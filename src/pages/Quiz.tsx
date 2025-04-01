@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,6 +29,7 @@ const Quiz = () => {
   const [submission, setSubmission] = useState<QuizSubmission | null>(null);
   const [isComplete, setIsComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   
   useEffect(() => {
     if (!isAuthenticated || !user) return;
@@ -41,7 +43,9 @@ const Quiz = () => {
           .select('*')
           .order('order_number');
           
-        if (modulesError) throw modulesError;
+        if (modulesError) {
+          throw modulesError;
+        }
         
         if (modulesData && modulesData.length > 0) {
           setModules(modulesData as unknown as QuizModule[]);
@@ -51,15 +55,21 @@ const Quiz = () => {
             .select('*')
             .order('order_number');
             
-          if (questionsError) throw questionsError;
+          if (questionsError) {
+            throw questionsError;
+          }
           
           if (questionsData) {
+            setQuestions(questionsData as unknown as QuizQuestion[]);
+            
             const { data: optionsData, error: optionsError } = await supabase
               .from('quiz_options')
               .select('*')
               .order('order_number');
               
-            if (optionsError) throw optionsError;
+            if (optionsError) {
+              throw optionsError;
+            }
             
             const questionsWithOptions = questionsData.map(question => {
               const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
@@ -69,7 +79,7 @@ const Quiz = () => {
             setQuestions(questionsWithOptions);
             
             if (modulesData.length > 0) {
-              const firstModuleQuestions = questions.filter(
+              const firstModuleQuestions = questionsWithOptions.filter(
                 q => q.module_id === modulesData[0].id
               );
               setModuleQuestions(firstModuleQuestions);
@@ -96,7 +106,7 @@ const Quiz = () => {
               setCurrentModuleIndex(moduleIndex);
               
               if (modulesData[moduleIndex]) {
-                const moduleQuestions = questions.filter(
+                const moduleQuestions = questionsWithOptions.filter(
                   q => q.module_id === modulesData[moduleIndex].id
                 );
                 setModuleQuestions(moduleQuestions);
@@ -108,7 +118,9 @@ const Quiz = () => {
               .select('*')
               .eq('user_id', user.id);
               
-            if (answersError) throw answersError;
+            if (answersError) {
+              throw answersError;
+            }
             
             if (answersData) {
               const loadedAnswers: AnswerMap = {};
@@ -136,12 +148,15 @@ const Quiz = () => {
               .select()
               .single();
               
-            if (createError) throw createError;
+            if (createError) {
+              throw createError;
+            }
             if (newSubmission) {
               setSubmission(newSubmission as unknown as QuizSubmission);
             }
           }
         } else {
+          setLoadError("Nenhum módulo de questionário encontrado.");
           toast({
             title: "Erro",
             description: "Nenhum módulo de questionário encontrado.",
@@ -153,6 +168,7 @@ const Quiz = () => {
           tag: 'Quiz', 
           data: error 
         });
+        setLoadError(error.message || "Não foi possível carregar os dados do questionário.");
         toast({
           title: "Erro ao carregar questionário",
           description: error.message || "Não foi possível carregar os dados do questionário.",
@@ -378,8 +394,16 @@ const Quiz = () => {
                 />
               </>
             ) : (
-              <div className="text-center">
-                <p className="text-xl">Nenhuma pergunta disponível. Por favor, contate o administrador.</p>
+              <div className="w-full max-w-2xl rounded-lg bg-destructive/10 p-8 text-center">
+                <h2 className="text-2xl font-bold text-destructive mb-4">Erro</h2>
+                <p className="text-xl mb-6">{loadError || "Nenhum módulo de questionário encontrado. Por favor, contate o administrador."}</p>
+                <div className="flex justify-center">
+                  <img 
+                    src="/lovable-uploads/b7853899-a730-4391-8853-72b5337e1bbc.png" 
+                    alt="Erro no questionário" 
+                    className="max-w-full h-auto max-h-60 object-contain" 
+                  />
+                </div>
               </div>
             )}
           </>

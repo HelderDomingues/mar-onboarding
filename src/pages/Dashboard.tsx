@@ -21,6 +21,7 @@ const Dashboard = () => {
   const [isSeeding, setIsSeeding] = useState(false);
   const [submission, setSubmission] = useState<QuizSubmission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkUserRole = async () => {
@@ -51,6 +52,7 @@ const Dashboard = () => {
         }
       } catch (error) {
         logger.error('Erro ao verificar papel do usuário', { tag: 'Dashboard', data: error });
+        setLoadError("Erro ao verificar as permissões do usuário.");
       } finally {
         setIsLoading(false);
       }
@@ -115,6 +117,12 @@ const Dashboard = () => {
       <main className="flex-1 container max-w-5xl py-8 px-4">
         <h1 className="text-3xl font-bold mb-2">Bem-vindo à sua Área MAR</h1>
         <p className="text-gray-600 mb-8">Acesse o questionário MAR - Mapa para Alto Rendimento abaixo.</p>
+        
+        {loadError && (
+          <div className="mb-6 p-4 bg-destructive/10 text-destructive rounded-lg">
+            <p>{loadError}</p>
+          </div>
+        )}
         
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <Card className="hover:shadow-md transition-shadow">
