@@ -2,12 +2,14 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { logger } from "@/utils/logger";
 
 export function QuizHeader() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   
   const handleLogout = async () => {
+    logger.info('Usuário solicitou logout', { tag: 'Header' });
     await logout();
     navigate("/");
   };
@@ -24,7 +26,7 @@ export function QuizHeader() {
         {user && (
           <>
             <span className="text-sm hidden md:inline">
-              Welcome, <strong>{user.name}</strong>
+              Bem-vindo, <strong>{user.email?.split('@')[0]}</strong>
             </span>
             <Button 
               variant="outline" 
@@ -32,7 +34,7 @@ export function QuizHeader() {
               onClick={handleLogout}
               className="border-quiz text-quiz hover:bg-quiz/10"
             >
-              Logout
+              Sair
             </Button>
           </>
         )}

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { logger } from "@/utils/logger";
 
 export function Login() {
   const [email, setEmail] = useState("");
@@ -18,17 +19,18 @@ export function Login() {
     setIsLoading(true);
     
     try {
+      logger.info('Tentativa de login iniciada', { tag: 'Login', data: { email } });
       await login(email, password);
       toast({
-        title: "Login successful",
-        description: "Welcome back to the Quiz Vault!",
+        title: "Login bem-sucedido",
+        description: "Bem-vindo à área de membros!",
       });
     } catch (error) {
-      console.error("Login error:", error);
+      logger.error('Falha no login', { tag: 'Login', data: error });
       toast({
         variant: "destructive",
-        title: "Login failed",
-        description: "Please check your credentials and try again.",
+        title: "Falha no login",
+        description: "Por favor, verifique suas credenciais e tente novamente.",
       });
     } finally {
       setIsLoading(false);
@@ -38,8 +40,8 @@ export function Login() {
   return (
     <Card className="w-full max-w-md animate-fade-in">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-        <CardDescription>Access your members-only quiz vault</CardDescription>
+        <CardTitle className="text-2xl font-bold">Bem-vindo(a)</CardTitle>
+        <CardDescription>Acesse sua área exclusiva de membros</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -48,7 +50,7 @@ export function Login() {
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
+              placeholder="seu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -57,9 +59,9 @@ export function Login() {
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label htmlFor="password" className="text-sm font-medium">Password</label>
+              <label htmlFor="password" className="text-sm font-medium">Senha</label>
               <a href="#" className="text-xs text-quiz-dark hover:underline">
-                Forgot password?
+                Esqueceu sua senha?
               </a>
             </div>
             <Input
@@ -79,10 +81,10 @@ export function Login() {
             className="w-full bg-quiz hover:bg-quiz-dark"
             disabled={isLoading}
           >
-            {isLoading ? "Logging in..." : "Sign In"}
+            {isLoading ? "Entrando..." : "Entrar"}
           </Button>
           <p className="text-sm text-center text-muted-foreground">
-            Don't have an account? <a href="#" className="text-quiz hover:underline">Contact us</a>
+            Não tem uma conta? <a href="#" className="text-quiz hover:underline">Entre em contato</a>
           </p>
         </CardFooter>
       </form>
