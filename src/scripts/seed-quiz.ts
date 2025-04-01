@@ -1,5 +1,6 @@
 
 import { supabase } from "../integrations/supabase/client";
+import { logger } from "@/utils/logger";
 
 // Script para inserir os dados do questionário no Supabase
 export async function seedQuizData() {
@@ -50,10 +51,10 @@ export async function seedQuizData() {
     
     const { error: modulesError } = await supabase
       .from('quiz_modules')
-      .upsert(modules, { onConflict: 'order_number' });
+      .upsert(modules as any, { onConflict: 'order_number' });
       
     if (modulesError) throw modulesError;
-    console.log("✅ Módulos inseridos com sucesso");
+    logger.info("✅ Módulos inseridos com sucesso");
     
     // 2. Buscar os módulos inseridos para obter os IDs
     const { data: insertedModules, error: fetchError } = await supabase
@@ -66,7 +67,7 @@ export async function seedQuizData() {
     
     // 3. Inserir as perguntas com base nos módulos inseridos
     const moduleMap: Record<number, string> = {};
-    insertedModules.forEach(module => {
+    insertedModules.forEach((module: any) => {
       moduleMap[module.order_number] = module.id;
     });
     
@@ -406,10 +407,10 @@ export async function seedQuizData() {
     
     const { error: questionsError } = await supabase
       .from('quiz_questions')
-      .upsert(questions);
+      .upsert(questions as any);
       
     if (questionsError) throw questionsError;
-    console.log("✅ Perguntas inseridas com sucesso");
+    logger.info("✅ Perguntas inseridas com sucesso");
     
     // 4. Buscar as perguntas inseridas para adicionar opções
     const { data: insertedQuestions, error: fetchQuestionsError } = await supabase
@@ -421,7 +422,7 @@ export async function seedQuizData() {
     
     // 5. Mapear as perguntas por texto para facilitar a adição de opções
     const questionMap: Record<string, string> = {};
-    insertedQuestions.forEach(question => {
+    insertedQuestions.forEach((question: any) => {
       questionMap[question.text] = question.id;
     });
     
@@ -1121,16 +1122,16 @@ export async function seedQuizData() {
     
     const { error: optionsError } = await supabase
       .from('quiz_options')
-      .upsert(validOptions);
+      .upsert(validOptions as any);
       
     if (optionsError) throw optionsError;
-    console.log("✅ Opções inseridas com sucesso");
+    logger.info("✅ Opções inseridas com sucesso");
     
-    console.log("✅ Dados do questionário inseridos com sucesso!");
+    logger.info("✅ Dados do questionário inseridos com sucesso!");
     return true;
     
   } catch (error) {
-    console.error("Erro ao inserir dados do questionário:", error);
+    logger.error("Erro ao inserir dados do questionário:", error);
     return false;
   }
 }

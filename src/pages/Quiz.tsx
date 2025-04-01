@@ -9,41 +9,7 @@ import { QuizComplete } from "@/components/quiz/QuizComplete";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
-
-// Tipos para os dados do banco
-interface QuizModule {
-  id: string;
-  title: string;
-  description: string | null;
-  order_number: number;
-}
-
-interface QuizQuestion {
-  id: string;
-  module_id: string;
-  text: string;
-  type: 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select';
-  required: boolean;
-  order_number: number;
-  hint: string | null;
-  options?: QuizOption[];
-}
-
-interface QuizOption {
-  id: string;
-  question_id: string;
-  text: string;
-  order_number: number;
-}
-
-interface QuizSubmission {
-  id: string;
-  user_id: string;
-  current_module: number;
-  completed: boolean;
-  started_at: string;
-  completed_at: string | null;
-}
+import { QuizModule, QuizQuestion, QuizOption, QuizAnswer, QuizSubmission } from "@/types/quiz";
 
 interface AnswerMap {
   [key: string]: string | string[];
@@ -81,7 +47,7 @@ const Quiz = () => {
         if (modulesError) throw modulesError;
         
         if (modulesData && modulesData.length > 0) {
-          setModules(modulesData);
+          setModules(modulesData as unknown as QuizModule[]);
           
           // Buscar todas as questões
           const { data: questionsData, error: questionsError } = await supabase
@@ -103,7 +69,7 @@ const Quiz = () => {
             // Mapear opções para questões
             const questionsWithOptions = questionsData.map(question => {
               const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
-              return { ...question, options };
+              return { ...question, options } as unknown as QuizQuestion;
             });
             
             setQuestions(questionsWithOptions);
@@ -129,7 +95,7 @@ const Quiz = () => {
           }
           
           if (submissionData) {
-            setSubmission(submissionData);
+            setSubmission(submissionData as unknown as QuizSubmission);
             
             // Se já foi completado, mostrar tela final
             if (submissionData.completed) {
@@ -187,7 +153,7 @@ const Quiz = () => {
               
             if (createError) throw createError;
             if (newSubmission) {
-              setSubmission(newSubmission);
+              setSubmission(newSubmission as unknown as QuizSubmission);
             }
           }
         } else {
@@ -402,7 +368,7 @@ const Quiz = () => {
       <main className="flex-1 container py-8 px-4 flex flex-col items-center">
         {!isComplete ? (
           <>
-            {modules.length > 0 && moduleQuestions.length > 0 && (
+            {modules.length > 0 && moduleQuestions.length > 0 ? (
               <>
                 <div className="w-full max-w-2xl mb-6">
                   <h2 className="text-2xl font-bold mb-2">
@@ -439,6 +405,10 @@ const Quiz = () => {
                   currentAnswer={answers[moduleQuestions[currentQuestionIndex].id]}
                 />
               </>
+            ) : (
+              <div className="text-center">
+                <p className="text-xl">Nenhuma pergunta disponível. Por favor, contate o administrador.</p>
+              </div>
             )}
           </>
         ) : (

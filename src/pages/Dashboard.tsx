@@ -10,13 +10,7 @@ import { seedQuizData } from "@/scripts/seed-quiz";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
-
-interface QuizSubmission {
-  id: string;
-  current_module: number;
-  completed: boolean;
-  completed_at: string | null;
-}
+import { QuizSubmission } from "@/types/quiz";
 
 const Dashboard = () => {
   const { isAuthenticated, user } = useAuth();
@@ -53,7 +47,7 @@ const Dashboard = () => {
           .single();
           
         if (!submissionError && submissionData) {
-          setSubmission(submissionData);
+          setSubmission(submissionData as unknown as QuizSubmission);
         }
       } catch (error) {
         logger.error('Erro ao verificar papel do usuário', { tag: 'Dashboard', data: error });
