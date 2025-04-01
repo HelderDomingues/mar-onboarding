@@ -18,7 +18,7 @@ export function QuizHeader() {
     <header className="bg-white border-b shadow-sm py-4 px-6 flex justify-between items-center">
       <div className="flex items-center">
         <h1 className="text-2xl font-bold text-quiz-dark">
-          <span className="text-quiz">Quiz</span>Vault
+          <span className="text-quiz">MAR</span> - Mapa para Alto Rendimento
         </h1>
       </div>
       

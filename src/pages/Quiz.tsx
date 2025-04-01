@@ -7,126 +7,392 @@ import { QuestionCard, Question } from "@/components/quiz/QuestionCard";
 import { QuizProgress } from "@/components/quiz/QuizProgress";
 import { QuizComplete } from "@/components/quiz/QuizComplete";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/utils/logger";
 
-// Sample quiz data - will be replaced with data from Supabase later
-const SAMPLE_QUESTIONS: Question[] = [
-  {
-    id: "q1",
-    text: "What is your primary goal with this assessment?",
-    type: "multiple-choice",
-    options: [
-      "Personal development",
-      "Career advancement",
-      "Educational purposes",
-      "Health improvement",
-      "Other"
-    ],
-    required: true
-  },
-  {
-    id: "q2",
-    text: "How would you rate your experience in this field?",
-    type: "multiple-choice",
-    options: [
-      "Beginner (0-1 years)",
-      "Intermediate (1-3 years)",
-      "Advanced (3-5 years)",
-      "Expert (5+ years)"
-    ],
-    required: true
-  },
-  {
-    id: "q3",
-    text: "Which of the following skills do you currently possess? (Select all that apply)",
-    type: "checkbox",
-    options: [
-      "Project management",
-      "Data analysis",
-      "Content creation",
-      "Technical writing",
-      "Strategic planning",
-      "Client communication"
-    ],
-    required: true
-  },
-  {
-    id: "q4",
-    text: "Please describe your current challenges and what you hope to achieve from this program.",
-    type: "text",
-    required: true
-  },
-  {
-    id: "q5",
-    text: "How many hours per week can you dedicate to this program?",
-    type: "multiple-choice",
-    options: [
-      "Less than 2 hours",
-      "2-5 hours",
-      "5-10 hours",
-      "10+ hours"
-    ],
-    required: true
-  }
-];
+// Tipos para os dados do banco
+interface QuizModule {
+  id: string;
+  title: string;
+  description: string | null;
+  order_number: number;
+}
 
-type AnswerMap = {
+interface QuizQuestion {
+  id: string;
+  module_id: string;
+  text: string;
+  type: 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select';
+  required: boolean;
+  order_number: number;
+  hint: string | null;
+  options?: QuizOption[];
+}
+
+interface QuizOption {
+  id: string;
+  question_id: string;
+  text: string;
+  order_number: number;
+}
+
+interface QuizSubmission {
+  id: string;
+  user_id: string;
+  current_module: number;
+  completed: boolean;
+  started_at: string;
+  completed_at: string | null;
+}
+
+interface AnswerMap {
   [key: string]: string | string[];
-};
+}
 
 const Quiz = () => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  const [modules, setModules] = useState<QuizModule[]>([]);
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [moduleQuestions, setModuleQuestions] = useState<QuizQuestion[]>([]);
   const [answers, setAnswers] = useState<AnswerMap>({});
+  const [submission, setSubmission] = useState<QuizSubmission | null>(null);
   const [isComplete, setIsComplete] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Carregar módulos e questões
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    
+    const fetchQuizData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Buscar módulos
+        const { data: modulesData, error: modulesError } = await supabase
+          .from('quiz_modules')
+          .select('*')
+          .order('order_number');
+          
+        if (modulesError) throw modulesError;
+        
+        if (modulesData && modulesData.length > 0) {
+          setModules(modulesData);
+          
+          // Buscar todas as questões
+          const { data: questionsData, error: questionsError } = await supabase
+            .from('quiz_questions')
+            .select('*')
+            .order('order_number');
+            
+          if (questionsError) throw questionsError;
+          
+          if (questionsData) {
+            // Buscar todas as opções
+            const { data: optionsData, error: optionsError } = await supabase
+              .from('quiz_options')
+              .select('*')
+              .order('order_number');
+              
+            if (optionsError) throw optionsError;
+            
+            // Mapear opções para questões
+            const questionsWithOptions = questionsData.map(question => {
+              const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
+              return { ...question, options };
+            });
+            
+            setQuestions(questionsWithOptions);
+            
+            // Definir questões do primeiro módulo
+            if (modulesData.length > 0) {
+              const firstModuleQuestions = questionsWithOptions.filter(
+                q => q.module_id === modulesData[0].id
+              );
+              setModuleQuestions(firstModuleQuestions);
+            }
+          }
+          
+          // Buscar ou criar registro de submissão para o usuário
+          const { data: submissionData, error: submissionError } = await supabase
+            .from('quiz_submissions')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+          
+          if (submissionError && submissionError.code !== 'PGRST116') { // Não é erro "não encontrado"
+            throw submissionError;
+          }
+          
+          if (submissionData) {
+            setSubmission(submissionData);
+            
+            // Se já foi completado, mostrar tela final
+            if (submissionData.completed) {
+              setIsComplete(true);
+            } 
+            // Caso contrário, restaurar o estado onde o usuário parou
+            else {
+              const moduleIndex = Math.max(0, submissionData.current_module - 1);
+              setCurrentModuleIndex(moduleIndex);
+              
+              if (modulesData[moduleIndex]) {
+                const moduleQuestions = questionsWithOptions.filter(
+                  q => q.module_id === modulesData[moduleIndex].id
+                );
+                setModuleQuestions(moduleQuestions);
+              }
+            }
+            
+            // Carregar respostas anteriores
+            const { data: answersData, error: answersError } = await supabase
+              .from('quiz_answers')
+              .select('*')
+              .eq('user_id', user.id);
+              
+            if (answersError) throw answersError;
+            
+            if (answersData) {
+              const loadedAnswers: AnswerMap = {};
+              answersData.forEach(ans => {
+                try {
+                  // Tentar parsear como JSON para checkbox (arrays)
+                  const parsed = JSON.parse(ans.answer || '');
+                  if (Array.isArray(parsed)) {
+                    loadedAnswers[ans.question_id] = parsed;
+                  } else {
+                    loadedAnswers[ans.question_id] = ans.answer || '';
+                  }
+                } catch (e) {
+                  // Se não for JSON, usar como string
+                  loadedAnswers[ans.question_id] = ans.answer || '';
+                }
+              });
+              
+              setAnswers(loadedAnswers);
+            }
+          } else {
+            // Criar um novo registro de submissão
+            const { data: newSubmission, error: createError } = await supabase
+              .from('quiz_submissions')
+              .insert([
+                { user_id: user.id, current_module: 1, started_at: new Date().toISOString() }
+              ])
+              .select()
+              .single();
+              
+            if (createError) throw createError;
+            if (newSubmission) {
+              setSubmission(newSubmission);
+            }
+          }
+        } else {
+          toast({
+            title: "Erro",
+            description: "Nenhum módulo de questionário encontrado.",
+            variant: "destructive",
+          });
+        }
+      } catch (error: any) {
+        logger.error('Erro ao carregar dados do questionário', { 
+          tag: 'Quiz', 
+          data: error 
+        });
+        toast({
+          title: "Erro ao carregar questionário",
+          description: error.message || "Não foi possível carregar os dados do questionário.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchQuizData();
+  }, [isAuthenticated, user, toast]);
+  
+  // Salvar resposta no Supabase
+  const saveAnswer = async (questionId: string, answer: string | string[]) => {
+    if (!user) return;
+    
+    try {
+      let answerValue = typeof answer === 'string' ? answer : JSON.stringify(answer);
+      
+      const { error } = await supabase
+        .from('quiz_answers')
+        .upsert([
+          {
+            user_id: user.id,
+            question_id: questionId,
+            answer: answerValue,
+          }
+        ], { onConflict: 'user_id,question_id' });
+        
+      if (error) throw error;
+      
+      logger.info('Resposta salva com sucesso', { 
+        tag: 'Quiz',
+        data: { questionId }
+      });
+    } catch (error: any) {
+      logger.error('Erro ao salvar resposta', { 
+        tag: 'Quiz',
+        data: { questionId, error }
+      });
+      toast({
+        title: "Erro ao salvar resposta",
+        description: "Não foi possível salvar sua resposta. Por favor, tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Atualizar o módulo atual no Supabase
+  const updateCurrentModule = async (moduleNumber: number) => {
+    if (!user || !submission) return;
+    
+    try {
+      const { error } = await supabase
+        .from('quiz_submissions')
+        .update({ current_module: moduleNumber })
+        .eq('user_id', user.id);
+        
+      if (error) throw error;
+      
+      logger.info('Progresso do módulo atualizado', {
+        tag: 'Quiz',
+        data: { moduleNumber }
+      });
+    } catch (error: any) {
+      logger.error('Erro ao atualizar progresso', { 
+        tag: 'Quiz',
+        data: error 
+      });
+    }
+  };
+  
+  // Marcar questionário como concluído
+  const completeQuiz = async () => {
+    if (!user || !submission) return;
+    
+    try {
+      const { error } = await supabase
+        .from('quiz_submissions')
+        .update({ 
+          completed: true,
+          completed_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+        
+      if (error) throw error;
+      
+      logger.info('Questionário marcado como concluído', {
+        tag: 'Quiz',
+        data: { userId: user.id }
+      });
+      
+      setIsComplete(true);
+    } catch (error: any) {
+      logger.error('Erro ao completar questionário', { 
+        tag: 'Quiz',
+        data: error 
+      });
+      toast({
+        title: "Erro ao finalizar questionário",
+        description: "Não foi possível registrar a conclusão do questionário. Por favor, tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
   
   const handleAnswer = (questionId: string, answer: string | string[]) => {
     setAnswers(prev => ({
       ...prev,
       [questionId]: answer
     }));
+    
+    // Salvar resposta no Supabase
+    saveAnswer(questionId, answer);
   };
   
-  const handleNext = () => {
-    if (currentQuestionIndex < SAMPLE_QUESTIONS.length - 1) {
+  const handleNext = async () => {
+    if (currentQuestionIndex < moduleQuestions.length - 1) {
+      // Avançar para a próxima pergunta no mesmo módulo
       setCurrentQuestionIndex(prev => prev + 1);
       window.scrollTo(0, 0);
     } else {
-      handleSubmitQuiz();
+      // Estamos no final do módulo atual
+      if (currentModuleIndex < modules.length - 1) {
+        // Avançar para o próximo módulo
+        const nextModuleIndex = currentModuleIndex + 1;
+        const nextModule = modules[nextModuleIndex];
+        
+        // Atualizar o módulo atual no Supabase
+        await updateCurrentModule(nextModule.order_number);
+        
+        // Filtrar questões para o próximo módulo
+        const nextModuleQuestions = questions.filter(
+          q => q.module_id === nextModule.id
+        );
+        
+        setCurrentModuleIndex(nextModuleIndex);
+        setModuleQuestions(nextModuleQuestions);
+        setCurrentQuestionIndex(0);
+        window.scrollTo(0, 0);
+      } else {
+        // Estamos no final do último módulo - concluir questionário
+        await completeQuiz();
+        
+        toast({
+          title: "Questionário concluído!",
+          description: "Suas respostas foram salvas com sucesso.",
+        });
+      }
     }
   };
   
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
+      // Voltar para a pergunta anterior no mesmo módulo
       setCurrentQuestionIndex(prev => prev - 1);
+      window.scrollTo(0, 0);
+    } else if (currentModuleIndex > 0) {
+      // Voltar para o módulo anterior
+      const prevModuleIndex = currentModuleIndex - 1;
+      const prevModule = modules[prevModuleIndex];
+      
+      // Filtrar questões para o módulo anterior
+      const prevModuleQuestions = questions.filter(
+        q => q.module_id === prevModule.id
+      );
+      
+      setCurrentModuleIndex(prevModuleIndex);
+      setModuleQuestions(prevModuleQuestions);
+      setCurrentQuestionIndex(prevModuleQuestions.length - 1);
       window.scrollTo(0, 0);
     }
   };
-  
-  const handleSubmitQuiz = () => {
-    console.log("Quiz submitted with answers:", answers);
-    
-    // Here we would save the answers to Supabase
-    // For now, just simulate the submission
-    
-    toast({
-      title: "Quiz submitted successfully!",
-      description: "Your responses have been recorded.",
-    });
-    
-    setIsComplete(true);
-  };
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      console.log("Quiz started for user:", user?.id);
-    }
-  }, [isAuthenticated, user]);
 
   if (!isAuthenticated) {
     return <Navigate to="/" />;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <QuizHeader />
+        <main className="flex-1 container py-8 px-4 flex flex-col items-center justify-center">
+          <div className="text-center">
+            <p className="text-xl mb-4">Carregando questionário...</p>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-quiz mx-auto"></div>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (
@@ -136,20 +402,44 @@ const Quiz = () => {
       <main className="flex-1 container py-8 px-4 flex flex-col items-center">
         {!isComplete ? (
           <>
-            <QuizProgress 
-              currentStep={currentQuestionIndex + 1} 
-              totalSteps={SAMPLE_QUESTIONS.length} 
-            />
-            
-            <QuestionCard
-              question={SAMPLE_QUESTIONS[currentQuestionIndex]}
-              onAnswer={handleAnswer}
-              onNext={handleNext}
-              onPrev={handlePrevious}
-              isFirst={currentQuestionIndex === 0}
-              isLast={currentQuestionIndex === SAMPLE_QUESTIONS.length - 1}
-              currentAnswer={answers[SAMPLE_QUESTIONS[currentQuestionIndex].id]}
-            />
+            {modules.length > 0 && moduleQuestions.length > 0 && (
+              <>
+                <div className="w-full max-w-2xl mb-6">
+                  <h2 className="text-2xl font-bold mb-2">
+                    {modules[currentModuleIndex]?.title}
+                  </h2>
+                  {modules[currentModuleIndex]?.description && (
+                    <p className="text-muted-foreground">
+                      {modules[currentModuleIndex]?.description}
+                    </p>
+                  )}
+                </div>
+                
+                <QuizProgress 
+                  currentStep={currentQuestionIndex + 1} 
+                  totalSteps={moduleQuestions.length}
+                  currentModule={currentModuleIndex + 1}
+                  totalModules={modules.length}
+                />
+                
+                <QuestionCard
+                  question={{
+                    id: moduleQuestions[currentQuestionIndex].id,
+                    text: moduleQuestions[currentQuestionIndex].text,
+                    type: moduleQuestions[currentQuestionIndex].type,
+                    options: moduleQuestions[currentQuestionIndex].options?.map(o => o.text),
+                    required: moduleQuestions[currentQuestionIndex].required,
+                    hint: moduleQuestions[currentQuestionIndex].hint || undefined
+                  }}
+                  onAnswer={handleAnswer}
+                  onNext={handleNext}
+                  onPrev={handlePrevious}
+                  isFirst={currentModuleIndex === 0 && currentQuestionIndex === 0}
+                  isLast={currentModuleIndex === modules.length - 1 && currentQuestionIndex === moduleQuestions.length - 1}
+                  currentAnswer={answers[moduleQuestions[currentQuestionIndex].id]}
+                />
+              </>
+            )}
           </>
         ) : (
           <QuizComplete />
@@ -157,7 +447,7 @@ const Quiz = () => {
       </main>
       
       <footer className="bg-white py-4 border-t text-center text-sm text-muted-foreground">
-        <p>© {new Date().getFullYear()} Quiz Vault. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} Crie Valor. Todos os direitos reservados.</p>
       </footer>
     </div>
   );
