@@ -14,23 +14,37 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-blue-50">
       <header className="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-quiz-dark">
-          <span className="text-quiz">Quiz</span>Vault
-        </h1>
+        <img 
+          src="/lovable-uploads/e109ec41-0f89-456d-8081-f73393ed4fd5.png" 
+          alt="Crie Valor" 
+          className="h-10"
+        />
       </header>
       
       <div className="flex-1 flex flex-col md:flex-row items-center justify-center p-6 gap-10 md:gap-20">
         <div className="max-w-md space-y-4 animate-slide-in">
-          <h1 className="text-4xl font-bold text-quiz-dark">Members-Only Quiz Vault</h1>
+          <img 
+            src="/lovable-uploads/19c7913c-2c4f-40f0-902b-d687b026e7c9.png" 
+            alt="MAR - Mapa para Alto Rendimento" 
+            className="h-24 mb-6"
+          />
+          <h1 className="text-4xl font-bold text-blue-900">Área Exclusiva de Membros</h1>
           <p className="text-lg text-gray-600">
-            Access exclusive quizzes and assessments designed for our members.
+            Acesse avaliações e questionários exclusivos desenvolvidos para nossos membros.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <Button className="bg-quiz hover:bg-quiz-dark">
-              Learn More
+            <Button 
+              className="bg-quiz hover:bg-quiz-dark" 
+              onClick={() => window.open("https://crievalor.com.br/mar", "_blank")}
+            >
+              Saiba Mais
             </Button>
-            <Button variant="outline" className="border-quiz text-quiz hover:bg-quiz/10">
-              Contact Us
+            <Button 
+              variant="outline" 
+              className="border-quiz text-quiz hover:bg-quiz/10"
+              onClick={() => window.open("https://crievalor.com.br/contato", "_blank")}
+            >
+              Entre em Contato
             </Button>
           </div>
         </div>
@@ -41,7 +55,7 @@ const Index = () => {
       </div>
       
       <footer className="bg-white py-6 border-t text-center text-sm text-muted-foreground">
-        <p>© {new Date().getFullYear()} Quiz Vault. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} Crie Valor Consultoria. Todos os direitos reservados.</p>
       </footer>
     </div>
   );

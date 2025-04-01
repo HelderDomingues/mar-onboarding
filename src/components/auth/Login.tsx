@@ -84,7 +84,7 @@ export function Login() {
             {isLoading ? "Entrando..." : "Entrar"}
           </Button>
           <p className="text-sm text-center text-muted-foreground">
-            Não tem uma conta? <a href="#" className="text-quiz hover:underline">Entre em contato</a>
+            Não tem uma conta? <a href="https://crievalor.com.br/contato" className="text-quiz hover:underline">Entre em contato</a>
           </p>
         </CardFooter>
       </form>
