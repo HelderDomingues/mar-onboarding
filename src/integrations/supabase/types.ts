@@ -579,6 +579,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      is_quiz_admin: {
+        Args: {
+          user_email: string
+        }
+        Returns: boolean
+      }
       setup_asaas_customers_rls_policies: {
         Args: Record<PropertyKey, never>
         Returns: boolean

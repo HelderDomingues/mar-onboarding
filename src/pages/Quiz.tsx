@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -96,27 +97,33 @@ const Quiz = () => {
           }
         }
 
+        // Corrigindo a consulta de submissões para evitar o erro 406
         const { data: submissionData, error: submissionError } = await supabase
           .from('quiz_submissions')
           .select('*')
-          .eq('user_id', user.id)
-          .single();
+          .eq('user_id', user.id);
 
-        if (submissionError && submissionError.code !== 'PGRST116') {
-          throw submissionError;
+        if (submissionError) {
+          logger.error('Erro ao buscar submissão do quiz', {
+            tag: 'Quiz',
+            data: submissionError
+          });
+          // Continue com o fluxo mesmo se houver erro na busca de submissão
         }
 
-        if (submissionData) {
-          setSubmission(submissionData as unknown as QuizSubmission);
+        // Verifica se existe uma submissão existente
+        if (submissionData && submissionData.length > 0) {
+          const userSubmission = submissionData[0] as unknown as QuizSubmission;
+          setSubmission(userSubmission);
           
-          if (submissionData.completed) {
+          if (userSubmission.completed) {
             setIsComplete(true);
           } else {
-            const moduleIndex = Math.max(0, submissionData.current_module - 1);
+            const moduleIndex = Math.max(0, userSubmission.current_module - 1);
             setCurrentModuleIndex(moduleIndex);
             
             if (modulesData[moduleIndex]) {
-              const moduleQuestions = questions.filter(
+              const moduleQuestions = questionsWithOptions.filter(
                 q => q.module_id === modulesData[moduleIndex].id
               );
               setModuleQuestions(moduleQuestions);
@@ -149,6 +156,7 @@ const Quiz = () => {
             setAnswers(loadedAnswers);
           }
         } else {
+          // Criar uma nova submissão se não existir
           const { data: newSubmission, error: createError } = await supabase
             .from('quiz_submissions')
             .insert([{
@@ -156,15 +164,14 @@ const Quiz = () => {
               current_module: 1,
               started_at: new Date().toISOString()
             }])
-            .select()
-            .single();
+            .select();
 
           if (createError) {
             throw createError;
           }
 
-          if (newSubmission) {
-            setSubmission(newSubmission as unknown as QuizSubmission);
+          if (newSubmission && newSubmission.length > 0) {
+            setSubmission(newSubmission[0] as unknown as QuizSubmission);
           }
         }
 
