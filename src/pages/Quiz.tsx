@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -30,7 +29,6 @@ const Quiz = () => {
   const [isComplete, setIsComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Carregar módulos e questões
   useEffect(() => {
     if (!isAuthenticated || !user) return;
     
@@ -38,7 +36,6 @@ const Quiz = () => {
       try {
         setIsLoading(true);
         
-        // Buscar módulos
         const { data: modulesData, error: modulesError } = await supabase
           .from('quiz_modules')
           .select('*')
@@ -49,7 +46,6 @@ const Quiz = () => {
         if (modulesData && modulesData.length > 0) {
           setModules(modulesData as unknown as QuizModule[]);
           
-          // Buscar todas as questões
           const { data: questionsData, error: questionsError } = await supabase
             .from('quiz_questions')
             .select('*')
@@ -58,7 +54,6 @@ const Quiz = () => {
           if (questionsError) throw questionsError;
           
           if (questionsData) {
-            // Buscar todas as opções
             const { data: optionsData, error: optionsError } = await supabase
               .from('quiz_options')
               .select('*')
@@ -66,7 +61,6 @@ const Quiz = () => {
               
             if (optionsError) throw optionsError;
             
-            // Mapear opções para questões
             const questionsWithOptions = questionsData.map(question => {
               const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
               return { ...question, options } as unknown as QuizQuestion;
@@ -74,47 +68,41 @@ const Quiz = () => {
             
             setQuestions(questionsWithOptions);
             
-            // Definir questões do primeiro módulo
             if (modulesData.length > 0) {
-              const firstModuleQuestions = questionsWithOptions.filter(
+              const firstModuleQuestions = questions.filter(
                 q => q.module_id === modulesData[0].id
               );
               setModuleQuestions(firstModuleQuestions);
             }
           }
           
-          // Buscar ou criar registro de submissão para o usuário
           const { data: submissionData, error: submissionError } = await supabase
             .from('quiz_submissions')
             .select('*')
             .eq('user_id', user.id)
             .single();
           
-          if (submissionError && submissionError.code !== 'PGRST116') { // Não é erro "não encontrado"
+          if (submissionError && submissionError.code !== 'PGRST116') {
             throw submissionError;
           }
           
           if (submissionData) {
             setSubmission(submissionData as unknown as QuizSubmission);
             
-            // Se já foi completado, mostrar tela final
             if (submissionData.completed) {
               setIsComplete(true);
-            } 
-            // Caso contrário, restaurar o estado onde o usuário parou
-            else {
+            } else {
               const moduleIndex = Math.max(0, submissionData.current_module - 1);
               setCurrentModuleIndex(moduleIndex);
               
               if (modulesData[moduleIndex]) {
-                const moduleQuestions = questionsWithOptions.filter(
+                const moduleQuestions = questions.filter(
                   q => q.module_id === modulesData[moduleIndex].id
                 );
                 setModuleQuestions(moduleQuestions);
               }
             }
             
-            // Carregar respostas anteriores
             const { data: answersData, error: answersError } = await supabase
               .from('quiz_answers')
               .select('*')
@@ -126,7 +114,6 @@ const Quiz = () => {
               const loadedAnswers: AnswerMap = {};
               answersData.forEach(ans => {
                 try {
-                  // Tentar parsear como JSON para checkbox (arrays)
                   const parsed = JSON.parse(ans.answer || '');
                   if (Array.isArray(parsed)) {
                     loadedAnswers[ans.question_id] = parsed;
@@ -134,7 +121,6 @@ const Quiz = () => {
                     loadedAnswers[ans.question_id] = ans.answer || '';
                   }
                 } catch (e) {
-                  // Se não for JSON, usar como string
                   loadedAnswers[ans.question_id] = ans.answer || '';
                 }
               });
@@ -142,7 +128,6 @@ const Quiz = () => {
               setAnswers(loadedAnswers);
             }
           } else {
-            // Criar um novo registro de submissão
             const { data: newSubmission, error: createError } = await supabase
               .from('quiz_submissions')
               .insert([
@@ -181,7 +166,6 @@ const Quiz = () => {
     fetchQuizData();
   }, [isAuthenticated, user, toast]);
   
-  // Salvar resposta no Supabase
   const saveAnswer = async (questionId: string, answer: string | string[]) => {
     if (!user) return;
     
@@ -217,7 +201,6 @@ const Quiz = () => {
     }
   };
   
-  // Atualizar o módulo atual no Supabase
   const updateCurrentModule = async (moduleNumber: number) => {
     if (!user || !submission) return;
     
@@ -241,7 +224,6 @@ const Quiz = () => {
     }
   };
   
-  // Marcar questionário como concluído
   const completeQuiz = async () => {
     if (!user || !submission) return;
     
@@ -281,26 +263,20 @@ const Quiz = () => {
       [questionId]: answer
     }));
     
-    // Salvar resposta no Supabase
     saveAnswer(questionId, answer);
   };
   
   const handleNext = async () => {
     if (currentQuestionIndex < moduleQuestions.length - 1) {
-      // Avançar para a próxima pergunta no mesmo módulo
       setCurrentQuestionIndex(prev => prev + 1);
       window.scrollTo(0, 0);
     } else {
-      // Estamos no final do módulo atual
       if (currentModuleIndex < modules.length - 1) {
-        // Avançar para o próximo módulo
         const nextModuleIndex = currentModuleIndex + 1;
         const nextModule = modules[nextModuleIndex];
         
-        // Atualizar o módulo atual no Supabase
         await updateCurrentModule(nextModule.order_number);
         
-        // Filtrar questões para o próximo módulo
         const nextModuleQuestions = questions.filter(
           q => q.module_id === nextModule.id
         );
@@ -310,7 +286,6 @@ const Quiz = () => {
         setCurrentQuestionIndex(0);
         window.scrollTo(0, 0);
       } else {
-        // Estamos no final do último módulo - concluir questionário
         await completeQuiz();
         
         toast({
@@ -323,15 +298,12 @@ const Quiz = () => {
   
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
-      // Voltar para a pergunta anterior no mesmo módulo
       setCurrentQuestionIndex(prev => prev - 1);
       window.scrollTo(0, 0);
     } else if (currentModuleIndex > 0) {
-      // Voltar para o módulo anterior
       const prevModuleIndex = currentModuleIndex - 1;
       const prevModule = modules[prevModuleIndex];
       
-      // Filtrar questões para o módulo anterior
       const prevModuleQuestions = questions.filter(
         q => q.module_id === prevModule.id
       );
