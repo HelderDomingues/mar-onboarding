@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -106,7 +105,7 @@ const Quiz = () => {
               setCurrentModuleIndex(moduleIndex);
               
               if (modulesData[moduleIndex]) {
-                const moduleQuestions = questionsWithOptions.filter(
+                const moduleQuestions = questions.filter(
                   q => q.module_id === modulesData[moduleIndex].id
                 );
                 setModuleQuestions(moduleQuestions);
