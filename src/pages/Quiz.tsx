@@ -1,21 +1,25 @@
+
 import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { QuizHeader } from "@/components/quiz/QuizHeader";
-import { QuestionCard, Question } from "@/components/quiz/QuestionCard";
-import { QuizProgress } from "@/components/quiz/QuizProgress";
 import { QuizComplete } from "@/components/quiz/QuizComplete";
-import { SeedButton } from "@/components/quiz/SeedButton";
+import { QuizConfigurationPanel } from "@/components/quiz/QuizConfigurationPanel";
+import { QuizContent } from "@/components/quiz/QuizContent";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { QuizModule, QuizQuestion, QuizOption, QuizAnswer, QuizSubmission } from "@/types/quiz";
-import { Button } from "@/components/ui/button";
-import { AlertCircle } from "lucide-react";
 
 interface AnswerMap {
   [key: string]: string | string[];
 }
+
+// Lista de emails de administradores
+const ADMIN_EMAILS = [
+  "helder@crievalor.com.br",
+  // Adicione outros emails de admin conforme necessário
+];
 
 const Quiz = () => {
   const { isAuthenticated, user } = useAuth();
@@ -32,6 +36,14 @@ const Quiz = () => {
   const [isComplete, setIsComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Verificar se o usuário atual é um administrador
+  useEffect(() => {
+    if (user?.email) {
+      setIsAdmin(ADMIN_EMAILS.includes(user.email));
+    }
+  }, [user]);
 
   const fetchQuizData = async () => {
     if (!isAuthenticated || !user) return;
@@ -322,6 +334,10 @@ const Quiz = () => {
     return <Navigate to="/" />;
   }
 
+  const hasQuizData = modules.length > 0 && moduleQuestions.length > 0;
+  const isFirstQuestion = currentModuleIndex === 0 && currentQuestionIndex === 0;
+  const isLastQuestion = currentModuleIndex === modules.length - 1 && currentQuestionIndex === moduleQuestions.length - 1;
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <QuizHeader />
@@ -329,88 +345,27 @@ const Quiz = () => {
       <main className="flex-1 container py-8 px-4 flex flex-col items-center">
         {!isComplete ? (
           <>
-            {modules.length > 0 && moduleQuestions.length > 0 ? (
-              <>
-                <div className="w-full max-w-2xl mb-6">
-                  <h2 className="text-2xl font-bold mb-2">
-                    {modules[currentModuleIndex]?.title}
-                  </h2>
-                  {modules[currentModuleIndex]?.description && (
-                    <p className="text-muted-foreground">
-                      {modules[currentModuleIndex]?.description}
-                    </p>
-                  )}
-                </div>
-                
-                <QuizProgress 
-                  currentStep={currentQuestionIndex + 1} 
-                  totalSteps={moduleQuestions.length} 
-                  currentModule={currentModuleIndex + 1} 
-                  totalModules={modules.length} 
-                />
-                
-                <QuestionCard 
-                  question={{
-                    id: moduleQuestions[currentQuestionIndex].id,
-                    text: moduleQuestions[currentQuestionIndex].text,
-                    type: moduleQuestions[currentQuestionIndex].type,
-                    options: moduleQuestions[currentQuestionIndex].options?.map(o => o.text),
-                    required: moduleQuestions[currentQuestionIndex].required,
-                    hint: moduleQuestions[currentQuestionIndex].hint || undefined
-                  }}
-                  onAnswer={handleAnswer}
-                  onNext={handleNext}
-                  onPrev={handlePrevious}
-                  isFirst={currentModuleIndex === 0 && currentQuestionIndex === 0}
-                  isLast={currentModuleIndex === modules.length - 1 && currentQuestionIndex === moduleQuestions.length - 1}
-                  currentAnswer={answers[moduleQuestions[currentQuestionIndex].id]}
-                />
-              </>
+            {hasQuizData ? (
+              <QuizContent
+                currentModule={modules[currentModuleIndex]}
+                moduleQuestions={moduleQuestions}
+                currentQuestionIndex={currentQuestionIndex}
+                onAnswer={handleAnswer}
+                onNext={handleNext}
+                onPrev={handlePrevious}
+                isFirst={isFirstQuestion}
+                isLast={isLastQuestion}
+                currentAnswers={answers}
+                totalModules={modules.length}
+                currentModuleIndex={currentModuleIndex}
+              />
             ) : (
-              <div className="w-full max-w-2xl rounded-lg bg-white p-8 text-center shadow-md">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                  Configuração do Questionário MAR
-                </h2>
-                
-                {isLoading ? (
-                  <div className="flex flex-col items-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-                    <p className="text-lg mb-6">Carregando questionário...</p>
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-lg mb-6">
-                      {loadError || "Nenhum módulo de questionário encontrado."}
-                    </p>
-                    {loadError && (
-                      <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-md flex items-center">
-                        <AlertCircle className="h-5 w-5 mr-2" />
-                        <p>Não foi possível configurar o questionário. Verifique o console para mais detalhes.</p>
-                      </div>
-                    )}
-                    {user && (
-                      <div className="mb-6">
-                        <Button 
-                          variant="primary" 
-                          onClick={() => fetchQuizData()}
-                          className="mb-4"
-                        >
-                          Configurar questionário MAR
-                        </Button>
-                        <SeedButton onComplete={fetchQuizData} />
-                      </div>
-                    )}
-                  </>
-                )}
-                
-                <div className="flex justify-center mt-8">
-                  <img 
-                    src="/lovable-uploads/98e55723-efb7-42e8-bc10-a429fdf04ffb.png" 
-                    alt="MAR - Mapa para Alto Rendimento" 
-                    className="max-w-full h-auto max-h-32 object-contain" 
-                  />
-                </div>
-              </div>
+              <QuizConfigurationPanel
+                isLoading={isLoading}
+                loadError={loadError}
+                onRefresh={fetchQuizData}
+                isAdmin={isAdmin}
+              />
             )}
           </>
         ) : (
