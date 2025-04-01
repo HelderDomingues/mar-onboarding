@@ -6,6 +6,7 @@ import { QuizHeader } from "@/components/quiz/QuizHeader";
 import { QuestionCard, Question } from "@/components/quiz/QuestionCard";
 import { QuizProgress } from "@/components/quiz/QuizProgress";
 import { QuizComplete } from "@/components/quiz/QuizComplete";
+import { SeedButton } from "@/components/quiz/SeedButton";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
@@ -31,156 +32,151 @@ const Quiz = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   
-  useEffect(() => {
+  const fetchQuizData = async () => {
     if (!isAuthenticated || !user) return;
     
-    const fetchQuizData = async () => {
-      try {
-        setIsLoading(true);
+    try {
+      setIsLoading(true);
+      
+      const { data: modulesData, error: modulesError } = await supabase
+        .from('quiz_modules')
+        .select('*')
+        .order('order_number');
         
-        const { data: modulesData, error: modulesError } = await supabase
-          .from('quiz_modules')
+      if (modulesError) {
+        throw modulesError;
+      }
+      
+      if (modulesData && modulesData.length > 0) {
+        setModules(modulesData as unknown as QuizModule[]);
+        
+        const { data: questionsData, error: questionsError } = await supabase
+          .from('quiz_questions')
           .select('*')
           .order('order_number');
           
-        if (modulesError) {
-          throw modulesError;
+        if (questionsError) {
+          throw questionsError;
         }
         
-        if (modulesData && modulesData.length > 0) {
-          setModules(modulesData as unknown as QuizModule[]);
-          
-          const { data: questionsData, error: questionsError } = await supabase
-            .from('quiz_questions')
+        if (questionsData) {
+          const { data: optionsData, error: optionsError } = await supabase
+            .from('quiz_options')
             .select('*')
             .order('order_number');
             
-          if (questionsError) {
-            throw questionsError;
+          if (optionsError) {
+            throw optionsError;
           }
           
-          if (questionsData) {
-            setQuestions(questionsData as unknown as QuizQuestion[]);
+          const questionsWithOptions = questionsData.map(question => {
+            const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
+            return { ...question, options } as unknown as QuizQuestion;
+          });
+          
+          setQuestions(questionsWithOptions);
+          
+          if (modulesData.length > 0) {
+            const firstModuleQuestions = questionsWithOptions.filter(
+              q => q.module_id === modulesData[0].id
+            );
+            setModuleQuestions(firstModuleQuestions);
+          }
+        }
+        
+        const { data: submissionData, error: submissionError } = await supabase
+          .from('quiz_submissions')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (submissionError && submissionError.code !== 'PGRST116') {
+          throw submissionError;
+        }
+        
+        if (submissionData) {
+          setSubmission(submissionData as unknown as QuizSubmission);
+          
+          if (submissionData.completed) {
+            setIsComplete(true);
+          } else {
+            const moduleIndex = Math.max(0, submissionData.current_module - 1);
+            setCurrentModuleIndex(moduleIndex);
             
-            const { data: optionsData, error: optionsError } = await supabase
-              .from('quiz_options')
-              .select('*')
-              .order('order_number');
-              
-            if (optionsError) {
-              throw optionsError;
-            }
-            
-            const questionsWithOptions = questionsData.map(question => {
-              const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
-              return { ...question, options } as unknown as QuizQuestion;
-            });
-            
-            setQuestions(questionsWithOptions);
-            
-            if (modulesData.length > 0) {
-              const firstModuleQuestions = questions.filter(
-                q => q.module_id === modulesData[0].id
+            if (modulesData[moduleIndex]) {
+              const moduleQuestions = questionsWithOptions.filter(
+                q => q.module_id === modulesData[moduleIndex].id
               );
-              setModuleQuestions(firstModuleQuestions);
+              setModuleQuestions(moduleQuestions);
             }
           }
           
-          const { data: submissionData, error: submissionError } = await supabase
-            .from('quiz_submissions')
+          const { data: answersData, error: answersError } = await supabase
+            .from('quiz_answers')
             .select('*')
-            .eq('user_id', user.id)
-            .single();
-          
-          if (submissionError && submissionError.code !== 'PGRST116') {
-            throw submissionError;
+            .eq('user_id', user.id);
+            
+          if (answersError) {
+            throw answersError;
           }
           
-          if (submissionData) {
-            setSubmission(submissionData as unknown as QuizSubmission);
-            
-            if (submissionData.completed) {
-              setIsComplete(true);
-            } else {
-              const moduleIndex = Math.max(0, submissionData.current_module - 1);
-              setCurrentModuleIndex(moduleIndex);
-              
-              if (modulesData[moduleIndex]) {
-                const moduleQuestions = questions.filter(
-                  q => q.module_id === modulesData[moduleIndex].id
-                );
-                setModuleQuestions(moduleQuestions);
-              }
-            }
-            
-            const { data: answersData, error: answersError } = await supabase
-              .from('quiz_answers')
-              .select('*')
-              .eq('user_id', user.id);
-              
-            if (answersError) {
-              throw answersError;
-            }
-            
-            if (answersData) {
-              const loadedAnswers: AnswerMap = {};
-              answersData.forEach(ans => {
-                try {
-                  const parsed = JSON.parse(ans.answer || '');
-                  if (Array.isArray(parsed)) {
-                    loadedAnswers[ans.question_id] = parsed;
-                  } else {
-                    loadedAnswers[ans.question_id] = ans.answer || '';
-                  }
-                } catch (e) {
+          if (answersData) {
+            const loadedAnswers: AnswerMap = {};
+            answersData.forEach(ans => {
+              try {
+                const parsed = JSON.parse(ans.answer || '');
+                if (Array.isArray(parsed)) {
+                  loadedAnswers[ans.question_id] = parsed;
+                } else {
                   loadedAnswers[ans.question_id] = ans.answer || '';
                 }
-              });
-              
-              setAnswers(loadedAnswers);
-            }
-          } else {
-            const { data: newSubmission, error: createError } = await supabase
-              .from('quiz_submissions')
-              .insert([
-                { user_id: user.id, current_module: 1, started_at: new Date().toISOString() }
-              ])
-              .select()
-              .single();
-              
-            if (createError) {
-              throw createError;
-            }
-            if (newSubmission) {
-              setSubmission(newSubmission as unknown as QuizSubmission);
-            }
+              } catch (e) {
+                loadedAnswers[ans.question_id] = ans.answer || '';
+              }
+            });
+            
+            setAnswers(loadedAnswers);
           }
         } else {
-          setLoadError("Nenhum módulo de questionário encontrado.");
-          toast({
-            title: "Erro",
-            description: "Nenhum módulo de questionário encontrado.",
-            variant: "destructive",
-          });
+          const { data: newSubmission, error: createError } = await supabase
+            .from('quiz_submissions')
+            .insert([
+              { user_id: user.id, current_module: 1, started_at: new Date().toISOString() }
+            ])
+            .select()
+            .single();
+            
+          if (createError) {
+            throw createError;
+          }
+          if (newSubmission) {
+            setSubmission(newSubmission as unknown as QuizSubmission);
+          }
         }
-      } catch (error: any) {
-        logger.error('Erro ao carregar dados do questionário', { 
-          tag: 'Quiz', 
-          data: error 
-        });
-        setLoadError(error.message || "Não foi possível carregar os dados do questionário.");
-        toast({
-          title: "Erro ao carregar questionário",
-          description: error.message || "Não foi possível carregar os dados do questionário.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
+        
+        setLoadError(null);
+      } else {
+        setLoadError("Nenhum módulo de questionário encontrado.");
       }
-    };
-    
+    } catch (error: any) {
+      logger.error('Erro ao carregar dados do questionário', { 
+        tag: 'Quiz', 
+        data: error 
+      });
+      setLoadError(error.message || "Não foi possível carregar os dados do questionário.");
+      toast({
+        title: "Erro ao carregar questionário",
+        description: error.message || "Não foi possível carregar os dados do questionário.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchQuizData();
-  }, [isAuthenticated, user, toast]);
+  }, [isAuthenticated, user]);
   
   const saveAnswer = async (questionId: string, answer: string | string[]) => {
     if (!user) return;
@@ -248,7 +244,8 @@ const Quiz = () => {
         .from('quiz_submissions')
         .update({ 
           completed: true,
-          completed_at: new Date().toISOString()
+          completed_at: new Date().toISOString(),
+          contact_consent: true
         })
         .eq('user_id', user.id);
         
@@ -335,20 +332,6 @@ const Quiz = () => {
     return <Navigate to="/" />;
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
-        <QuizHeader />
-        <main className="flex-1 container py-8 px-4 flex flex-col items-center justify-center">
-          <div className="text-center">
-            <p className="text-xl mb-4">Carregando questionário...</p>
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-quiz mx-auto"></div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <QuizHeader />
@@ -394,14 +377,21 @@ const Quiz = () => {
                 />
               </>
             ) : (
-              <div className="w-full max-w-2xl rounded-lg bg-destructive/10 p-8 text-center">
-                <h2 className="text-2xl font-bold text-destructive mb-4">Erro</h2>
-                <p className="text-xl mb-6">{loadError || "Nenhum módulo de questionário encontrado. Por favor, contate o administrador."}</p>
+              <div className="w-full max-w-2xl rounded-lg bg-white p-8 text-center shadow-md">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Configuração do Questionário</h2>
+                <p className="text-lg mb-6">
+                  {loadError || "Nenhum módulo de questionário encontrado."} 
+                </p>
+                {user && (
+                  <div className="mb-6">
+                    <SeedButton onComplete={fetchQuizData} />
+                  </div>
+                )}
                 <div className="flex justify-center">
                   <img 
-                    src="/lovable-uploads/b7853899-a730-4391-8853-72b5337e1bbc.png" 
-                    alt="Erro no questionário" 
-                    className="max-w-full h-auto max-h-60 object-contain" 
+                    src="/lovable-uploads/e8129a1e-d4a7-471a-9d2f-80660199b08b.png" 
+                    alt="Questionário MAR" 
+                    className="max-w-full h-auto max-h-60 object-contain border rounded-md" 
                   />
                 </div>
               </div>
