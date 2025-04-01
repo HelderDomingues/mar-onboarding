@@ -25,7 +25,7 @@ export function QuizProgress({
           <Badge variant="secondary">Módulo {currentModule}/{totalModules}</Badge>
           <Badge variant="outline">Questão {currentStep}/{totalSteps}</Badge>
         </span>
-        <Badge variant="primary" className="bg-quiz text-white">
+        <Badge variant="default" className="bg-quiz text-white">
           {Math.round(totalProgress)}% Completo
         </Badge>
       </div>
