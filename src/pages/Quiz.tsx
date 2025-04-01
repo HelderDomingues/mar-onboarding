@@ -123,7 +123,8 @@ const Quiz = () => {
             setCurrentModuleIndex(moduleIndex);
             
             if (modulesData[moduleIndex]) {
-              const moduleQuestions = questionsWithOptions.filter(
+              // Corrigindo a referência à variável 'questionsWithOptions'
+              const moduleQuestions = questions.filter(
                 q => q.module_id === modulesData[moduleIndex].id
               );
               setModuleQuestions(moduleQuestions);
