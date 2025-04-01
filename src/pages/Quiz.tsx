@@ -377,9 +377,9 @@ const Quiz = () => {
               </>
             ) : (
               <div className="w-full max-w-2xl rounded-lg bg-white p-8 text-center shadow-md">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Configuração do Questionário</h2>
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Configuração do Questionário MAR</h2>
                 <p className="text-lg mb-6">
-                  {loadError || "Nenhum módulo de questionário encontrado."} 
+                  {isLoading ? "Carregando questionário..." : (loadError || "O questionário ainda não foi configurado.")}
                 </p>
                 {user && (
                   <div className="mb-6">
@@ -388,9 +388,9 @@ const Quiz = () => {
                 )}
                 <div className="flex justify-center">
                   <img 
-                    src="/lovable-uploads/e8129a1e-d4a7-471a-9d2f-80660199b08b.png" 
-                    alt="Questionário MAR" 
-                    className="max-w-full h-auto max-h-60 object-contain border rounded-md" 
+                    src="/lovable-uploads/98e55723-efb7-42e8-bc10-a429fdf04ffb.png" 
+                    alt="MAR - Mapa para Alto Rendimento" 
+                    className="max-w-full h-auto max-h-60 object-contain" 
                   />
                 </div>
               </div>
