@@ -16,7 +16,7 @@ const Index = () => {
       
       <div className="flex-1 flex flex-col md:flex-row items-center justify-center p-6 gap-10 md:gap-20">
         <div className="max-w-md space-y-4 animate-slide-in">
-          <img alt="MAR - Mapa para Alto Rendimento" src="/lovable-uploads/b0f8ebcc-1d80-4da4-b9a4-e6d781f68084.png" className="h-21 mb-10" />
+          <img alt="MAR - Mapa para Alto Rendimento" src="/lovable-uploads/b0f8ebcc-1d80-4da4-b9a4-e6d781f68084.png" className="h-20 mb-10" />
           <h1 className="text-4xl font-bold text-blue-900">Área Exclusiva de Membros</h1>
           <p className="text-lg text-gray-600">
             Acesse avaliações e questionários exclusivos desenvolvidos para nossos membros.
