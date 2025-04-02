@@ -1,13 +1,10 @@
-
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, HomeIcon, User, Mail, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
-
 export function QuizSuccess() {
-  return (
-    <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-8">
+  return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-8">
       <Card className="quiz-card overflow-hidden">
         <div className="bg-green-500 h-2 w-full"></div>
         <CardHeader className="text-center pt-8">
@@ -37,28 +34,15 @@ export function QuizSuccess() {
             
             <h4 className="font-medium mt-4 mb-2">Fale com um consultor</h4>
             <div className="flex flex-col md:flex-row gap-3 justify-center">
-              <a 
-                href="https://wa.me/+5547992150289" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-green-600 text-white hover:bg-green-700 h-10 px-4 py-2 w-full md:w-auto"
-              >
+              <a href="https://wa.me/+5547992150289" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-green-600 text-white hover:bg-green-700 h-10 px-4 py-2 w-full md:w-auto">
                 <Phone className="h-4 w-4 mr-2" /> WhatsApp (47)
               </a>
               
-              <a 
-                href="https://wa.me/+5567996542991" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-green-600 text-white hover:bg-green-700 h-10 px-4 py-2 w-full md:w-auto"
-              >
+              <a href="https://wa.me/+5567996542991" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-green-600 text-white hover:bg-green-700 h-10 px-4 py-2 w-full md:w-auto">
                 <Phone className="h-4 w-4 mr-2" /> WhatsApp (67)
               </a>
               
-              <a 
-                href="mailto:contato@crievalor.com.br" 
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full md:w-auto"
-              >
+              <a href="mailto:contato@crievalor.com.br" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-gre focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full md:w-auto">
                 <Mail className="h-4 w-4 mr-2" /> E-mail
               </a>
             </div>
@@ -74,17 +58,12 @@ export function QuizSuccess() {
             </Button>
           </Link>
           
-          <a 
-            href="https://lovable.dev/projects/a882ff86-3929-4dd9-a7ce-87e37dd08713" 
-            target="_blank" 
-            rel="noopener noreferrer"
-          >
+          <a href="https://lovable.dev/projects/a882ff86-3929-4dd9-a7ce-87e37dd08713" target="_blank" rel="noopener noreferrer">
             <Button variant="outline" className="w-full md:w-auto">
               <User className="h-4 w-4 mr-2" /> Visitar Perfil Crie Valor
             </Button>
           </a>
         </CardFooter>
       </Card>
-    </div>
-  );
+    </div>;
 }
