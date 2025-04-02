@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { PrefixInput } from "@/components/ui/prefix-input";
 import { InfoIcon } from "lucide-react";
 
-export type QuestionType = 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select' | 'url';
+export type QuestionType = 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select' | 'url' | 'instagram';
 export interface Question {
   id: string;
   text: string;
@@ -43,6 +44,16 @@ export function QuestionCard({
   const [checkedOptions, setCheckedOptions] = useState<string[]>(Array.isArray(currentAnswer) ? currentAnswer : []);
   const [otherValue, setOtherValue] = useState<string>('');
   const [showOtherInput, setShowOtherInput] = useState<boolean>(false);
+
+  // Verificar se é uma pergunta de Instagram
+  const isInstagramQuestion = (text: string): boolean => {
+    return (
+      text.toLowerCase().includes('instagram da empresa') ||
+      text.toLowerCase().includes('instagram concorrente a') ||
+      text.toLowerCase().includes('instagram concorrente b') ||
+      text.toLowerCase().includes('instagram concorrente c')
+    );
+  };
 
   useEffect(() => {
     if (typeof currentAnswer === 'string') {
@@ -132,6 +143,7 @@ export function QuestionCard({
       case 'textarea':
       case 'email':
       case 'number':
+      case 'instagram':
         return !!textAnswer;
       case 'url':
         return !!textAnswer;
@@ -181,6 +193,16 @@ export function QuestionCard({
           <PrefixInput 
             prefix="https://" 
             placeholder="exemplo: www.suaempresa.com.br" 
+            type="text" 
+            value={textAnswer} 
+            onChange={e => setTextAnswer(e.target.value)}
+          />
+        )}
+        
+        {question.type === 'instagram' && (
+          <PrefixInput 
+            prefix="https://instagram.com/" 
+            placeholder="exemplo: suaempresa - (escrever sem o @)" 
             type="text" 
             value={textAnswer} 
             onChange={e => setTextAnswer(e.target.value)}

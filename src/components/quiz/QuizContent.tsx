@@ -87,6 +87,21 @@ export function QuizContent({
   }
 
   const currentQuestion = moduleQuestions[currentQuestionIndex];
+  
+  // Determinar o tipo correto com base no texto da questão
+  const getQuestionType = (question: QuizQuestion) => {
+    if (question.type === 'url') {
+      if (
+        question.text.toLowerCase().includes('instagram da empresa') ||
+        question.text.toLowerCase().includes('instagram concorrente a') ||
+        question.text.toLowerCase().includes('instagram concorrente b') ||
+        question.text.toLowerCase().includes('instagram concorrente c')
+      ) {
+        return 'instagram';
+      }
+    }
+    return question.type;
+  };
 
   // Funções para navegação administrativa
   const handleAdminModuleChange = (moduleIndex: string) => {
@@ -250,7 +265,7 @@ export function QuizContent({
         question={{
           id: currentQuestion.id,
           text: currentQuestion.text,
-          type: currentQuestion.type,
+          type: getQuestionType(currentQuestion),
           options: currentQuestion.options?.map(o => o.text),
           required: currentQuestion.required,
           hint: currentQuestion.hint || undefined
