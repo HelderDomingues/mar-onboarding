@@ -62,7 +62,7 @@ export function QuizConfigurationPanel({
                   <Tabs defaultValue="navigation" className="w-full">
                     <TabsList className="mb-4 bg-gray-950">
                       <TabsTrigger value="navigation" className="text-slate-800 font-light bg-zinc-800 hover:bg-zinc-700">Navegação</TabsTrigger>
-                      <TabsTrigger value="actions" className="text-slate-800">Ações</TabsTrigger>
+                      <TabsTrigger value="actions" className="text-slate-800 bg-gray-900 hover:bg-gray-800">Ações</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="navigation" className="space-y-4 bg-zinc-600">
