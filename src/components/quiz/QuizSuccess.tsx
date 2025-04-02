@@ -42,7 +42,7 @@ export function QuizSuccess() {
                 <Phone className="h-4 w-4 mr-2" /> WhatsApp (67)
               </a>
               
-              <a href="mailto:contato@crievalor.com.br" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-gre focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full md:w-auto">
+              <a href="mailto:contato@crievalor.com.br" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-gre focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-blue-500 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full md:w-auto">
                 <Mail className="h-4 w-4 mr-2" /> E-mail
               </a>
             </div>
