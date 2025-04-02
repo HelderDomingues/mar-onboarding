@@ -3,7 +3,7 @@ import { QuestionCard, Question } from "@/components/quiz/QuestionCard";
 import { QuizProgress } from "@/components/quiz/QuizProgress";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { Card } from "@/components/ui/card";
-import { BookOpen, Settings, ArrowRight, ArrowLeft, Skip } from "lucide-react";
+import { BookOpen, Settings, ArrowRight, ArrowLeft } from "lucide-react";
 import { QuizReview } from "@/components/quiz/QuizReview";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
