@@ -154,12 +154,12 @@
 
 /* Ajuste para inputs e elementos de formulário */
 .quiz-card .text-muted-foreground {
-  @apply text-white/70;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* Força texto branco para todos elementos dentro do quiz-container */
 .quiz-container .text-muted-foreground {
-  @apply text-white/70;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .quiz-container h1,
@@ -205,7 +205,7 @@
 }
 
 .quiz-container [role="dialog"] p {
-  @apply text-muted-foreground;
+  color: hsl(var(--muted-foreground));
 }
 
 /* Animações */
