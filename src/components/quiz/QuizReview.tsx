@@ -101,15 +101,15 @@ export function QuizReview({
                 <div className="flex items-start gap-2 mb-4">
                   <FileCheck className="h-5 w-5 mt-1 text-[hsl(var(--quiz-accent))]" />
                   <div>
-                    <h4 className="font-semibold text-slate-800">Termo de Validação</h4>
-                    <p className="text-sm text-slate-500">
+                    <h4 className="font-semibold text-slate-900">Termo de Validação</h4>
+                    <p className="text-sm text-slate-900">
                       Para finalizar o questionário, por favor leia e concorde com os termos abaixo.
                     </p>
                   </div>
                 </div>
                 
                 <div className="p-3 bg-white rounded border border-slate-200 text-sm mb-4">
-                  <p className="text-slate-950">
+                  <p className="text-slate-900">
                     Declaro que as informações fornecidas neste questionário são verdadeiras e
                     condizem com a realidade atual da minha empresa/negócio.
                     Compreendo que estas informações serão utilizadas pela Crie Valor para análise
@@ -117,16 +117,16 @@ export function QuizReview({
                   </p>
                 </div>
                 
-                <div className="flex items-center gap-2 bg-lime-600">
+                <div className="flex items-center gap-2 bg-inherit">
                   <Checkbox id="agreement" checked={agreedToTerms} onCheckedChange={handleTermsChange} className="bg-slate-50 text-lime-400" />
-                  <label htmlFor="agreement" className="text-sm font-medium leading-none cursor-pointer bg-lime-600">
+                  <label htmlFor="agreement" className="text-sm font-medium leading-none cursor-pointer bg-transparent text-gray-900">
                     Concordo com os termos acima e confirmo a veracidade das informações
                   </label>
                 </div>
                 
                 <div className="flex items-center gap-2 mt-4 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  <span className="text-slate-700">Data de validação: {currentDate}</span>
+                  <span className="text-zinc-800">Data de validação: {currentDate}</span>
                 </div>
               </div>
             </CardContent>
