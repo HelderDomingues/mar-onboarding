@@ -56,7 +56,7 @@ export function QuizContent({
     // Aplicar estilos diretamente para garantir que eles sejam atualizados corretamente
     const applyStyles = () => {
       // Garantir que os elementos Select tenham o texto apropriado
-      const selectTriggers = document.querySelectorAll('.quiz-container .select-trigger');
+      const selectTriggers = document.querySelectorAll('.select-trigger, .SelectTrigger');
       selectTriggers.forEach(trigger => {
         if (trigger instanceof HTMLElement) {
           trigger.style.backgroundColor = "white";
@@ -65,23 +65,15 @@ export function QuizContent({
       });
       
       // Garantir que os itens de menu tenham o contraste correto
-      const selectItems = document.querySelectorAll('.quiz-container .select-item');
+      const selectItems = document.querySelectorAll('.select-item, .SelectItem');
       selectItems.forEach(item => {
         if (item instanceof HTMLElement) {
           item.style.color = "black";
         }
       });
       
-      // Corrigir abas
-      const tabsTriggers = document.querySelectorAll('.quiz-container .tabs-trigger, .quiz-container [data-state]');
-      tabsTriggers.forEach(tab => {
-        if (tab instanceof HTMLElement) {
-          tab.style.color = "white";
-        }
-      });
-
-      // Corrigir conteúdo do Dropdown
-      const selectContents = document.querySelectorAll('.select__content, [role="listbox"]');
+      // Garantir que o conteúdo dos selects tenha fundo branco
+      const selectContents = document.querySelectorAll('.select-content, [role="listbox"]');
       selectContents.forEach(content => {
         if (content instanceof HTMLElement) {
           content.style.backgroundColor = "white";
@@ -159,9 +151,9 @@ export function QuizContent({
   return (
     <>
       {isAdmin && (
-        <Card className="w-full max-w-2xl mb-4 p-3 border-orange-500 border-2">
+        <Card className="w-full max-w-2xl mb-4 p-3 border-orange-500 border-2 admin-panel">
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-orange-500">Modo administrador</span>
+            <span className="font-semibold text-white">Modo administrador</span>
             <Button 
               variant="outline" 
               size="sm" 
@@ -174,10 +166,20 @@ export function QuizContent({
           
           {showAdminPanel && (
             <div className="mt-3 p-3 bg-orange-50 rounded-md">
-              <Tabs defaultValue="navigation">
-                <TabsList className="mb-3 bg-orange-200 tabs-list">
-                  <TabsTrigger value="navigation" className="text-orange-900 data-[state=active]:bg-orange-300 tabs-trigger">Navegação</TabsTrigger>
-                  <TabsTrigger value="info" className="text-orange-900 data-[state=active]:bg-orange-300 tabs-trigger">Informações</TabsTrigger>
+              <Tabs defaultValue="navigation" className="admin-tabs">
+                <TabsList className="mb-3 bg-orange-900 tabs-list">
+                  <TabsTrigger 
+                    value="navigation" 
+                    className="text-white data-[state=active]:bg-orange-700 data-[state=active]:text-white"
+                  >
+                    Navegação
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="info" 
+                    className="text-white data-[state=active]:bg-orange-700 data-[state=active]:text-white"
+                  >
+                    Informações
+                  </TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="navigation" className="space-y-3">
@@ -188,12 +190,12 @@ export function QuizContent({
                         value={currentModuleIndex.toString()}
                         onValueChange={handleAdminModuleChange}
                       >
-                        <SelectTrigger className="bg-white text-black select-trigger" style={{backgroundColor: "white", color: "black"}}>
+                        <SelectTrigger className="bg-white text-black select-trigger">
                           <SelectValue placeholder="Selecionar módulo" />
                         </SelectTrigger>
                         <SelectContent className="bg-white select-content">
                           {allModules.map((module, index) => (
-                            <SelectItem key={module.id} value={index.toString()} className="select-item" style={{color: "black"}}>
+                            <SelectItem key={module.id} value={index.toString()} className="select-item">
                               Módulo {index + 1}: {module.title}
                             </SelectItem>
                           ))}
@@ -207,12 +209,12 @@ export function QuizContent({
                         value={currentQuestionIndex.toString()}
                         onValueChange={handleAdminQuestionChange}
                       >
-                        <SelectTrigger className="bg-white text-black select-trigger" style={{backgroundColor: "white", color: "black"}}>
+                        <SelectTrigger className="bg-white text-black select-trigger">
                           <SelectValue placeholder="Selecionar questão" />
                         </SelectTrigger>
                         <SelectContent className="bg-white select-content">
                           {moduleQuestions.map((question, index) => (
-                            <SelectItem key={question.id} value={index.toString()} className="select-item" style={{color: "black"}}>
+                            <SelectItem key={question.id} value={index.toString()} className="select-item">
                               Questão {index + 1}
                             </SelectItem>
                           ))}

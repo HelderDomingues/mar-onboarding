@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { QuizModule, QuizQuestion, QuizAnswer, QuizSubmission } from "@/types/quiz";
+
 interface AnswerMap {
   [key: string]: string | string[];
 }
@@ -23,62 +24,56 @@ const refreshStyles = () => {
   document.body.offsetHeight; // Força um reflow
   document.body.style.display = '';
 
-  // Forçar atualização dos estilos inline
-  const quizElements = document.querySelectorAll('.quiz-container *');
-  quizElements.forEach(el => {
-    if (el instanceof HTMLElement) {
-      const computedStyle = window.getComputedStyle(el);
-      el.style.cssText = el.style.cssText; // Reaplica os estilos inline
-    }
+  // Corrigir estilos específicos para garantir contraste
+  const selectElements = {
+    '.select-trigger, [data-radix-select-trigger]': { backgroundColor: 'white', color: 'black' },
+    '.select-item, [role="option"]': { color: 'black' },
+    '.select-content, [role="listbox"]': { backgroundColor: 'white', color: 'black', zIndex: '50' },
+    '.tabs-trigger, [data-radix-tabs-trigger]': { color: 'white' },
+    '[data-state="active"]': { color: 'white' },
+    '.admin-panel': { backgroundColor: 'hsl(240, 15%, 15%)', color: 'white' },
+    '.admin-panel [data-radix-tabs-trigger]': { color: 'white' },
+    '.admin-panel [data-state="active"]': { backgroundColor: 'hsl(240, 15%, 35%)', color: 'white' }
+  };
+
+  // Aplicar todos os estilos
+  Object.entries(selectElements).forEach(([selector, styles]) => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach(el => {
+      if (el instanceof HTMLElement) {
+        Object.entries(styles).forEach(([prop, value]) => {
+          el.style[prop as any] = value;
+        });
+      }
+    });
   });
 
-  // Atualizar as classes específicas que precisam ser mais contrastantes
-  const selectTriggers = document.querySelectorAll('.select-trigger');
-  selectTriggers.forEach(trigger => {
-    if (trigger instanceof HTMLElement) {
-      trigger.style.backgroundColor = "white";
-      trigger.style.color = "black";
-    }
-  });
-  const selectItems = document.querySelectorAll('.select-item');
-  selectItems.forEach(item => {
-    if (item instanceof HTMLElement) {
-      item.style.color = "black";
-    }
-  });
-  const tabsTriggers = document.querySelectorAll('.tabs-trigger, [data-state]');
-  tabsTriggers.forEach(tab => {
-    if (tab instanceof HTMLElement) {
-      tab.style.color = "white";
-    }
-  });
-
-  // Forçar atualização para dropdowns
-  const dropdowns = document.querySelectorAll('[role="listbox"]');
-  dropdowns.forEach(dropdown => {
-    if (dropdown instanceof HTMLElement) {
-      dropdown.style.backgroundColor = "white";
-      dropdown.style.color = "black";
-      dropdown.style.zIndex = "50";
+  // Forçar contraste para o painel administrativo
+  const adminPanels = document.querySelectorAll('.admin-panel, .tabs-list');
+  adminPanels.forEach(panel => {
+    if (panel instanceof HTMLElement) {
+      const tabsTriggers = panel.querySelectorAll('[data-radix-tabs-trigger]');
+      tabsTriggers.forEach(trigger => {
+        if (trigger instanceof HTMLElement) {
+          trigger.style.color = 'white';
+        }
+      });
     }
   });
 };
+
 const Quiz = () => {
-  const {
-    isAuthenticated,
-    user
-  } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
 
   // Verificar se está no modo admin pela URL e obter parâmetros
   const queryParams = new URLSearchParams(location.search);
   const adminParam = queryParams.get('admin');
   const moduleParam = queryParams.get('module');
   const questionParam = queryParams.get('question');
+
   const [modules, setModules] = useState<QuizModule[]>([]);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
@@ -92,19 +87,45 @@ const Quiz = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showReview, setShowReview] = useState(false);
 
-  // Forçar atualização de estilos periodicamente
+  // Forçar atualização de estilos periodicamente e em pontos-chave
   useEffect(() => {
-    // Forçar atualizações de estilo na inicialização e em intervalos regulares
+    // Forçar atualizações de estilo na inicialização
     refreshStyles();
-    const intervalId = setInterval(refreshStyles, 1000);
-    return () => clearInterval(intervalId);
+    
+    // Aplicar a cada 500ms para garantir
+    const intervalId = setInterval(refreshStyles, 500);
+    
+    // Adicionar evento para esperar que o DOM seja totalmente carregado
+    document.addEventListener('DOMContentLoaded', refreshStyles);
+    
+    // Adicionar observer para detectar mudanças na DOM
+    const observer = new MutationObserver(refreshStyles);
+    observer.observe(document.body, { 
+      childList: true, 
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class']
+    });
+    
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('DOMContentLoaded', refreshStyles);
+      observer.disconnect();
+    };
   }, []);
+  
+  // Chamar refreshStyles quando componentes específicos mudam
+  useEffect(() => {
+    refreshStyles();
+  }, [currentModuleIndex, currentQuestionIndex, showReview, isAdmin]);
+
   useEffect(() => {
     if (user?.email) {
       // Verificar se é admin por email ou pela URL
       setIsAdmin(ADMIN_EMAILS.includes(user.email) || adminParam === 'true');
     }
   }, [user, adminParam]);
+
   const fetchQuizData = async () => {
     if (!isAuthenticated || !user) return;
     try {
@@ -245,9 +266,11 @@ const Quiz = () => {
       setIsLoading(false);
     }
   };
+
   useEffect(() => {
     fetchQuizData();
   }, [isAuthenticated, user, moduleParam, questionParam]);
+
   const saveAnswer = async (questionId: string, answer: string | string[]) => {
     if (!user) return;
     try {
@@ -283,6 +306,7 @@ const Quiz = () => {
       });
     }
   };
+
   const updateCurrentModule = async (moduleNumber: number) => {
     if (!user || !submission) return;
     try {
@@ -305,6 +329,7 @@ const Quiz = () => {
       });
     }
   };
+
   const completeQuiz = async () => {
     if (!user || !submission) return;
     try {
@@ -335,6 +360,7 @@ const Quiz = () => {
       });
     }
   };
+
   const handleAnswer = (questionId: string, answer: string | string[]) => {
     setAnswers(prev => ({
       ...prev,
@@ -342,6 +368,7 @@ const Quiz = () => {
     }));
     saveAnswer(questionId, answer);
   };
+
   const handleNext = async () => {
     if (currentQuestionIndex < moduleQuestions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
@@ -362,6 +389,7 @@ const Quiz = () => {
       }
     }
   };
+
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1);
@@ -376,6 +404,7 @@ const Quiz = () => {
       window.scrollTo(0, 0);
     }
   };
+
   const handleEditQuestion = (moduleIndex: number, questionIndex: number) => {
     setShowReview(false);
     setCurrentModuleIndex(moduleIndex);
@@ -385,24 +414,63 @@ const Quiz = () => {
     setCurrentQuestionIndex(questionIndex);
     window.scrollTo(0, 0);
   };
+
   if (!isAuthenticated) {
     return <Navigate to="/" />;
   }
+
   const hasQuizData = modules.length > 0 && moduleQuestions.length > 0;
   const isFirstQuestion = currentModuleIndex === 0 && currentQuestionIndex === 0;
   const isLastQuestion = currentModuleIndex === modules.length - 1 && currentQuestionIndex === moduleQuestions.length - 1;
-  return <div className="min-h-screen flex flex-col quiz-container">
+
+  return (
+    <div className="min-h-screen flex flex-col quiz-container">
       <QuizHeader isAdmin={isAdmin} />
       
-      <main className="flex-1 container py-8 px-4 flex flex-col items-center bg-zync 400">
-        {!isComplete ? <>
-            {hasQuizData ? <QuizContent currentModule={modules[currentModuleIndex]} moduleQuestions={moduleQuestions} currentQuestionIndex={currentQuestionIndex} onAnswer={handleAnswer} onNext={handleNext} onPrev={handlePrevious} isFirst={isFirstQuestion} isLast={isLastQuestion} currentAnswers={answers} totalModules={modules.length} currentModuleIndex={currentModuleIndex} showReview={showReview} onReviewComplete={completeQuiz} onEditQuestion={handleEditQuestion} allModules={modules} allQuestions={questions} isAdmin={isAdmin} /> : <QuizConfigurationPanel isLoading={isLoading} loadError={loadError} onRefresh={fetchQuizData} isAdmin={isAdmin} modules={modules} questions={questions} />}
-          </> : <QuizComplete />}
+      <main className="flex-1 container py-8 px-4 flex flex-col items-center">
+        {!isComplete ? (
+          <>
+            {hasQuizData ? (
+              <QuizContent
+                currentModule={modules[currentModuleIndex]}
+                moduleQuestions={moduleQuestions}
+                currentQuestionIndex={currentQuestionIndex}
+                onAnswer={handleAnswer}
+                onNext={handleNext}
+                onPrev={handlePrevious}
+                isFirst={isFirstQuestion}
+                isLast={isLastQuestion}
+                currentAnswers={answers}
+                totalModules={modules.length}
+                currentModuleIndex={currentModuleIndex}
+                showReview={showReview}
+                onReviewComplete={completeQuiz}
+                onEditQuestion={handleEditQuestion}
+                allModules={modules}
+                allQuestions={questions}
+                isAdmin={isAdmin}
+              />
+            ) : (
+              <QuizConfigurationPanel
+                isLoading={isLoading}
+                loadError={loadError}
+                onRefresh={fetchQuizData}
+                isAdmin={isAdmin}
+                modules={modules}
+                questions={questions}
+              />
+            )}
+          </>
+        ) : (
+          <QuizComplete />
+        )}
       </main>
       
       <footer className="py-4 border-t border-[hsl(var(--quiz-border))] text-center text-sm text-muted-foreground">
         <p>© {new Date().getFullYear()} Crie Valor. Todos os direitos reservados.</p>
       </footer>
-    </div>;
+    </div>
+  );
 };
+
 export default Quiz;

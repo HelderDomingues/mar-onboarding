@@ -10,7 +10,8 @@ const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
   ({ className, prefix, ...props }, ref) => {
     return (
       <div className="flex h-10 w-full rounded-md border border-input overflow-hidden bg-background prefix-input-wrapper">
-        <div className="flex items-center px-3 text-sm border-r border-input prefix-input-prefix"
+        <div 
+          className="flex items-center px-3 text-sm border-r border-input prefix-input-prefix"
           style={{ 
             backgroundColor: "hsl(210, 50%, 60%)", 
             color: "white" 

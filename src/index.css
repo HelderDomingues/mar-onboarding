@@ -53,6 +53,12 @@
     --quiz-progress: 210 50% 60%;
     --quiz-progress-bg: 220 20% 30%;
     --quiz-text: 0 0% 100%;
+
+    /* Cores do painel administrativo */
+    --admin-panel-bg: 240 15% 15%;
+    --admin-panel-text: 0 0% 100%;
+    --admin-panel-accent: 25 100% 50%;
+    --admin-panel-button: 210 50% 60%;
   }
 
   .dark {
@@ -121,6 +127,7 @@
 
 .quiz-btn {
   background-color: hsl(var(--quiz-accent));
+  color: hsl(var(--quiz-text));
 }
 
 .quiz-btn:hover {
@@ -153,39 +160,23 @@
   animation: fade-in 0.3s ease-out forwards;
 }
 
-/* Texto branco para todos os elementos dentro do quiz */
-.quiz-card, 
-.quiz-card h1, 
-.quiz-card h2, 
-.quiz-card h3, 
-.quiz-card h4, 
-.quiz-card p, 
-.quiz-card span, 
-.quiz-card label, 
-.quiz-card div {
+/* Garante texto branco para todos os elementos dentro do quiz */
+.quiz-container,
+.quiz-container h1, 
+.quiz-container h2, 
+.quiz-container h3, 
+.quiz-container h4, 
+.quiz-container h5,
+.quiz-container p, 
+.quiz-container span, 
+.quiz-container label, 
+.quiz-container div {
   color: hsl(var(--quiz-text));
-}
-
-/* Ajuste para inputs e elementos de formulário */
-.quiz-card .text-muted-foreground {
-  color: rgba(255, 255, 255, 0.7);
 }
 
 /* Força texto branco para todos elementos dentro do quiz-container */
 .quiz-container .text-muted-foreground {
   color: rgba(255, 255, 255, 0.7);
-}
-
-.quiz-container h1,
-.quiz-container h2,
-.quiz-container h3,
-.quiz-container h4,
-.quiz-container h5,
-.quiz-container p,
-.quiz-container span,
-.quiz-container label,
-.quiz-container div {
-  color: hsl(var(--quiz-text));
 }
 
 /* Garanta que os inputs tenham texto escuro em fundos claros */
@@ -254,12 +245,39 @@
 }
 
 .quiz-container .select-trigger {
-  background-color: white;
-  color: black;
+  background-color: white !important;
+  color: black !important;
+}
+
+.quiz-container .select-content {
+  background-color: white !important;
+  color: black !important;
+  z-index: 50;
 }
 
 .quiz-container .select-item {
-  color: black;
+  color: black !important;
+}
+
+/* Estilos específicos para o painel de administração */
+.admin-panel {
+  --local-bg: hsl(var(--admin-panel-bg));
+  --local-text: hsl(var(--admin-panel-text));
+  background-color: var(--local-bg);
+  color: var(--local-text);
+}
+
+.admin-panel .tabs-list {
+  background-color: hsl(240, 15%, 25%);
+}
+
+.admin-panel .tabs-trigger {
+  color: white;
+}
+
+.admin-panel .tabs-trigger[data-state="active"] {
+  background-color: hsl(240, 15%, 35%);
+  color: white;
 }
 
 /* Animações */
