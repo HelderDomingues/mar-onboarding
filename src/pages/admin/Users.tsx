@@ -37,6 +37,16 @@ type UserProfile = {
   has_submission?: boolean;
 };
 
+// Interface para tipar corretamente o retorno da função listUsers do Supabase
+interface AuthUser {
+  id: string;
+  email?: string;
+}
+
+interface AuthUsersResponse {
+  users: AuthUser[];
+}
+
 const UsersPage = () => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
@@ -69,7 +79,10 @@ const UsersPage = () => {
         setIsAdmin(true);
         
         // Buscar usuários - primeiro buscar os auth.users para ter os emails
-        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers() as { 
+          data: AuthUsersResponse; 
+          error: any;
+        };
           
         if (authError) {
           toast({
@@ -110,10 +123,15 @@ const UsersPage = () => {
         const submissionUserIds = submissions?.map(sub => sub.user_id) || [];
         
         // Criar um mapa de emails usando os dados do auth.users
-        const emailMap = new Map();
-        authUsers?.users.forEach(authUser => {
-          emailMap.set(authUser.id, authUser.email);
-        });
+        const emailMap = new Map<string, string>();
+        
+        if (authUsers && authUsers.users) {
+          authUsers.users.forEach((authUser: AuthUser) => {
+            if (authUser.id && authUser.email) {
+              emailMap.set(authUser.id, authUser.email);
+            }
+          });
+        }
         
         // Combinar os dados de perfis com emails
         const processedUsers = (profilesData || []).map(profile => {
