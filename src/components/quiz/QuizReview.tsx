@@ -102,7 +102,7 @@ export function QuizReview({
                   <FileCheck className="h-5 w-5 mt-1 text-[hsl(var(--quiz-accent))]" />
                   <div>
                     <h4 className="font-semibold text-zinc-950">Termo de Validação</h4>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-zinc-500">
                       Para finalizar o questionário, por favor leia e concorde com os termos abaixo.
                     </p>
                   </div>
