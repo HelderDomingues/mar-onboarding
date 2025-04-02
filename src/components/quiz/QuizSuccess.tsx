@@ -27,7 +27,7 @@ export function QuizSuccess() {
           
           <div className="bg-slate-50 rounded-lg p-6 border border-[hsl(var(--quiz-border))]">
             <h3 className="font-semibold text-lg mb-3 text-slate-900">Próximos passos</h3>
-            <p className="mb-4 text-slate-900">
+            <p className="mb-4 text-slate-950">
               Nossa equipe irá analisar suas respostas e entraremos em contato em breve para 
               discutir os resultados e as melhores estratégias para o seu negócio.
             </p>
