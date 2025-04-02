@@ -15,65 +15,25 @@ interface AnswerMap {
 }
 
 // Lista de emails de administradores
-const ADMIN_EMAILS = ["helder@crievalor.com.br", "teste1@crievalor.com.br", "teste2@crievalor.com.br", "teste3@crievalor.com.br"];
-
-// Função para forçar atualização de estilos
-const refreshStyles = () => {
-  // Atualizar estilos forçando um reflow
-  document.body.style.display = 'none';
-  document.body.offsetHeight; // Força um reflow
-  document.body.style.display = '';
-
-  // Corrigir estilos específicos para garantir contraste
-  const selectElements = {
-    '.select-trigger, [data-radix-select-trigger]': { backgroundColor: 'white', color: 'black' },
-    '.select-item, [role="option"]': { color: 'black' },
-    '.select-content, [role="listbox"]': { backgroundColor: 'white', color: 'black', zIndex: '50' },
-    '.tabs-trigger, [data-radix-tabs-trigger]': { color: 'white' },
-    '[data-state="active"]': { color: 'white' },
-    '.admin-panel': { backgroundColor: 'hsl(240, 15%, 15%)', color: 'white' },
-    '.admin-panel [data-radix-tabs-trigger]': { color: 'white' },
-    '.admin-panel [data-state="active"]': { backgroundColor: 'hsl(240, 15%, 35%)', color: 'white' }
-  };
-
-  // Aplicar todos os estilos
-  Object.entries(selectElements).forEach(([selector, styles]) => {
-    const elements = document.querySelectorAll(selector);
-    elements.forEach(el => {
-      if (el instanceof HTMLElement) {
-        Object.entries(styles).forEach(([prop, value]) => {
-          el.style[prop as any] = value;
-        });
-      }
-    });
-  });
-
-  // Forçar contraste para o painel administrativo
-  const adminPanels = document.querySelectorAll('.admin-panel, .tabs-list');
-  adminPanels.forEach(panel => {
-    if (panel instanceof HTMLElement) {
-      const tabsTriggers = panel.querySelectorAll('[data-radix-tabs-trigger]');
-      tabsTriggers.forEach(trigger => {
-        if (trigger instanceof HTMLElement) {
-          trigger.style.color = 'white';
-        }
-      });
-    }
-  });
-};
+const ADMIN_EMAILS = [
+  "helder@crievalor.com.br",
+  "teste1@crievalor.com.br",
+  "teste2@crievalor.com.br",
+  "teste3@crievalor.com.br"
+];
 
 const Quiz = () => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-
+  
   // Verificar se está no modo admin pela URL e obter parâmetros
   const queryParams = new URLSearchParams(location.search);
   const adminParam = queryParams.get('admin');
   const moduleParam = queryParams.get('module');
   const questionParam = queryParams.get('question');
-
+  
   const [modules, setModules] = useState<QuizModule[]>([]);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
@@ -87,38 +47,6 @@ const Quiz = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showReview, setShowReview] = useState(false);
 
-  // Forçar atualização de estilos periodicamente e em pontos-chave
-  useEffect(() => {
-    // Forçar atualizações de estilo na inicialização
-    refreshStyles();
-    
-    // Aplicar a cada 500ms para garantir
-    const intervalId = setInterval(refreshStyles, 500);
-    
-    // Adicionar evento para esperar que o DOM seja totalmente carregado
-    document.addEventListener('DOMContentLoaded', refreshStyles);
-    
-    // Adicionar observer para detectar mudanças na DOM
-    const observer = new MutationObserver(refreshStyles);
-    observer.observe(document.body, { 
-      childList: true, 
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['style', 'class']
-    });
-    
-    return () => {
-      clearInterval(intervalId);
-      document.removeEventListener('DOMContentLoaded', refreshStyles);
-      observer.disconnect();
-    };
-  }, []);
-  
-  // Chamar refreshStyles quando componentes específicos mudam
-  useEffect(() => {
-    refreshStyles();
-  }, [currentModuleIndex, currentQuestionIndex, showReview, isAdmin]);
-
   useEffect(() => {
     if (user?.email) {
       // Verificar se é admin por email ou pela URL
@@ -128,39 +56,46 @@ const Quiz = () => {
 
   const fetchQuizData = async () => {
     if (!isAuthenticated || !user) return;
+
     try {
       setIsLoading(true);
-      const {
-        data: modulesData,
-        error: modulesError
-      } = await supabase.from('quiz_modules').select('*').order('order_number');
+      
+      const { data: modulesData, error: modulesError } = await supabase
+        .from('quiz_modules')
+        .select('*')
+        .order('order_number');
+
       if (modulesError) {
         throw modulesError;
       }
+
       if (modulesData && modulesData.length > 0) {
         setModules(modulesData as unknown as QuizModule[]);
-        const {
-          data: questionsData,
-          error: questionsError
-        } = await supabase.from('quiz_questions').select('*').order('order_number');
+
+        const { data: questionsData, error: questionsError } = await supabase
+          .from('quiz_questions')
+          .select('*')
+          .order('order_number');
+
         if (questionsError) {
           throw questionsError;
         }
+
         if (questionsData) {
-          const {
-            data: optionsData,
-            error: optionsError
-          } = await supabase.from('quiz_options').select('*').order('order_number');
+          const { data: optionsData, error: optionsError } = await supabase
+            .from('quiz_options')
+            .select('*')
+            .order('order_number');
+
           if (optionsError) {
             throw optionsError;
           }
+
           const questionsWithOptions = questionsData.map(question => {
             const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
-            return {
-              ...question,
-              options
-            } as unknown as QuizQuestion;
+            return { ...question, options } as unknown as QuizQuestion;
           });
+
           setQuestions(questionsWithOptions);
 
           // Se temos um módulo específico na URL, usar esse para definir o módulo atual
@@ -170,7 +105,7 @@ const Quiz = () => {
               setCurrentModuleIndex(moduleIndex);
               const moduleQuestions = questionsWithOptions.filter(q => q.module_id === moduleParam);
               setModuleQuestions(moduleQuestions);
-
+              
               // Se temos uma questão específica na URL, usar essa para definir a questão atual
               if (questionParam) {
                 const questionIndex = moduleQuestions.findIndex(q => q.id === questionParam);
@@ -180,41 +115,53 @@ const Quiz = () => {
               }
             }
           } else if (modulesData.length > 0) {
-            const firstModuleQuestions = questionsWithOptions.filter(q => q.module_id === modulesData[0].id);
+            const firstModuleQuestions = questionsWithOptions.filter(
+              q => q.module_id === modulesData[0].id
+            );
             setModuleQuestions(firstModuleQuestions);
           }
         }
-        const {
-          data: submissionData,
-          error: submissionError
-        } = await supabase.from('quiz_submissions').select('*').eq('user_id', user.id);
+
+        const { data: submissionData, error: submissionError } = await supabase
+          .from('quiz_submissions')
+          .select('*')
+          .eq('user_id', user.id);
+
         if (submissionError) {
           logger.error('Erro ao buscar submissão do quiz', {
             tag: 'Quiz',
             data: submissionError
           });
         }
+
         if (submissionData && submissionData.length > 0) {
           const userSubmission = submissionData[0] as unknown as QuizSubmission;
           setSubmission(userSubmission);
+          
           if (userSubmission.completed) {
             setIsComplete(true);
           } else if (!moduleParam) {
             // Só usar o módulo salvo se não tiver módulo na URL
             const moduleIndex = Math.max(0, userSubmission.current_module - 1);
             setCurrentModuleIndex(moduleIndex);
+            
             if (modulesData[moduleIndex]) {
-              const moduleQuestions = questions.filter(q => q.module_id === modulesData[moduleIndex].id);
+              const moduleQuestions = questions.filter(
+                q => q.module_id === modulesData[moduleIndex].id
+              );
               setModuleQuestions(moduleQuestions);
             }
           }
-          const {
-            data: answersData,
-            error: answersError
-          } = await supabase.from('quiz_answers').select('*').eq('user_id', user.id);
+
+          const { data: answersData, error: answersError } = await supabase
+            .from('quiz_answers')
+            .select('*')
+            .eq('user_id', user.id);
+
           if (answersError) {
             throw answersError;
           }
+
           if (answersData) {
             const loadedAnswers: AnswerMap = {};
             answersData.forEach(ans => {
@@ -232,21 +179,24 @@ const Quiz = () => {
             setAnswers(loadedAnswers);
           }
         } else {
-          const {
-            data: newSubmission,
-            error: createError
-          } = await supabase.from('quiz_submissions').insert([{
-            user_id: user.id,
-            current_module: 1,
-            started_at: new Date().toISOString()
-          }]).select();
+          const { data: newSubmission, error: createError } = await supabase
+            .from('quiz_submissions')
+            .insert([{
+              user_id: user.id,
+              current_module: 1,
+              started_at: new Date().toISOString()
+            }])
+            .select();
+
           if (createError) {
             throw createError;
           }
+
           if (newSubmission && newSubmission.length > 0) {
             setSubmission(newSubmission[0] as unknown as QuizSubmission);
           }
         }
+
         setLoadError(null);
       } else {
         setLoadError("Nenhum módulo de questionário encontrado.");
@@ -408,9 +358,11 @@ const Quiz = () => {
   const handleEditQuestion = (moduleIndex: number, questionIndex: number) => {
     setShowReview(false);
     setCurrentModuleIndex(moduleIndex);
+    
     const moduleId = modules[moduleIndex].id;
     const moduleQuestions = questions.filter(q => q.module_id === moduleId);
     setModuleQuestions(moduleQuestions);
+    
     setCurrentQuestionIndex(questionIndex);
     window.scrollTo(0, 0);
   };

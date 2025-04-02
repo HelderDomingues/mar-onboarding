@@ -53,12 +53,6 @@
     --quiz-progress: 210 50% 60%;
     --quiz-progress-bg: 220 20% 30%;
     --quiz-text: 0 0% 100%;
-
-    /* Cores do painel administrativo */
-    --admin-panel-bg: 240 15% 15%;
-    --admin-panel-text: 0 0% 100%;
-    --admin-panel-accent: 25 100% 50%;
-    --admin-panel-button: 210 50% 60%;
   }
 
   .dark {
@@ -114,170 +108,53 @@
 
 /* Classes específicas do questionário */
 .quiz-container {
-  background-color: hsl(var(--quiz-bg));
-  color: hsl(var(--quiz-text));
-  min-height: 100vh;
+  @apply bg-[hsl(var(--quiz-bg))] text-[hsl(var(--quiz-text))] min-h-screen;
 }
 
 .quiz-card {
-  background-color: hsl(var(--quiz-card));
-  border-color: hsl(var(--quiz-border));
-  color: hsl(var(--quiz-text));
+  @apply bg-[hsl(var(--quiz-card))] border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))];
 }
 
 .quiz-btn {
-  background-color: hsl(var(--quiz-accent));
-  color: hsl(var(--quiz-text));
-}
-
-.quiz-btn:hover {
-  background-color: hsl(var(--quiz-accent-hover));
+  @apply bg-[hsl(var(--quiz-accent))] hover:bg-[hsl(var(--quiz-accent-hover))];
 }
 
 .quiz-progress-bar {
-  height: 0.5rem;
-  border-radius: 9999px;
-  background-color: hsl(var(--quiz-progress-bg));
+  @apply h-2 rounded-full bg-[hsl(var(--quiz-progress-bg))];
 }
 
 .quiz-progress-value {
-  height: 100%;
-  border-radius: 9999px;
-  background-color: hsl(var(--quiz-progress));
+  @apply h-full rounded-full bg-[hsl(var(--quiz-progress))];
 }
 
 .quiz-module-badge {
-  background: linear-gradient(to right, hsl(var(--quiz-accent)), hsl(var(--quiz-accent-hover)));
-  color: white;
+  @apply bg-gradient-to-r from-[hsl(var(--quiz-accent))] to-[hsl(var(--quiz-accent-hover))] text-white;
 }
 
 .quiz-step-active {
-  border-left-width: 4px;
-  border-color: hsl(var(--quiz-accent));
+  @apply border-l-4 border-[hsl(var(--quiz-accent))];
 }
 
 .quiz-question {
-  animation: fade-in 0.3s ease-out forwards;
+  @apply animate-fade-in;
 }
 
-/* Garante texto branco para todos os elementos dentro do quiz */
-.quiz-container,
-.quiz-container h1, 
-.quiz-container h2, 
-.quiz-container h3, 
-.quiz-container h4, 
-.quiz-container h5,
-.quiz-container p, 
-.quiz-container span, 
-.quiz-container label, 
-.quiz-container div {
-  color: hsl(var(--quiz-text));
+/* Texto branco para todos os elementos dentro do quiz */
+.quiz-card, 
+.quiz-card h1, 
+.quiz-card h2, 
+.quiz-card h3, 
+.quiz-card h4, 
+.quiz-card p, 
+.quiz-card span, 
+.quiz-card label, 
+.quiz-card div {
+  @apply text-[hsl(var(--quiz-text))];
 }
 
-/* Força texto branco para todos elementos dentro do quiz-container */
-.quiz-container .text-muted-foreground {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-/* Garanta que os inputs tenham texto escuro em fundos claros */
-.quiz-container input[type="text"],
-.quiz-container input[type="email"],
-.quiz-container input[type="number"],
-.quiz-container textarea {
-  color: hsl(var(--foreground));
-  background-color: white;
-}
-
-/* Ajuste para prefix-input dentro do quiz */
-.quiz-container .prefix-input-wrapper {
-  border-color: hsl(var(--quiz-border));
-}
-
-.quiz-container .prefix-input-prefix {
-  background-color: hsl(var(--quiz-accent));
-  color: hsl(var(--quiz-text));
-  border-right-color: hsl(var(--quiz-border));
-}
-
-.quiz-container .prefix-input-field {
-  background-color: white;
-  color: hsl(var(--foreground));
-}
-
-/* Ajustes específicos para diálogos dentro do quiz */
-.quiz-container [role="dialog"] {
-  color: hsl(var(--foreground));
-}
-
-.quiz-container [role="dialog"] h2 {
-  color: hsl(var(--foreground));
-}
-
-.quiz-container [role="dialog"] p {
-  color: hsl(var(--muted-foreground));
-}
-
-/* Elementos selecionados */
-.quiz-container select,
-.quiz-container option {
-  color: hsl(var(--foreground));
-  background-color: white;
-}
-
-/* Botões dentro do quiz */
-.quiz-container button:not(.quiz-btn) {
-  color: hsl(var(--quiz-text));
-}
-
-/* Cores específicas para elementos de navegação */
-.quiz-container .navigation-item {
-  background-color: rgba(70, 80, 90, 0.1);
-  color: hsl(var(--quiz-text));
-}
-
-/* Força estilos específicos para componentes da UI */
-.quiz-container .tabs-list {
-  background-color: hsl(var(--quiz-card));
-}
-
-.quiz-container .tabs-trigger {
-  color: hsl(var(--quiz-text));
-}
-
-.quiz-container .select-trigger {
-  background-color: white !important;
-  color: black !important;
-}
-
-.quiz-container .select-content {
-  background-color: white !important;
-  color: black !important;
-  z-index: 50;
-}
-
-.quiz-container .select-item {
-  color: black !important;
-}
-
-/* Estilos específicos para o painel de administração */
-.admin-panel {
-  --local-bg: hsl(var(--admin-panel-bg));
-  --local-text: hsl(var(--admin-panel-text));
-  background-color: var(--local-bg);
-  color: var(--local-text);
-}
-
-.admin-panel .tabs-list {
-  background-color: hsl(240, 15%, 25%);
-}
-
-.admin-panel .tabs-trigger {
-  color: white;
-}
-
-.admin-panel .tabs-trigger[data-state="active"] {
-  background-color: hsl(240, 15%, 35%);
-  color: white;
+/* Ajuste para inputs e elementos de formulário */
+.quiz-card .text-muted-foreground {
+  @apply text-white/70;
 }
 
 /* Animações */

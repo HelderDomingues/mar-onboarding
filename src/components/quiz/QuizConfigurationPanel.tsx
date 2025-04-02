@@ -17,9 +17,9 @@ interface QuizConfigurationPanelProps {
   questions?: any[];
 }
 
-export function QuizConfigurationPanel({
-  isLoading,
-  loadError,
+export function QuizConfigurationPanel({ 
+  isLoading, 
+  loadError, 
   onRefresh,
   isAdmin,
   modules = [],
@@ -28,27 +28,32 @@ export function QuizConfigurationPanel({
   const navigate = useNavigate();
   const [selectedModule, setSelectedModule] = useState<string>("");
   const [selectedQuestion, setSelectedQuestion] = useState<string>("");
-
+  
   const handleNavigateToDashboard = () => {
     navigate("/dashboard");
   };
-
+  
   const handleNavigateToQuestion = () => {
     if (!selectedModule) return;
-
+    
     // Formato da URL: /quiz?admin=true&module=X&question=Y
     let url = `/quiz?admin=true`;
+    
     if (selectedModule) {
       url += `&module=${selectedModule}`;
+      
       if (selectedQuestion) {
         url += `&question=${selectedQuestion}`;
       }
     }
+    
     navigate(url);
   };
-
-  const filteredQuestions = selectedModule ? questions.filter(q => q.module_id === selectedModule) : [];
-
+  
+  const filteredQuestions = selectedModule ? 
+    questions.filter(q => q.module_id === selectedModule) : 
+    [];
+  
   return (
     <div className="w-full max-w-2xl rounded-lg bg-white p-8 shadow-md">
       <h2 className="text-2xl font-bold text-gray-800 mb-4">
@@ -64,30 +69,33 @@ export function QuizConfigurationPanel({
         <>
           {isAdmin && modules.length > 0 ? (
             <div className="mb-6">
-              <Card className="border-violet-500 border-2 mb-6 bg-slate-100">
-                <CardHeader className="pb-3 bg-zinc-600">
-                  <CardTitle className="text-xl text-white">
+              <Card className="border-orange-500 border-2 bg-orange-50/50 mb-6">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-xl text-orange-700">
                     Painel de Navegação Administrativa
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="bg-zinc-600">
+                <CardContent>
                   <Tabs defaultValue="navigation" className="w-full">
-                    <TabsList className="mb-4 bg-gray-950">
-                      <TabsTrigger value="navigation" className="text-white font-light bg-zinc-800 hover:bg-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white">Navegação</TabsTrigger>
-                      <TabsTrigger value="actions" className="text-white bg-gray-900 hover:bg-gray-800 data-[state=active]:bg-gray-800 data-[state=active]:text-white">Ações</TabsTrigger>
+                    <TabsList className="mb-4">
+                      <TabsTrigger value="navigation">Navegação</TabsTrigger>
+                      <TabsTrigger value="actions">Ações</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="navigation" className="space-y-4">
                       <div className="grid grid-cols-1 gap-4">
                         <div>
-                          <label className="text-sm font-medium mb-1 block text-white">Selecione um Módulo</label>
-                          <Select value={selectedModule} onValueChange={setSelectedModule}>
-                            <SelectTrigger className="bg-white text-black">
+                          <label className="text-sm font-medium mb-1 block">Selecione um Módulo</label>
+                          <Select
+                            value={selectedModule}
+                            onValueChange={setSelectedModule}
+                          >
+                            <SelectTrigger>
                               <SelectValue placeholder="Escolha um módulo" />
                             </SelectTrigger>
-                            <SelectContent className="bg-white text-black">
+                            <SelectContent>
                               {modules.map((module, index) => (
-                                <SelectItem key={module.id} value={module.id} className="text-black">
+                                <SelectItem key={module.id} value={module.id}>
                                   Módulo {index + 1}: {module.title}
                                 </SelectItem>
                               ))}
@@ -97,14 +105,18 @@ export function QuizConfigurationPanel({
                         
                         {selectedModule && (
                           <div>
-                            <label className="text-sm font-medium mb-1 block text-white">Selecione uma Questão</label>
-                            <Select value={selectedQuestion} onValueChange={setSelectedQuestion} disabled={filteredQuestions.length === 0}>
-                              <SelectTrigger className="bg-white text-black">
+                            <label className="text-sm font-medium mb-1 block">Selecione uma Questão</label>
+                            <Select
+                              value={selectedQuestion}
+                              onValueChange={setSelectedQuestion}
+                              disabled={filteredQuestions.length === 0}
+                            >
+                              <SelectTrigger>
                                 <SelectValue placeholder={filteredQuestions.length === 0 ? "Nenhuma questão disponível" : "Escolha uma questão"} />
                               </SelectTrigger>
-                              <SelectContent className="bg-white text-black">
+                              <SelectContent>
                                 {filteredQuestions.map((question, index) => (
-                                  <SelectItem key={question.id} value={question.id} className="text-black">
+                                  <SelectItem key={question.id} value={question.id}>
                                     Questão {index + 1}: {question.text.substring(0, 30)}...
                                   </SelectItem>
                                 ))}
@@ -115,11 +127,19 @@ export function QuizConfigurationPanel({
                       </div>
                       
                       <div className="flex gap-3 justify-between">
-                        <Button variant="outline" onClick={handleNavigateToDashboard} className="flex-1 bg-white text-zinc-950">
+                        <Button 
+                          variant="outline" 
+                          onClick={handleNavigateToDashboard}
+                          className="flex-1"
+                        >
                           <Home className="h-4 w-4 mr-2" /> Dashboard
                         </Button>
                         
-                        <Button onClick={handleNavigateToQuestion} disabled={!selectedModule} className="flex-1 bg-gray-950 hover:bg-gray-800 text-white">
+                        <Button 
+                          onClick={handleNavigateToQuestion}
+                          disabled={!selectedModule}
+                          className="flex-1 bg-orange-500 hover:bg-orange-600"
+                        >
                           Ir para Questão
                         </Button>
                       </div>
@@ -127,12 +147,16 @@ export function QuizConfigurationPanel({
                     
                     <TabsContent value="actions">
                       <div className="space-y-4">
-                        <p className="text-sm mb-2 text-white">
+                        <p className="text-sm text-muted-foreground mb-2">
                           Ações administrativas para o questionário
                         </p>
                         
                         <div className="flex flex-col gap-3">
-                          <Button variant="outline" onClick={onRefresh} className="justify-start bg-white text-zinc-900">
+                          <Button 
+                            variant="outline" 
+                            onClick={onRefresh}
+                            className="justify-start"
+                          >
                             Recarregar Dados
                           </Button>
                           
@@ -159,13 +183,21 @@ export function QuizConfigurationPanel({
               
               {isAdmin && (
                 <div className="mb-6">
-                  <Button variant="outline" onClick={onRefresh} className="mb-4 mr-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={onRefresh}
+                    className="mb-4 mr-4"
+                  >
                     Tentar novamente
                   </Button>
                   <SeedButton onComplete={onRefresh} />
                   
                   <div className="mt-4">
-                    <Button variant="outline" onClick={handleNavigateToDashboard} className="w-full">
+                    <Button
+                      variant="outline"
+                      onClick={handleNavigateToDashboard}
+                      className="w-full"
+                    >
                       <Home className="h-4 w-4 mr-2" /> Voltar para Dashboard
                     </Button>
                   </div>
@@ -183,7 +215,11 @@ export function QuizConfigurationPanel({
       )}
       
       <div className="flex justify-center mt-8">
-        <img src="/lovable-uploads/98e55723-efb7-42e8-bc10-a429fdf04ffb.png" alt="MAR - Mapa para Alto Rendimento" className="max-w-full h-auto max-h-7 object-scale-down" />
+        <img 
+          src="/lovable-uploads/98e55723-efb7-42e8-bc10-a429fdf04ffb.png" 
+          alt="MAR - Mapa para Alto Rendimento" 
+          className="max-w-full h-auto max-h-32 object-contain" 
+        />
       </div>
     </div>
   );
