@@ -9,7 +9,7 @@ interface PrefixInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
   ({ className, prefix, ...props }, ref) => {
     return (
-      <div className="flex h-10 w-full rounded-md border border-input overflow-hidden">
+      <div className="flex h-10 w-full rounded-md border border-input overflow-hidden bg-background">
         <div className="flex items-center bg-muted px-3 text-muted-foreground text-sm border-r border-input">
           {prefix}
         </div>

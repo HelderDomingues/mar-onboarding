@@ -157,6 +157,23 @@
   @apply text-white/70;
 }
 
+/* Força texto branco para todos elementos dentro do quiz-container */
+.quiz-container .text-muted-foreground {
+  @apply text-white/70;
+}
+
+.quiz-container h1,
+.quiz-container h2,
+.quiz-container h3,
+.quiz-container h4,
+.quiz-container h5,
+.quiz-container p,
+.quiz-container span,
+.quiz-container label,
+.quiz-container div {
+  @apply text-[hsl(var(--quiz-text))];
+}
+
 /* Animações */
 @keyframes fade-in {
   from {
