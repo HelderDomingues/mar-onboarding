@@ -27,6 +27,7 @@ const Dashboard = () => {
       if (!user) return;
       
       try {
+        setIsLoading(true);
         // Verificar se o usuário é admin
         const { data, error } = await supabase
           .from('user_roles')
@@ -37,6 +38,7 @@ const Dashboard = () => {
           
         if (!error && data) {
           setIsAdmin(true);
+          console.log("Usuário é administrador");
         }
         
         // Buscar submissão atual
@@ -48,6 +50,8 @@ const Dashboard = () => {
           
         if (!submissionError && submissionData) {
           setSubmission(submissionData as unknown as QuizSubmission);
+        } else if (submissionError && submissionError.code !== 'PGRST116') { // Não é erro de 'not found'
+          console.error("Erro ao buscar submissão", submissionError);
         }
       } catch (error) {
         logger.error('Erro ao verificar papel do usuário', { tag: 'Dashboard', data: error });
@@ -73,7 +77,7 @@ const Dashboard = () => {
       <div className="min-h-screen flex flex-col bg-gray-50">
         <QuizHeader isAdmin={isAdmin} />
         <main className="flex-1 container py-8 px-4 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-quiz"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
         </main>
       </div>
     );

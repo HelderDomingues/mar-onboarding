@@ -4,18 +4,37 @@ import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Sidebar, SidebarSeparator, SidebarTrigger } from "@/components/ui/sidebar";
-import { Home, User, Settings, BarChart, Database, Book, HelpCircle, ChevronDown, ChevronRight, LogIn } from "lucide-react";
+import { 
+  Home, 
+  User, 
+  Settings, 
+  BarChart, 
+  Database, 
+  HelpCircle, 
+  ChevronDown, 
+  ChevronRight, 
+  LogIn,
+  FileText,
+  Users,
+  LayoutDashboard
+} from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 export function AdminSidebar() {
   const [isUsersOpen, setIsUsersOpen] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
-  const handleLogout = () => {
-    // Esta função será implementada posteriormente
-    console.log("Fazendo logout");
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate("/");
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+    }
   };
 
   const isActive = (path: string) => location.pathname.startsWith(path);
@@ -23,14 +42,14 @@ export function AdminSidebar() {
   return (
     <Sidebar>
       <div className="flex flex-col h-full py-2">
-        <div className="flex items-center justify-between px-4 py-2">
+        <div className="flex items-center justify-between px-4 py-2 border-b mb-2">
           <div className="flex items-center gap-2">
             <img
               src="/lovable-uploads/e109ec41-0f89-456d-8081-f73393ed4fd5.png"
               alt="Crie Valor"
-              className="h-6"
+              className="h-7"
             />
-            <span className="font-semibold text-sm">Admin</span>
+            <Badge variant="outline" className="font-semibold text-sm">Admin</Badge>
           </div>
           <SidebarTrigger />
         </div>
@@ -41,8 +60,8 @@ export function AdminSidebar() {
               <Button
                 variant="ghost"
                 size="sm"
-                className={`w-full justify-start ${isActive('/admin') ? 'bg-sidebar-accent' : ''}`}>
-                <Home className="mr-2 h-4 w-4" />
+                className={`w-full justify-start ${isActive('/admin') && !isActive('/admin/users') && !isActive('/admin/settings') ? 'bg-sidebar-accent text-primary' : ''}`}>
+                <LayoutDashboard className="mr-2 h-4 w-4" />
                 Dashboard
               </Button>
             </Link>
@@ -55,9 +74,9 @@ export function AdminSidebar() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`w-full justify-between ${isActive('/admin/users') ? 'bg-sidebar-accent' : ''}`}>
+                  className={`w-full justify-between ${isActive('/admin/users') ? 'bg-sidebar-accent text-primary' : ''}`}>
                   <div className="flex items-center">
-                    <User className="mr-2 h-4 w-4" />
+                    <Users className="mr-2 h-4 w-4" />
                     <span>Usuários</span>
                   </div>
                   {isUsersOpen ? (
@@ -72,13 +91,15 @@ export function AdminSidebar() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={`w-full justify-start ${location.pathname === '/admin/users' ? 'bg-sidebar-accent' : ''}`}>
+                    className={`w-full justify-start ${location.pathname === '/admin/users' ? 'bg-sidebar-accent text-primary' : ''}`}>
                     Todos os Usuários
                   </Button>
                 </Link>
-                <Button variant="ghost" size="sm" className="w-full justify-start">
-                  Adicionar Usuário
-                </Button>
+                <Link to="/admin/users/new">
+                  <Button variant="ghost" size="sm" className="w-full justify-start">
+                    Adicionar Usuário
+                  </Button>
+                </Link>
               </CollapsibleContent>
             </Collapsible>
 
@@ -86,7 +107,7 @@ export function AdminSidebar() {
               <Button
                 variant="ghost"
                 size="sm"
-                className={`w-full justify-start ${isActive('/admin/data') ? 'bg-sidebar-accent' : ''}`}>
+                className={`w-full justify-start ${isActive('/admin/data') ? 'bg-sidebar-accent text-primary' : ''}`}>
                 <Database className="mr-2 h-4 w-4" />
                 Dados
               </Button>
@@ -96,7 +117,7 @@ export function AdminSidebar() {
               <Button
                 variant="ghost"
                 size="sm"
-                className={`w-full justify-start ${isActive('/admin/reports') ? 'bg-sidebar-accent' : ''}`}>
+                className={`w-full justify-start ${isActive('/admin/reports') ? 'bg-sidebar-accent text-primary' : ''}`}>
                 <BarChart className="mr-2 h-4 w-4" />
                 Relatórios
               </Button>
@@ -106,7 +127,7 @@ export function AdminSidebar() {
               <Button
                 variant="ghost"
                 size="sm"
-                className={`w-full justify-start ${isActive('/admin/settings') ? 'bg-sidebar-accent' : ''}`}>
+                className={`w-full justify-start ${isActive('/admin/settings') ? 'bg-sidebar-accent text-primary' : ''}`}>
                 <Settings className="mr-2 h-4 w-4" />
                 Configurações
               </Button>
@@ -116,7 +137,7 @@ export function AdminSidebar() {
               <Button
                 variant="ghost"
                 size="sm"
-                className={`w-full justify-start ${isActive('/admin/help') ? 'bg-sidebar-accent' : ''}`}>
+                className={`w-full justify-start ${isActive('/admin/help') ? 'bg-sidebar-accent text-primary' : ''}`}>
                 <HelpCircle className="mr-2 h-4 w-4" />
                 Ajuda
               </Button>
@@ -143,23 +164,16 @@ export function AdminSidebar() {
             </TooltipContent>
           </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full justify-start"
-                onClick={() => navigate('/')}>
-                <LogIn className="mr-2 h-4 w-4" />
-                Autenticação
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Ir para a página de login</p>
-            </TooltipContent>
-          </Tooltip>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            className="w-full justify-start opacity-90 hover:opacity-100"
+            onClick={handleLogout}>
+            <LogIn className="mr-2 h-4 w-4 rotate-180" />
+            Sair
+          </Button>
 
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center pt-2">
             <Badge variant="outline" className="text-xs text-muted-foreground">
               v1.0.0
             </Badge>

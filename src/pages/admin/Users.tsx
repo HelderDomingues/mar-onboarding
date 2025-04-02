@@ -25,7 +25,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, UserPlus, Mail, CheckCircle, XCircle } from "lucide-react";
+import { Search, UserPlus, Mail, CheckCircle, XCircle, RefreshCw } from "lucide-react";
 
 type UserProfile = {
   id: string;
@@ -37,16 +37,6 @@ type UserProfile = {
   has_submission?: boolean;
 };
 
-// Interface para tipar corretamente o retorno da função listUsers do Supabase
-interface AuthUser {
-  id: string;
-  email?: string;
-}
-
-interface AuthUsersResponse {
-  users: AuthUser[];
-}
-
 const UsersPage = () => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
@@ -56,112 +46,109 @@ const UsersPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   
-  useEffect(() => {
-    const checkAdminAndLoadUsers = async () => {
-      if (!user) {
-        navigate("/");
+  const fetchUsers = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    
+    try {
+      // Verificar se o usuário atual é admin
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .single();
+        
+      if (roleError || !roleData) {
+        navigate("/dashboard");
         return;
       }
       
-      try {
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .single();
-          
-        if (roleError || !roleData) {
-          navigate("/dashboard");
-          return;
-        }
+      setIsAdmin(true);
+      
+      // Buscar todos os perfis de usuários
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*');
         
-        setIsAdmin(true);
-        
-        // Buscar usuários - primeiro buscar os auth.users para ter os emails
-        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers() as { 
-          data: AuthUsersResponse; 
-          error: any;
-        };
-          
-        if (authError) {
-          toast({
-            title: "Erro ao carregar usuários",
-            description: "Não foi possível acessar a lista de usuários autenticados",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        // Depois buscar os perfis
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('*');
-          
-        if (profilesError) {
-          toast({
-            title: "Erro ao carregar perfis de usuários",
-            description: profilesError.message,
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        // Buscar roles de admin
-        const { data: adminRoles, error: adminRolesError } = await supabase
-          .from('user_roles')
-          .select('user_id')
-          .eq('role', 'admin');
-        
-        // Buscar submissões
-        const { data: submissions, error: submissionsError } = await supabase
-          .from('quiz_submissions')
-          .select('user_id');
-          
-        // Transformar dados
-        const adminUserIds = adminRoles?.map(role => role.user_id) || [];
-        const submissionUserIds = submissions?.map(sub => sub.user_id) || [];
-        
-        // Criar um mapa de emails usando os dados do auth.users
-        const emailMap = new Map<string, string>();
-        
-        if (authUsers && authUsers.users) {
-          authUsers.users.forEach((authUser: AuthUser) => {
-            if (authUser.id && authUser.email) {
-              emailMap.set(authUser.id, authUser.email);
-            }
-          });
-        }
-        
-        // Combinar os dados de perfis com emails
-        const processedUsers = (profilesData || []).map(profile => {
-          // Obter email do mapa usando o ID do perfil
-          const email = emailMap.get(profile.id) || '';
-          
-          return {
-            ...profile,
-            email, // Adicionar o email ao objeto
-            is_admin: adminUserIds.includes(profile.id),
-            has_submission: submissionUserIds.includes(profile.id)
-          } as UserProfile;
-        });
-        
-        setUsers(processedUsers);
-      } catch (error) {
-        console.error('Erro ao verificar permissões de admin:', error);
+      if (profilesError) {
         toast({
-          title: "Erro de permissão",
-          description: "Você não tem permissão para acessar esta página.",
+          title: "Erro ao carregar perfis de usuários",
+          description: profilesError.message,
           variant: "destructive",
         });
-        navigate("/dashboard");
-      } finally {
-        setIsLoading(false);
+        return;
       }
-    };
-    
-    checkAdminAndLoadUsers();
-  }, [user, navigate, toast]);
+      
+      // Buscar emails dos usuários diretamente da auth.users
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) {
+        toast({
+          title: "Erro ao carregar emails dos usuários",
+          description: "Não foi possível acessar emails dos usuários",
+          variant: "destructive",
+        });
+      }
+      
+      // Buscar roles de admin
+      const { data: adminRoles, error: adminRolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'admin');
+      
+      // Buscar submissões
+      const { data: submissions, error: submissionsError } = await supabase
+        .from('quiz_submissions')
+        .select('user_id');
+        
+      // Transformar dados
+      const adminUserIds = adminRoles?.map(role => role.user_id) || [];
+      const submissionUserIds = submissions?.map(sub => sub.user_id) || [];
+      
+      // Criar um mapa de emails usando os dados do auth.users
+      const emailMap = new Map<string, string>();
+      
+      if (authData && authData.users) {
+        authData.users.forEach((authUser) => {
+          if (authUser.id && authUser.email) {
+            emailMap.set(authUser.id, authUser.email);
+          }
+        });
+      }
+      
+      // Combinar os dados de perfis com emails
+      const processedUsers = (profilesData || []).map(profile => {
+        return {
+          ...profile,
+          email: emailMap.get(profile.id) || 'Email não disponível',
+          is_admin: adminUserIds.includes(profile.id),
+          has_submission: submissionUserIds.includes(profile.id)
+        } as UserProfile;
+      });
+      
+      setUsers(processedUsers);
+      
+    } catch (error) {
+      console.error('Erro ao buscar usuários:', error);
+      toast({
+        title: "Erro ao carregar usuários",
+        description: "Ocorreu um problema ao buscar os dados dos usuários.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchUsers();
+    } else if (!isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated, user, navigate]);
   
   const filteredUsers = users.filter(user => {
     const searchLower = searchQuery.toLowerCase();
@@ -217,7 +204,7 @@ const UsersPage = () => {
     }
   };
   
-  if (!isAuthenticated || !isAdmin) {
+  if (!isAuthenticated) {
     return null; // Será redirecionado no useEffect
   }
   
@@ -227,48 +214,54 @@ const UsersPage = () => {
         <AdminSidebar />
         <SidebarInset className="p-6 bg-gray-50">
           <div className="container max-w-7xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-2xl font-bold">Gerenciamento de Usuários</h1>
-                <p className="text-muted-foreground mt-1">
-                  Gerencie usuários, permissões e acesso ao sistema.
-                </p>
-              </div>
-              
-              <Button className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 mb-6">
+              <h1 className="text-2xl font-bold">Gerenciamento de Usuários</h1>
+              <p className="text-muted-foreground">
+                Gerencie usuários, permissões e acesso ao sistema.
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <Button className="flex items-center gap-2 bg-primary">
                 <UserPlus className="h-4 w-4" />
                 <span>Novo Usuário</span>
               </Button>
+              
+              <div className="relative flex-grow max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  className="pl-9 w-full" 
+                  placeholder="Buscar usuários..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={fetchUsers}
+                disabled={isLoading}
+                title="Atualizar lista de usuários"
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </Button>
             </div>
             
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Usuários do Sistema</CardTitle>
-                    <CardDescription>
-                      Total de {users.length} usuários registrados
-                    </CardDescription>
-                  </div>
-                  
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      className="pl-9 w-[300px]" 
-                      placeholder="Buscar usuários..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                </div>
+            <Card className="shadow-sm">
+              <CardHeader className="pb-3 border-b">
+                <CardTitle>Usuários do Sistema</CardTitle>
+                <CardDescription>
+                  Total de {users.length} usuários registrados
+                </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 {isLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <div className="flex justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                   </div>
                 ) : (
-                  <div className="rounded-md border">
+                  <div className="rounded-md">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -288,7 +281,7 @@ const UsersPage = () => {
                           </TableRow>
                         ) : (
                           filteredUsers.map((user) => (
-                            <TableRow key={user.id}>
+                            <TableRow key={user.id} className="hover:bg-muted/50">
                               <TableCell className="font-medium">
                                 {user.full_name || user.username || 'Sem nome'}
                               </TableCell>
@@ -328,7 +321,7 @@ const UsersPage = () => {
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="flex justify-between border-t pt-5 text-muted-foreground text-sm">
+              <CardFooter className="flex justify-between border-t py-4 px-6 text-muted-foreground text-sm">
                 <p>Atualizado em {new Date().toLocaleDateString('pt-BR')}</p>
               </CardFooter>
             </Card>
