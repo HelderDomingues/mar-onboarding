@@ -5,12 +5,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { QuizHeader } from "@/components/quiz/QuizHeader";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, BookOpen, BarChart, DatabaseIcon } from "lucide-react";
+import { Clock, BookOpen, BarChart, DatabaseIcon, Settings, ChevronRight } from "lucide-react";
 import { seedQuizData } from "@/scripts/seed-quiz";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { QuizSubmission } from "@/types/quiz";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Dashboard = () => {
   const { isAuthenticated, user } = useAuth();
@@ -22,6 +23,7 @@ const Dashboard = () => {
   const [submission, setSubmission] = useState<QuizSubmission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
 
   useEffect(() => {
     const checkUserRole = async () => {
@@ -95,6 +97,11 @@ const Dashboard = () => {
     }
   };
 
+  // Função para navegar para a página do questionário em modo edição
+  const navigateToQuizAdmin = () => {
+    navigate("/quiz?admin=true");
+  };
+
   if (!isAuthenticated) {
     return <Navigate to="/" />;
   }
@@ -122,6 +129,105 @@ const Dashboard = () => {
           <div className="mb-6 p-4 bg-destructive/10 text-destructive rounded-lg">
             <p>{loadError}</p>
           </div>
+        )}
+
+        {isAdmin && (
+          <Card className="w-full mb-6 border-orange-500 border-2 bg-orange-50/50">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl text-orange-700 flex items-center">
+                  <Settings className="mr-2 h-5 w-5" /> Painel Administrativo
+                </CardTitle>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowAdminPanel(!showAdminPanel)}
+                  className="bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100"
+                >
+                  {showAdminPanel ? "Ocultar" : "Expandir"}
+                </Button>
+              </div>
+              <CardDescription className="text-orange-600">
+                Ferramentas administrativas do sistema MAR
+              </CardDescription>
+            </CardHeader>
+
+            {showAdminPanel && (
+              <CardContent>
+                <Tabs defaultValue="quiz">
+                  <TabsList className="mb-4 bg-orange-100">
+                    <TabsTrigger value="quiz">Questionário</TabsTrigger>
+                    <TabsTrigger value="users">Usuários</TabsTrigger>
+                    <TabsTrigger value="data">Dados</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="quiz" className="space-y-4">
+                    <div className="flex flex-col gap-3">
+                      <Button 
+                        onClick={navigateToQuizAdmin} 
+                        className="justify-start bg-white border border-orange-200 text-orange-700 hover:bg-orange-50 hover:text-orange-800"
+                      >
+                        <Settings className="mr-2 h-4 w-4" />
+                        Modo administrador do questionário
+                        <ChevronRight className="ml-auto h-4 w-4" />
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        onClick={handleSeedData}
+                        disabled={isSeeding}
+                        className="justify-start border-orange-200 text-orange-700 hover:bg-orange-50 hover:text-orange-800"
+                      >
+                        {isSeeding ? (
+                          <>
+                            <span className="animate-spin h-4 w-4 border-2 border-orange-500 rounded-full border-t-transparent mr-2"></span>
+                            Inserindo dados...
+                          </>
+                        ) : (
+                          <>
+                            <DatabaseIcon className="h-4 w-4 mr-2" /> 
+                            Inserir Dados do Questionário
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="users" className="bg-white p-4 rounded-md border border-orange-200">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Gerencie usuários e permissões do sistema.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      className="border-orange-200 text-orange-700 hover:bg-orange-50 hover:text-orange-800"
+                      onClick={() => toast({
+                        title: "Funcionalidade em desenvolvimento",
+                        description: "O gerenciamento de usuários estará disponível em breve.",
+                      })}
+                    >
+                      Gerenciar Usuários
+                    </Button>
+                  </TabsContent>
+                  
+                  <TabsContent value="data" className="bg-white p-4 rounded-md border border-orange-200">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Exporte dados e relatórios do questionário MAR.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      className="border-orange-200 text-orange-700 hover:bg-orange-50 hover:text-orange-800"
+                      onClick={() => toast({
+                        title: "Funcionalidade em desenvolvimento",
+                        description: "A exportação de dados estará disponível em breve.",
+                      })}
+                    >
+                      Exportar Dados
+                    </Button>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            )}
+          </Card>
         )}
         
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -205,43 +311,6 @@ const Dashboard = () => {
               </Button>
             </CardFooter>
           </Card>
-          
-          {isAdmin && (
-            <Card className="hover:shadow-md transition-shadow col-span-full bg-gray-50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DatabaseIcon className="h-5 w-5" /> 
-                  Área do Administrador
-                </CardTitle>
-                <CardDescription>Ferramentas administrativas</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Estas opções estão disponíveis apenas para administradores do sistema.
-                </p>
-                <div className="flex flex-wrap gap-4">
-                  <Button 
-                    variant="outline" 
-                    onClick={handleSeedData}
-                    disabled={isSeeding}
-                    className="flex items-center gap-2"
-                  >
-                    {isSeeding ? (
-                      <>
-                        <span className="animate-spin h-4 w-4 border-2 border-gray-500 rounded-full border-t-transparent"></span>
-                        Inserindo dados...
-                      </>
-                    ) : (
-                      <>
-                        <DatabaseIcon className="h-4 w-4" /> 
-                        Inserir Dados do Questionário
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </main>
       

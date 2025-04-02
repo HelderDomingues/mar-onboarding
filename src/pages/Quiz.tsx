@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { QuizHeader } from "@/components/quiz/QuizHeader";
 import { QuizComplete } from "@/components/quiz/QuizComplete";
@@ -25,7 +25,12 @@ const ADMIN_EMAILS = [
 const Quiz = () => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  
+  // Verificar se está no modo admin pela URL
+  const queryParams = new URLSearchParams(location.search);
+  const adminParam = queryParams.get('admin');
   
   const [modules, setModules] = useState<QuizModule[]>([]);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -42,9 +47,10 @@ const Quiz = () => {
 
   useEffect(() => {
     if (user?.email) {
-      setIsAdmin(ADMIN_EMAILS.includes(user.email));
+      // Verificar se é admin por email ou pela URL
+      setIsAdmin(ADMIN_EMAILS.includes(user.email) || adminParam === 'true');
     }
-  }, [user]);
+  }, [user, adminParam]);
 
   const fetchQuizData = async () => {
     if (!isAuthenticated || !user) return;
