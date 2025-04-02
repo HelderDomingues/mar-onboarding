@@ -3,7 +3,16 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { logger } from "@/utils/logger";
-import { Home, LogOut } from "lucide-react";
+import { Home, LogOut, UserCircle } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 interface QuizHeaderProps {
   isAdmin?: boolean;
@@ -34,18 +43,20 @@ export function QuizHeader({
     navigate("/dashboard");
   };
 
+  const userInitials = user?.email ? user.email.substring(0, 2).toUpperCase() : "US";
+
   return (
     <header className={`${isAdmin ? 'bg-slate-800 text-white' : 'bg-primary text-white'} shadow-md py-4 px-6 flex justify-between items-center font-sans`}>
       <div className="flex items-center gap-3">
         {isAdmin && (
-          <div className="bg-orange-500 text-white px-3 py-1 text-xs font-medium rounded-md">
-            ADMIN
+          <div className="bg-blue-600 text-white px-3 py-1 text-xs font-medium rounded-md flex items-center gap-1">
+            <span className="font-sans">Admin</span>
           </div>
         )}
         <img 
           alt="MAR - Mapa para Alto Rendimento" 
-          src="/lovable-uploads/98e55723-efb7-42e8-bc10-a429fdf04ffb.png" 
-          className="h-6 brightness-0 invert" 
+          src="/lovable-uploads/fc26fbf8-6a4c-4016-9ab3-5be4628828c9.png" 
+          className="h-8" 
         />
       </div>
       
@@ -62,21 +73,30 @@ export function QuizHeader({
         )}
         
         {user && (
-          <>
-            <span className="text-sm hidden md:inline text-white font-sans">
-              Bem-vindo, <strong>{user.email?.split('@')[0]}</strong>
-            </span>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleLogout} 
-              className="text-white border-white hover:bg-white/20 hover:text-white font-sans"
-              type="button"
-            >
-              <LogOut className="h-4 w-4 mr-1 rotate-180" />
-              Sair
-            </Button>
-          </>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                <Avatar>
+                  <AvatarFallback className="bg-primary-700 text-white font-medium">
+                    {userInitials}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="flex items-center gap-2">
+                <UserCircle className="h-4 w-4" />
+                <span>{user.email}</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-600">
+                <LogOut className="h-4 w-4 rotate-180" />
+                <span>Sair</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
     </header>

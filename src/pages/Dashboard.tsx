@@ -88,7 +88,7 @@ const Dashboard = () => {
       <SidebarProvider defaultOpen={true}>
         <div className="flex min-h-screen font-sans">
           <AdminSidebar />
-          <SidebarInset className="p-6 bg-gray-50">
+          <SidebarInset className="p-6 bg-gray-100">
             <div className="container max-w-7xl mx-auto">
               <AdminDashboard 
                 submission={submission}

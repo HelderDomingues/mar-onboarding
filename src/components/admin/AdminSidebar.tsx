@@ -5,7 +5,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Button } from "@/components/ui/button";
 import { Sidebar, SidebarSeparator, SidebarTrigger } from "@/components/ui/sidebar";
 import { 
-  Home, 
   User, 
   Settings, 
   BarChart, 
@@ -14,7 +13,6 @@ import {
   ChevronDown, 
   ChevronRight, 
   LogOut,
-  FileText,
   Users,
   LayoutDashboard
 } from "lucide-react";
@@ -42,14 +40,16 @@ export function AdminSidebar() {
   return (
     <Sidebar>
       <div className="flex flex-col h-full py-2">
-        <div className="flex items-center justify-between px-4 py-2 border-b mb-2">
+        <div className="flex items-center justify-between px-4 py-2 border-b mb-4">
           <div className="flex items-center gap-2">
             <img
-              src="/lovable-uploads/e109ec41-0f89-456d-8081-f73393ed4fd5.png"
+              src="/lovable-uploads/60cbe0c2-a08c-4e1e-990b-db648efa9e0e.png"
               alt="Crie Valor"
-              className="h-7"
+              className="h-6"
             />
-            <Badge variant="outline" className="font-sans text-xs font-medium bg-blue-600 text-white border-0">Admin</Badge>
+            <div className="bg-blue-600 text-white px-3 py-1 text-xs font-medium rounded-md flex items-center gap-1">
+              <span className="font-sans">Admin</span>
+            </div>
           </div>
           <SidebarTrigger />
         </div>
@@ -148,16 +148,6 @@ export function AdminSidebar() {
         <SidebarSeparator />
 
         <div className="p-2 space-y-2">
-          <Link to="/dashboard">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full justify-start">
-              <Home className="mr-2 h-4 w-4" />
-              Dashboard Usuário
-            </Button>
-          </Link>
-
           <Button 
             variant="destructive" 
             size="sm" 
