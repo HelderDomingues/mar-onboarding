@@ -240,7 +240,7 @@
 
 /* Cores específicas para elementos de navegação */
 .quiz-container .navigation-item {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(70, 80, 90, 0.1);
   color: hsl(var(--quiz-text));
 }
 
