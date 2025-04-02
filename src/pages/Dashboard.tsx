@@ -38,7 +38,7 @@ const Dashboard = () => {
           
         if (!error && data) {
           setIsAdmin(true);
-          console.log("Usuário é administrador");
+          logger.info("Usuário é administrador");
         }
         
         // Buscar submissão atual
@@ -74,7 +74,7 @@ const Dashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
         <QuizHeader isAdmin={isAdmin} />
         <main className="flex-1 container py-8 px-4 flex items-center justify-center">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
@@ -86,7 +86,7 @@ const Dashboard = () => {
   if (isAdmin) {
     return (
       <SidebarProvider defaultOpen={true}>
-        <div className="flex min-h-screen">
+        <div className="flex min-h-screen font-sans">
           <AdminSidebar />
           <SidebarInset className="p-6 bg-gray-50">
             <div className="container max-w-7xl mx-auto">
@@ -102,7 +102,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
       <QuizHeader isAdmin={isAdmin} />
       
       <main className="flex-1 container max-w-5xl py-8 px-4">

@@ -13,7 +13,7 @@ import {
   HelpCircle, 
   ChevronDown, 
   ChevronRight, 
-  LogIn,
+  LogOut,
   FileText,
   Users,
   LayoutDashboard
@@ -49,13 +49,13 @@ export function AdminSidebar() {
               alt="Crie Valor"
               className="h-7"
             />
-            <Badge variant="outline" className="font-semibold text-sm">Admin</Badge>
+            <Badge variant="outline" className="font-sans text-xs font-medium bg-blue-600 text-white border-0">Admin</Badge>
           </div>
           <SidebarTrigger />
         </div>
 
         <div className="flex-1 overflow-auto py-2">
-          <div className="space-y-1 px-2">
+          <div className="space-y-1 px-2 font-sans">
             <Link to="/admin">
               <Button
                 variant="ghost"
@@ -148,33 +148,28 @@ export function AdminSidebar() {
         <SidebarSeparator />
 
         <div className="p-2 space-y-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full justify-start"
-                onClick={() => navigate('/dashboard')}>
-                <Home className="mr-2 h-4 w-4" />
-                Dashboard Usuário
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Ir para o Dashboard do usuário</p>
-            </TooltipContent>
-          </Tooltip>
+          <Link to="/dashboard">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full justify-start">
+              <Home className="mr-2 h-4 w-4" />
+              Dashboard Usuário
+            </Button>
+          </Link>
 
           <Button 
             variant="destructive" 
             size="sm" 
             className="w-full justify-start opacity-90 hover:opacity-100"
-            onClick={handleLogout}>
-            <LogIn className="mr-2 h-4 w-4 rotate-180" />
+            onClick={handleLogout}
+            type="button">
+            <LogOut className="mr-2 h-4 w-4 rotate-180" />
             Sair
           </Button>
 
           <div className="flex items-center justify-center pt-2">
-            <Badge variant="outline" className="text-xs text-muted-foreground">
+            <Badge variant="outline" className="text-xs text-muted-foreground font-sans">
               v1.0.0
             </Badge>
           </div>
