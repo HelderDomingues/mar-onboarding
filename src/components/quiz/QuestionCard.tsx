@@ -215,12 +215,12 @@ export function QuestionCard({
   return (
     <Card className="w-full max-w-2xl animate-fade-in quiz-card">
       <CardHeader>
-        <CardTitle className="text-xl flex items-start text-white">
+        <CardTitle className="text-xl flex items-start">
           <span>{question.text}</span>
           {question.required && <span className="text-red-500 ml-1">*</span>}
           {question.hint && (
             <div className="relative ml-2 group">
-              <InfoIcon className="h-5 w-5 text-white cursor-help" />
+              <InfoIcon className="h-5 w-5 cursor-help" />
               <div className="absolute left-0 -bottom-2 transform translate-y-full z-10 hidden group-hover:block bg-black text-white text-xs p-2 rounded w-60">
                 {question.hint}
               </div>
@@ -233,7 +233,7 @@ export function QuestionCard({
         {question.type === 'radio' && question.options && (
           <div>
             {question.type === 'radio' && (
-              <p className="text-sm text-white mb-4">
+              <p className="text-sm mb-4">
                 Selecione uma opção abaixo
               </p>
             )}
@@ -241,7 +241,7 @@ export function QuestionCard({
               {question.options.map((option, index) => (
                 <div key={index} className="flex items-center space-x-2">
                   <RadioGroupItem value={option} id={`option-${question.id}-${index}`} />
-                  <Label htmlFor={`option-${question.id}-${index}`} className="text-base text-white">
+                  <Label htmlFor={`option-${question.id}-${index}`} className="text-base">
                     {option}
                   </Label>
                 </div>
@@ -268,7 +268,7 @@ export function QuestionCard({
             placeholder={getPlaceholder()} 
             value={textAnswer} 
             onChange={e => setTextAnswer(e.target.value)} 
-            className="w-full"
+            className="w-full bg-white text-foreground"
           />
         )}
         
@@ -278,7 +278,7 @@ export function QuestionCard({
             placeholder={getPlaceholder()} 
             value={textAnswer} 
             onChange={e => setTextAnswer(e.target.value)} 
-            className="w-full" 
+            className="w-full bg-white text-foreground" 
           />
         )}
         
@@ -288,7 +288,7 @@ export function QuestionCard({
             placeholder={getPlaceholder()} 
             value={textAnswer} 
             onChange={e => setTextAnswer(e.target.value)} 
-            className="w-full" 
+            className="w-full bg-white text-foreground" 
           />
         )}
         
@@ -297,7 +297,8 @@ export function QuestionCard({
             prefix="instagram.com/" 
             placeholder={getPlaceholder()}
             value={textAnswer} 
-            onChange={e => setTextAnswer(e.target.value)} 
+            onChange={e => setTextAnswer(e.target.value)}
+            className="bg-white text-foreground"
           />
         )}
         
@@ -306,7 +307,8 @@ export function QuestionCard({
             prefix="https://" 
             placeholder={getPlaceholder()}
             value={textAnswer} 
-            onChange={e => setTextAnswer(e.target.value)} 
+            onChange={e => setTextAnswer(e.target.value)}
+            className="bg-white text-foreground"
           />
         )}
         
@@ -315,13 +317,13 @@ export function QuestionCard({
             placeholder={getPlaceholder()} 
             value={textAnswer} 
             onChange={e => setTextAnswer(e.target.value)} 
-            className="min-h-[120px]" 
+            className="min-h-[120px] bg-white text-foreground" 
           />
         )}
         
         {question.type === 'checkbox' && question.options && (
           <div className="space-y-3">
-            <p className="text-sm text-white mb-3">
+            <p className="text-sm mb-3">
               Marque quantas opções desejar
             </p>
             {question.options.map((option, index) => (
@@ -333,7 +335,7 @@ export function QuestionCard({
                 />
                 <label 
                   htmlFor={`checkbox-${question.id}-${index}`} 
-                  className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white"
+                  className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
                   {option}
                 </label>
@@ -347,7 +349,7 @@ export function QuestionCard({
                   placeholder="Especifique sua resposta..." 
                   value={otherValue} 
                   onChange={e => setOtherValue(e.target.value)} 
-                  className="w-full" 
+                  className="w-full bg-white text-foreground" 
                 />
               </div>
             )}
@@ -356,7 +358,7 @@ export function QuestionCard({
         
         {question.type === 'select' && question.options && (
           <select 
-            className="w-full border border-gray-300 rounded-md p-2 text-black" 
+            className="w-full border border-gray-300 rounded-md p-2 bg-white text-black" 
             value={selectedOption} 
             onChange={e => setSelectedOption(e.target.value)}
           >
@@ -375,7 +377,7 @@ export function QuestionCard({
           variant="outline" 
           onClick={onPrev} 
           disabled={isFirst} 
-          className="border-[hsl(var(--quiz-border))] text-white"
+          className="border-[hsl(var(--quiz-border))]"
         >
           Anterior
         </Button>

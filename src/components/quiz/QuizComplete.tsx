@@ -12,7 +12,7 @@ export function QuizComplete() {
   const [dialogOpen, setDialogOpen] = useState(false);
   
   return (
-    <Card className="w-full max-w-md animate-fade-in">
+    <Card className="w-full max-w-md animate-fade-in quiz-card">
       <CardHeader className="text-center">
         <div className="mb-4 mx-auto relative">
           <div className="absolute inset-0 bg-[hsl(var(--quiz-accent))] rounded-full opacity-20 animate-ping"></div>
@@ -28,7 +28,7 @@ export function QuizComplete() {
           </p>
         </div>
         
-        <p className="text-center text-muted-foreground">
+        <p className="text-center">
           Obrigado por completar o questionário MAR (Mapa para Alto Rendimento). 
           Suas respostas foram salvas com sucesso.
         </p>
@@ -37,7 +37,7 @@ export function QuizComplete() {
         
         <div className="space-y-2">
           <h3 className="font-medium">Próximos passos:</h3>
-          <ul className="space-y-1 text-sm text-muted-foreground pl-5 list-disc">
+          <ul className="space-y-1 text-sm pl-5 list-disc">
             <li>Nossa equipe da Crie Valor irá analisar suas respostas</li>
             <li>Será preparado um relatório personalizado para o seu negócio</li>
             <li>Entraremos em contato para agendar uma reunião de apresentação</li>
