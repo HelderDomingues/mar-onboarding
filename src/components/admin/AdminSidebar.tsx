@@ -1,9 +1,8 @@
-
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import { Sidebar, SidebarSeparator, SidebarToggle } from "@/components/ui/sidebar";
+import { Sidebar, SidebarSeparator, SidebarTrigger } from "@/components/ui/sidebar";
 import { Home, User, Settings, BarChart, Database, Book, HelpCircle, ChevronDown, ChevronRight, LogIn } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -32,7 +31,7 @@ export function AdminSidebar() {
             />
             <span className="font-semibold text-sm">Admin</span>
           </div>
-          <SidebarToggle />
+          <SidebarTrigger />
         </div>
 
         <div className="flex-1 overflow-auto py-2">
@@ -127,7 +126,6 @@ export function AdminSidebar() {
         <SidebarSeparator />
 
         <div className="p-2 space-y-2">
-          {/* Novo botão para Dashboard do Usuário */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
@@ -144,7 +142,6 @@ export function AdminSidebar() {
             </TooltipContent>
           </Tooltip>
 
-          {/* Novo botão para Autenticação */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
