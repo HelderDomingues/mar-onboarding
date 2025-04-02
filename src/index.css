@@ -52,6 +52,7 @@
     --quiz-accent-hover: 210 50% 50%;
     --quiz-progress: 210 50% 60%;
     --quiz-progress-bg: 220 20% 30%;
+    --quiz-text: 0 0% 100%;
   }
 
   .dark {
@@ -91,6 +92,7 @@
     --quiz-accent-hover: 210 50% 50%;
     --quiz-progress: 210 50% 60%;
     --quiz-progress-bg: 220 20% 25%;
+    --quiz-text: 0 0% 100%;
   }
 }
 
@@ -106,11 +108,11 @@
 
 /* Classes específicas do questionário */
 .quiz-container {
-  @apply bg-[hsl(var(--quiz-bg))] text-foreground min-h-screen;
+  @apply bg-[hsl(var(--quiz-bg))] text-[hsl(var(--quiz-text))] min-h-screen;
 }
 
 .quiz-card {
-  @apply bg-[hsl(var(--quiz-card))] border-[hsl(var(--quiz-border))];
+  @apply bg-[hsl(var(--quiz-card))] border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))];
 }
 
 .quiz-btn {
@@ -135,6 +137,24 @@
 
 .quiz-question {
   @apply animate-fade-in;
+}
+
+/* Texto branco para todos os elementos dentro do quiz */
+.quiz-card, 
+.quiz-card h1, 
+.quiz-card h2, 
+.quiz-card h3, 
+.quiz-card h4, 
+.quiz-card p, 
+.quiz-card span, 
+.quiz-card label, 
+.quiz-card div {
+  @apply text-[hsl(var(--quiz-text))];
+}
+
+/* Ajuste para inputs e elementos de formulário */
+.quiz-card .text-muted-foreground {
+  @apply text-white/70;
 }
 
 /* Animações */

@@ -68,6 +68,7 @@ export default {
 					light: '#93c5fd',   // blue-300
 					dark: '#1e40af',    // blue-800
 					accent: '#f59e0b',  // amber-500
+					text: 'hsl(var(--quiz-text))'
 				}
 			},
 			borderRadius: {
