@@ -52,7 +52,7 @@ export function QuizConfigurationPanel({
           <p className="text-lg mb-6">Carregando questionário...</p>
         </div> : <>
           {isAdmin && modules.length > 0 ? <div className="mb-6">
-              <Card className="border-orange-500 border-2 bg-orange-50/50 mb-6">
+              <Card className="border-violet-500 border-2 mb-6 bg-slate-100">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-xl text-orange-700">
                     Painel de Navegação Administrativa
