@@ -108,35 +108,49 @@
 
 /* Classes específicas do questionário */
 .quiz-container {
-  @apply bg-[hsl(var(--quiz-bg))] text-[hsl(var(--quiz-text))] min-h-screen;
+  background-color: hsl(var(--quiz-bg));
+  color: hsl(var(--quiz-text));
+  min-height: 100vh;
 }
 
 .quiz-card {
-  @apply bg-[hsl(var(--quiz-card))] border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))];
+  background-color: hsl(var(--quiz-card));
+  border-color: hsl(var(--quiz-border));
+  color: hsl(var(--quiz-text));
 }
 
 .quiz-btn {
-  @apply bg-[hsl(var(--quiz-accent))] hover:bg-[hsl(var(--quiz-accent-hover))];
+  background-color: hsl(var(--quiz-accent));
+}
+
+.quiz-btn:hover {
+  background-color: hsl(var(--quiz-accent-hover));
 }
 
 .quiz-progress-bar {
-  @apply h-2 rounded-full bg-[hsl(var(--quiz-progress-bg))];
+  height: 0.5rem;
+  border-radius: 9999px;
+  background-color: hsl(var(--quiz-progress-bg));
 }
 
 .quiz-progress-value {
-  @apply h-full rounded-full bg-[hsl(var(--quiz-progress))];
+  height: 100%;
+  border-radius: 9999px;
+  background-color: hsl(var(--quiz-progress));
 }
 
 .quiz-module-badge {
-  @apply bg-gradient-to-r from-[hsl(var(--quiz-accent))] to-[hsl(var(--quiz-accent-hover))] text-white;
+  background: linear-gradient(to right, hsl(var(--quiz-accent)), hsl(var(--quiz-accent-hover)));
+  color: white;
 }
 
 .quiz-step-active {
-  @apply border-l-4 border-[hsl(var(--quiz-accent))];
+  border-left-width: 4px;
+  border-color: hsl(var(--quiz-accent));
 }
 
 .quiz-question {
-  @apply animate-fade-in;
+  animation: fade-in 0.3s ease-out forwards;
 }
 
 /* Texto branco para todos os elementos dentro do quiz */
@@ -149,7 +163,7 @@
 .quiz-card span, 
 .quiz-card label, 
 .quiz-card div {
-  @apply text-[hsl(var(--quiz-text))];
+  color: hsl(var(--quiz-text));
 }
 
 /* Ajuste para inputs e elementos de formulário */
@@ -171,7 +185,7 @@
 .quiz-container span,
 .quiz-container label,
 .quiz-container div {
-  @apply text-[hsl(var(--quiz-text))];
+  color: hsl(var(--quiz-text));
 }
 
 /* Garanta que os inputs tenham texto escuro em fundos claros */
@@ -179,33 +193,55 @@
 .quiz-container input[type="email"],
 .quiz-container input[type="number"],
 .quiz-container textarea {
-  @apply text-foreground;
+  color: hsl(var(--foreground));
+  background-color: white;
 }
 
 /* Ajuste para prefix-input dentro do quiz */
 .quiz-container .prefix-input-wrapper {
-  @apply border-[hsl(var(--quiz-border))];
+  border-color: hsl(var(--quiz-border));
 }
 
 .quiz-container .prefix-input-prefix {
-  @apply bg-[hsl(var(--quiz-accent))] text-[hsl(var(--quiz-text))] border-r-[hsl(var(--quiz-border))];
+  background-color: hsl(var(--quiz-accent));
+  color: hsl(var(--quiz-text));
+  border-right-color: hsl(var(--quiz-border));
 }
 
 .quiz-container .prefix-input-field {
-  @apply bg-white text-foreground;
+  background-color: white;
+  color: hsl(var(--foreground));
 }
 
 /* Ajustes específicos para diálogos dentro do quiz */
 .quiz-container [role="dialog"] {
-  @apply text-foreground;
+  color: hsl(var(--foreground));
 }
 
 .quiz-container [role="dialog"] h2 {
-  @apply text-foreground;
+  color: hsl(var(--foreground));
 }
 
 .quiz-container [role="dialog"] p {
   color: hsl(var(--muted-foreground));
+}
+
+/* Elementos selecionados */
+.quiz-container select,
+.quiz-container option {
+  color: hsl(var(--foreground));
+  background-color: white;
+}
+
+/* Botões dentro do quiz */
+.quiz-container button:not(.quiz-btn) {
+  color: hsl(var(--quiz-text));
+}
+
+/* Cores específicas para elementos de navegação */
+.quiz-container .navigation-item {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: hsl(var(--quiz-text));
 }
 
 /* Animações */

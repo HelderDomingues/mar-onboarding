@@ -5,7 +5,7 @@ import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { Card } from "@/components/ui/card";
 import { BookOpen, Settings, ArrowRight, ArrowLeft } from "lucide-react";
 import { QuizReview } from "@/components/quiz/QuizReview";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -50,6 +50,34 @@ export function QuizContent({
   isAdmin
 }: QuizContentProps) {
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  
+  // Aplica estilos específicos para garantir o contraste
+  useEffect(() => {
+    // Garantir que os elementos Select tenham o texto apropriado
+    const selectTriggers = document.querySelectorAll('.quiz-container .select-trigger');
+    selectTriggers.forEach(trigger => {
+      if (trigger instanceof HTMLElement) {
+        trigger.style.color = "black";
+        trigger.style.backgroundColor = "white";
+      }
+    });
+    
+    // Garantir que os itens de menu tenham o contraste correto
+    const selectItems = document.querySelectorAll('.quiz-container .select-item');
+    selectItems.forEach(item => {
+      if (item instanceof HTMLElement) {
+        item.style.color = "black";
+      }
+    });
+    
+    // Corrigir tabelas
+    const tabsTriggers = document.querySelectorAll('.quiz-container .tabs-trigger');
+    tabsTriggers.forEach(tab => {
+      if (tab instanceof HTMLElement) {
+        tab.style.color = "white";
+      }
+    });
+  }, [currentModule, currentQuestionIndex, showReview]);
 
   if (!moduleQuestions || moduleQuestions.length === 0) {
     return null;
@@ -67,7 +95,7 @@ export function QuizContent({
                 variant="outline" 
                 size="sm" 
                 onClick={() => setShowAdminPanel(!showAdminPanel)}
-                className="bg-orange-50 border-orange-300"
+                className="bg-orange-50 border-orange-300 text-orange-800"
               >
                 <Settings className="h-4 w-4 mr-1" /> Painel admin
               </Button>
@@ -113,7 +141,7 @@ export function QuizContent({
               variant="outline" 
               size="sm" 
               onClick={() => setShowAdminPanel(!showAdminPanel)}
-              className="bg-orange-50 border-orange-300"
+              className="bg-orange-50 border-orange-300 text-orange-800"
             >
               <Settings className="h-4 w-4 mr-1" /> {showAdminPanel ? "Ocultar painel" : "Mostrar painel"}
             </Button>
@@ -122,25 +150,25 @@ export function QuizContent({
           {showAdminPanel && (
             <div className="mt-3 p-3 bg-orange-50 rounded-md">
               <Tabs defaultValue="navigation">
-                <TabsList className="mb-3">
-                  <TabsTrigger value="navigation">Navegação</TabsTrigger>
-                  <TabsTrigger value="info">Informações</TabsTrigger>
+                <TabsList className="mb-3 bg-orange-200">
+                  <TabsTrigger value="navigation" className="text-orange-900 data-[state=active]:bg-orange-300">Navegação</TabsTrigger>
+                  <TabsTrigger value="info" className="text-orange-900 data-[state=active]:bg-orange-300">Informações</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="navigation" className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-sm font-medium mb-1 block">Módulo</label>
+                      <label className="text-sm font-medium mb-1 block text-orange-900">Módulo</label>
                       <Select
                         value={currentModuleIndex.toString()}
                         onValueChange={handleAdminModuleChange}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-white text-black select-trigger">
                           <SelectValue placeholder="Selecionar módulo" />
                         </SelectTrigger>
                         <SelectContent>
                           {allModules.map((module, index) => (
-                            <SelectItem key={module.id} value={index.toString()}>
+                            <SelectItem key={module.id} value={index.toString()} className="select-item">
                               Módulo {index + 1}: {module.title}
                             </SelectItem>
                           ))}
@@ -149,17 +177,17 @@ export function QuizContent({
                     </div>
                     
                     <div>
-                      <label className="text-sm font-medium mb-1 block">Questão</label>
+                      <label className="text-sm font-medium mb-1 block text-orange-900">Questão</label>
                       <Select
                         value={currentQuestionIndex.toString()}
                         onValueChange={handleAdminQuestionChange}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-white text-black select-trigger">
                           <SelectValue placeholder="Selecionar questão" />
                         </SelectTrigger>
                         <SelectContent>
                           {moduleQuestions.map((question, index) => (
-                            <SelectItem key={question.id} value={index.toString()}>
+                            <SelectItem key={question.id} value={index.toString()} className="select-item">
                               Questão {index + 1}
                             </SelectItem>
                           ))}
@@ -174,6 +202,7 @@ export function QuizContent({
                       size="sm" 
                       onClick={onPrev}
                       disabled={isFirst}
+                      className="text-orange-900 bg-orange-100"
                     >
                       <ArrowLeft className="h-4 w-4 mr-1" /> Anterior
                     </Button>
@@ -182,6 +211,7 @@ export function QuizContent({
                       variant="secondary"
                       size="sm"
                       onClick={handleJumpToReview}
+                      className="text-orange-900 bg-orange-200"
                     >
                       Ir para revisão
                     </Button>
@@ -190,6 +220,7 @@ export function QuizContent({
                       variant="outline"
                       size="sm" 
                       onClick={onNext}
+                      className="text-orange-900 bg-orange-100"
                     >
                       Próximo <ArrowRight className="h-4 w-4 ml-1" />
                     </Button>
@@ -197,7 +228,7 @@ export function QuizContent({
                 </TabsContent>
                 
                 <TabsContent value="info">
-                  <div className="text-sm space-y-2">
+                  <div className="text-sm space-y-2 text-orange-900">
                     <div>
                       <span className="font-medium">ID do módulo:</span> {currentModule?.id}
                     </div>
@@ -227,11 +258,11 @@ export function QuizContent({
             <BookOpen className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold mb-2">
+            <h2 className="text-2xl font-bold mb-2 text-[hsl(var(--quiz-text))]">
               {currentModule?.title}
             </h2>
             {currentModule?.description && (
-              <p className="text-muted-foreground">
+              <p className="text-[hsla(var(--quiz-text),0.8)]">
                 {currentModule?.description}
               </p>
             )}

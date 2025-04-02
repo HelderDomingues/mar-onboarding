@@ -22,6 +22,20 @@ const ADMIN_EMAILS = [
   "teste3@crievalor.com.br"
 ];
 
+// Função para forçar atualização de estilos
+const refreshStyles = () => {
+  const links = document.querySelectorAll('link[rel="stylesheet"]');
+  links.forEach(link => {
+    const href = link.getAttribute('href');
+    if (href) {
+      const updatedHref = href.includes('?') 
+        ? `${href}&refresh=${Date.now()}` 
+        : `${href}?refresh=${Date.now()}`;
+      link.setAttribute('href', updatedHref);
+    }
+  });
+};
+
 const Quiz = () => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
@@ -46,6 +60,11 @@ const Quiz = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showReview, setShowReview] = useState(false);
+
+  // Forçar atualização de estilos ao carregar
+  useEffect(() => {
+    refreshStyles();
+  }, []);
 
   useEffect(() => {
     if (user?.email) {
