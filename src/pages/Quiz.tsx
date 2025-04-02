@@ -9,7 +9,7 @@ import { QuizContent } from "@/components/quiz/QuizContent";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
-import { QuizModule, QuizQuestion, QuizOption, QuizAnswer, QuizSubmission } from "@/types/quiz";
+import { QuizModule, QuizQuestion, QuizAnswer, QuizSubmission } from "@/types/quiz";
 
 interface AnswerMap {
   [key: string]: string | string[];
@@ -37,6 +37,7 @@ const Quiz = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showReview, setShowReview] = useState(false);
 
   // Verificar se o usuário atual é um administrador
   useEffect(() => {
@@ -313,11 +314,9 @@ const Quiz = () => {
         setCurrentQuestionIndex(0);
         window.scrollTo(0, 0);
       } else {
-        await completeQuiz();
-        toast({
-          title: "Questionário concluído!",
-          description: "Suas respostas foram salvas com sucesso."
-        });
+        // Mostrar tela de revisão em vez de completar diretamente
+        setShowReview(true);
+        window.scrollTo(0, 0);
       }
     }
   };
@@ -335,6 +334,19 @@ const Quiz = () => {
       setCurrentQuestionIndex(prevModuleQuestions.length - 1);
       window.scrollTo(0, 0);
     }
+  };
+
+  // Função para editar uma pergunta específica
+  const handleEditQuestion = (moduleIndex: number, questionIndex: number) => {
+    setShowReview(false);
+    setCurrentModuleIndex(moduleIndex);
+    
+    const moduleId = modules[moduleIndex].id;
+    const moduleQuestions = questions.filter(q => q.module_id === moduleId);
+    setModuleQuestions(moduleQuestions);
+    
+    setCurrentQuestionIndex(questionIndex);
+    window.scrollTo(0, 0);
   };
 
   if (!isAuthenticated) {
@@ -365,6 +377,11 @@ const Quiz = () => {
                 currentAnswers={answers}
                 totalModules={modules.length}
                 currentModuleIndex={currentModuleIndex}
+                showReview={showReview}
+                onReviewComplete={completeQuiz}
+                onEditQuestion={handleEditQuestion}
+                allModules={modules}
+                allQuestions={questions}
               />
             ) : (
               <QuizConfigurationPanel

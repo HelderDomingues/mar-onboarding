@@ -4,6 +4,7 @@ import { QuizProgress } from "@/components/quiz/QuizProgress";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { Card } from "@/components/ui/card";
 import { BookOpen } from "lucide-react";
+import { QuizReview } from "@/components/quiz/QuizReview";
 
 interface QuizContentProps {
   currentModule: QuizModule;
@@ -17,6 +18,11 @@ interface QuizContentProps {
   currentAnswers: Record<string, string | string[]>;
   totalModules: number;
   currentModuleIndex: number;
+  showReview: boolean;
+  onReviewComplete: () => void;
+  onEditQuestion: (moduleIndex: number, questionIndex: number) => void;
+  allModules: QuizModule[];
+  allQuestions: QuizQuestion[];
 }
 
 export function QuizContent({
@@ -30,10 +36,28 @@ export function QuizContent({
   isLast,
   currentAnswers,
   totalModules,
-  currentModuleIndex
+  currentModuleIndex,
+  showReview,
+  onReviewComplete,
+  onEditQuestion,
+  allModules,
+  allQuestions
 }: QuizContentProps) {
   if (!moduleQuestions || moduleQuestions.length === 0) {
     return null;
+  }
+
+  // Se estamos na tela de revisão, mostrar componente de revisão
+  if (showReview) {
+    return (
+      <QuizReview
+        modules={allModules}
+        questions={allQuestions}
+        answers={currentAnswers}
+        onComplete={onReviewComplete}
+        onEdit={onEditQuestion}
+      />
+    );
   }
 
   const currentQuestion = moduleQuestions[currentQuestionIndex];
