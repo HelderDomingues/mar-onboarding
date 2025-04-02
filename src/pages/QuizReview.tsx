@@ -21,7 +21,7 @@ const QuizReviewPage = () => {
       text: "Qual o nome da sua empresa?", 
       module_id: "1", 
       order_number: 1,
-      type: "text",
+      type: "text" as const,
       required: true,
       hint: null
     },
@@ -30,7 +30,7 @@ const QuizReviewPage = () => {
       text: "Quantos funcionários você tem?", 
       module_id: "1", 
       order_number: 2,
-      type: "number",
+      type: "number" as const,
       required: true,
       hint: null
     },
@@ -39,7 +39,7 @@ const QuizReviewPage = () => {
       text: "Qual o faturamento mensal?", 
       module_id: "2", 
       order_number: 1,
-      type: "text",
+      type: "text" as const,
       required: true,
       hint: null
     }
