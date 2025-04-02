@@ -155,7 +155,7 @@ export function QuizConfigurationPanel({
         </>}
       
       <div className="flex justify-center mt-8">
-        <img src="/lovable-uploads/98e55723-efb7-42e8-bc10-a429fdf04ffb.png" alt="MAR - Mapa para Alto Rendimento" className="max-w-full h-auto max-h-32 object-contain" />
+        <img src="/lovable-uploads/98e55723-efb7-42e8-bc10-a429fdf04ffb.png" alt="MAR - Mapa para Alto Rendimento" className="max-w-full h-auto max-h-10 object-none" />
       </div>
     </div>;
 }
