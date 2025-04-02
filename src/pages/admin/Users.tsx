@@ -68,15 +68,27 @@ const UsersPage = () => {
         
         setIsAdmin(true);
         
-        // Buscar usuários
-        const { data: userData, error: userError } = await supabase
+        // Buscar usuários - primeiro buscar os auth.users para ter os emails
+        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+          
+        if (authError) {
+          toast({
+            title: "Erro ao carregar usuários",
+            description: "Não foi possível acessar a lista de usuários autenticados",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Depois buscar os perfis
+        const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('*');
           
-        if (userError) {
+        if (profilesError) {
           toast({
-            title: "Erro ao carregar usuários",
-            description: userError.message,
+            title: "Erro ao carregar perfis de usuários",
+            description: profilesError.message,
             variant: "destructive",
           });
           return;
@@ -97,11 +109,24 @@ const UsersPage = () => {
         const adminUserIds = adminRoles?.map(role => role.user_id) || [];
         const submissionUserIds = submissions?.map(sub => sub.user_id) || [];
         
-        const processedUsers = (userData || []).map(profile => ({
-          ...profile,
-          is_admin: adminUserIds.includes(profile.id),
-          has_submission: submissionUserIds.includes(profile.id)
-        }));
+        // Criar um mapa de emails usando os dados do auth.users
+        const emailMap = new Map();
+        authUsers?.users.forEach(authUser => {
+          emailMap.set(authUser.id, authUser.email);
+        });
+        
+        // Combinar os dados de perfis com emails
+        const processedUsers = (profilesData || []).map(profile => {
+          // Obter email do mapa usando o ID do perfil
+          const email = emailMap.get(profile.id) || '';
+          
+          return {
+            ...profile,
+            email, // Adicionar o email ao objeto
+            is_admin: adminUserIds.includes(profile.id),
+            has_submission: submissionUserIds.includes(profile.id)
+          } as UserProfile;
+        });
         
         setUsers(processedUsers);
       } catch (error) {
