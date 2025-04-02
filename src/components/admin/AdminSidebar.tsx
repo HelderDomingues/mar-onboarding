@@ -26,6 +26,8 @@ import {
   LogOut,
   CheckSquare,
   Award,
+  Home,
+  LogIn,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/use-toast";
@@ -58,14 +60,16 @@ export function AdminSidebar() {
     
     if (section === "dashboard") {
       navigate("/dashboard");
+    } else if (section === "userDashboard") {
+      navigate("/dashboard");
     } else if (section === "users") {
       navigate("/admin/users");
     } else if (section === "quiz") {
       navigate("/quiz?admin=true");
     } else if (section === "quizReview") {
-      navigate("/quiz/review?admin=true");
+      navigate("/quiz/review");
     } else if (section === "quizSuccess") {
-      navigate("/quiz/success?admin=true");
+      navigate("/quiz/success");
     } else if (section === "data") {
       navigate("/admin/data");
     } else if (section === "reports") {
@@ -74,6 +78,8 @@ export function AdminSidebar() {
       navigate("/admin/settings");
     } else if (section === "help") {
       navigate("/admin/help");
+    } else if (section === "auth") {
+      navigate("/");
     }
   };
 
@@ -104,10 +110,21 @@ export function AdminSidebar() {
                 <SidebarMenuButton 
                   onClick={() => handleNavigation("dashboard")}
                   isActive={activeSection === "dashboard"}
-                  tooltip="Dashboard"
+                  tooltip="Dashboard Admin"
                 >
                   <LayoutDashboard className="h-4 w-4" />
-                  <span>Dashboard</span>
+                  <span>Dashboard Admin</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => handleNavigation("userDashboard")}
+                  isActive={activeSection === "userDashboard"}
+                  tooltip="Dashboard Usuário"
+                >
+                  <Home className="h-4 w-4" />
+                  <span>Dashboard Usuário</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
@@ -119,6 +136,17 @@ export function AdminSidebar() {
                 >
                   <Users className="h-4 w-4" />
                   <span>Usuários</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => handleNavigation("auth")}
+                  isActive={activeSection === "auth"}
+                  tooltip="Autenticação"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span>Autenticação</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

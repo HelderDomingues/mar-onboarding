@@ -8,9 +8,11 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Quiz from "./pages/Quiz";
+import QuizReviewPage from "./pages/QuizReview";
 import NotFound from "./pages/NotFound";
 import UsersPage from "./pages/admin/Users";
 import SettingsPage from "./pages/admin/Settings";
+import { QuizSuccess } from "./components/quiz/QuizSuccess";
 
 const queryClient = new QueryClient();
 
@@ -25,8 +27,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/quiz" element={<Quiz />} />
-            <Route path="/quiz/review" element={<Quiz />} /> 
-            <Route path="/quiz/success" element={<Quiz />} /> 
+            <Route path="/quiz/review" element={<QuizReviewPage />} />
+            <Route path="/quiz/success" element={<QuizSuccess />} />
             
             {/* Rotas Admin */}
             <Route path="/admin/users" element={<UsersPage />} />
