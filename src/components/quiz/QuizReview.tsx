@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,6 @@ import { ArrowRight, CheckCircle, Edit, ThumbsUp, Calendar, FileCheck } from "lu
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-
 interface QuizReviewProps {
   modules: QuizModule[];
   questions: QuizQuestion[];
@@ -16,17 +14,15 @@ interface QuizReviewProps {
   onComplete: () => void;
   onEdit: (moduleIndex: number, questionIndex: number) => void;
 }
-
 export function QuizReview({
   modules,
   questions,
   answers,
   onComplete,
-  onEdit,
+  onEdit
 }: QuizReviewProps) {
   const [confirmed, setConfirmed] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-  
   const form = useForm({
     defaultValues: {
       agreement: false
@@ -52,15 +48,11 @@ export function QuizReview({
     if (typeof value === "string") return value;
     return value.join(", ");
   };
-
   const handleTermsChange = (checked: boolean) => {
     setAgreedToTerms(checked);
   };
-
-  return (
-    <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-6">
-      {!confirmed ? (
-        <>
+  return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-6">
+      {!confirmed ? <>
           <Card className="quiz-card">
             <CardHeader>
               <CardTitle className="text-2xl font-bold flex items-center gap-2">
@@ -75,8 +67,7 @@ export function QuizReview({
               </p>
               
               <div className="space-y-8">
-                {questionsByModule.map((moduleData, moduleIndex) => (
-                  <div key={moduleData.module.id} className="border border-[hsl(var(--quiz-border))] rounded-lg p-4">
+                {questionsByModule.map((moduleData, moduleIndex) => <div key={moduleData.module.id} className="border border-[hsl(var(--quiz-border))] rounded-lg p-4">
                     <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
                       <Badge variant="outline" className="quiz-module-badge">
                         Módulo {moduleIndex + 1}
@@ -86,10 +77,8 @@ export function QuizReview({
                     
                     <div className="space-y-4">
                       {moduleData.questions.map((question, questionIndex) => {
-                        const answer = answers[question.id];
-                        
-                        return (
-                          <div key={question.id} className="border-t border-[hsl(var(--quiz-border))] pt-3">
+                  const answer = answers[question.id];
+                  return <div key={question.id} className="border-t border-[hsl(var(--quiz-border))] pt-3">
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
                                 <p className="font-medium">{question.text}</p>
@@ -98,21 +87,14 @@ export function QuizReview({
                                 </p>
                               </div>
                               
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                className="ml-2 border-[hsl(var(--quiz-border))]"
-                                onClick={() => onEdit(moduleIndex, questionIndex)}
-                              >
+                              <Button variant="outline" size="sm" onClick={() => onEdit(moduleIndex, questionIndex)} className="ml-2 border-[hsl(var(--quiz-border))] text-zinc-950">
                                 <Edit className="h-4 w-4 mr-1" /> Editar
                               </Button>
                             </div>
-                          </div>
-                        );
-                      })}
+                          </div>;
+                })}
                     </div>
-                  </div>
-                ))}
+                  </div>)}
               </div>
               
               <div className="mt-8 p-4 border border-[hsl(var(--quiz-border))] rounded-lg bg-slate-50">
@@ -136,15 +118,8 @@ export function QuizReview({
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Checkbox 
-                    id="agreement" 
-                    checked={agreedToTerms}
-                    onCheckedChange={handleTermsChange}
-                  />
-                  <label 
-                    htmlFor="agreement" 
-                    className="text-sm font-medium leading-none cursor-pointer"
-                  >
+                  <Checkbox id="agreement" checked={agreedToTerms} onCheckedChange={handleTermsChange} />
+                  <label htmlFor="agreement" className="text-sm font-medium leading-none cursor-pointer">
                     Concordo com os termos acima e confirmo a veracidade das informações
                   </label>
                 </div>
@@ -156,25 +131,15 @@ export function QuizReview({
               </div>
             </CardContent>
             <CardFooter className="flex justify-between pt-6 border-t border-[hsl(var(--quiz-border))]">
-              <Button 
-                variant="outline" 
-                onClick={() => onEdit(modules.length - 1, questions.filter(q => q.module_id === modules[modules.length - 1].id).length - 1)}
-                className="border-[hsl(var(--quiz-border))]"
-              >
+              <Button variant="outline" onClick={() => onEdit(modules.length - 1, questions.filter(q => q.module_id === modules[modules.length - 1].id).length - 1)} className="border-[hsl(var(--quiz-border))]">
                 Voltar
               </Button>
-              <Button 
-                onClick={() => setConfirmed(true)}
-                className="quiz-btn"
-                disabled={!agreedToTerms}
-              >
+              <Button onClick={() => setConfirmed(true)} className="quiz-btn" disabled={!agreedToTerms}>
                 Confirmar Respostas <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </CardFooter>
           </Card>
-        </>
-      ) : (
-        <Card className="quiz-card">
+        </> : <Card className="quiz-card">
           <CardHeader>
             <CardTitle className="text-2xl font-bold flex items-center gap-2">
               <CheckCircle className="h-6 w-6 text-green-500" />
@@ -187,15 +152,10 @@ export function QuizReview({
             </p>
           </CardContent>
           <CardFooter className="flex justify-center">
-            <Button 
-              onClick={onComplete}
-              className="quiz-btn"
-            >
+            <Button onClick={onComplete} className="quiz-btn">
               Finalizar Questionário
             </Button>
           </CardFooter>
-        </Card>
-      )}
-    </div>
-  );
+        </Card>}
+    </div>;
 }
