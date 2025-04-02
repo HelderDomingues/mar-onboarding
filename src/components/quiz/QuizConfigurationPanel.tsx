@@ -97,11 +97,11 @@ export function QuizConfigurationPanel({
                       </div>
                       
                       <div className="flex gap-3 justify-between">
-                        <Button variant="outline" onClick={handleNavigateToDashboard} className="flex-1">
+                        <Button variant="outline" onClick={handleNavigateToDashboard} className="flex-1 text-zinc-950">
                           <Home className="h-4 w-4 mr-2" /> Dashboard
                         </Button>
                         
-                        <Button onClick={handleNavigateToQuestion} disabled={!selectedModule} className="flex-1 bg-orange-500 hover:bg-orange-600">
+                        <Button onClick={handleNavigateToQuestion} disabled={!selectedModule} className="flex-1 bg-gray-950 hover:bg-gray-800">
                           Ir para Questão
                         </Button>
                       </div>
@@ -109,7 +109,7 @@ export function QuizConfigurationPanel({
                     
                     <TabsContent value="actions">
                       <div className="space-y-4">
-                        <p className="text-sm text-muted-foreground mb-2">
+                        <p className="text-sm mb-2 text-gray-950">
                           Ações administrativas para o questionário
                         </p>
                         
