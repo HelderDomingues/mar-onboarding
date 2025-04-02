@@ -12,7 +12,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -25,6 +24,8 @@ import {
   BarChart3,
   HelpCircle,
   LogOut,
+  CheckSquare,
+  Award,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/use-toast";
@@ -56,41 +57,28 @@ export function AdminSidebar() {
     setActiveSection(section);
     
     if (section === "dashboard") {
-      // Já estamos no dashboard, só atualiza o estado
+      navigate("/dashboard");
     } else if (section === "users") {
-      // Navegamos para a seção de usuários ou carregamos essa view
-      toast({
-        title: "Gerenciamento de Usuários",
-        description: "Funcionalidade em desenvolvimento.",
-      });
+      navigate("/admin/users");
     } else if (section === "quiz") {
-      // Para o quiz, navegamos para a página de quiz em modo admin
       navigate("/quiz?admin=true");
+    } else if (section === "quizReview") {
+      navigate("/quiz/review?admin=true");
+    } else if (section === "quizSuccess") {
+      navigate("/quiz/success?admin=true");
     } else if (section === "data") {
-      toast({
-        title: "Exportação de Dados",
-        description: "Funcionalidade em desenvolvimento.",
-      });
+      navigate("/admin/data");
     } else if (section === "reports") {
-      toast({
-        title: "Relatórios e Estatísticas",
-        description: "Funcionalidade em desenvolvimento.",
-      });
+      navigate("/admin/reports");
     } else if (section === "settings") {
-      toast({
-        title: "Configurações do Sistema",
-        description: "Funcionalidade em desenvolvimento.",
-      });
+      navigate("/admin/settings");
     } else if (section === "help") {
-      toast({
-        title: "Central de Ajuda",
-        description: "Funcionalidade em desenvolvimento.",
-      });
+      navigate("/admin/help");
     }
   };
 
   return (
-    <Sidebar variant="floating">
+    <Sidebar variant="floating" collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border px-5 py-4 flex flex-col gap-1">
         <div className="flex items-center justify-between">
           <img 
@@ -116,6 +104,7 @@ export function AdminSidebar() {
                 <SidebarMenuButton 
                   onClick={() => handleNavigation("dashboard")}
                   isActive={activeSection === "dashboard"}
+                  tooltip="Dashboard"
                 >
                   <LayoutDashboard className="h-4 w-4" />
                   <span>Dashboard</span>
@@ -126,16 +115,25 @@ export function AdminSidebar() {
                 <SidebarMenuButton 
                   onClick={() => handleNavigation("users")}
                   isActive={activeSection === "users"}
+                  tooltip="Usuários"
                 >
                   <Users className="h-4 w-4" />
                   <span>Usuários</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarGroup>
+          <SidebarGroupLabel>Questionário</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   onClick={() => handleNavigation("quiz")}
                   isActive={activeSection === "quiz"}
+                  tooltip="Questionário MAR"
                 >
                   <FileText className="h-4 w-4" />
                   <span>Questionário MAR</span>
@@ -144,8 +142,38 @@ export function AdminSidebar() {
               
               <SidebarMenuItem>
                 <SidebarMenuButton 
+                  onClick={() => handleNavigation("quizReview")}
+                  isActive={activeSection === "quizReview"}
+                  tooltip="Validação"
+                >
+                  <CheckSquare className="h-4 w-4" />
+                  <span>Validação</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => handleNavigation("quizSuccess")}
+                  isActive={activeSection === "quizSuccess"}
+                  tooltip="Sucesso"
+                >
+                  <Award className="h-4 w-4" />
+                  <span>Sucesso</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarGroup>
+          <SidebarGroupLabel>Análise</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
                   onClick={() => handleNavigation("data")}
                   isActive={activeSection === "data"}
+                  tooltip="Dados"
                 >
                   <Database className="h-4 w-4" />
                   <span>Dados</span>
@@ -156,6 +184,7 @@ export function AdminSidebar() {
                 <SidebarMenuButton 
                   onClick={() => handleNavigation("reports")}
                   isActive={activeSection === "reports"}
+                  tooltip="Relatórios"
                 >
                   <BarChart3 className="h-4 w-4" />
                   <span>Relatórios</span>
@@ -173,6 +202,7 @@ export function AdminSidebar() {
                 <SidebarMenuButton 
                   onClick={() => handleNavigation("settings")}
                   isActive={activeSection === "settings"}
+                  tooltip="Configurações"
                 >
                   <Settings className="h-4 w-4" />
                   <span>Configurações</span>
@@ -183,6 +213,7 @@ export function AdminSidebar() {
                 <SidebarMenuButton 
                   onClick={() => handleNavigation("help")}
                   isActive={activeSection === "help"}
+                  tooltip="Ajuda"
                 >
                   <HelpCircle className="h-4 w-4" />
                   <span>Ajuda</span>
