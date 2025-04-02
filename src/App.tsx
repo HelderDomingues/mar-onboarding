@@ -13,6 +13,7 @@ import Quiz from "./pages/Quiz";
 import QuizReviewPage from "./pages/QuizReview";
 import NotFound from "./pages/NotFound";
 import UsersPage from "./pages/admin/Users";
+import NewUserPage from "./pages/admin/NewUser";
 import SettingsPage from "./pages/admin/Settings";
 import { QuizSuccess } from "./components/quiz/QuizSuccess";
 
@@ -163,7 +164,7 @@ const App = () => (
               path="/admin/users/new"
               element={
                 <AdminRoute>
-                  <UsersPage />
+                  <NewUserPage />
                 </AdminRoute>
               }
             />

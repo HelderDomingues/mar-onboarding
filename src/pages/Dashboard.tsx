@@ -95,6 +95,26 @@ const Dashboard = () => {
                 submission={submission}
                 isAdmin={isAdmin}
               />
+              
+              {/* Seção para acesso direto às páginas de validação e sucesso (para testes) */}
+              <div className="mt-8 border-t pt-6">
+                <h2 className="text-xl font-bold mb-4">Acesso direto para testes</h2>
+                <div className="flex flex-wrap gap-4">
+                  <Button 
+                    variant="outline"
+                    onClick={() => window.location.href = '/quiz/review'}
+                  >
+                    Página de Revisão
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    onClick={() => window.location.href = '/quiz/success'}
+                  >
+                    Página de Sucesso
+                  </Button>
+                </div>
+              </div>
             </div>
           </SidebarInset>
         </div>

@@ -23,7 +23,7 @@ export function AdminSidebar() {
   const [isUsersOpen, setIsUsersOpen] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleLogout = async () => {
     try {
@@ -104,7 +104,10 @@ export function AdminSidebar() {
                   </Button>
                 </Link>
                 <Link to="/admin/users/new">
-                  <Button variant="ghost" size="sm" className="w-full justify-start">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className={`w-full justify-start ${location.pathname === '/admin/users/new' ? 'bg-sidebar-accent text-primary' : ''}`}>
                     Adicionar Usuário
                   </Button>
                 </Link>
@@ -156,6 +159,15 @@ export function AdminSidebar() {
         <SidebarSeparator />
 
         <div className="p-2 space-y-2">
+          {user && (
+            <div className="flex items-center p-2 rounded-md bg-muted">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user.email}</p>
+                <p className="text-xs text-muted-foreground">Administrador</p>
+              </div>
+            </div>
+          )}
+          
           <Button 
             variant="destructive" 
             size="sm" 

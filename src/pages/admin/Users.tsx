@@ -55,11 +55,13 @@ const UsersPage = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [error, setError] = useState<string | null>(null);
   
   const fetchUsers = async () => {
     if (!user) return;
     
     setIsLoading(true);
+    setError(null);
     
     try {
       // Verificar se o usuário atual é admin
@@ -88,58 +90,97 @@ const UsersPage = () => {
           description: profilesError.message,
           variant: "destructive",
         });
+        setError("Erro ao carregar perfis: " + profilesError.message);
         return;
       }
       
-      // Buscar users da tabela auth para pegar emails
-      const { data: authUsers, error: authUsersError } = await supabase.auth.admin.listUsers() as { 
-        data: AdminListUsersResponse | null, 
-        error: Error | null 
-      };
-      
-      // Buscar roles de admin
-      const { data: adminRoles, error: adminRolesError } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'admin');
-      
-      // Buscar submissões
-      const { data: submissions, error: submissionsError } = await supabase
-        .from('quiz_submissions')
-        .select('user_id');
+      try {
+        // Buscar users da tabela auth para pegar emails
+        const { data: authUsers, error: authUsersError } = await supabase.auth.admin.listUsers() as { 
+          data: AdminListUsersResponse | null, 
+          error: Error | null 
+        };
         
-      // Transformar dados
-      const adminUserIds = adminRoles?.map(role => role.user_id) || [];
-      const submissionUserIds = submissions?.map(sub => sub.user_id) || [];
-      
-      // Criar um mapa de emails usando os dados de auth.users (se disponível)
-      const emailMap = new Map<string, string>();
-      if (authUsers && authUsers.users) {
-        authUsers.users.forEach(user => {
-          emailMap.set(user.id, user.email);
+        if (authUsersError) {
+          console.error("Erro ao listar usuários (auth admin API):", authUsersError);
+          setError("Não foi possível acessar a lista de usuários via API admin. Verifique se está usando a chave correta.");
+        }
+        
+        // Buscar roles de admin
+        const { data: adminRoles, error: adminRolesError } = await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'admin');
+        
+        // Buscar submissões
+        const { data: submissions, error: submissionsError } = await supabase
+          .from('quiz_submissions')
+          .select('user_id');
+          
+        // Transformar dados
+        const adminUserIds = adminRoles?.map(role => role.user_id) || [];
+        const submissionUserIds = submissions?.map(sub => sub.user_id) || [];
+        
+        // Criar um mapa de emails usando os dados de auth.users (se disponível)
+        const emailMap = new Map<string, string>();
+        if (authUsers && authUsers.users) {
+          authUsers.users.forEach(user => {
+            emailMap.set(user.id, user.email);
+          });
+        }
+        
+        // Combinar os dados de perfis com emails
+        const profilesArray = Array.isArray(profilesData) ? profilesData : [];
+        const processedUsers = profilesArray.map(profile => {
+          return {
+            ...profile,
+            email: emailMap.get(profile.id) || "Email não disponível", // Use o email do mapa ou valor padrão
+            is_admin: adminUserIds.includes(profile.id),
+            has_submission: submissionUserIds.includes(profile.id)
+          } as UserProfile;
         });
+        
+        setUsers(processedUsers);
+      } catch (error: any) {
+        console.error("Erro ao acessar API de admin:", error);
+        setError("Erro ao acessar API de admin do Supabase: " + error.message);
+        
+        // Mesmo com erro, vamos exibir os perfis básicos
+        const profilesArray = Array.isArray(profilesData) ? profilesData : [];
+        
+        // Buscar roles de admin mesmo sem emails
+        const { data: adminRoles } = await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'admin');
+          
+        const { data: submissions } = await supabase
+          .from('quiz_submissions')
+          .select('user_id');
+          
+        const adminUserIds = adminRoles?.map(role => role.user_id) || [];
+        const submissionUserIds = submissions?.map(sub => sub.user_id) || [];
+        
+        const processedUsers = profilesArray.map(profile => {
+          return {
+            ...profile,
+            email: "Email não disponível", 
+            is_admin: adminUserIds.includes(profile.id),
+            has_submission: submissionUserIds.includes(profile.id)
+          } as UserProfile;
+        });
+        
+        setUsers(processedUsers);
       }
       
-      // Combinar os dados de perfis com emails
-      const profilesArray = Array.isArray(profilesData) ? profilesData : [];
-      const processedUsers = profilesArray.map(profile => {
-        return {
-          ...profile,
-          email: emailMap.get(profile.id) || "Email não disponível", // Use o email do mapa ou valor padrão
-          is_admin: adminUserIds.includes(profile.id),
-          has_submission: submissionUserIds.includes(profile.id)
-        } as UserProfile;
-      });
-      
-      setUsers(processedUsers);
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao buscar usuários:', error);
       toast({
         title: "Erro ao carregar usuários",
         description: "Ocorreu um problema ao buscar os dados dos usuários.",
         variant: "destructive",
       });
+      setError("Erro ao buscar usuários: " + error.message);
     } finally {
       setIsLoading(false);
     }
@@ -170,12 +211,7 @@ const UsersPage = () => {
   };
   
   const handleAddUser = () => {
-    toast({
-      title: "Adicionar usuário",
-      description: "Funcionalidade de adicionar usuário será implementada em breve.",
-    });
-    // Implementação futura: navegação para página de criação de usuário
-    // navigate("/admin/users/new");
+    navigate("/admin/users/new");
   };
   
   const handleToggleAdmin = async (userId: string, isCurrentlyAdmin: boolean) => {
@@ -234,7 +270,10 @@ const UsersPage = () => {
             </div>
             
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-              <Button className="flex items-center gap-2 bg-primary" onClick={handleAddUser}>
+              <Button 
+                className="flex items-center gap-2 bg-primary" 
+                onClick={handleAddUser}
+              >
                 <UserPlus className="h-4 w-4" />
                 <span>Novo Usuário</span>
               </Button>
@@ -268,6 +307,13 @@ const UsersPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
+                {error && (
+                  <div className="p-4 bg-amber-50 border-l-4 border-amber-500 text-amber-700">
+                    <h3 className="font-medium">Atenção</h3>
+                    <p className="text-sm">{error}</p>
+                  </div>
+                )}
+                
                 {isLoading ? (
                   <div className="flex justify-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -335,8 +381,8 @@ const UsersPage = () => {
               </CardContent>
               <CardFooter className="flex justify-between border-t py-4 px-6 text-muted-foreground text-sm">
                 <p>Atualizado em {new Date().toLocaleDateString('pt-BR')}</p>
-                <div className="text-orange-500 font-medium text-xs">
-                  Acesso limitado aos dados dos usuários por permissões do Supabase
+                <div className="text-amber-600 font-medium text-xs">
+                  {error ? "Acesso limitado aos dados dos usuários" : "Última atualização: " + new Date().toLocaleTimeString('pt-BR')}
                 </div>
               </CardFooter>
             </Card>
