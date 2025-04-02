@@ -10,7 +10,7 @@ export interface QuizQuestion {
   id: string;
   module_id: string;
   text: string;
-  type: 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select';
+  type: 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select' | 'url' | 'instagram';
   required: boolean;
   order_number: number;
   hint: string | null;

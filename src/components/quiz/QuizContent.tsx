@@ -1,4 +1,3 @@
-
 import { QuestionCard, Question } from "@/components/quiz/QuestionCard";
 import { QuizProgress } from "@/components/quiz/QuizProgress";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
@@ -89,16 +88,14 @@ export function QuizContent({
   const currentQuestion = moduleQuestions[currentQuestionIndex];
   
   // Determinar o tipo correto com base no texto da questão
-  const getQuestionType = (question: QuizQuestion) => {
-    if (question.type === 'url') {
-      if (
-        question.text.toLowerCase().includes('instagram da empresa') ||
-        question.text.toLowerCase().includes('instagram concorrente a') ||
-        question.text.toLowerCase().includes('instagram concorrente b') ||
-        question.text.toLowerCase().includes('instagram concorrente c')
-      ) {
-        return 'instagram';
-      }
+  const getQuestionType = (question: QuizQuestion): typeof question.type => {
+    if (
+      question.text.toLowerCase().includes('instagram da empresa') ||
+      question.text.toLowerCase().includes('instagram concorrente a') ||
+      question.text.toLowerCase().includes('instagram concorrente b') ||
+      question.text.toLowerCase().includes('instagram concorrente c')
+    ) {
+      return 'instagram';
     }
     return question.type;
   };
