@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { ArrowRight, CheckCircle, Edit, ThumbsUp, Calendar, FileCheck } from "lu
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+
 interface QuizReviewProps {
   modules: QuizModule[];
   questions: QuizQuestion[];
@@ -14,6 +16,7 @@ interface QuizReviewProps {
   onComplete: () => void;
   onEdit: (moduleIndex: number, questionIndex: number) => void;
 }
+
 export function QuizReview({
   modules,
   questions,
@@ -48,9 +51,11 @@ export function QuizReview({
     if (typeof value === "string") return value;
     return value.join(", ");
   };
+  
   const handleTermsChange = (checked: boolean) => {
     setAgreedToTerms(checked);
   };
+  
   return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-6">
       {!confirmed ? <>
           <Card className="quiz-card">
@@ -61,14 +66,14 @@ export function QuizReview({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="mb-6 text-muted-foreground">
+              <p className="mb-6 text-[hsl(var(--quiz-text))]">
                 Por favor, revise suas respostas abaixo para confirmar que estão corretas. 
                 Você pode editar qualquer resposta clicando no botão de edição.
               </p>
               
               <div className="space-y-8">
                 {questionsByModule.map((moduleData, moduleIndex) => <div key={moduleData.module.id} className="border border-[hsl(var(--quiz-border))] rounded-lg p-4">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-[hsl(var(--quiz-text))]">
                       <Badge variant="outline" className="quiz-module-badge">
                         Módulo {moduleIndex + 1}
                       </Badge>
@@ -81,13 +86,13 @@ export function QuizReview({
                   return <div key={question.id} className="border-t border-[hsl(var(--quiz-border))] pt-3">
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
-                                <p className="font-medium">{question.text}</p>
-                                <p className="text-muted-foreground mt-1 break-words">
+                                <p className="font-medium text-[hsl(var(--quiz-text))]">{question.text}</p>
+                                <p className="text-[hsl(var(--quiz-text))] opacity-80 mt-1 break-words">
                                   {formatAnswerValue(answer)}
                                 </p>
                               </div>
                               
-                              <Button variant="outline" size="sm" onClick={() => onEdit(moduleIndex, questionIndex)} className="ml-2 border-[hsl(var(--quiz-border))] text-zinc-950">
+                              <Button variant="outline" size="sm" onClick={() => onEdit(moduleIndex, questionIndex)} className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))]">
                                 <Edit className="h-4 w-4 mr-1" /> Editar
                               </Button>
                             </div>
@@ -97,19 +102,19 @@ export function QuizReview({
                   </div>)}
               </div>
               
-              <div className="mt-8 p-4 border border-[hsl(var(--quiz-border))] rounded-lg bg-slate-50">
+              <div className="mt-8 p-4 border border-[hsl(var(--quiz-border))] rounded-lg bg-slate-800">
                 <div className="flex items-start gap-2 mb-4">
                   <FileCheck className="h-5 w-5 mt-1 text-[hsl(var(--quiz-accent))]" />
                   <div>
-                    <h4 className="font-semibold text-slate-950\n">Termo de Validação</h4>
-                    <p className="text-sm text-slate-900\n">
+                    <h4 className="font-semibold text-[hsl(var(--quiz-text))]">Termo de Validação</h4>
+                    <p className="text-sm text-[hsl(var(--quiz-text))] opacity-90">
                       Para finalizar o questionário, por favor leia e concorde com os termos abaixo.
                     </p>
                   </div>
                 </div>
                 
-                <div className="p-3 bg-white rounded border border-slate-200 text-sm mb-4">
-                  <p className="text-slate-900\n">
+                <div className="p-3 bg-slate-700 rounded border border-slate-600 text-sm mb-4">
+                  <p className="text-[hsl(var(--quiz-text))]">
                     Declaro que as informações fornecidas neste questionário são verdadeiras e
                     condizem com a realidade atual da minha empresa/negócio.
                     Compreendo que estas informações serão utilizadas pela Crie Valor para análise
@@ -117,21 +122,21 @@ export function QuizReview({
                   </p>
                 </div>
                 
-                <div className="flex items-center gap-2 bg-inherit">
-                  <Checkbox id="agreement" checked={agreedToTerms} onCheckedChange={handleTermsChange} className="bg-slate-50 text-lime-400" />
-                  <label htmlFor="agreement" className="text-sm font-medium leading-none cursor-pointer bg-transparent text-gray-900">
+                <div className="flex items-center gap-2">
+                  <Checkbox id="agreement" checked={agreedToTerms} onCheckedChange={handleTermsChange} className="border-white" />
+                  <label htmlFor="agreement" className="text-sm font-medium leading-none cursor-pointer text-[hsl(var(--quiz-text))]">
                     Concordo com os termos acima e confirmo a veracidade das informações
                   </label>
                 </div>
                 
-                <div className="flex items-center gap-2 mt-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 mt-4 text-sm text-[hsl(var(--quiz-text))] opacity-80">
                   <Calendar className="h-4 w-4" />
-                  <span className="text-zinc-800">Data de validação: {currentDate}</span>
+                  <span>Data de validação: {currentDate}</span>
                 </div>
               </div>
             </CardContent>
             <CardFooter className="flex justify-between pt-6 border-t border-[hsl(var(--quiz-border))]">
-              <Button variant="outline" onClick={() => onEdit(modules.length - 1, questions.filter(q => q.module_id === modules[modules.length - 1].id).length - 1)} className="border-[hsl(var(--quiz-border))] text-gray-800">
+              <Button variant="outline" onClick={() => onEdit(modules.length - 1, questions.filter(q => q.module_id === modules[modules.length - 1].id).length - 1)} className="border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))]">
                 Voltar
               </Button>
               <Button onClick={() => setConfirmed(true)} disabled={!agreedToTerms} className="quiz-btn bg-lime-600 hover:bg-lime-500">
@@ -147,7 +152,7 @@ export function QuizReview({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="mb-4 text-center text-muted-foreground">
+            <p className="mb-4 text-center text-[hsl(var(--quiz-text))]">
               Suas respostas foram validadas com sucesso. Clique abaixo para concluir o questionário.
             </p>
           </CardContent>

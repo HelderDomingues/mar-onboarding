@@ -1,267 +1,173 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import {
-  LayoutDashboard,
-  Users,
-  FileText,
-  Settings,
-  Database,
-  BarChart3,
-  HelpCircle,
-  LogOut,
-  CheckSquare,
-  Award,
-  Home,
-  LogIn,
-} from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/components/ui/use-toast";
-import { logger } from "@/utils/logger";
+import { Sidebar, SidebarSeparator, SidebarToggle } from "@/components/ui/sidebar";
+import { Home, User, Settings, BarChart, Database, Book, HelpCircle, ChevronDown, ChevronRight, LogIn } from "lucide-react";
+import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 export function AdminSidebar() {
-  const { logout } = useAuth();
+  const [isUsersOpen, setIsUsersOpen] = useState(true);
+  const location = useLocation();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [activeSection, setActiveSection] = useState<string>("dashboard");
 
-  const handleLogout = async () => {
-    try {
-      logger.info('Administrador solicitou logout', {
-        tag: 'AdminSidebar'
-      });
-      await logout();
-      navigate("/");
-    } catch (error) {
-      toast({
-        title: "Erro ao fazer logout",
-        description: "Ocorreu um erro ao tentar fazer logout.",
-        variant: "destructive",
-      });
-    }
+  const handleLogout = () => {
+    // Esta função será implementada posteriormente
+    console.log("Fazendo logout");
   };
 
-  const handleNavigation = (section: string) => {
-    setActiveSection(section);
-    
-    if (section === "dashboard") {
-      navigate("/dashboard");
-    } else if (section === "userDashboard") {
-      navigate("/dashboard");
-    } else if (section === "users") {
-      navigate("/admin/users");
-    } else if (section === "quiz") {
-      navigate("/quiz?admin=true");
-    } else if (section === "quizReview") {
-      navigate("/quiz/review");
-    } else if (section === "quizSuccess") {
-      navigate("/quiz/success");
-    } else if (section === "data") {
-      navigate("/admin/data");
-    } else if (section === "reports") {
-      navigate("/admin/reports");
-    } else if (section === "settings") {
-      navigate("/admin/settings");
-    } else if (section === "help") {
-      navigate("/admin/help");
-    } else if (section === "auth") {
-      navigate("/");
-    }
-  };
+  const isActive = (path: string) => location.pathname.startsWith(path);
 
   return (
-    <Sidebar variant="floating" collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border px-5 py-4 flex flex-col gap-1">
-        <div className="flex items-center justify-between">
-          <img 
-            src="/lovable-uploads/98e55723-efb7-42e8-bc10-a429fdf04ffb.png" 
-            alt="MAR - Mapa para Alto Rendimento" 
-            className="h-6" 
-          />
-          <SidebarTrigger />
+    <Sidebar>
+      <div className="flex flex-col h-full py-2">
+        <div className="flex items-center justify-between px-4 py-2">
+          <div className="flex items-center gap-2">
+            <img
+              src="/lovable-uploads/e109ec41-0f89-456d-8081-f73393ed4fd5.png"
+              alt="Crie Valor"
+              className="h-6"
+            />
+            <span className="font-semibold text-sm">Admin</span>
+          </div>
+          <SidebarToggle />
         </div>
-        <div className="py-1">
-          <p className="text-xs text-sidebar-foreground/60">
-            Painel Administrativo
-          </p>
+
+        <div className="flex-1 overflow-auto py-2">
+          <div className="space-y-1 px-2">
+            <Link to="/admin">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`w-full justify-start ${isActive('/admin') ? 'bg-sidebar-accent' : ''}`}>
+                <Home className="mr-2 h-4 w-4" />
+                Dashboard
+              </Button>
+            </Link>
+            
+            <Collapsible
+              open={isUsersOpen}
+              onOpenChange={setIsUsersOpen}
+              className="w-full">
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`w-full justify-between ${isActive('/admin/users') ? 'bg-sidebar-accent' : ''}`}>
+                  <div className="flex items-center">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Usuários</span>
+                  </div>
+                  {isUsersOpen ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pl-6 space-y-1">
+                <Link to="/admin/users">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`w-full justify-start ${location.pathname === '/admin/users' ? 'bg-sidebar-accent' : ''}`}>
+                    Todos os Usuários
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="sm" className="w-full justify-start">
+                  Adicionar Usuário
+                </Button>
+              </CollapsibleContent>
+            </Collapsible>
+
+            <Link to="/admin/data">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`w-full justify-start ${isActive('/admin/data') ? 'bg-sidebar-accent' : ''}`}>
+                <Database className="mr-2 h-4 w-4" />
+                Dados
+              </Button>
+            </Link>
+
+            <Link to="/admin/reports">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`w-full justify-start ${isActive('/admin/reports') ? 'bg-sidebar-accent' : ''}`}>
+                <BarChart className="mr-2 h-4 w-4" />
+                Relatórios
+              </Button>
+            </Link>
+            
+            <Link to="/admin/settings">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`w-full justify-start ${isActive('/admin/settings') ? 'bg-sidebar-accent' : ''}`}>
+                <Settings className="mr-2 h-4 w-4" />
+                Configurações
+              </Button>
+            </Link>
+
+            <Link to="/admin/help">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`w-full justify-start ${isActive('/admin/help') ? 'bg-sidebar-accent' : ''}`}>
+                <HelpCircle className="mr-2 h-4 w-4" />
+                Ajuda
+              </Button>
+            </Link>
+          </div>
         </div>
-      </SidebarHeader>
-      
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Navegação</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => handleNavigation("dashboard")}
-                  isActive={activeSection === "dashboard"}
-                  tooltip="Dashboard Admin"
-                >
-                  <LayoutDashboard className="h-4 w-4" />
-                  <span>Dashboard Admin</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => handleNavigation("userDashboard")}
-                  isActive={activeSection === "userDashboard"}
-                  tooltip="Dashboard Usuário"
-                >
-                  <Home className="h-4 w-4" />
-                  <span>Dashboard Usuário</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => handleNavigation("users")}
-                  isActive={activeSection === "users"}
-                  tooltip="Usuários"
-                >
-                  <Users className="h-4 w-4" />
-                  <span>Usuários</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => handleNavigation("auth")}
-                  isActive={activeSection === "auth"}
-                  tooltip="Autenticação"
-                >
-                  <LogIn className="h-4 w-4" />
-                  <span>Autenticação</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        
-        <SidebarGroup>
-          <SidebarGroupLabel>Questionário</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => handleNavigation("quiz")}
-                  isActive={activeSection === "quiz"}
-                  tooltip="Questionário MAR"
-                >
-                  <FileText className="h-4 w-4" />
-                  <span>Questionário MAR</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => handleNavigation("quizReview")}
-                  isActive={activeSection === "quizReview"}
-                  tooltip="Validação"
-                >
-                  <CheckSquare className="h-4 w-4" />
-                  <span>Validação</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => handleNavigation("quizSuccess")}
-                  isActive={activeSection === "quizSuccess"}
-                  tooltip="Sucesso"
-                >
-                  <Award className="h-4 w-4" />
-                  <span>Sucesso</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        
-        <SidebarGroup>
-          <SidebarGroupLabel>Análise</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => handleNavigation("data")}
-                  isActive={activeSection === "data"}
-                  tooltip="Dados"
-                >
-                  <Database className="h-4 w-4" />
-                  <span>Dados</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => handleNavigation("reports")}
-                  isActive={activeSection === "reports"}
-                  tooltip="Relatórios"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  <span>Relatórios</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        
-        <SidebarGroup>
-          <SidebarGroupLabel>Sistema</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => handleNavigation("settings")}
-                  isActive={activeSection === "settings"}
-                  tooltip="Configurações"
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>Configurações</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => handleNavigation("help")}
-                  isActive={activeSection === "help"}
-                  tooltip="Ajuda"
-                >
-                  <HelpCircle className="h-4 w-4" />
-                  <span>Ajuda</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-      
-      <SidebarFooter>
-        <Button
-          variant="outline"
-          className="w-full justify-start"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Sair
-        </Button>
-      </SidebarFooter>
+
+        <SidebarSeparator />
+
+        <div className="p-2 space-y-2">
+          {/* Novo botão para Dashboard do Usuário */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full justify-start"
+                onClick={() => navigate('/dashboard')}>
+                <Home className="mr-2 h-4 w-4" />
+                Dashboard Usuário
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Ir para o Dashboard do usuário</p>
+            </TooltipContent>
+          </Tooltip>
+
+          {/* Novo botão para Autenticação */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full justify-start"
+                onClick={() => navigate('/')}>
+                <LogIn className="mr-2 h-4 w-4" />
+                Autenticação
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Ir para a página de login</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <div className="flex items-center justify-center">
+            <Badge variant="outline" className="text-xs text-muted-foreground">
+              v1.0.0
+            </Badge>
+          </div>
+        </div>
+      </div>
     </Sidebar>
   );
 }

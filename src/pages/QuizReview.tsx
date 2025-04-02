@@ -61,13 +61,14 @@ const QuizReviewPage = () => {
     navigate('/quiz/success');
   };
   
-  const handleEdit = () => {
-    navigate('/quiz');
+  const handleEdit = (moduleIndex: number, questionIndex: number) => {
+    // Direcionar para a página do quiz com parâmetros para carregar a questão específica
+    navigate(`/quiz?module=${mockModules[moduleIndex].id}&question=${mockQuestions.filter(q => q.module_id === mockModules[moduleIndex].id)[questionIndex].id}`);
   };
 
   return (
     <div className="min-h-screen flex flex-col quiz-container">
-      <QuizHeader isAdmin={true} />
+      <QuizHeader isAdmin={false} />
       
       <main className="flex-1 container py-8 px-4 flex flex-col items-center">
         <QuizReviewComponent 
@@ -75,11 +76,11 @@ const QuizReviewPage = () => {
           questions={mockQuestions}
           answers={mockAnswers}
           onComplete={handleComplete}
-          onEdit={() => handleEdit()}
+          onEdit={handleEdit}
         />
       </main>
       
-      <footer className="py-4 border-t border-[hsl(var(--quiz-border))] text-center text-sm text-muted-foreground">
+      <footer className="py-4 border-t border-[hsl(var(--quiz-border))] text-center text-sm text-white/70">
         <p>© {new Date().getFullYear()} Crie Valor. Todos os direitos reservados.</p>
       </footer>
     </div>

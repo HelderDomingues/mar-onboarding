@@ -116,7 +116,7 @@
 }
 
 .quiz-btn {
-  @apply bg-[hsl(var(--quiz-accent))] hover:bg-[hsl(var(--quiz-accent-hover))];
+  @apply bg-[hsl(var(--quiz-accent))] hover:bg-[hsl(var(--quiz-accent-hover))] text-white;
 }
 
 .quiz-progress-bar {
