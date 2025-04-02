@@ -230,7 +230,7 @@ const Dashboard = () => {
                 <CardTitle className="text-xl flex items-center text-violet-950">
                   <Settings className="mr-2 h-5 w-5" /> Painel Administrativo
                 </CardTitle>
-                <Button variant="outline" size="sm" onClick={() => setShowAdminPanel(!showAdminPanel)} className="border-violet-800 text-violet-950 font-light rounded-sm bg-violet-200 hover:bg-violet-100">
+                <Button variant="outline" size="sm" onClick={() => setShowAdminPanel(!showAdminPanel)} className="border-violet-800 text-violet-950 font-light rounded-sm bg-zinc-100">
                   {showAdminPanel ? "Ocultar" : "Expandir"}
                 </Button>
               </div>
