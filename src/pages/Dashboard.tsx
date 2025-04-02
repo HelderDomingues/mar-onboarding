@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { QuizSubmission } from "@/types/quiz";
+import { Button } from "@/components/ui/button";
 
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
@@ -107,6 +108,26 @@ const Dashboard = () => {
       
       <main className="flex-1 container max-w-5xl py-8 px-4">
         <UserDashboard submission={submission} />
+        
+        {/* Seção para acesso direto às páginas de validação e sucesso (para testes) */}
+        <div className="mt-8 border-t pt-6">
+          <h2 className="text-xl font-bold mb-4">Acesso direto para testes</h2>
+          <div className="flex flex-wrap gap-4">
+            <Button 
+              variant="outline"
+              onClick={() => window.location.href = '/quiz/review'}
+            >
+              Página de Revisão
+            </Button>
+            
+            <Button 
+              variant="outline"
+              onClick={() => window.location.href = '/quiz/success'}
+            >
+              Página de Sucesso
+            </Button>
+          </div>
+        </div>
       </main>
       
       <footer className="bg-white py-4 border-t text-center text-sm text-muted-foreground">

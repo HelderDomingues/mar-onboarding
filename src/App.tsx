@@ -33,6 +33,7 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
   const { user, isAuthenticated } = useAuth();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
   
   useEffect(() => {
     const checkAdminRole = async () => {
@@ -75,7 +76,7 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
   }
   
   if (!isAdmin) {
-    return <Navigate to="/dashboard" />;
+    return <Navigate to="/dashboard" state={{ from: location.pathname, message: "Você não tem permissão para acessar esta área." }} />;
   }
   
   return <>{children}</>;

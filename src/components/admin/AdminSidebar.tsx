@@ -5,7 +5,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Button } from "@/components/ui/button";
 import { Sidebar, SidebarSeparator, SidebarTrigger } from "@/components/ui/sidebar";
 import { 
-  User, 
   Settings, 
   BarChart, 
   Database, 
@@ -40,18 +39,27 @@ export function AdminSidebar() {
   return (
     <Sidebar>
       <div className="flex flex-col h-full py-2">
-        <div className="flex items-center justify-between px-4 py-2 border-b mb-4">
-          <div className="flex items-center gap-2">
-            <img
-              src="/lovable-uploads/60cbe0c2-a08c-4e1e-990b-db648efa9e0e.png"
-              alt="Crie Valor"
-              className="h-6"
-            />
-            <div className="bg-blue-600 text-white px-3 py-1 text-xs font-medium rounded-md flex items-center gap-1">
-              <span className="font-sans">Admin</span>
+        <div className="flex flex-col items-center gap-2 px-4 py-3 border-b mb-4">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center">
+              <img
+                src="/lovable-uploads/fc26fbf8-6a4c-4016-9ab3-5be4628828c9.png"
+                alt="MAR - Mapa para Alto Rendimento"
+                className="h-8"
+              />
+              <Badge variant="blue" className="ml-2 bg-blue-600 text-white px-2 py-1 text-xs font-medium rounded">
+                Admin
+              </Badge>
             </div>
+            <SidebarTrigger />
           </div>
-          <SidebarTrigger />
+          <div className="flex justify-center w-full mt-2">
+            <img
+              src="/lovable-uploads/ab2ed2e2-b060-4ec5-8ebb-06a38b16e0f7.png"
+              alt="Crie Valor"
+              className="h-4"
+            />
+          </div>
         </div>
 
         <div className="flex-1 overflow-auto py-2">

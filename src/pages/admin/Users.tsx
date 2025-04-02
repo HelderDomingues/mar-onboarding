@@ -81,17 +81,6 @@ const UsersPage = () => {
         return;
       }
       
-      // Buscar emails dos usuários 
-      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) {
-        toast({
-          title: "Erro ao carregar emails dos usuários",
-          description: "Não foi possível acessar emails dos usuários",
-          variant: "destructive",
-        });
-      }
-      
       // Buscar roles de admin
       const { data: adminRoles, error: adminRolesError } = await supabase
         .from('user_roles')
@@ -107,23 +96,18 @@ const UsersPage = () => {
       const adminUserIds = adminRoles?.map(role => role.user_id) || [];
       const submissionUserIds = submissions?.map(sub => sub.user_id) || [];
       
-      // Criar um mapa de emails usando os dados do auth.users
+      // Criar um mapa de emails usando os dados dos perfis ou IDs de usuários
       const emailMap = new Map<string, string>();
       
-      if (authData && authData.users) {
-        authData.users.forEach((authUser: any) => {
-          if (authUser && authUser.id && authUser.email) {
-            emailMap.set(authUser.id, authUser.email);
-          }
-        });
-      }
-      
-      // Combinar os dados de perfis com emails
+      // Combinar os dados de perfis
       const profilesArray = Array.isArray(profilesData) ? profilesData : [];
       const processedUsers = profilesArray.map(profile => {
+        // Buscar o email dos metadados do perfil se disponível
+        const email = profile.email || "Email não disponível";
+        
         return {
           ...profile,
-          email: emailMap.get(profile.id) || 'Email não disponível',
+          email: email,
           is_admin: adminUserIds.includes(profile.id),
           has_submission: submissionUserIds.includes(profile.id)
         } as UserProfile;
@@ -165,6 +149,15 @@ const UsersPage = () => {
       title: "Enviar e-mail",
       description: "Função para enviar e-mail ainda não implementada.",
     });
+  };
+  
+  const handleAddUser = () => {
+    toast({
+      title: "Adicionar usuário",
+      description: "Funcionalidade de adicionar usuário será implementada em breve.",
+    });
+    // Implementação futura: navegação para página de criação de usuário
+    // navigate("/admin/users/new");
   };
   
   const handleToggleAdmin = async (userId: string, isCurrentlyAdmin: boolean) => {
@@ -223,7 +216,7 @@ const UsersPage = () => {
             </div>
             
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-              <Button className="flex items-center gap-2 bg-primary">
+              <Button className="flex items-center gap-2 bg-primary" onClick={handleAddUser}>
                 <UserPlus className="h-4 w-4" />
                 <span>Novo Usuário</span>
               </Button>
@@ -286,7 +279,7 @@ const UsersPage = () => {
                               <TableCell className="font-medium">
                                 {user.full_name || user.username || 'Sem nome'}
                               </TableCell>
-                              <TableCell>{user.email || 'Sem email'}</TableCell>
+                              <TableCell>{user.email || 'Email não disponível'}</TableCell>
                               <TableCell>
                                 {user.has_submission ? (
                                   <div className="flex items-center gap-1 text-green-600">
@@ -324,6 +317,14 @@ const UsersPage = () => {
               </CardContent>
               <CardFooter className="flex justify-between border-t py-4 px-6 text-muted-foreground text-sm">
                 <p>Atualizado em {new Date().toLocaleDateString('pt-BR')}</p>
+                {isLoading ? null : (
+                  users.length === 0 ? null : (
+                    <div className="text-red-500 font-medium">
+                      {/* Indicação de erro nos emails apenas se houver usuários */}
+                      Emails não disponíveis via API Supabase
+                    </div>
+                  )
+                )}
               </CardFooter>
             </Card>
           </div>

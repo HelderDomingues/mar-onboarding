@@ -48,16 +48,16 @@ export function QuizHeader({
   return (
     <header className={`${isAdmin ? 'bg-slate-800 text-white' : 'bg-primary text-white'} shadow-md py-4 px-6 flex justify-between items-center font-sans`}>
       <div className="flex items-center gap-3">
-        {isAdmin && (
-          <div className="bg-blue-600 text-white px-3 py-1 text-xs font-medium rounded-md flex items-center gap-1">
-            <span className="font-sans">Admin</span>
-          </div>
-        )}
         <img 
           alt="MAR - Mapa para Alto Rendimento" 
           src="/lovable-uploads/fc26fbf8-6a4c-4016-9ab3-5be4628828c9.png" 
           className="h-8" 
         />
+        {isAdmin && (
+          <div className="bg-blue-600 text-white px-3 py-1 text-xs font-medium rounded-md flex items-center gap-1">
+            <span className="font-sans">Admin</span>
+          </div>
+        )}
       </div>
       
       <div className="flex items-center gap-4">
