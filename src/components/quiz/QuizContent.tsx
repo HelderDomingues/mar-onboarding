@@ -53,31 +53,56 @@ export function QuizContent({
   
   // Aplica estilos específicos para garantir o contraste
   useEffect(() => {
-    // Garantir que os elementos Select tenham o texto apropriado
-    const selectTriggers = document.querySelectorAll('.quiz-container .select-trigger');
-    selectTriggers.forEach(trigger => {
-      if (trigger instanceof HTMLElement) {
-        trigger.style.color = "black";
-        trigger.style.backgroundColor = "white";
-      }
-    });
-    
-    // Garantir que os itens de menu tenham o contraste correto
-    const selectItems = document.querySelectorAll('.quiz-container .select-item');
-    selectItems.forEach(item => {
-      if (item instanceof HTMLElement) {
-        item.style.color = "black";
-      }
-    });
-    
-    // Corrigir tabelas
-    const tabsTriggers = document.querySelectorAll('.quiz-container .tabs-trigger');
-    tabsTriggers.forEach(tab => {
-      if (tab instanceof HTMLElement) {
-        tab.style.color = "white";
-      }
-    });
-  }, [currentModule, currentQuestionIndex, showReview]);
+    // Aplicar estilos diretamente para garantir que eles sejam atualizados corretamente
+    const applyStyles = () => {
+      // Garantir que os elementos Select tenham o texto apropriado
+      const selectTriggers = document.querySelectorAll('.quiz-container .select-trigger');
+      selectTriggers.forEach(trigger => {
+        if (trigger instanceof HTMLElement) {
+          trigger.style.backgroundColor = "white";
+          trigger.style.color = "black";
+        }
+      });
+      
+      // Garantir que os itens de menu tenham o contraste correto
+      const selectItems = document.querySelectorAll('.quiz-container .select-item');
+      selectItems.forEach(item => {
+        if (item instanceof HTMLElement) {
+          item.style.color = "black";
+        }
+      });
+      
+      // Corrigir abas
+      const tabsTriggers = document.querySelectorAll('.quiz-container .tabs-trigger, .quiz-container [data-state]');
+      tabsTriggers.forEach(tab => {
+        if (tab instanceof HTMLElement) {
+          tab.style.color = "white";
+        }
+      });
+
+      // Corrigir conteúdo do Dropdown
+      const selectContents = document.querySelectorAll('.select__content, [role="listbox"]');
+      selectContents.forEach(content => {
+        if (content instanceof HTMLElement) {
+          content.style.backgroundColor = "white";
+          content.style.color = "black";
+          content.style.zIndex = "50";
+        }
+      });
+    };
+
+    // Executar aplicação de estilos
+    applyStyles();
+
+    // Configurar um temporizador para aplicar os estilos novamente após o componente ser renderizado
+    const timeoutId = setTimeout(applyStyles, 100);
+    const intervalId = setInterval(applyStyles, 500); // Continuar aplicando estilos a cada 500ms
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
+  }, [currentModule, currentQuestionIndex, showReview, showAdminPanel]);
 
   if (!moduleQuestions || moduleQuestions.length === 0) {
     return null;
@@ -150,9 +175,9 @@ export function QuizContent({
           {showAdminPanel && (
             <div className="mt-3 p-3 bg-orange-50 rounded-md">
               <Tabs defaultValue="navigation">
-                <TabsList className="mb-3 bg-orange-200">
-                  <TabsTrigger value="navigation" className="text-orange-900 data-[state=active]:bg-orange-300">Navegação</TabsTrigger>
-                  <TabsTrigger value="info" className="text-orange-900 data-[state=active]:bg-orange-300">Informações</TabsTrigger>
+                <TabsList className="mb-3 bg-orange-200 tabs-list">
+                  <TabsTrigger value="navigation" className="text-orange-900 data-[state=active]:bg-orange-300 tabs-trigger">Navegação</TabsTrigger>
+                  <TabsTrigger value="info" className="text-orange-900 data-[state=active]:bg-orange-300 tabs-trigger">Informações</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="navigation" className="space-y-3">
@@ -163,12 +188,12 @@ export function QuizContent({
                         value={currentModuleIndex.toString()}
                         onValueChange={handleAdminModuleChange}
                       >
-                        <SelectTrigger className="bg-white text-black select-trigger">
+                        <SelectTrigger className="bg-white text-black select-trigger" style={{backgroundColor: "white", color: "black"}}>
                           <SelectValue placeholder="Selecionar módulo" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white select-content">
                           {allModules.map((module, index) => (
-                            <SelectItem key={module.id} value={index.toString()} className="select-item">
+                            <SelectItem key={module.id} value={index.toString()} className="select-item" style={{color: "black"}}>
                               Módulo {index + 1}: {module.title}
                             </SelectItem>
                           ))}
@@ -182,12 +207,12 @@ export function QuizContent({
                         value={currentQuestionIndex.toString()}
                         onValueChange={handleAdminQuestionChange}
                       >
-                        <SelectTrigger className="bg-white text-black select-trigger">
+                        <SelectTrigger className="bg-white text-black select-trigger" style={{backgroundColor: "white", color: "black"}}>
                           <SelectValue placeholder="Selecionar questão" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white select-content">
                           {moduleQuestions.map((question, index) => (
-                            <SelectItem key={question.id} value={index.toString()} className="select-item">
+                            <SelectItem key={question.id} value={index.toString()} className="select-item" style={{color: "black"}}>
                               Questão {index + 1}
                             </SelectItem>
                           ))}

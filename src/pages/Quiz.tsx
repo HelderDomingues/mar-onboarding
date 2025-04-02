@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,14 +25,50 @@ const ADMIN_EMAILS = [
 
 // Função para forçar atualização de estilos
 const refreshStyles = () => {
-  const links = document.querySelectorAll('link[rel="stylesheet"]');
-  links.forEach(link => {
-    const href = link.getAttribute('href');
-    if (href) {
-      const updatedHref = href.includes('?') 
-        ? `${href}&refresh=${Date.now()}` 
-        : `${href}?refresh=${Date.now()}`;
-      link.setAttribute('href', updatedHref);
+  // Atualizar estilos forçando um reflow
+  document.body.style.display = 'none';
+  document.body.offsetHeight; // Força um reflow
+  document.body.style.display = '';
+  
+  // Forçar atualização dos estilos inline
+  const quizElements = document.querySelectorAll('.quiz-container *');
+  quizElements.forEach(el => {
+    if (el instanceof HTMLElement) {
+      const computedStyle = window.getComputedStyle(el);
+      el.style.cssText = el.style.cssText; // Reaplica os estilos inline
+    }
+  });
+
+  // Atualizar as classes específicas que precisam ser mais contrastantes
+  const selectTriggers = document.querySelectorAll('.select-trigger');
+  selectTriggers.forEach(trigger => {
+    if (trigger instanceof HTMLElement) {
+      trigger.style.backgroundColor = "white";
+      trigger.style.color = "black";
+    }
+  });
+
+  const selectItems = document.querySelectorAll('.select-item');
+  selectItems.forEach(item => {
+    if (item instanceof HTMLElement) {
+      item.style.color = "black";
+    }
+  });
+
+  const tabsTriggers = document.querySelectorAll('.tabs-trigger, [data-state]');
+  tabsTriggers.forEach(tab => {
+    if (tab instanceof HTMLElement) {
+      tab.style.color = "white";
+    }
+  });
+  
+  // Forçar atualização para dropdowns
+  const dropdowns = document.querySelectorAll('[role="listbox"]');
+  dropdowns.forEach(dropdown => {
+    if (dropdown instanceof HTMLElement) {
+      dropdown.style.backgroundColor = "white";
+      dropdown.style.color = "black";
+      dropdown.style.zIndex = "50";
     }
   });
 };
@@ -61,9 +98,13 @@ const Quiz = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showReview, setShowReview] = useState(false);
 
-  // Forçar atualização de estilos ao carregar
+  // Forçar atualização de estilos periodicamente
   useEffect(() => {
+    // Forçar atualizações de estilo na inicialização e em intervalos regulares
     refreshStyles();
+    const intervalId = setInterval(refreshStyles, 1000);
+    
+    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {

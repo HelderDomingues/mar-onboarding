@@ -244,6 +244,24 @@
   color: hsl(var(--quiz-text));
 }
 
+/* Força estilos específicos para componentes da UI */
+.quiz-container .tabs-list {
+  background-color: hsl(var(--quiz-card));
+}
+
+.quiz-container .tabs-trigger {
+  color: hsl(var(--quiz-text));
+}
+
+.quiz-container .select-trigger {
+  background-color: white;
+  color: black;
+}
+
+.quiz-container .select-item {
+  color: black;
+}
+
 /* Animações */
 @keyframes fade-in {
   from {
