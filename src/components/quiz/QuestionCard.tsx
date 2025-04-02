@@ -53,16 +53,41 @@ export function QuestionCard({
   const [checkedOptions, setCheckedOptions] = useState<string[]>(
     Array.isArray(currentAnswer) ? currentAnswer : []
   );
+
+  // Para opção "outro" em múltipla escolha
+  const [otherValue, setOtherValue] = useState<string>('');
+  const [showOtherInput, setShowOtherInput] = useState<boolean>(false);
   
   // Atualizar estado local quando as props mudam
   useEffect(() => {
     if (typeof currentAnswer === 'string') {
       setSelectedOption(currentAnswer);
       setTextAnswer(currentAnswer);
+      
+      // Verificar se a opção "outro" está selecionada
+      if (question.options?.some(opt => opt.toLowerCase().includes('outro')) && 
+          !question.options?.includes(currentAnswer) && 
+          currentAnswer !== '') {
+        setOtherValue(currentAnswer);
+        setShowOtherInput(true);
+        
+        if (question.type === 'radio') {
+          const otherOption = question.options?.find(opt => opt.toLowerCase().includes('outro'));
+          if (otherOption) setSelectedOption(otherOption);
+        }
+      }
     } else if (Array.isArray(currentAnswer)) {
       setCheckedOptions(currentAnswer);
+      
+      // Verificar se alguma resposta não está entre as opções (é uma resposta "outro")
+      const otherOption = question.options?.find(opt => opt.toLowerCase().includes('outro'));
+      if (otherOption && currentAnswer.some(ans => !question.options?.includes(ans))) {
+        setShowOtherInput(true);
+        const customAnswer = currentAnswer.find(ans => !question.options?.includes(ans));
+        if (customAnswer) setOtherValue(customAnswer);
+      }
     }
-  }, [currentAnswer, question.id]);
+  }, [currentAnswer, question.id, question.options]);
   
   const handleCheckboxChange = (option: string) => {
     setCheckedOptions((prev) => {
@@ -72,13 +97,43 @@ export function QuestionCard({
         return [...prev, option];
       }
     });
+    
+    // Se selecionou "outro", mostrar campo de texto
+    if (option.toLowerCase().includes('outro')) {
+      setShowOtherInput(!checkedOptions.includes(option));
+    }
+  };
+  
+  const handleRadioChange = (value: string) => {
+    setSelectedOption(value);
+    
+    // Se selecionou "outro", mostrar campo de texto
+    if (value.toLowerCase().includes('outro')) {
+      setShowOtherInput(true);
+    } else {
+      setShowOtherInput(false);
+    }
   };
   
   const handleNext = () => {
     if (question.type === 'radio') {
-      onAnswer(question.id, selectedOption);
+      // Se selecionou "outro", usar o valor do campo de texto
+      if (selectedOption.toLowerCase().includes('outro') && showOtherInput && otherValue) {
+        onAnswer(question.id, otherValue);
+      } else {
+        onAnswer(question.id, selectedOption);
+      }
     } else if (question.type === 'checkbox') {
-      onAnswer(question.id, checkedOptions);
+      let answers = [...checkedOptions];
+      
+      // Se selecionou "outro", substituir pela resposta personalizada
+      const otherIndex = answers.findIndex(opt => opt.toLowerCase().includes('outro'));
+      if (otherIndex >= 0 && showOtherInput && otherValue) {
+        answers.splice(otherIndex, 1);
+        answers.push(otherValue);
+      }
+      
+      onAnswer(question.id, answers);
     } else {
       onAnswer(question.id, textAnswer);
     }
@@ -90,8 +145,14 @@ export function QuestionCard({
     
     switch (question.type) {
       case 'radio':
+        if (selectedOption.toLowerCase().includes('outro')) {
+          return !!otherValue;
+        }
         return !!selectedOption;
       case 'checkbox':
+        if (checkedOptions.some(opt => opt.toLowerCase().includes('outro')) && !otherValue) {
+          return false;
+        }
         return checkedOptions.length > 0;
       case 'text':
       case 'textarea':
@@ -104,7 +165,7 @@ export function QuestionCard({
   };
 
   return (
-    <Card className="w-full max-w-2xl animate-fade-in">
+    <Card className="w-full max-w-2xl animate-fade-in quiz-card">
       <CardHeader>
         <CardTitle className="text-xl flex items-start">
           <span>{question.text}</span>
@@ -122,20 +183,39 @@ export function QuestionCard({
       
       <CardContent>
         {question.type === 'radio' && question.options && (
-          <RadioGroup 
-            value={selectedOption} 
-            onValueChange={setSelectedOption}
-            className="space-y-3"
-          >
-            {question.options.map((option, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <RadioGroupItem value={option} id={`option-${question.id}-${index}`} />
-                <Label htmlFor={`option-${question.id}-${index}`} className="text-base">
-                  {option}
-                </Label>
+          <div>
+            {question.type === 'radio' && (
+              <p className="text-sm text-muted-foreground mb-4">
+                Selecione uma opção abaixo
+              </p>
+            )}
+            <RadioGroup 
+              value={selectedOption} 
+              onValueChange={handleRadioChange}
+              className="space-y-3"
+            >
+              {question.options.map((option, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <RadioGroupItem value={option} id={`option-${question.id}-${index}`} />
+                  <Label htmlFor={`option-${question.id}-${index}`} className="text-base">
+                    {option}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+            
+            {showOtherInput && (
+              <div className="mt-2 pl-6">
+                <Input
+                  type="text"
+                  placeholder="Especifique sua resposta..."
+                  value={otherValue}
+                  onChange={(e) => setOtherValue(e.target.value)}
+                  className="w-full"
+                />
               </div>
-            ))}
-          </RadioGroup>
+            )}
+          </div>
         )}
         
         {question.type === 'text' && (
@@ -179,6 +259,9 @@ export function QuestionCard({
         
         {question.type === 'checkbox' && question.options && (
           <div className="space-y-3">
+            <p className="text-sm text-muted-foreground mb-3">
+              Marque quantas opções desejar
+            </p>
             {question.options.map((option, index) => (
               <div key={index} className="flex items-center space-x-2">
                 <Checkbox 
@@ -194,6 +277,18 @@ export function QuestionCard({
                 </label>
               </div>
             ))}
+            
+            {showOtherInput && (
+              <div className="mt-2 pl-6">
+                <Input
+                  type="text"
+                  placeholder="Especifique sua resposta..."
+                  value={otherValue}
+                  onChange={(e) => setOtherValue(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+            )}
           </div>
         )}
         
@@ -218,13 +313,14 @@ export function QuestionCard({
           variant="outline" 
           onClick={onPrev}
           disabled={isFirst}
+          className="border-[hsl(var(--quiz-border))]"
         >
           Anterior
         </Button>
         
         <Button 
           onClick={handleNext} 
-          className="bg-quiz hover:bg-quiz-dark"
+          className="quiz-btn text-white"
           disabled={question.required && !isAnswerValid()}
         >
           {isLast ? "Finalizar" : "Próximo"}

@@ -2,6 +2,8 @@
 import { QuestionCard, Question } from "@/components/quiz/QuestionCard";
 import { QuizProgress } from "@/components/quiz/QuizProgress";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
+import { Card } from "@/components/ui/card";
+import { BookOpen } from "lucide-react";
 
 interface QuizContentProps {
   currentModule: QuizModule;
@@ -38,16 +40,23 @@ export function QuizContent({
 
   return (
     <>
-      <div className="w-full max-w-2xl mb-6">
-        <h2 className="text-2xl font-bold mb-2">
-          {currentModule?.title}
-        </h2>
-        {currentModule?.description && (
-          <p className="text-muted-foreground">
-            {currentModule?.description}
-          </p>
-        )}
-      </div>
+      <Card className="w-full max-w-2xl mb-6 p-6 quiz-card">
+        <div className="flex items-start gap-3">
+          <div className="bg-[hsl(var(--quiz-accent))] p-2 rounded-full">
+            <BookOpen className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold mb-2">
+              {currentModule?.title}
+            </h2>
+            {currentModule?.description && (
+              <p className="text-muted-foreground">
+                {currentModule?.description}
+              </p>
+            )}
+          </div>
+        </div>
+      </Card>
 
       <QuizProgress 
         currentStep={currentQuestionIndex + 1} 

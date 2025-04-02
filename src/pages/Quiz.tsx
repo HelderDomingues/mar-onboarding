@@ -123,7 +123,7 @@ const Quiz = () => {
             setCurrentModuleIndex(moduleIndex);
             
             if (modulesData[moduleIndex]) {
-              // Corrigindo a referência à variável 'questionsWithOptions'
+              // Usando a variável questions em vez de questionsWithOptions
               const moduleQuestions = questions.filter(
                 q => q.module_id === modulesData[moduleIndex].id
               );
@@ -346,7 +346,7 @@ const Quiz = () => {
   const isLastQuestion = currentModuleIndex === modules.length - 1 && currentQuestionIndex === moduleQuestions.length - 1;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col quiz-container">
       <QuizHeader />
       
       <main className="flex-1 container py-8 px-4 flex flex-col items-center">
@@ -380,7 +380,7 @@ const Quiz = () => {
         )}
       </main>
       
-      <footer className="bg-white py-4 border-t text-center text-sm text-muted-foreground">
+      <footer className="py-4 border-t border-[hsl(var(--quiz-border))] text-center text-sm text-muted-foreground">
         <p>© {new Date().getFullYear()} Crie Valor. Todos os direitos reservados.</p>
       </footer>
     </div>
