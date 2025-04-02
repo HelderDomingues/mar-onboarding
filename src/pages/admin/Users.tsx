@@ -81,7 +81,7 @@ const UsersPage = () => {
         return;
       }
       
-      // Buscar emails dos usuários diretamente da auth.users
+      // Buscar emails dos usuários 
       const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
       
       if (authError) {
@@ -111,15 +111,16 @@ const UsersPage = () => {
       const emailMap = new Map<string, string>();
       
       if (authData && authData.users) {
-        authData.users.forEach((authUser) => {
-          if (authUser.id && authUser.email) {
+        authData.users.forEach((authUser: any) => {
+          if (authUser && authUser.id && authUser.email) {
             emailMap.set(authUser.id, authUser.email);
           }
         });
       }
       
       // Combinar os dados de perfis com emails
-      const processedUsers = (profilesData || []).map(profile => {
+      const profilesArray = Array.isArray(profilesData) ? profilesData : [];
+      const processedUsers = profilesArray.map(profile => {
         return {
           ...profile,
           email: emailMap.get(profile.id) || 'Email não disponível',

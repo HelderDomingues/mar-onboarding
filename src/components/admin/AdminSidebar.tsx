@@ -26,11 +26,11 @@ export function AdminSidebar() {
   const [isUsersOpen, setIsUsersOpen] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { logout } = useAuth();
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      await logout();
       navigate("/");
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
