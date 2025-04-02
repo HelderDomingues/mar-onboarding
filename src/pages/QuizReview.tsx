@@ -9,16 +9,40 @@ const QuizReviewPage = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
-  // Dados de exemplo para visualização
+  // Dados de exemplo para visualização com todas as propriedades necessárias conforme interfaces
   const mockModules = [
-    { id: "1", title: "Dados Gerais", order_number: 1 },
-    { id: "2", title: "Financeiro", order_number: 2 }
+    { id: "1", title: "Dados Gerais", description: null, order_number: 1 },
+    { id: "2", title: "Financeiro", description: null, order_number: 2 }
   ];
   
   const mockQuestions = [
-    { id: "1", text: "Qual o nome da sua empresa?", module_id: "1", order_number: 1 },
-    { id: "2", text: "Quantos funcionários você tem?", module_id: "1", order_number: 2 },
-    { id: "3", text: "Qual o faturamento mensal?", module_id: "2", order_number: 1 }
+    { 
+      id: "1", 
+      text: "Qual o nome da sua empresa?", 
+      module_id: "1", 
+      order_number: 1,
+      type: "text",
+      required: true,
+      hint: null
+    },
+    { 
+      id: "2", 
+      text: "Quantos funcionários você tem?", 
+      module_id: "1", 
+      order_number: 2,
+      type: "number",
+      required: true,
+      hint: null
+    },
+    { 
+      id: "3", 
+      text: "Qual o faturamento mensal?", 
+      module_id: "2", 
+      order_number: 1,
+      type: "text",
+      required: true,
+      hint: null
+    }
   ];
   
   const mockAnswers = {
