@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,7 +17,9 @@ interface AnswerMap {
 // Lista de emails de administradores
 const ADMIN_EMAILS = [
   "helder@crievalor.com.br",
-  // Adicione outros emails de admin conforme necessário
+  "teste1@crievalor.com.br",
+  "teste2@crievalor.com.br",
+  "teste3@crievalor.com.br"
 ];
 
 const Quiz = () => {
@@ -39,7 +40,6 @@ const Quiz = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showReview, setShowReview] = useState(false);
 
-  // Verificar se o usuário atual é um administrador
   useEffect(() => {
     if (user?.email) {
       setIsAdmin(ADMIN_EMAILS.includes(user.email));
@@ -98,7 +98,6 @@ const Quiz = () => {
           }
         }
 
-        // Corrigindo a consulta de submissões para evitar o erro 406
         const { data: submissionData, error: submissionError } = await supabase
           .from('quiz_submissions')
           .select('*')
@@ -109,10 +108,8 @@ const Quiz = () => {
             tag: 'Quiz',
             data: submissionError
           });
-          // Continue com o fluxo mesmo se houver erro na busca de submissão
         }
 
-        // Verifica se existe uma submissão existente
         if (submissionData && submissionData.length > 0) {
           const userSubmission = submissionData[0] as unknown as QuizSubmission;
           setSubmission(userSubmission);
@@ -124,7 +121,6 @@ const Quiz = () => {
             setCurrentModuleIndex(moduleIndex);
             
             if (modulesData[moduleIndex]) {
-              // Usando a variável questions em vez de questionsWithOptions
               const moduleQuestions = questions.filter(
                 q => q.module_id === modulesData[moduleIndex].id
               );
@@ -158,7 +154,6 @@ const Quiz = () => {
             setAnswers(loadedAnswers);
           }
         } else {
-          // Criar uma nova submissão se não existir
           const { data: newSubmission, error: createError } = await supabase
             .from('quiz_submissions')
             .insert([{
@@ -314,7 +309,6 @@ const Quiz = () => {
         setCurrentQuestionIndex(0);
         window.scrollTo(0, 0);
       } else {
-        // Mostrar tela de revisão em vez de completar diretamente
         setShowReview(true);
         window.scrollTo(0, 0);
       }
@@ -336,7 +330,6 @@ const Quiz = () => {
     }
   };
 
-  // Função para editar uma pergunta específica
   const handleEditQuestion = (moduleIndex: number, questionIndex: number) => {
     setShowReview(false);
     setCurrentModuleIndex(moduleIndex);
@@ -382,6 +375,7 @@ const Quiz = () => {
                 onEditQuestion={handleEditQuestion}
                 allModules={modules}
                 allQuestions={questions}
+                isAdmin={isAdmin}
               />
             ) : (
               <QuizConfigurationPanel
