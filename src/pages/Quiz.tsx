@@ -156,6 +156,7 @@ const Quiz = () => {
             }
           }
 
+          // Alterado para buscar da tabela quiz_answers em vez de quiz_options
           const { data: answersData, error: answersError } = await supabase
             .from('quiz_answers')
             .select('*')
@@ -224,6 +225,7 @@ const Quiz = () => {
     fetchQuizData();
   }, [isAuthenticated, user, moduleParam, questionParam]);
 
+  // Modificado para salvar na tabela quiz_answers em vez de quiz_options
   const saveAnswer = async (questionId: string, answer: string | string[]) => {
     if (!user) return;
     try {

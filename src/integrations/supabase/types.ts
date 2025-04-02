@@ -221,6 +221,13 @@ export type Database = {
             referencedRelation: "quiz_questions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "quiz_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_responses_flat"
+            referencedColumns: ["question_id"]
+          },
         ]
       }
       quiz_modules: {
@@ -283,6 +290,13 @@ export type Database = {
             referencedRelation: "quiz_questions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "quiz_options_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_responses_flat"
+            referencedColumns: ["question_id"]
+          },
         ]
       }
       quiz_questions: {
@@ -337,6 +351,7 @@ export type Database = {
           contact_preference: string | null
           created_at: string
           current_module: number
+          email: string | null
           id: string
           started_at: string
           updated_at: string
@@ -349,6 +364,7 @@ export type Database = {
           contact_preference?: string | null
           created_at?: string
           current_module?: number
+          email?: string | null
           id?: string
           started_at?: string
           updated_at?: string
@@ -361,6 +377,7 @@ export type Database = {
           contact_preference?: string | null
           created_at?: string
           current_module?: number
+          email?: string | null
           id?: string
           started_at?: string
           updated_at?: string
@@ -541,7 +558,23 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      quiz_responses_flat: {
+        Row: {
+          answer: string | null
+          company_name: string | null
+          completed: boolean | null
+          completed_at: string | null
+          contact_consent: boolean | null
+          email: string | null
+          full_name: string | null
+          question_id: string | null
+          question_text: string | null
+          started_at: string | null
+          submission_id: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       bootstrap_admin_role: {
