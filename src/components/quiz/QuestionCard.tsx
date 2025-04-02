@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,8 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { InfoIcon } from "lucide-react";
-export type QuestionType = 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select';
+import { InfoIcon, Instagram, Globe } from "lucide-react";
+import { PrefixInput } from "@/components/ui/prefix-input";
+
+export type QuestionType = 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select' | 'instagram' | 'website';
+
 export interface Question {
   id: string;
   text: string;
@@ -16,6 +20,7 @@ export interface Question {
   required: boolean;
   hint?: string;
 }
+
 interface QuestionCardProps {
   question: Question;
   onAnswer: (questionId: string, answer: string | string[]) => void;
@@ -25,6 +30,7 @@ interface QuestionCardProps {
   isLast: boolean;
   currentAnswer?: string | string[];
 }
+
 export function QuestionCard({
   question,
   onAnswer,
@@ -49,6 +55,7 @@ export function QuestionCard({
 
   // Atualizar estado local quando as props mudam
   useEffect(() => {
+    // Redefinir estados para evitar persistência de dados entre perguntas
     if (typeof currentAnswer === 'string') {
       setSelectedOption(currentAnswer);
       setTextAnswer(currentAnswer);
@@ -61,6 +68,10 @@ export function QuestionCard({
           const otherOption = question.options?.find(opt => opt.toLowerCase().includes('outro'));
           if (otherOption) setSelectedOption(otherOption);
         }
+      } else {
+        // Limpar o otherValue quando não estiver usando a opção "outro"
+        setOtherValue('');
+        setShowOtherInput(false);
       }
     } else if (Array.isArray(currentAnswer)) {
       setCheckedOptions(currentAnswer);
@@ -71,9 +82,22 @@ export function QuestionCard({
         setShowOtherInput(true);
         const customAnswer = currentAnswer.find(ans => !question.options?.includes(ans));
         if (customAnswer) setOtherValue(customAnswer);
+      } else {
+        // Limpar o otherValue quando não estiver usando a opção "outro"
+        setOtherValue('');
+        setShowOtherInput(false);
       }
+    } else {
+      // Se não há resposta atual, limpar todos os estados
+      setTextAnswer('');
+      setSelectedOption('');
+      setCheckedOptions([]);
+      setOtherValue('');
+      setShowOtherInput(false);
     }
-  }, [currentAnswer, question.id, question.options]);
+  }, [question.id, currentAnswer, question.options]);
+
+  // Funções de manipulação
   const handleCheckboxChange = (option: string) => {
     setCheckedOptions(prev => {
       if (prev.includes(option)) {
@@ -88,6 +112,7 @@ export function QuestionCard({
       setShowOtherInput(!checkedOptions.includes(option));
     }
   };
+
   const handleRadioChange = (value: string) => {
     setSelectedOption(value);
 
@@ -98,6 +123,7 @@ export function QuestionCard({
       setShowOtherInput(false);
     }
   };
+
   const handleNext = () => {
     if (question.type === 'radio') {
       // Se selecionou "outro", usar o valor do campo de texto
@@ -116,11 +142,29 @@ export function QuestionCard({
         answers.push(otherValue);
       }
       onAnswer(question.id, answers);
+    } else if (question.type === 'instagram') {
+      // Remove o prefixo se o usuário o incluiu
+      let instagramUsername = textAnswer;
+      if (instagramUsername.includes('instagram.com/')) {
+        instagramUsername = instagramUsername.split('instagram.com/').pop() || '';
+      }
+      if (instagramUsername.startsWith('@')) {
+        instagramUsername = instagramUsername.substring(1);
+      }
+      onAnswer(question.id, instagramUsername);
+    } else if (question.type === 'website') {
+      // Garantir que a URL tenha o protocolo
+      let websiteUrl = textAnswer;
+      if (websiteUrl && !websiteUrl.startsWith('http')) {
+        websiteUrl = 'https://' + websiteUrl;
+      }
+      onAnswer(question.id, websiteUrl);
     } else {
       onAnswer(question.id, textAnswer);
     }
     onNext();
   };
+
   const isAnswerValid = () => {
     if (!question.required) return true;
     switch (question.type) {
@@ -134,6 +178,8 @@ export function QuestionCard({
           return false;
         }
         return checkedOptions.length > 0;
+      case 'instagram':
+      case 'website':
       case 'text':
       case 'textarea':
       case 'email':
@@ -143,6 +189,27 @@ export function QuestionCard({
         return true;
     }
   };
+
+  // Define placeholder texts based on question type
+  const getPlaceholder = () => {
+    switch (question.type) {
+      case 'text':
+        return "Digite sua resposta aqui...";
+      case 'email':
+        return "Digite seu e-mail aqui...";
+      case 'number':
+        return "Digite um número...";
+      case 'textarea':
+        return "Digite sua resposta detalhada aqui...";
+      case 'instagram':
+        return "Seu nome de usuário sem @";
+      case 'website':
+        return "exemplo.com.br";
+      default:
+        return "Digite sua resposta aqui...";
+    }
+  };
+
   return <Card className="w-full max-w-2xl animate-fade-in quiz-card">
       <CardHeader>
         <CardTitle className="text-xl flex items-start">
@@ -176,13 +243,31 @@ export function QuestionCard({
               </div>}
           </div>}
         
-        {question.type === 'text' && <Input type="text" placeholder="Digite sua resposta aqui..." value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full" />}
+        {question.type === 'text' && <Input type="text" placeholder={getPlaceholder()} value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full" />}
         
-        {question.type === 'email' && <Input type="email" placeholder="Digite seu e-mail aqui..." value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full" />}
+        {question.type === 'email' && <Input type="email" placeholder={getPlaceholder()} value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full" />}
         
-        {question.type === 'number' && <Input type="number" placeholder="Digite um número..." value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full" />}
+        {question.type === 'number' && <Input type="number" placeholder={getPlaceholder()} value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full" />}
         
-        {question.type === 'textarea' && <Textarea placeholder="Digite sua resposta aqui..." value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="min-h-[120px]" />}
+        {question.type === 'instagram' && 
+          <PrefixInput 
+            prefix="instagram.com/" 
+            placeholder={getPlaceholder()}
+            value={textAnswer} 
+            onChange={e => setTextAnswer(e.target.value)} 
+          />
+        }
+        
+        {question.type === 'website' && 
+          <PrefixInput 
+            prefix="https://" 
+            placeholder={getPlaceholder()}
+            value={textAnswer} 
+            onChange={e => setTextAnswer(e.target.value)} 
+          />
+        }
+        
+        {question.type === 'textarea' && <Textarea placeholder={getPlaceholder()} value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="min-h-[120px]" />}
         
         {question.type === 'checkbox' && question.options && <div className="space-y-3">
             <p className="text-sm text-muted-foreground mb-3">
@@ -209,7 +294,7 @@ export function QuestionCard({
       </CardContent>
       
       <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={onPrev} disabled={isFirst} className="border-[hsl(var(--quiz-border))] text-zinc-600">
+        <Button variant="outline" onClick={onPrev} disabled={isFirst} className="border-[hsl(var(--quiz-border))] text-white">
           Anterior
         </Button>
         
