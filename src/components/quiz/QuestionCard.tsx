@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { PrefixInput } from "@/components/ui/prefix-input";
 import { InfoIcon } from "lucide-react";
-export type QuestionType = 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select';
+
+export type QuestionType = 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select' | 'url';
 export interface Question {
   id: string;
   text: string;
@@ -16,6 +18,7 @@ export interface Question {
   required: boolean;
   hint?: string;
 }
+
 interface QuestionCardProps {
   question: Question;
   onAnswer: (questionId: string, answer: string | string[]) => void;
@@ -25,6 +28,7 @@ interface QuestionCardProps {
   isLast: boolean;
   currentAnswer?: string | string[];
 }
+
 export function QuestionCard({
   question,
   onAnswer,
@@ -34,26 +38,17 @@ export function QuestionCard({
   isLast,
   currentAnswer
 }: QuestionCardProps) {
-  // Para perguntas de múltipla escolha (radio)
   const [selectedOption, setSelectedOption] = useState<string>(typeof currentAnswer === 'string' ? currentAnswer : '');
-
-  // Para perguntas de texto
   const [textAnswer, setTextAnswer] = useState<string>(typeof currentAnswer === 'string' ? currentAnswer : '');
-
-  // Para perguntas de checkbox (múltiplas seleções)
   const [checkedOptions, setCheckedOptions] = useState<string[]>(Array.isArray(currentAnswer) ? currentAnswer : []);
-
-  // Para opção "outro" em múltipla escolha
   const [otherValue, setOtherValue] = useState<string>('');
   const [showOtherInput, setShowOtherInput] = useState<boolean>(false);
 
-  // Atualizar estado local quando as props mudam
   useEffect(() => {
     if (typeof currentAnswer === 'string') {
       setSelectedOption(currentAnswer);
       setTextAnswer(currentAnswer);
 
-      // Verificar se a opção "outro" está selecionada
       if (question.options?.some(opt => opt.toLowerCase().includes('outro')) && !question.options?.includes(currentAnswer) && currentAnswer !== '') {
         setOtherValue(currentAnswer);
         setShowOtherInput(true);
@@ -65,7 +60,6 @@ export function QuestionCard({
     } else if (Array.isArray(currentAnswer)) {
       setCheckedOptions(currentAnswer);
 
-      // Verificar se alguma resposta não está entre as opções (é uma resposta "outro")
       const otherOption = question.options?.find(opt => opt.toLowerCase().includes('outro'));
       if (otherOption && currentAnswer.some(ans => !question.options?.includes(ans))) {
         setShowOtherInput(true);
@@ -74,6 +68,7 @@ export function QuestionCard({
       }
     }
   }, [currentAnswer, question.id, question.options]);
+
   const handleCheckboxChange = (option: string) => {
     setCheckedOptions(prev => {
       if (prev.includes(option)) {
@@ -83,24 +78,23 @@ export function QuestionCard({
       }
     });
 
-    // Se selecionou "outro", mostrar campo de texto
     if (option.toLowerCase().includes('outro')) {
       setShowOtherInput(!checkedOptions.includes(option));
     }
   };
+
   const handleRadioChange = (value: string) => {
     setSelectedOption(value);
 
-    // Se selecionou "outro", mostrar campo de texto
     if (value.toLowerCase().includes('outro')) {
       setShowOtherInput(true);
     } else {
       setShowOtherInput(false);
     }
   };
+
   const handleNext = () => {
     if (question.type === 'radio') {
-      // Se selecionou "outro", usar o valor do campo de texto
       if (selectedOption.toLowerCase().includes('outro') && showOtherInput && otherValue) {
         onAnswer(question.id, otherValue);
       } else {
@@ -109,7 +103,6 @@ export function QuestionCard({
     } else if (question.type === 'checkbox') {
       let answers = [...checkedOptions];
 
-      // Se selecionou "outro", substituir pela resposta personalizada
       const otherIndex = answers.findIndex(opt => opt.toLowerCase().includes('outro'));
       if (otherIndex >= 0 && showOtherInput && otherValue) {
         answers.splice(otherIndex, 1);
@@ -121,6 +114,7 @@ export function QuestionCard({
     }
     onNext();
   };
+
   const isAnswerValid = () => {
     if (!question.required) return true;
     switch (question.type) {
@@ -139,10 +133,13 @@ export function QuestionCard({
       case 'email':
       case 'number':
         return !!textAnswer;
+      case 'url':
+        return !!textAnswer;
       default:
         return true;
     }
   };
+
   return <Card className="w-full max-w-2xl animate-fade-in quiz-card">
       <CardHeader>
         <CardTitle className="text-xl flex items-start">
@@ -179,6 +176,16 @@ export function QuestionCard({
         {question.type === 'text' && <Input type="text" placeholder="Digite sua resposta aqui..." value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full" />}
         
         {question.type === 'email' && <Input type="email" placeholder="Digite seu e-mail aqui..." value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full" />}
+        
+        {question.type === 'url' && (
+          <PrefixInput 
+            prefix="https://" 
+            placeholder="exemplo: www.suaempresa.com.br" 
+            type="text" 
+            value={textAnswer} 
+            onChange={e => setTextAnswer(e.target.value)}
+          />
+        )}
         
         {question.type === 'number' && <Input type="number" placeholder="Digite um número..." value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full" />}
         
