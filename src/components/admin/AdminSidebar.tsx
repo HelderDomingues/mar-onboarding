@@ -47,7 +47,7 @@ export function AdminSidebar() {
                 alt="MAR - Mapa para Alto Rendimento"
                 className="h-8"
               />
-              <Badge variant="blue" className="ml-2 bg-blue-600 text-white px-2 py-1 text-xs font-medium rounded">
+              <Badge variant="default" className="ml-2 bg-blue-600 text-white px-2 py-1 text-xs font-medium rounded">
                 Admin
               </Badge>
             </div>

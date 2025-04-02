@@ -29,7 +29,7 @@ import { Search, UserPlus, Mail, CheckCircle, XCircle, RefreshCw } from "lucide-
 
 type UserProfile = {
   id: string;
-  email: string;
+  email?: string;
   full_name?: string;
   username?: string;
   created_at?: string;
@@ -81,6 +81,9 @@ const UsersPage = () => {
         return;
       }
       
+      // Buscar users da tabela auth para pegar emails
+      const { data: authUsers, error: authUsersError } = await supabase.auth.admin.listUsers();
+      
       // Buscar roles de admin
       const { data: adminRoles, error: adminRolesError } = await supabase
         .from('user_roles')
@@ -96,18 +99,20 @@ const UsersPage = () => {
       const adminUserIds = adminRoles?.map(role => role.user_id) || [];
       const submissionUserIds = submissions?.map(sub => sub.user_id) || [];
       
-      // Criar um mapa de emails usando os dados dos perfis ou IDs de usuários
+      // Criar um mapa de emails usando os dados de auth.users (se disponível)
       const emailMap = new Map<string, string>();
+      if (authUsers && authUsers.users) {
+        authUsers.users.forEach(user => {
+          emailMap.set(user.id, user.email);
+        });
+      }
       
-      // Combinar os dados de perfis
+      // Combinar os dados de perfis com emails
       const profilesArray = Array.isArray(profilesData) ? profilesData : [];
       const processedUsers = profilesArray.map(profile => {
-        // Buscar o email dos metadados do perfil se disponível
-        const email = profile.email || "Email não disponível";
-        
         return {
           ...profile,
-          email: email,
+          email: emailMap.get(profile.id) || "Email não disponível", // Use o email do mapa ou valor padrão
           is_admin: adminUserIds.includes(profile.id),
           has_submission: submissionUserIds.includes(profile.id)
         } as UserProfile;
@@ -317,14 +322,9 @@ const UsersPage = () => {
               </CardContent>
               <CardFooter className="flex justify-between border-t py-4 px-6 text-muted-foreground text-sm">
                 <p>Atualizado em {new Date().toLocaleDateString('pt-BR')}</p>
-                {isLoading ? null : (
-                  users.length === 0 ? null : (
-                    <div className="text-red-500 font-medium">
-                      {/* Indicação de erro nos emails apenas se houver usuários */}
-                      Emails não disponíveis via API Supabase
-                    </div>
-                  )
-                )}
+                <div className="text-orange-500 font-medium text-xs">
+                  Acesso limitado aos dados dos usuários por permissões do Supabase
+                </div>
               </CardFooter>
             </Card>
           </div>
