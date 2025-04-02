@@ -101,15 +101,15 @@ export function QuizReview({
                 <div className="flex items-start gap-2 mb-4">
                   <FileCheck className="h-5 w-5 mt-1 text-[hsl(var(--quiz-accent))]" />
                   <div>
-                    <h4 className="font-semibold text-slate-900">Termo de Validação</h4>
-                    <p className="text-sm text-slate-900">
+                    <h4 className="font-semibold text-slate-950\n">Termo de Validação</h4>
+                    <p className="text-sm text-slate-900\n">
                       Para finalizar o questionário, por favor leia e concorde com os termos abaixo.
                     </p>
                   </div>
                 </div>
                 
                 <div className="p-3 bg-white rounded border border-slate-200 text-sm mb-4">
-                  <p className="text-slate-900">
+                  <p className="text-slate-900\n">
                     Declaro que as informações fornecidas neste questionário são verdadeiras e
                     condizem com a realidade atual da minha empresa/negócio.
                     Compreendo que estas informações serão utilizadas pela Crie Valor para análise
