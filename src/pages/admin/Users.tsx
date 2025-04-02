@@ -37,6 +37,16 @@ type UserProfile = {
   has_submission?: boolean;
 };
 
+// Tipo para usuários do Supabase Auth
+interface SupabaseAuthUser {
+  id: string;
+  email: string;
+}
+
+interface AdminListUsersResponse {
+  users: SupabaseAuthUser[];
+}
+
 const UsersPage = () => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
@@ -82,7 +92,10 @@ const UsersPage = () => {
       }
       
       // Buscar users da tabela auth para pegar emails
-      const { data: authUsers, error: authUsersError } = await supabase.auth.admin.listUsers();
+      const { data: authUsers, error: authUsersError } = await supabase.auth.admin.listUsers() as { 
+        data: AdminListUsersResponse | null, 
+        error: Error | null 
+      };
       
       // Buscar roles de admin
       const { data: adminRoles, error: adminRolesError } = await supabase
