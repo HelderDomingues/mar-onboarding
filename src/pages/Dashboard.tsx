@@ -5,13 +5,23 @@ import { useAuth } from "@/hooks/useAuth";
 import { QuizHeader } from "@/components/quiz/QuizHeader";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, BookOpen, BarChart, DatabaseIcon, Settings, ChevronRight } from "lucide-react";
+import { Clock, BookOpen, BarChart, DatabaseIcon, Settings, ChevronRight, Users, Search } from "lucide-react";
 import { seedQuizData } from "@/scripts/seed-quiz";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { QuizSubmission } from "@/types/quiz";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+interface UserRow {
+  id: string;
+  email: string;
+  createdAt: string;
+  role?: string;
+  lastLogin?: string;
+}
 
 const Dashboard = () => {
   const { isAuthenticated, user } = useAuth();
@@ -24,7 +34,65 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
-
+  
+  // Novo estado para gerenciamento de usuários
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  // Função para carregar usuários
+  const loadUsers = async () => {
+    if (!isAdmin) return;
+    
+    setIsLoadingUsers(true);
+    try {
+      // Buscar usuários 
+      const { data, error } = await supabase.auth.admin.listUsers();
+      
+      if (error) {
+        toast({
+          title: "Erro ao carregar usuários",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (data && data.users) {
+        // Transformar dados para formatação da tabela
+        const formattedUsers: UserRow[] = data.users.map(u => ({
+          id: u.id,
+          email: u.email || 'Email não disponível',
+          createdAt: new Date(u.created_at || '').toLocaleDateString('pt-BR'),
+          lastLogin: u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('pt-BR') : 'Nunca',
+        }));
+        
+        // Buscar roles dos usuários
+        const { data: rolesData, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('user_id, role');
+          
+        if (!rolesError && rolesData) {
+          // Adicionar role aos usuários
+          formattedUsers.forEach(user => {
+            const userRole = rolesData.find(r => r.user_id === user.id);
+            user.role = userRole ? userRole.role : 'user';
+          });
+        }
+        
+        setUsers(formattedUsers);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar usuários",
+        description: error.message || "Ocorreu um erro ao carregar os usuários.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+  
   useEffect(() => {
     const checkUserRole = async () => {
       if (!user) return;
@@ -101,6 +169,52 @@ const Dashboard = () => {
   const navigateToQuizAdmin = () => {
     navigate("/quiz?admin=true");
   };
+  
+  // Função para gerenciar um usuário específico
+  const handleManageUser = (userId: string) => {
+    toast({
+      title: "Gerenciamento de usuário",
+      description: `Funcionalidade em desenvolvimento para o usuário ${userId}`,
+    });
+  };
+  
+  // Função para promover um usuário a admin
+  const handleToggleAdmin = async (userId: string, currentRole?: string) => {
+    try {
+      if (currentRole === 'admin') {
+        // Remover papel de admin
+        await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', userId)
+          .eq('role', 'admin');
+          
+        toast({
+          title: "Permissão removida",
+          description: "O usuário não é mais administrador.",
+        });
+      } else {
+        // Adicionar papel de admin
+        await supabase
+          .from('user_roles')
+          .insert({ user_id: userId, role: 'admin' });
+          
+        toast({
+          title: "Permissão adicionada",
+          description: "O usuário agora é administrador.",
+        });
+      }
+      
+      // Recarregar lista de usuários
+      loadUsers();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar permissões",
+        description: error.message || "Ocorreu um erro ao atualizar as permissões do usuário.",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (!isAuthenticated) {
     return <Navigate to="/" />;
@@ -109,7 +223,7 @@ const Dashboard = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
-        <QuizHeader />
+        <QuizHeader isAdmin={isAdmin} />
         <main className="flex-1 container py-8 px-4 flex items-center justify-center">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-quiz"></div>
         </main>
@@ -119,7 +233,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <QuizHeader />
+      <QuizHeader isAdmin={isAdmin} />
       
       <main className="flex-1 container max-w-5xl py-8 px-4">
         <h1 className="text-3xl font-bold mb-2">Bem-vindo à sua Área MAR</h1>
@@ -197,16 +311,81 @@ const Dashboard = () => {
                     <p className="text-sm text-muted-foreground mb-4">
                       Gerencie usuários e permissões do sistema.
                     </p>
-                    <Button 
-                      variant="outline" 
-                      className="border-orange-200 text-orange-700 hover:bg-orange-50 hover:text-orange-800"
-                      onClick={() => toast({
-                        title: "Funcionalidade em desenvolvimento",
-                        description: "O gerenciamento de usuários estará disponível em breve.",
-                      })}
-                    >
-                      Gerenciar Usuários
-                    </Button>
+                    
+                    <div className="flex items-center mb-4 gap-2">
+                      <Input 
+                        placeholder="Buscar usuário..." 
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="max-w-sm"
+                        value={searchTerm}
+                      />
+                      <Button 
+                        variant="outline"
+                        className="border-orange-200 text-orange-700 hover:bg-orange-50"
+                        onClick={loadUsers}
+                      >
+                        <Search className="h-4 w-4 mr-2" /> Buscar
+                      </Button>
+                    </div>
+                    
+                    {isLoadingUsers ? (
+                      <div className="py-8 flex justify-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                      </div>
+                    ) : users.length > 0 ? (
+                      <div className="rounded-md border overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Data de Cadastro</TableHead>
+                              <TableHead>Último Login</TableHead>
+                              <TableHead>Papel</TableHead>
+                              <TableHead className="w-[100px]">Ações</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {users
+                              .filter(user => searchTerm ? user.email.toLowerCase().includes(searchTerm.toLowerCase()) : true)
+                              .map((user) => (
+                                <TableRow key={user.id}>
+                                  <TableCell>{user.email}</TableCell>
+                                  <TableCell>{user.createdAt}</TableCell>
+                                  <TableCell>{user.lastLogin}</TableCell>
+                                  <TableCell>
+                                    <span className={`px-2 py-1 rounded-full text-xs ${
+                                      user.role === 'admin' 
+                                        ? 'bg-orange-100 text-orange-800' 
+                                        : 'bg-blue-100 text-blue-800'
+                                    }`}>
+                                      {user.role || 'user'}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleToggleAdmin(user.id, user.role)}
+                                      className={user.role === 'admin' 
+                                        ? 'text-red-600 hover:text-red-700 hover:bg-red-50' 
+                                        : 'text-green-600 hover:text-green-700 hover:bg-green-50'}
+                                    >
+                                      {user.role === 'admin' ? 'Remover Admin' : 'Tornar Admin'}
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Users className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
+                        <p className="mt-2 text-muted-foreground">
+                          Clique em "Buscar" para mostrar os usuários do sistema.
+                        </p>
+                      </div>
+                    )}
                   </TabsContent>
                   
                   <TabsContent value="data" className="bg-white p-4 rounded-md border border-orange-200">

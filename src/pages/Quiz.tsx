@@ -28,9 +28,11 @@ const Quiz = () => {
   const location = useLocation();
   const { toast } = useToast();
   
-  // Verificar se está no modo admin pela URL
+  // Verificar se está no modo admin pela URL e obter parâmetros
   const queryParams = new URLSearchParams(location.search);
   const adminParam = queryParams.get('admin');
+  const moduleParam = queryParams.get('module');
+  const questionParam = queryParams.get('question');
   
   const [modules, setModules] = useState<QuizModule[]>([]);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -96,7 +98,23 @@ const Quiz = () => {
 
           setQuestions(questionsWithOptions);
 
-          if (modulesData.length > 0) {
+          // Se temos um módulo específico na URL, usar esse para definir o módulo atual
+          if (moduleParam && modulesData.some(m => m.id === moduleParam)) {
+            const moduleIndex = modulesData.findIndex(m => m.id === moduleParam);
+            if (moduleIndex >= 0) {
+              setCurrentModuleIndex(moduleIndex);
+              const moduleQuestions = questionsWithOptions.filter(q => q.module_id === moduleParam);
+              setModuleQuestions(moduleQuestions);
+              
+              // Se temos uma questão específica na URL, usar essa para definir a questão atual
+              if (questionParam) {
+                const questionIndex = moduleQuestions.findIndex(q => q.id === questionParam);
+                if (questionIndex >= 0) {
+                  setCurrentQuestionIndex(questionIndex);
+                }
+              }
+            }
+          } else if (modulesData.length > 0) {
             const firstModuleQuestions = questionsWithOptions.filter(
               q => q.module_id === modulesData[0].id
             );
@@ -122,7 +140,8 @@ const Quiz = () => {
           
           if (userSubmission.completed) {
             setIsComplete(true);
-          } else {
+          } else if (!moduleParam) {
+            // Só usar o módulo salvo se não tiver módulo na URL
             const moduleIndex = Math.max(0, userSubmission.current_module - 1);
             setCurrentModuleIndex(moduleIndex);
             
@@ -200,7 +219,7 @@ const Quiz = () => {
 
   useEffect(() => {
     fetchQuizData();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, moduleParam, questionParam]);
 
   const saveAnswer = async (questionId: string, answer: string | string[]) => {
     if (!user) return;
@@ -358,7 +377,7 @@ const Quiz = () => {
 
   return (
     <div className="min-h-screen flex flex-col quiz-container">
-      <QuizHeader />
+      <QuizHeader isAdmin={isAdmin} />
       
       <main className="flex-1 container py-8 px-4 flex flex-col items-center">
         {!isComplete ? (
@@ -389,6 +408,8 @@ const Quiz = () => {
                 loadError={loadError}
                 onRefresh={fetchQuizData}
                 isAdmin={isAdmin}
+                modules={modules}
+                questions={questions}
               />
             )}
           </>
