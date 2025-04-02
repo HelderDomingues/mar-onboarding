@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,18 +9,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { QuizModule, QuizQuestion, QuizAnswer, QuizSubmission } from "@/types/quiz";
-
 interface AnswerMap {
   [key: string]: string | string[];
 }
 
 // Lista de emails de administradores
-const ADMIN_EMAILS = [
-  "helder@crievalor.com.br",
-  "teste1@crievalor.com.br",
-  "teste2@crievalor.com.br",
-  "teste3@crievalor.com.br"
-];
+const ADMIN_EMAILS = ["helder@crievalor.com.br", "teste1@crievalor.com.br", "teste2@crievalor.com.br", "teste3@crievalor.com.br"];
 
 // Função para forçar atualização de estilos
 const refreshStyles = () => {
@@ -29,7 +22,7 @@ const refreshStyles = () => {
   document.body.style.display = 'none';
   document.body.offsetHeight; // Força um reflow
   document.body.style.display = '';
-  
+
   // Forçar atualização dos estilos inline
   const quizElements = document.querySelectorAll('.quiz-container *');
   quizElements.forEach(el => {
@@ -47,21 +40,19 @@ const refreshStyles = () => {
       trigger.style.color = "black";
     }
   });
-
   const selectItems = document.querySelectorAll('.select-item');
   selectItems.forEach(item => {
     if (item instanceof HTMLElement) {
       item.style.color = "black";
     }
   });
-
   const tabsTriggers = document.querySelectorAll('.tabs-trigger, [data-state]');
   tabsTriggers.forEach(tab => {
     if (tab instanceof HTMLElement) {
       tab.style.color = "white";
     }
   });
-  
+
   // Forçar atualização para dropdowns
   const dropdowns = document.querySelectorAll('[role="listbox"]');
   dropdowns.forEach(dropdown => {
@@ -72,19 +63,22 @@ const refreshStyles = () => {
     }
   });
 };
-
 const Quiz = () => {
-  const { isAuthenticated, user } = useAuth();
+  const {
+    isAuthenticated,
+    user
+  } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
-  
+  const {
+    toast
+  } = useToast();
+
   // Verificar se está no modo admin pela URL e obter parâmetros
   const queryParams = new URLSearchParams(location.search);
   const adminParam = queryParams.get('admin');
   const moduleParam = queryParams.get('module');
   const questionParam = queryParams.get('question');
-  
   const [modules, setModules] = useState<QuizModule[]>([]);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
@@ -103,59 +97,49 @@ const Quiz = () => {
     // Forçar atualizações de estilo na inicialização e em intervalos regulares
     refreshStyles();
     const intervalId = setInterval(refreshStyles, 1000);
-    
     return () => clearInterval(intervalId);
   }, []);
-
   useEffect(() => {
     if (user?.email) {
       // Verificar se é admin por email ou pela URL
       setIsAdmin(ADMIN_EMAILS.includes(user.email) || adminParam === 'true');
     }
   }, [user, adminParam]);
-
   const fetchQuizData = async () => {
     if (!isAuthenticated || !user) return;
-
     try {
       setIsLoading(true);
-      
-      const { data: modulesData, error: modulesError } = await supabase
-        .from('quiz_modules')
-        .select('*')
-        .order('order_number');
-
+      const {
+        data: modulesData,
+        error: modulesError
+      } = await supabase.from('quiz_modules').select('*').order('order_number');
       if (modulesError) {
         throw modulesError;
       }
-
       if (modulesData && modulesData.length > 0) {
         setModules(modulesData as unknown as QuizModule[]);
-
-        const { data: questionsData, error: questionsError } = await supabase
-          .from('quiz_questions')
-          .select('*')
-          .order('order_number');
-
+        const {
+          data: questionsData,
+          error: questionsError
+        } = await supabase.from('quiz_questions').select('*').order('order_number');
         if (questionsError) {
           throw questionsError;
         }
-
         if (questionsData) {
-          const { data: optionsData, error: optionsError } = await supabase
-            .from('quiz_options')
-            .select('*')
-            .order('order_number');
-
+          const {
+            data: optionsData,
+            error: optionsError
+          } = await supabase.from('quiz_options').select('*').order('order_number');
           if (optionsError) {
             throw optionsError;
           }
-
           const questionsWithOptions = questionsData.map(question => {
             const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
-            return { ...question, options } as unknown as QuizQuestion;
+            return {
+              ...question,
+              options
+            } as unknown as QuizQuestion;
           });
-
           setQuestions(questionsWithOptions);
 
           // Se temos um módulo específico na URL, usar esse para definir o módulo atual
@@ -165,7 +149,7 @@ const Quiz = () => {
               setCurrentModuleIndex(moduleIndex);
               const moduleQuestions = questionsWithOptions.filter(q => q.module_id === moduleParam);
               setModuleQuestions(moduleQuestions);
-              
+
               // Se temos uma questão específica na URL, usar essa para definir a questão atual
               if (questionParam) {
                 const questionIndex = moduleQuestions.findIndex(q => q.id === questionParam);
@@ -175,53 +159,41 @@ const Quiz = () => {
               }
             }
           } else if (modulesData.length > 0) {
-            const firstModuleQuestions = questionsWithOptions.filter(
-              q => q.module_id === modulesData[0].id
-            );
+            const firstModuleQuestions = questionsWithOptions.filter(q => q.module_id === modulesData[0].id);
             setModuleQuestions(firstModuleQuestions);
           }
         }
-
-        const { data: submissionData, error: submissionError } = await supabase
-          .from('quiz_submissions')
-          .select('*')
-          .eq('user_id', user.id);
-
+        const {
+          data: submissionData,
+          error: submissionError
+        } = await supabase.from('quiz_submissions').select('*').eq('user_id', user.id);
         if (submissionError) {
           logger.error('Erro ao buscar submissão do quiz', {
             tag: 'Quiz',
             data: submissionError
           });
         }
-
         if (submissionData && submissionData.length > 0) {
           const userSubmission = submissionData[0] as unknown as QuizSubmission;
           setSubmission(userSubmission);
-          
           if (userSubmission.completed) {
             setIsComplete(true);
           } else if (!moduleParam) {
             // Só usar o módulo salvo se não tiver módulo na URL
             const moduleIndex = Math.max(0, userSubmission.current_module - 1);
             setCurrentModuleIndex(moduleIndex);
-            
             if (modulesData[moduleIndex]) {
-              const moduleQuestions = questions.filter(
-                q => q.module_id === modulesData[moduleIndex].id
-              );
+              const moduleQuestions = questions.filter(q => q.module_id === modulesData[moduleIndex].id);
               setModuleQuestions(moduleQuestions);
             }
           }
-
-          const { data: answersData, error: answersError } = await supabase
-            .from('quiz_answers')
-            .select('*')
-            .eq('user_id', user.id);
-
+          const {
+            data: answersData,
+            error: answersError
+          } = await supabase.from('quiz_answers').select('*').eq('user_id', user.id);
           if (answersError) {
             throw answersError;
           }
-
           if (answersData) {
             const loadedAnswers: AnswerMap = {};
             answersData.forEach(ans => {
@@ -239,24 +211,21 @@ const Quiz = () => {
             setAnswers(loadedAnswers);
           }
         } else {
-          const { data: newSubmission, error: createError } = await supabase
-            .from('quiz_submissions')
-            .insert([{
-              user_id: user.id,
-              current_module: 1,
-              started_at: new Date().toISOString()
-            }])
-            .select();
-
+          const {
+            data: newSubmission,
+            error: createError
+          } = await supabase.from('quiz_submissions').insert([{
+            user_id: user.id,
+            current_module: 1,
+            started_at: new Date().toISOString()
+          }]).select();
           if (createError) {
             throw createError;
           }
-
           if (newSubmission && newSubmission.length > 0) {
             setSubmission(newSubmission[0] as unknown as QuizSubmission);
           }
         }
-
         setLoadError(null);
       } else {
         setLoadError("Nenhum módulo de questionário encontrado.");
@@ -276,11 +245,9 @@ const Quiz = () => {
       setIsLoading(false);
     }
   };
-
   useEffect(() => {
     fetchQuizData();
   }, [isAuthenticated, user, moduleParam, questionParam]);
-
   const saveAnswer = async (questionId: string, answer: string | string[]) => {
     if (!user) return;
     try {
@@ -316,7 +283,6 @@ const Quiz = () => {
       });
     }
   };
-
   const updateCurrentModule = async (moduleNumber: number) => {
     if (!user || !submission) return;
     try {
@@ -339,7 +305,6 @@ const Quiz = () => {
       });
     }
   };
-
   const completeQuiz = async () => {
     if (!user || !submission) return;
     try {
@@ -370,7 +335,6 @@ const Quiz = () => {
       });
     }
   };
-
   const handleAnswer = (questionId: string, answer: string | string[]) => {
     setAnswers(prev => ({
       ...prev,
@@ -378,7 +342,6 @@ const Quiz = () => {
     }));
     saveAnswer(questionId, answer);
   };
-
   const handleNext = async () => {
     if (currentQuestionIndex < moduleQuestions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
@@ -399,7 +362,6 @@ const Quiz = () => {
       }
     }
   };
-
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1);
@@ -414,75 +376,33 @@ const Quiz = () => {
       window.scrollTo(0, 0);
     }
   };
-
   const handleEditQuestion = (moduleIndex: number, questionIndex: number) => {
     setShowReview(false);
     setCurrentModuleIndex(moduleIndex);
-    
     const moduleId = modules[moduleIndex].id;
     const moduleQuestions = questions.filter(q => q.module_id === moduleId);
     setModuleQuestions(moduleQuestions);
-    
     setCurrentQuestionIndex(questionIndex);
     window.scrollTo(0, 0);
   };
-
   if (!isAuthenticated) {
     return <Navigate to="/" />;
   }
-
   const hasQuizData = modules.length > 0 && moduleQuestions.length > 0;
   const isFirstQuestion = currentModuleIndex === 0 && currentQuestionIndex === 0;
   const isLastQuestion = currentModuleIndex === modules.length - 1 && currentQuestionIndex === moduleQuestions.length - 1;
-
-  return (
-    <div className="min-h-screen flex flex-col quiz-container">
+  return <div className="min-h-screen flex flex-col quiz-container">
       <QuizHeader isAdmin={isAdmin} />
       
-      <main className="flex-1 container py-8 px-4 flex flex-col items-center">
-        {!isComplete ? (
-          <>
-            {hasQuizData ? (
-              <QuizContent
-                currentModule={modules[currentModuleIndex]}
-                moduleQuestions={moduleQuestions}
-                currentQuestionIndex={currentQuestionIndex}
-                onAnswer={handleAnswer}
-                onNext={handleNext}
-                onPrev={handlePrevious}
-                isFirst={isFirstQuestion}
-                isLast={isLastQuestion}
-                currentAnswers={answers}
-                totalModules={modules.length}
-                currentModuleIndex={currentModuleIndex}
-                showReview={showReview}
-                onReviewComplete={completeQuiz}
-                onEditQuestion={handleEditQuestion}
-                allModules={modules}
-                allQuestions={questions}
-                isAdmin={isAdmin}
-              />
-            ) : (
-              <QuizConfigurationPanel
-                isLoading={isLoading}
-                loadError={loadError}
-                onRefresh={fetchQuizData}
-                isAdmin={isAdmin}
-                modules={modules}
-                questions={questions}
-              />
-            )}
-          </>
-        ) : (
-          <QuizComplete />
-        )}
+      <main className="flex-1 container py-8 px-4 flex flex-col items-center bg-zync 400">
+        {!isComplete ? <>
+            {hasQuizData ? <QuizContent currentModule={modules[currentModuleIndex]} moduleQuestions={moduleQuestions} currentQuestionIndex={currentQuestionIndex} onAnswer={handleAnswer} onNext={handleNext} onPrev={handlePrevious} isFirst={isFirstQuestion} isLast={isLastQuestion} currentAnswers={answers} totalModules={modules.length} currentModuleIndex={currentModuleIndex} showReview={showReview} onReviewComplete={completeQuiz} onEditQuestion={handleEditQuestion} allModules={modules} allQuestions={questions} isAdmin={isAdmin} /> : <QuizConfigurationPanel isLoading={isLoading} loadError={loadError} onRefresh={fetchQuizData} isAdmin={isAdmin} modules={modules} questions={questions} />}
+          </> : <QuizComplete />}
       </main>
       
       <footer className="py-4 border-t border-[hsl(var(--quiz-border))] text-center text-sm text-muted-foreground">
         <p>© {new Date().getFullYear()} Crie Valor. Todos os direitos reservados.</p>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Quiz;

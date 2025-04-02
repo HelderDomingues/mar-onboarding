@@ -53,21 +53,21 @@ export function QuizConfigurationPanel({
         </div> : <>
           {isAdmin && modules.length > 0 ? <div className="mb-6">
               <Card className="border-violet-500 border-2 mb-6 bg-slate-100">
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-3 bg-zinc-600">
                   <CardTitle className="text-xl text-orange-700">
                     Painel de Navegação Administrativa
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="bg-zinc-600">
                   <Tabs defaultValue="navigation" className="w-full">
-                    <TabsList className="mb-4">
-                      <TabsTrigger value="navigation" className="text-slate-800 font-light">Navegação</TabsTrigger>
+                    <TabsList className="mb-4 bg-gray-950">
+                      <TabsTrigger value="navigation" className="text-slate-800 font-light bg-zinc-800 hover:bg-zinc-700">Navegação</TabsTrigger>
                       <TabsTrigger value="actions" className="text-slate-800">Ações</TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="navigation" className="space-y-4">
-                      <div className="grid grid-cols-1 gap-4">
-                        <div>
+                    <TabsContent value="navigation" className="space-y-4 bg-zinc-600">
+                      <div className="grid grid-cols-1 gap-4 bg-zinc-400">
+                        <div className="bg-zinc-600">
                           <label className="text-sm font-medium mb-1 block">Selecione um Módulo</label>
                           <Select value={selectedModule} onValueChange={setSelectedModule}>
                             <SelectTrigger>
