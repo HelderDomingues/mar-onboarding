@@ -134,7 +134,7 @@ export function QuizReview({
               <Button variant="outline" onClick={() => onEdit(modules.length - 1, questions.filter(q => q.module_id === modules[modules.length - 1].id).length - 1)} className="border-[hsl(var(--quiz-border))] text-gray-800">
                 Voltar
               </Button>
-              <Button onClick={() => setConfirmed(true)} className="quiz-btn" disabled={!agreedToTerms}>
+              <Button onClick={() => setConfirmed(true)} disabled={!agreedToTerms} className="quiz-btn bg-lime-600 hover:bg-lime-500">
                 Confirmar Respostas <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </CardFooter>
