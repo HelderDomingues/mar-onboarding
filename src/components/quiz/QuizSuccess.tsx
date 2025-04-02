@@ -1,0 +1,90 @@
+
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { CheckCircle, HomeIcon, User, Mail, Phone } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Separator } from "@/components/ui/separator";
+
+export function QuizSuccess() {
+  return (
+    <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-8">
+      <Card className="quiz-card overflow-hidden">
+        <div className="bg-green-500 h-2 w-full"></div>
+        <CardHeader className="text-center pt-8">
+          <div className="mx-auto bg-green-100 p-4 rounded-full w-20 h-20 flex items-center justify-center mb-4">
+            <CheckCircle className="h-10 w-10 text-green-600" />
+          </div>
+          <CardTitle className="text-3xl font-bold">Parabéns!</CardTitle>
+        </CardHeader>
+        
+        <CardContent className="text-center px-6">
+          <p className="text-xl mb-4">
+            Você concluiu o Questionário MAR com sucesso!
+          </p>
+          
+          <p className="text-muted-foreground mb-8">
+            Agradecemos pelo tempo dedicado ao preenchimento do questionário. 
+            Suas respostas são fundamentais para que possamos entender melhor o seu negócio 
+            e oferecer o suporte necessário para o seu crescimento.
+          </p>
+          
+          <div className="bg-slate-50 rounded-lg p-6 border border-[hsl(var(--quiz-border))]">
+            <h3 className="font-semibold text-lg mb-3">Próximos passos</h3>
+            <p className="text-muted-foreground mb-4">
+              Nossa equipe irá analisar suas respostas e entraremos em contato em breve para 
+              discutir os resultados e as melhores estratégias para o seu negócio.
+            </p>
+            
+            <h4 className="font-medium mt-4 mb-2">Fale com um consultor</h4>
+            <div className="flex flex-col md:flex-row gap-3 justify-center">
+              <a 
+                href="https://wa.me/+5547992150289" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-green-600 text-white hover:bg-green-700 h-10 px-4 py-2 w-full md:w-auto"
+              >
+                <Phone className="h-4 w-4 mr-2" /> WhatsApp (47)
+              </a>
+              
+              <a 
+                href="https://wa.me/+5567996542991" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-green-600 text-white hover:bg-green-700 h-10 px-4 py-2 w-full md:w-auto"
+              >
+                <Phone className="h-4 w-4 mr-2" /> WhatsApp (67)
+              </a>
+              
+              <a 
+                href="mailto:contato@crievalor.com.br" 
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full md:w-auto"
+              >
+                <Mail className="h-4 w-4 mr-2" /> E-mail
+              </a>
+            </div>
+          </div>
+        </CardContent>
+        
+        <Separator className="my-2" />
+        
+        <CardFooter className="flex justify-center gap-4 flex-col md:flex-row p-6">
+          <Link to="/dashboard">
+            <Button variant="default" className="w-full md:w-auto">
+              <HomeIcon className="h-4 w-4 mr-2" /> Ir para o Dashboard
+            </Button>
+          </Link>
+          
+          <a 
+            href="https://lovable.dev/projects/a882ff86-3929-4dd9-a7ce-87e37dd08713" 
+            target="_blank" 
+            rel="noopener noreferrer"
+          >
+            <Button variant="outline" className="w-full md:w-auto">
+              <User className="h-4 w-4 mr-2" /> Visitar Perfil Crie Valor
+            </Button>
+          </a>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+}

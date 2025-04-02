@@ -185,9 +185,21 @@ export function QuestionCard({
               </div>}
           </div>}
         
-        {question.type === 'text' && <Input type="text" placeholder="Digite sua resposta aqui..." value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full" />}
+        {question.type === 'text' && <Input 
+            type="text" 
+            placeholder="Digite sua resposta aqui..." 
+            value={textAnswer} 
+            onChange={e => setTextAnswer(e.target.value)} 
+            className="w-full" 
+          />}
         
-        {question.type === 'email' && <Input type="email" placeholder="Digite seu e-mail aqui..." value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full" />}
+        {question.type === 'email' && <Input 
+            type="email" 
+            placeholder="Digite seu e-mail aqui..." 
+            value={textAnswer} 
+            onChange={e => setTextAnswer(e.target.value)} 
+            className="w-full" 
+          />}
         
         {question.type === 'url' && (
           <PrefixInput 

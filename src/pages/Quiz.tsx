@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -5,6 +6,7 @@ import { QuizHeader } from "@/components/quiz/QuizHeader";
 import { QuizComplete } from "@/components/quiz/QuizComplete";
 import { QuizConfigurationPanel } from "@/components/quiz/QuizConfigurationPanel";
 import { QuizContent } from "@/components/quiz/QuizContent";
+import { QuizSuccess } from "@/components/quiz/QuizSuccess";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
@@ -46,6 +48,7 @@ const Quiz = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showReview, setShowReview] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     if (user?.email) {
@@ -298,6 +301,7 @@ const Quiz = () => {
         }
       });
       setIsComplete(true);
+      setShowSuccess(true); // Mostrar tela de sucesso
     } catch (error: any) {
       logger.error('Erro ao completar questionário', {
         tag: 'Quiz',
@@ -380,7 +384,9 @@ const Quiz = () => {
       <QuizHeader isAdmin={isAdmin} />
       
       <main className="flex-1 container py-8 px-4 flex flex-col items-center">
-        {!isComplete ? (
+        {showSuccess ? (
+          <QuizSuccess />
+        ) : !isComplete ? (
           <>
             {hasQuizData ? (
               <QuizContent
@@ -414,7 +420,7 @@ const Quiz = () => {
             )}
           </>
         ) : (
-          <QuizComplete />
+          <QuizSuccess />
         )}
       </main>
       

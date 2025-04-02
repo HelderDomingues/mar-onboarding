@@ -4,7 +4,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, CheckCircle, Edit, ThumbsUp } from "lucide-react";
+import { ArrowRight, CheckCircle, Edit, ThumbsUp, Calendar, FileCheck } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 
 interface QuizReviewProps {
   modules: QuizModule[];
@@ -22,6 +25,20 @@ export function QuizReview({
   onEdit,
 }: QuizReviewProps) {
   const [confirmed, setConfirmed] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  
+  const form = useForm({
+    defaultValues: {
+      agreement: false
+    }
+  });
+
+  // Data atual formatada para português do Brasil
+  const currentDate = new Date().toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
 
   // Agrupar perguntas por módulo
   const questionsByModule = modules.map(module => ({
@@ -34,6 +51,10 @@ export function QuizReview({
     if (!value) return "Sem resposta";
     if (typeof value === "string") return value;
     return value.join(", ");
+  };
+
+  const handleTermsChange = (checked: boolean) => {
+    setAgreedToTerms(checked);
   };
 
   return (
@@ -93,6 +114,46 @@ export function QuizReview({
                   </div>
                 ))}
               </div>
+              
+              <div className="mt-8 p-4 border border-[hsl(var(--quiz-border))] rounded-lg bg-slate-50">
+                <div className="flex items-start gap-2 mb-4">
+                  <FileCheck className="h-5 w-5 mt-1 text-[hsl(var(--quiz-accent))]" />
+                  <div>
+                    <h4 className="font-semibold">Termo de Validação</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Para finalizar o questionário, por favor leia e concorde com os termos abaixo.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="p-3 bg-white rounded border border-slate-200 text-sm mb-4">
+                  <p>
+                    Declaro que as informações fornecidas neste questionário são verdadeiras e
+                    condizem com a realidade atual da minha empresa/negócio.
+                    Compreendo que estas informações serão utilizadas pela Crie Valor para análise
+                    e diagnóstico, e que a precisão destas informações é fundamental para o sucesso do trabalho.
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Checkbox 
+                    id="agreement" 
+                    checked={agreedToTerms}
+                    onCheckedChange={handleTermsChange}
+                  />
+                  <label 
+                    htmlFor="agreement" 
+                    className="text-sm font-medium leading-none cursor-pointer"
+                  >
+                    Concordo com os termos acima e confirmo a veracidade das informações
+                  </label>
+                </div>
+                
+                <div className="flex items-center gap-2 mt-4 text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  <span>Data de validação: {currentDate}</span>
+                </div>
+              </div>
             </CardContent>
             <CardFooter className="flex justify-between pt-6 border-t border-[hsl(var(--quiz-border))]">
               <Button 
@@ -105,6 +166,7 @@ export function QuizReview({
               <Button 
                 onClick={() => setConfirmed(true)}
                 className="quiz-btn"
+                disabled={!agreedToTerms}
               >
                 Confirmar Respostas <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
