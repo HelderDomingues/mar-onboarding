@@ -58,6 +58,14 @@ export function ImportUsers() {
     reader.readAsText(file);
   };
 
+  // Função para converter string para número (aceita null)
+  const parseToNumber = (value: string | null | undefined): number | null => {
+    if (value === null || value === undefined || value === '') return null;
+    // Remove caracteres não numéricos
+    const cleanValue = value.replace(/[^\d]/g, '');
+    return cleanValue ? Number(cleanValue) : null;
+  };
+
   const processCsvData = async () => {
     if (!csvData.trim()) {
       toast({
@@ -111,12 +119,20 @@ export function ImportUsers() {
         
         // Call the function to create or update the user
         try {
-          // Usando SQL direto em vez de RPC para evitar problemas de tipo
+          // Convertendo para os tipos corretos antes de inserir
+          const cpfCnpjNumber = parseToNumber(customer.cpfCnpj);
+          const telefoneNumber = parseToNumber(customer.phone || customer.mobilePhone);
+          
+          if (!cpfCnpjNumber) {
+            importResults.failure.push(`${customer.email}: CPF/CNPJ inválido`);
+            continue;
+          }
+          
           const { data, error } = await supabase.from('asaas_customers').insert({
             email: customer.email,
             nome_completo: customer.name,
-            cpf_cnpj: customer.cpfCnpj,
-            telefone: customer.phone || customer.mobilePhone || null,
+            cpf_cnpj: cpfCnpjNumber,
+            telefone: telefoneNumber,
             asaas_id: customer.id || null
           }).select();
           
@@ -140,7 +156,7 @@ export function ImportUsers() {
       toast({
         title: "Importação concluída",
         description: `${importResults.success.length} usuários importados com sucesso e ${importResults.failure.length} falhas.`,
-        variant: importResults.failure.length > 0 ? "default" : "default"
+        variant: "default"
       });
       
     } catch (error: any) {
@@ -167,12 +183,19 @@ export function ImportUsers() {
     setIsLoading(true);
     
     try {
-      // Usando SQL direto em vez de RPC para evitar problemas de tipo
+      // Convertendo para os tipos corretos
+      const cpfCnpjNumber = parseToNumber(manualData.cpfCnpj);
+      const telefoneNumber = parseToNumber(manualData.phone);
+      
+      if (!cpfCnpjNumber) {
+        throw new Error("CPF/CNPJ inválido");
+      }
+      
       const { data, error } = await supabase.from('asaas_customers').insert({
         email: manualData.email,
         nome_completo: manualData.name,
-        cpf_cnpj: manualData.cpfCnpj,
-        telefone: manualData.phone || null,
+        cpf_cnpj: cpfCnpjNumber,
+        telefone: telefoneNumber,
         asaas_id: manualData.asaasId || null
       }).select();
       
