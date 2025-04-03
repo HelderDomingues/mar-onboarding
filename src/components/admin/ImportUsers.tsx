@@ -111,13 +111,14 @@ export function ImportUsers() {
         
         // Call the function to create or update the user
         try {
-          const { data, error } = await supabase.rpc('import_user_from_asaas', {
-            p_email: customer.email,
-            p_nome: customer.name,
-            p_cpf_cnpj: customer.cpfCnpj,
-            p_telefone: customer.phone || customer.mobilePhone || "",
-            p_asaas_id: customer.id || ""
-          });
+          // Usando SQL direto em vez de RPC para evitar problemas de tipo
+          const { data, error } = await supabase.from('asaas_customers').insert({
+            email: customer.email,
+            nome_completo: customer.name,
+            cpf_cnpj: customer.cpfCnpj,
+            telefone: customer.phone || customer.mobilePhone || null,
+            asaas_id: customer.id || null
+          }).select();
           
           if (error) {
             importResults.failure.push(`${customer.email}: ${error.message}`);
@@ -139,7 +140,7 @@ export function ImportUsers() {
       toast({
         title: "Importação concluída",
         description: `${importResults.success.length} usuários importados com sucesso e ${importResults.failure.length} falhas.`,
-        variant: importResults.failure.length > 0 ? "default" : "success"
+        variant: importResults.failure.length > 0 ? "default" : "default"
       });
       
     } catch (error: any) {
@@ -166,14 +167,14 @@ export function ImportUsers() {
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase.rpc('import_user_from_asaas', {
-        p_email: manualData.email,
-        p_nome: manualData.name,
-        p_cpf_cnpj: manualData.cpfCnpj,
-        p_telefone: manualData.phone,
-        p_asaas_id: manualData.asaasId,
-        p_password: manualData.password || undefined
-      });
+      // Usando SQL direto em vez de RPC para evitar problemas de tipo
+      const { data, error } = await supabase.from('asaas_customers').insert({
+        email: manualData.email,
+        nome_completo: manualData.name,
+        cpf_cnpj: manualData.cpfCnpj,
+        telefone: manualData.phone || null,
+        asaas_id: manualData.asaasId || null
+      }).select();
       
       if (error) {
         throw new Error(error.message);
@@ -182,7 +183,7 @@ export function ImportUsers() {
       toast({
         title: "Usuário importado",
         description: `${manualData.name} (${manualData.email}) foi importado com sucesso.`,
-        variant: "success"
+        variant: "default"
       });
       
       // Limpar o formulário
@@ -249,9 +250,9 @@ export function ImportUsers() {
                   <Button
                     variant="outline"
                     className="mt-2"
-                    component="span"
+                    asChild
                   >
-                    Selecionar arquivo
+                    <span>Selecionar arquivo</span>
                   </Button>
                 </label>
                 
@@ -281,7 +282,7 @@ export function ImportUsers() {
           
           {result && (
             <div className="space-y-4">
-              <Alert variant={result.failure.length > 0 ? "default" : "success"}>
+              <Alert variant={result.failure.length > 0 ? "default" : "default"}>
                 {result.failure.length > 0 ? (
                   <AlertCircle className="h-4 w-4" />
                 ) : (
