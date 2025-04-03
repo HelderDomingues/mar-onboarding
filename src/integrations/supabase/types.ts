@@ -559,6 +559,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_and_migrate_data: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       check_if_user_is_admin: {
         Args: {
           user_id: string
@@ -624,6 +628,10 @@ export type Database = {
       setup_subscriptions_rls_policies: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      sync_existing_users: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
     }
     Enums: {
