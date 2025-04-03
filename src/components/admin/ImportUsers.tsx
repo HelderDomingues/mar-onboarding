@@ -18,6 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UploadCloud, AlertCircle, CheckCircle2, UserPlus, FileInput } from "lucide-react";
 
+// Tipos para dados do Asaas
 type AsaasCustomer = {
   id: string;
   email: string;
@@ -27,25 +28,16 @@ type AsaasCustomer = {
   mobilePhone?: string;
 };
 
+// Tipo para os resultados da importação
 type ImportResult = {
   success: string[];
   failure: string[];
   message: string;
 };
 
-export function ImportUsers() {
-  const { toast } = useToast();
+// Componente para importação via CSV
+const CsvImport = ({ onImport }: { onImport: (csvData: string) => void }) => {
   const [csvData, setCsvData] = useState<string>("");
-  const [manualData, setManualData] = useState({
-    email: "",
-    name: "",
-    cpfCnpj: "",
-    phone: "",
-    asaasId: "",
-    password: ""
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<ImportResult | null>(null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,17 +46,222 @@ export function ImportUsers() {
     const reader = new FileReader();
     reader.onload = (event) => {
       setCsvData(event.target?.result as string || "");
+      onImport(event.target?.result as string || "");
     };
     reader.readAsText(file);
   };
 
-  // Função para converter string para número (aceita null)
-  const parseToNumber = (value: string | null | undefined): number | null => {
-    if (value === null || value === undefined || value === '') return null;
-    // Remove caracteres não numéricos
-    const cleanValue = value.replace(/[^\d]/g, '');
-    return cleanValue ? Number(cleanValue) : null;
+  return (
+    <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center">
+      <UploadCloud className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+      <p className="text-sm mb-2">
+        Arraste e solte o arquivo CSV aqui ou clique para selecionar
+      </p>
+      
+      <Input
+        id="csv-upload"
+        type="file"
+        accept=".csv"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
+      
+      <label htmlFor="csv-upload">
+        <Button
+          variant="outline"
+          className="mt-2"
+          asChild
+        >
+          <span>Selecionar arquivo</span>
+        </Button>
+      </label>
+      
+      {csvData && (
+        <div className="mt-4 text-left">
+          <Alert className="bg-muted/40">
+            <FileInput className="h-4 w-4" />
+            <AlertTitle>Arquivo carregado</AlertTitle>
+            <AlertDescription>
+              {csvData.split('\n').length - 1} registros detectados
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente para importação manual
+const ManualImport = ({ onSubmit, isLoading }: { onSubmit: (formData: any) => void, isLoading: boolean }) => {
+  const [formData, setFormData] = useState({
+    email: "",
+    name: "",
+    cpfCnpj: "",
+    phone: "",
+    asaasId: "",
+    password: ""
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value
+    });
   };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium mb-1">
+              Email*
+            </label>
+            <Input
+              id="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="email@exemplo.com"
+              required
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium mb-1">
+              Nome completo*
+            </label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Nome do Usuário"
+              required
+            />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="cpfCnpj" className="block text-sm font-medium mb-1">
+              CPF/CNPJ*
+            </label>
+            <Input
+              id="cpfCnpj"
+              value={formData.cpfCnpj}
+              onChange={handleChange}
+              placeholder="Somente números"
+              required
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="phone" className="block text-sm font-medium mb-1">
+              Telefone
+            </label>
+            <Input
+              id="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="(00) 00000-0000"
+            />
+          </div>
+        </div>
+        
+        <Separator />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="asaasId" className="block text-sm font-medium mb-1">
+              ID do Asaas
+            </label>
+            <Input
+              id="asaasId"
+              value={formData.asaasId}
+              onChange={handleChange}
+              placeholder="ID do cliente no Asaas (opcional)"
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium mb-1">
+              Senha (opcional)
+            </label>
+            <Input
+              id="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Deixe em branco para gerar automaticamente"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Se não for fornecida, uma senha aleatória será gerada
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <Button 
+        type="submit"
+        disabled={isLoading}
+        className="w-full mt-4"
+      >
+        <UserPlus className="mr-2 h-4 w-4" />
+        {isLoading ? "Importando..." : "Importar Usuário"}
+      </Button>
+    </form>
+  );
+};
+
+// Componente para exibir resultados da importação
+const ImportResults = ({ result }: { result: ImportResult | null }) => {
+  if (!result) return null;
+
+  return (
+    <div className="space-y-4">
+      <Alert variant={result.failure.length > 0 ? "default" : "default"}>
+        {result.failure.length > 0 ? (
+          <AlertCircle className="h-4 w-4" />
+        ) : (
+          <CheckCircle2 className="h-4 w-4" />
+        )}
+        <AlertTitle>Resultado da Importação</AlertTitle>
+        <AlertDescription>{result.message}</AlertDescription>
+      </Alert>
+      
+      {result.failure.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Erros de importação</CardTitle>
+            <CardDescription>
+              Lista de usuários que não puderam ser importados
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="max-h-40 overflow-y-auto">
+              {result.failure.map((error, idx) => (
+                <div key={idx} className="py-2 border-b last:border-0">
+                  {error}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+// Componente principal ImportUsers
+export function ImportUsers() {
+  const { toast } = useToast();
+  const [csvData, setCsvData] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [result, setResult] = useState<ImportResult | null>(null);
 
   const processCsvData = async () => {
     if (!csvData.trim()) {
@@ -97,27 +294,27 @@ export function ImportUsers() {
         failure: []
       };
       
-      // Skip header row
+      // Pular a linha de cabeçalho
       for (let i = 1; i < rows.length; i++) {
-        if (!rows[i].trim()) continue; // Skip empty rows
+        if (!rows[i].trim()) continue; // Pular linhas vazias
         
         const values = rows[i].split(',').map(v => v.trim());
         const customer: Partial<AsaasCustomer> = {};
         
-        // Map values to keys based on header positions
+        // Mapear valores para chaves baseado nas posições dos cabeçalhos
         headers.forEach((header, index) => {
           if (values[index] !== undefined) {
             customer[header as keyof AsaasCustomer] = values[index];
           }
         });
         
-        // Check if we have required fields
+        // Verificar se temos os campos obrigatórios
         if (!customer.email || !customer.name || !customer.cpfCnpj) {
           importResults.failure.push(`Linha ${i+1}: dados incompletos`);
           continue;
         }
         
-        // Call the function to create or update the user
+        // Chamar a função para criar ou atualizar o usuário
         try {
           const { data, error } = await supabase.rpc('import_user_from_asaas', {
             p_email: customer.email,
@@ -161,8 +358,8 @@ export function ImportUsers() {
     }
   };
   
-  const handleManualImport = async () => {
-    if (!manualData.email || !manualData.name || !manualData.cpfCnpj) {
+  const handleManualImport = async (formData: any) => {
+    if (!formData.email || !formData.name || !formData.cpfCnpj) {
       toast({
         variant: "destructive",
         title: "Dados incompletos",
@@ -175,12 +372,12 @@ export function ImportUsers() {
     
     try {
       const { data, error } = await supabase.rpc('import_user_from_asaas', {
-        p_email: manualData.email,
-        p_nome: manualData.name,
-        p_cpf_cnpj: manualData.cpfCnpj,
-        p_telefone: manualData.phone || '',
-        p_asaas_id: manualData.asaasId || '',
-        p_password: manualData.password || null
+        p_email: formData.email,
+        p_nome: formData.name,
+        p_cpf_cnpj: formData.cpfCnpj,
+        p_telefone: formData.phone || '',
+        p_asaas_id: formData.asaasId || '',
+        p_password: formData.password || null
       });
       
       if (error) {
@@ -189,18 +386,8 @@ export function ImportUsers() {
       
       toast({
         title: "Usuário importado",
-        description: `${manualData.name} (${manualData.email}) foi importado com sucesso.`,
+        description: `${formData.name} (${formData.email}) foi importado com sucesso.`,
         variant: "default"
-      });
-      
-      // Limpar o formulário
-      setManualData({
-        email: "",
-        name: "",
-        cpfCnpj: "",
-        phone: "",
-        asaasId: "",
-        password: ""
       });
       
     } catch (error: any) {
@@ -239,42 +426,7 @@ export function ImportUsers() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center">
-                <UploadCloud className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm mb-2">
-                  Arraste e solte o arquivo CSV aqui ou clique para selecionar
-                </p>
-                
-                <Input
-                  id="csv-upload"
-                  type="file"
-                  accept=".csv"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
-                
-                <label htmlFor="csv-upload">
-                  <Button
-                    variant="outline"
-                    className="mt-2"
-                    asChild
-                  >
-                    <span>Selecionar arquivo</span>
-                  </Button>
-                </label>
-                
-                {csvData && (
-                  <div className="mt-4 text-left">
-                    <Alert className="bg-muted/40">
-                      <FileInput className="h-4 w-4" />
-                      <AlertTitle>Arquivo carregado</AlertTitle>
-                      <AlertDescription>
-                        {csvData.split('\n').length - 1} registros detectados
-                      </AlertDescription>
-                    </Alert>
-                  </div>
-                )}
-              </div>
+              <CsvImport onImport={setCsvData} />
             </CardContent>
             <CardFooter>
               <Button 
@@ -287,39 +439,7 @@ export function ImportUsers() {
             </CardFooter>
           </Card>
           
-          {result && (
-            <div className="space-y-4">
-              <Alert variant={result.failure.length > 0 ? "default" : "default"}>
-                {result.failure.length > 0 ? (
-                  <AlertCircle className="h-4 w-4" />
-                ) : (
-                  <CheckCircle2 className="h-4 w-4" />
-                )}
-                <AlertTitle>Resultado da Importação</AlertTitle>
-                <AlertDescription>{result.message}</AlertDescription>
-              </Alert>
-              
-              {result.failure.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Erros de importação</CardTitle>
-                    <CardDescription>
-                      Lista de usuários que não puderam ser importados
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="max-h-40 overflow-y-auto">
-                      {result.failure.map((error, idx) => (
-                        <div key={idx} className="py-2 border-b last:border-0">
-                          {error}
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
+          <ImportResults result={result} />
         </TabsContent>
         
         <TabsContent value="manual">
@@ -331,102 +451,8 @@ export function ImportUsers() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium mb-1">
-                      Email*
-                    </label>
-                    <Input
-                      id="email"
-                      value={manualData.email}
-                      onChange={(e) => setManualData({...manualData, email: e.target.value})}
-                      placeholder="email@exemplo.com"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium mb-1">
-                      Nome completo*
-                    </label>
-                    <Input
-                      id="name"
-                      value={manualData.name}
-                      onChange={(e) => setManualData({...manualData, name: e.target.value})}
-                      placeholder="Nome do Usuário"
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="cpfCnpj" className="block text-sm font-medium mb-1">
-                      CPF/CNPJ*
-                    </label>
-                    <Input
-                      id="cpfCnpj"
-                      value={manualData.cpfCnpj}
-                      onChange={(e) => setManualData({...manualData, cpfCnpj: e.target.value})}
-                      placeholder="Somente números"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium mb-1">
-                      Telefone
-                    </label>
-                    <Input
-                      id="phone"
-                      value={manualData.phone}
-                      onChange={(e) => setManualData({...manualData, phone: e.target.value})}
-                      placeholder="(00) 00000-0000"
-                    />
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="asaasId" className="block text-sm font-medium mb-1">
-                      ID do Asaas
-                    </label>
-                    <Input
-                      id="asaasId"
-                      value={manualData.asaasId}
-                      onChange={(e) => setManualData({...manualData, asaasId: e.target.value})}
-                      placeholder="ID do cliente no Asaas (opcional)"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium mb-1">
-                      Senha (opcional)
-                    </label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={manualData.password}
-                      onChange={(e) => setManualData({...manualData, password: e.target.value})}
-                      placeholder="Deixe em branco para gerar automaticamente"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Se não for fornecida, uma senha aleatória será gerada
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <ManualImport onSubmit={handleManualImport} isLoading={isLoading} />
             </CardContent>
-            <CardFooter>
-              <Button 
-                onClick={handleManualImport} 
-                disabled={isLoading}
-                className="w-full"
-              >
-                <UserPlus className="mr-2 h-4 w-4" />
-                {isLoading ? "Importando..." : "Importar Usuário"}
-              </Button>
-            </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>
