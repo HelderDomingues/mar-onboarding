@@ -11,37 +11,37 @@ export type Database = {
     Tables: {
       asaas_customers: {
         Row: {
-          asaas_id: string
-          cpf_cnpj: string
-          created_at: string
+          asaas_id: string | null
+          cpf_cnpj: number
+          created_at: string | null
           email: string | null
           id: string
           nome_completo: string | null
           telefone: number | null
-          updated_at: string
-          user_id: string
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
-          asaas_id: string
-          cpf_cnpj: string
-          created_at?: string
+          asaas_id?: string | null
+          cpf_cnpj: number
+          created_at?: string | null
           email?: string | null
           id?: string
           nome_completo?: string | null
           telefone?: number | null
-          updated_at?: string
-          user_id: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          asaas_id?: string
-          cpf_cnpj?: string
-          created_at?: string
+          asaas_id?: string | null
+          cpf_cnpj?: number
+          created_at?: string | null
           email?: string | null
           id?: string
           nome_completo?: string | null
           telefone?: number | null
-          updated_at?: string
-          user_id?: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -144,6 +144,7 @@ export type Database = {
           company_address: string | null
           company_name: string | null
           cpf: string | null
+          email: string | null
           full_name: string | null
           has_asaas_customer: boolean | null
           id: string
@@ -160,6 +161,7 @@ export type Database = {
           company_address?: string | null
           company_name?: string | null
           cpf?: string | null
+          email?: string | null
           full_name?: string | null
           has_asaas_customer?: boolean | null
           id: string
@@ -176,6 +178,7 @@ export type Database = {
           company_address?: string | null
           company_name?: string | null
           cpf?: string | null
+          email?: string | null
           full_name?: string | null
           has_asaas_customer?: boolean | null
           id?: string
@@ -472,33 +475,6 @@ export type Database = {
         }
         Relationships: []
       }
-      "Teste MAKE": {
-        Row: {
-          created_at: string
-          Email: string
-          id: number
-          Nome: string
-          Sobrenome: string
-          Whatsapp: number
-        }
-        Insert: {
-          created_at?: string
-          Email: string
-          id?: number
-          Nome: string
-          Sobrenome: string
-          Whatsapp: number
-        }
-        Update: {
-          created_at?: string
-          Email?: string
-          id?: number
-          Nome?: string
-          Sobrenome?: string
-          Whatsapp?: number
-        }
-        Relationships: []
-      }
       testimonials: {
         Row: {
           active: boolean | null
@@ -602,6 +578,17 @@ export type Database = {
         }
         Returns: string
       }
+      import_user_from_asaas: {
+        Args: {
+          p_email: string
+          p_nome: string
+          p_cpf_cnpj: string
+          p_telefone: string
+          p_asaas_id: string
+          p_password?: string
+        }
+        Returns: string
+      }
       increment_material_access_count: {
         Args: {
           material_id: string
@@ -612,9 +599,21 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
-      is_quiz_admin: {
+      is_quiz_admin:
+        | {
+            Args: Record<PropertyKey, never>
+            Returns: boolean
+          }
+        | {
+            Args: {
+              user_email: string
+            }
+            Returns: boolean
+          }
+      link_user_to_asaas_customer: {
         Args: {
           user_email: string
+          asaas_email: string
         }
         Returns: boolean
       }

@@ -13,7 +13,9 @@ import {
   ChevronRight, 
   LogOut,
   Users,
-  LayoutDashboard
+  LayoutDashboard,
+  UserPlus,
+  FileUp
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -109,6 +111,15 @@ export function AdminSidebar() {
                     size="sm" 
                     className={`w-full justify-start ${location.pathname === '/admin/users/new' ? 'bg-sidebar-accent text-primary' : ''}`}>
                     Adicionar Usuário
+                  </Button>
+                </Link>
+                <Link to="/admin/users/import">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className={`w-full justify-start ${location.pathname === '/admin/users/import' ? 'bg-sidebar-accent text-primary' : ''}`}>
+                    <FileUp className="mr-2 h-4 w-4" />
+                    Importar do Asaas
                   </Button>
                 </Link>
               </CollapsibleContent>

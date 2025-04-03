@@ -15,6 +15,8 @@ import NotFound from "./pages/NotFound";
 import UsersPage from "./pages/admin/Users";
 import NewUserPage from "./pages/admin/NewUser";
 import SettingsPage from "./pages/admin/Settings";
+import ImportUsersPage from "./pages/admin/ImportUsers";
+import MemberArea from "./pages/MemberArea";
 import { QuizSuccess } from "./components/quiz/QuizSuccess";
 
 const queryClient = new QueryClient({
@@ -115,6 +117,15 @@ const App = () => (
             />
             
             <Route
+              path="/member"
+              element={
+                <ProtectedRoute>
+                  <MemberArea />
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
               path="/quiz"
               element={
                 <ProtectedRoute>
@@ -165,6 +176,15 @@ const App = () => (
               element={
                 <AdminRoute>
                   <NewUserPage />
+                </AdminRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/users/import"
+              element={
+                <AdminRoute>
+                  <ImportUsersPage />
                 </AdminRoute>
               }
             />

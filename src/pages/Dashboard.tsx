@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { QuizHeader } from "@/components/quiz/QuizHeader";
 import { useToast } from "@/components/ui/use-toast";
@@ -96,7 +96,7 @@ const Dashboard = () => {
                 isAdmin={isAdmin}
               />
               
-              {/* Seção para acesso direto às páginas de validação e sucesso (para testes) */}
+              {/* Área de testes e desenvolvimento */}
               <div className="mt-8 border-t pt-6">
                 <h2 className="text-xl font-bold mb-4">Acesso direto para testes</h2>
                 <div className="flex flex-wrap gap-4">
@@ -113,6 +113,13 @@ const Dashboard = () => {
                   >
                     Página de Sucesso
                   </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    onClick={() => window.location.href = '/member'}
+                  >
+                    Área do Membro
+                  </Button>
                 </div>
               </div>
             </div>
@@ -127,9 +134,18 @@ const Dashboard = () => {
       <QuizHeader isAdmin={isAdmin} />
       
       <main className="flex-1 container max-w-5xl py-8 px-4">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Dashboard Principal</h1>
+          <Link to="/member">
+            <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
+              Acessar Área do Membro
+            </Button>
+          </Link>
+        </div>
+        
         <UserDashboard submission={submission} />
         
-        {/* Seção para acesso direto às páginas de validação e sucesso (para testes) */}
+        {/* Área de testes */}
         <div className="mt-8 border-t pt-6">
           <h2 className="text-xl font-bold mb-4">Acesso direto para testes</h2>
           <div className="flex flex-wrap gap-4">
