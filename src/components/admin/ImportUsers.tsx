@@ -119,22 +119,13 @@ export function ImportUsers() {
         
         // Call the function to create or update the user
         try {
-          // Convertendo para os tipos corretos antes de inserir
-          const cpfCnpjNumber = parseToNumber(customer.cpfCnpj);
-          const telefoneNumber = parseToNumber(customer.phone || customer.mobilePhone);
-          
-          if (!cpfCnpjNumber) {
-            importResults.failure.push(`${customer.email}: CPF/CNPJ inválido`);
-            continue;
-          }
-          
-          const { data, error } = await supabase.from('asaas_customers').insert({
-            email: customer.email,
-            nome_completo: customer.name,
-            cpf_cnpj: cpfCnpjNumber,
-            telefone: telefoneNumber,
-            asaas_id: customer.id || null
-          }).select();
+          const { data, error } = await supabase.rpc('import_user_from_asaas', {
+            p_email: customer.email,
+            p_nome: customer.name,
+            p_cpf_cnpj: customer.cpfCnpj,
+            p_telefone: customer.phone || customer.mobilePhone || '',
+            p_asaas_id: customer.id || ''
+          });
           
           if (error) {
             importResults.failure.push(`${customer.email}: ${error.message}`);
@@ -183,21 +174,14 @@ export function ImportUsers() {
     setIsLoading(true);
     
     try {
-      // Convertendo para os tipos corretos
-      const cpfCnpjNumber = parseToNumber(manualData.cpfCnpj);
-      const telefoneNumber = parseToNumber(manualData.phone);
-      
-      if (!cpfCnpjNumber) {
-        throw new Error("CPF/CNPJ inválido");
-      }
-      
-      const { data, error } = await supabase.from('asaas_customers').insert({
-        email: manualData.email,
-        nome_completo: manualData.name,
-        cpf_cnpj: cpfCnpjNumber,
-        telefone: telefoneNumber,
-        asaas_id: manualData.asaasId || null
-      }).select();
+      const { data, error } = await supabase.rpc('import_user_from_asaas', {
+        p_email: manualData.email,
+        p_nome: manualData.name,
+        p_cpf_cnpj: manualData.cpfCnpj,
+        p_telefone: manualData.phone || '',
+        p_asaas_id: manualData.asaasId || '',
+        p_password: manualData.password || null
+      });
       
       if (error) {
         throw new Error(error.message);
