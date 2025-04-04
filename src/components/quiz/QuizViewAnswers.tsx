@@ -45,7 +45,7 @@ export function QuizViewAnswers() {
         // Buscar respostas do usuário
         const { data: answersData, error: answersError } = await supabase
           .from('quiz_answers')
-          .select('question_id, answer_value')
+          .select('question_id, answer')
           .eq('user_id', user.id);
           
         if (answersError) throw answersError;
@@ -54,9 +54,9 @@ export function QuizViewAnswers() {
         const answersObject: Record<string, any> = {};
         answersData?.forEach(item => {
           try {
-            answersObject[item.question_id] = JSON.parse(item.answer_value);
+            answersObject[item.question_id] = JSON.parse(item.answer);
           } catch (e) {
-            answersObject[item.question_id] = item.answer_value;
+            answersObject[item.question_id] = item.answer;
           }
         });
         
