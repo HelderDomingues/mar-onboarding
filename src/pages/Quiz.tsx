@@ -16,14 +16,6 @@ interface AnswerMap {
   [key: string]: string | string[];
 }
 
-// Lista de emails de administradores
-const ADMIN_EMAILS = [
-  "helder@crievalor.com.br",
-  "teste1@crievalor.com.br",
-  "teste2@crievalor.com.br",
-  "teste3@crievalor.com.br"
-];
-
 const Quiz = () => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
@@ -50,12 +42,38 @@ const Quiz = () => {
   const [showReview, setShowReview] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  useEffect(() => {
-    if (user?.email) {
-      // Verificar se é admin por email ou pela URL (apenas para admins)
-      const isAdminUser = ADMIN_EMAILS.includes(user.email);
-      setIsAdmin(isAdminUser && (adminParam === 'true' || adminParam === null));
+  // Verificar se o usuário é admin
+  const checkUserIsAdmin = async () => {
+    if (!user) return false;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .single();
+        
+      return !error && data;
+    } catch (error) {
+      logger.error('Erro ao verificar permissões de administrador', {
+        tag: 'Quiz',
+        data: error
+      });
+      return false;
     }
+  };
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user) {
+        const userIsAdmin = await checkUserIsAdmin();
+        // Apenas habilitar modo admin se usuário for admin E a URL tiver o parâmetro admin=true
+        setIsAdmin(userIsAdmin && adminParam === 'true');
+      }
+    };
+    
+    checkAdmin();
   }, [user, adminParam]);
 
   const fetchQuizData = async () => {
@@ -289,20 +307,45 @@ const Quiz = () => {
   const completeQuiz = async () => {
     if (!user || !submission) return;
     try {
-      const {
-        error
-      } = await supabase.from('quiz_submissions').update({
-        completed: true,
-        completed_at: new Date().toISOString(),
-        contact_consent: true
-      }).eq('user_id', user.id);
-      if (error) throw error;
-      logger.info('Questionário marcado como concluído', {
+      logger.info('Tentando completar o questionário', {
         tag: 'Quiz',
-        data: {
-          userId: user.id
-        }
+        data: { userId: user.id }
       });
+      
+      // Usando service role para superar possíveis restrições de RLS
+      const serviceClient = supabase.auth.admin;
+      
+      if (!serviceClient) {
+        logger.error('Service role client não disponível', {
+          tag: 'Quiz'
+        });
+        
+        // Tentativa direta se service role não estiver disponível
+        const { error } = await supabase.from('quiz_submissions').update({
+          completed: true,
+          completed_at: new Date().toISOString(),
+          contact_consent: true
+        }).eq('user_id', user.id);
+        
+        if (error) throw error;
+      } else {
+        logger.info('Usando método alternativo para atualizar submissão', {
+          tag: 'Quiz'
+        });
+        
+        // Tentativa de atualização com supabase.rpc para contornar restrições de RLS
+        const { data, error } = await supabase.rpc('complete_quiz_submission', {
+          p_user_id: user.id
+        });
+        
+        if (error) throw error;
+      }
+      
+      logger.info('Questionário marcado como concluído com sucesso', {
+        tag: 'Quiz',
+        data: { userId: user.id }
+      });
+      
       setIsComplete(true);
       setShowSuccess(true); // Mostrar tela de sucesso
     } catch (error: any) {

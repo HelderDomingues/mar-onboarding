@@ -1,20 +1,60 @@
 
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Button } from "@/components/ui/button";
-import { Sidebar, SidebarSeparator, SidebarTrigger } from "@/components/ui/sidebar";
-import { Settings, BarChart, Database, HelpCircle, ChevronDown, ChevronRight, LogOut, Users, LayoutDashboard, UserPlus, FileUp, Check, User } from "lucide-react";
-import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarTrigger
+} from "@/components/ui/sidebar";
+import {
+  LayoutDashboard,
+  Users,
+  Settings,
+  LogOut,
+  FileClock,
+  FileCheck,
+  User
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface UserProfile {
+  full_name?: string;
+  avatar_url?: string;
+}
 
 export function AdminSidebar() {
-  const [isUsersOpen, setIsUsersOpen] = useState(true);
-  const [isPagesOpen, setIsPagesOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const { user, logout } = useAuth();
+  
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user?.id) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', user.id)
+            .single();
+            
+          if (!error && data) {
+            setProfile(data);
+          }
+        } catch (error) {
+          console.error('Erro ao buscar perfil:', error);
+        }
+      }
+    };
+    
+    fetchProfile();
+  }, [user]);
   
   const handleLogout = async () => {
     try {
@@ -25,140 +65,159 @@ export function AdminSidebar() {
     }
   };
   
-  const isActive = (path: string) => location.pathname.startsWith(path);
+  const userInitials = profile?.full_name 
+    ? profile.full_name.split(' ').slice(0, 2).map(name => name[0]).join('').toUpperCase()
+    : user?.email 
+      ? user.email.substring(0, 2).toUpperCase() 
+      : "AD";
+      
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
   
-  return <Sidebar>
-      <div className="flex flex-col h-full py-2">
-        <div className="flex flex-col items-center gap-2 px-4 py-3 border-b mb-4">
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center">
-              <img alt="MAR - Mapa para Alto Rendimento" className="h-8" src="https://static.wixstatic.com/media/783feb_f9f4149d6df9498fa01130d2b89f2fe2~mv2.png" />
-              <Badge variant="default" className="ml-2 bg-blue-600 text-white px-2 py-1 text-xs font-medium rounded">
-                Admin
-              </Badge>
-            </div>
-            <SidebarTrigger />
-          </div>
-          <div className="flex justify-center w-full mt-2 my-[30px]">
-            <img alt="Crie Valor" src="https://static.wixstatic.com/media/783feb_1d37d88c360245f2aee325cefb930b33~mv2.png" className="align-right h-10 object-fill" />
+  return (
+    <Sidebar className="hidden md:flex">
+      <SidebarHeader className="border-b">
+        <div className="flex items-center p-4">
+          <img
+            src="https://static.wixstatic.com/media/783feb_0e0fffdb3f3e4eafa422021dcea535d4~mv2.png"
+            className="h-8 mr-3"
+            alt="MAR - Mapa para Alto Rendimento"
+          />
+          <div className="bg-blue-600 text-white px-3 py-1 text-xs font-medium rounded-md">
+            Admin
           </div>
         </div>
-
-        <div className="flex-1 overflow-auto py-2">
-          <div className="space-y-1 px-2 font-sans">
-            <Link to="/admin">
-              <Button variant="ghost" size="sm" className={`w-full justify-start ${isActive('/admin') && !isActive('/admin/users') && !isActive('/admin/settings') ? 'bg-sidebar-accent text-primary' : ''}`}>
-                <LayoutDashboard className="mr-2 h-4 w-4" />
+      </SidebarHeader>
+      
+      <SidebarContent>
+        <div className="w-full flex pt-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative w-full justify-start rounded-none px-4 h-auto py-2">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-8 w-8">
+                    {profile?.avatar_url ? (
+                      <AvatarImage src={profile.avatar_url} alt="Avatar" />
+                    ) : null}
+                    <AvatarFallback className="bg-primary-700 text-white font-medium">
+                      {userInitials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="text-left">
+                    <p className="text-sm font-medium">{profile?.full_name || "Administrador"}</p>
+                    <p className="text-xs text-muted-foreground">{user?.email}</p>
+                  </div>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/member" className="cursor-pointer">
+                  <User className="h-4 w-4 mr-2" />
+                  <span>Meu Perfil</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/admin/settings" className="cursor-pointer">
+                  <Settings className="h-4 w-4 mr-2" />
+                  <span>Configurações</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={handleLogout}
+                className="text-red-600 cursor-pointer"
+              >
+                <LogOut className="h-4 w-4 mr-2 rotate-180" />
+                <span>Sair</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        
+        <nav className="mt-6">
+          <div className="px-3 py-2">
+            <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight">
+              Administração
+            </h2>
+            <div className="space-y-1">
+              <Button
+                variant={isActive("/dashboard") || isActive("/admin") ? "secondary" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => navigate('/dashboard')}
+              >
+                <LayoutDashboard className="h-4 w-4 mr-2" />
                 Dashboard
               </Button>
-            </Link>
-            
-            <Collapsible open={isUsersOpen} onOpenChange={setIsUsersOpen} className="w-full">
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className={`w-full justify-between ${isActive('/admin/users') ? 'bg-sidebar-accent text-primary' : ''}`}>
-                  <div className="flex items-center">
-                    <Users className="mr-2 h-4 w-4" />
-                    <span>Usuários</span>
-                  </div>
-                  {isUsersOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pl-6 space-y-1">
-                <Link to="/admin/users">
-                  <Button variant="ghost" size="sm" className={`w-full justify-start ${location.pathname === '/admin/users' ? 'bg-sidebar-accent text-primary' : ''}`}>
-                    Todos os Usuários
-                  </Button>
-                </Link>
-                <Link to="/admin/users/new">
-                  <Button variant="ghost" size="sm" className={`w-full justify-start ${location.pathname === '/admin/users/new' ? 'bg-sidebar-accent text-primary' : ''}`}>
-                    Adicionar Usuário
-                  </Button>
-                </Link>
-                <Link to="/admin/users/import" className="bg-blue-900 rounded-md my-[10px]">
-                  <Button variant="ghost" size="sm" className={`w-full justify-start ${location.pathname === '/admin/users/import' ? 'bg-sidebar-accent text-primary' : ''}`}>
-                    <FileUp className="mr-2 h-4 w-4" />
-                    Importar do Asaas
-                  </Button>
-                </Link>
-              </CollapsibleContent>
-            </Collapsible>
-
-            <Link to="/admin/data" className="my-[20px]">
-              <Button variant="ghost" size="sm" className={`w-full justify-start ${isActive('/admin/data') ? 'bg-sidebar-accent text-primary' : ''}`}>
-                <Database className="mr-2 h-4 w-4" />
-                Dados
+              
+              <Button
+                variant={isActive("/admin/users") ? "secondary" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => navigate('/admin/users')}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Usuários
               </Button>
-            </Link>
-
-            <Link to="/admin/reports">
-              <Button variant="ghost" size="sm" className={`w-full justify-start ${isActive('/admin/reports') ? 'bg-sidebar-accent text-primary' : ''}`}>
-                <BarChart className="mr-2 h-4 w-4" />
-                Relatórios
-              </Button>
-            </Link>
-            
-            <Link to="/admin/settings">
-              <Button variant="ghost" size="sm" className={`w-full justify-start ${isActive('/admin/settings') ? 'bg-sidebar-accent text-primary' : ''}`}>
-                <Settings className="mr-2 h-4 w-4" />
+              
+              <Button
+                variant={isActive("/admin/settings") ? "secondary" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => navigate('/admin/settings')}
+              >
+                <Settings className="h-4 w-4 mr-2" />
                 Configurações
               </Button>
-            </Link>
-
-            <Link to="/admin/help">
-              <Button variant="ghost" size="sm" className={`w-full justify-start ${isActive('/admin/help') ? 'bg-sidebar-accent text-primary' : ''}`}>
-                <HelpCircle className="mr-2 h-4 w-4" />
-                Ajuda
+            </div>
+          </div>
+          
+          <div className="px-3 py-2">
+            <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight">
+              Páginas Especiais
+            </h2>
+            <div className="space-y-1">
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => navigate('/quiz/review')}
+              >
+                <FileClock className="h-4 w-4 mr-2" />
+                Página de Revisão
               </Button>
-            </Link>
-            
-            {/* Seção de páginas especiais */}
-            <Collapsible open={isPagesOpen} onOpenChange={setIsPagesOpen} className="w-full mt-4 border-t pt-4">
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-full justify-between">
-                  <div className="flex items-center">
-                    <span>Páginas Especiais</span>
-                  </div>
-                  {isPagesOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pl-6 space-y-1">
-                <Link to="/quiz/review">
-                  <Button variant="ghost" size="sm" className={`w-full justify-start ${location.pathname === '/quiz/review' ? 'bg-sidebar-accent text-primary' : ''}`}>
-                    <Check className="mr-2 h-4 w-4" />
-                    Página de Revisão
-                  </Button>
-                </Link>
-                <Link to="/quiz/success">
-                  <Button variant="ghost" size="sm" className={`w-full justify-start ${location.pathname === '/quiz/success' ? 'bg-sidebar-accent text-primary' : ''}`}>
-                    <Check className="mr-2 h-4 w-4" />
-                    Página de Sucesso
-                  </Button>
-                </Link>
-                <Link to="/member">
-                  <Button variant="ghost" size="sm" className={`w-full justify-start ${location.pathname === '/member' ? 'bg-sidebar-accent text-primary' : ''}`}>
-                    <User className="mr-2 h-4 w-4" />
-                    Página de Membro
-                  </Button>
-                </Link>
-              </CollapsibleContent>
-            </Collapsible>
+              
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => navigate('/quiz/success')}
+              >
+                <FileCheck className="h-4 w-4 mr-2" />
+                Página de Sucesso
+              </Button>
+              
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => navigate('/member')}
+              >
+                <User className="h-4 w-4 mr-2" />
+                Página de Membro
+              </Button>
+            </div>
           </div>
+        </nav>
+      </SidebarContent>
+      
+      <SidebarFooter className="border-t">
+        <div className="p-3">
+          <SidebarTrigger className="mb-1 w-full text-slate-900">
+            <LogOut className="h-4 w-4 mr-2 rotate-180" />
+            Ocultar Menu
+          </SidebarTrigger>
+          <p className="text-xs text-center text-muted-foreground">v1.0.0</p>
         </div>
-
-        <SidebarSeparator />
-
-        <div className="p-2">
-          <Button variant="destructive" size="sm" className="w-full justify-start opacity-90 hover:opacity-100" onClick={handleLogout} type="button">
-            <LogOut className="mr-2 h-4 w-4 rotate-180" />
-            Sair
-          </Button>
-
-          <div className="flex items-center justify-center pt-2">
-            <Badge variant="outline" className="text-xs text-muted-foreground font-sans">
-              v1.0.0
-            </Badge>
-          </div>
-        </div>
-      </div>
-    </Sidebar>;
+      </SidebarFooter>
+    </Sidebar>
+  );
 }

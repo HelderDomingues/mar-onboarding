@@ -25,7 +25,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, UserPlus, Mail, CheckCircle, XCircle, RefreshCw } from "lucide-react";
+import { Search, UserPlus, Mail, CheckCircle, XCircle, RefreshCw, Key } from "lucide-react";
 
 type UserProfile = {
   id: string;
@@ -36,16 +36,6 @@ type UserProfile = {
   is_admin?: boolean;
   has_submission?: boolean;
 };
-
-// Tipo para usuários do Supabase Auth
-interface SupabaseAuthUser {
-  id: string;
-  email: string;
-}
-
-interface AdminListUsersResponse {
-  users: SupabaseAuthUser[];
-}
 
 const UsersPage = () => {
   const { isAuthenticated, user } = useAuth();
@@ -94,17 +84,10 @@ const UsersPage = () => {
         return;
       }
       
+      // Tentar obter emails diretamente - isso só vai funcionar se estiver usando service role key
       try {
-        // Buscar users da tabela auth para pegar emails
-        const { data: authUsers, error: authUsersError } = await supabase.auth.admin.listUsers() as { 
-          data: AdminListUsersResponse | null, 
-          error: Error | null 
-        };
-        
-        if (authUsersError) {
-          console.error("Erro ao listar usuários (auth admin API):", authUsersError);
-          setError("Não foi possível acessar a lista de usuários via API admin. Verifique se está usando a chave correta.");
-        }
+        // Buscar users da tabela auth.users diretamente via RPC
+        const { data: emailData, error: emailError } = await supabase.rpc('get_user_emails');
         
         // Buscar roles de admin
         const { data: adminRoles, error: adminRolesError } = await supabase
@@ -121,11 +104,13 @@ const UsersPage = () => {
         const adminUserIds = adminRoles?.map(role => role.user_id) || [];
         const submissionUserIds = submissions?.map(sub => sub.user_id) || [];
         
-        // Criar um mapa de emails usando os dados de auth.users (se disponível)
+        // Criar um mapa de emails usando os dados obtidos
         const emailMap = new Map<string, string>();
-        if (authUsers && authUsers.users) {
-          authUsers.users.forEach(user => {
-            emailMap.set(user.id, user.email);
+        if (emailData && Array.isArray(emailData)) {
+          emailData.forEach((item: any) => {
+            if (item && item.user_id && item.email) {
+              emailMap.set(item.user_id, item.email);
+            }
           });
         }
         
@@ -134,16 +119,19 @@ const UsersPage = () => {
         const processedUsers = profilesArray.map(profile => {
           return {
             ...profile,
-            email: emailMap.get(profile.id) || "Email não disponível", // Use o email do mapa ou valor padrão
+            email: emailMap.get(profile.id) || profile.email || "Email não disponível",
             is_admin: adminUserIds.includes(profile.id),
             has_submission: submissionUserIds.includes(profile.id)
           } as UserProfile;
         });
         
         setUsers(processedUsers);
+        if (emailError) {
+          setError("Acesso limitado aos dados de email. Utilize o método alternativo para ver todos os emails.");
+        }
       } catch (error: any) {
-        console.error("Erro ao acessar API de admin:", error);
-        setError("Erro ao acessar API de admin do Supabase: " + error.message);
+        console.error("Erro ao acessar dados de email:", error);
+        setError("Erro ao acessar dados de email: " + error.message);
         
         // Mesmo com erro, vamos exibir os perfis básicos
         const profilesArray = Array.isArray(profilesData) ? profilesData : [];
@@ -164,7 +152,7 @@ const UsersPage = () => {
         const processedUsers = profilesArray.map(profile => {
           return {
             ...profile,
-            email: "Email não disponível", 
+            email: profile.email || "Email não disponível", 
             is_admin: adminUserIds.includes(profile.id),
             has_submission: submissionUserIds.includes(profile.id)
           } as UserProfile;
@@ -252,6 +240,13 @@ const UsersPage = () => {
     }
   };
   
+  const setupEmailAccess = () => {
+    toast({
+      title: "Configurar acesso aos emails",
+      description: "Para acessar emails dos usuários é necessário configurar a chave service_role do Supabase.",
+    });
+  };
+  
   if (!isAuthenticated) {
     return null; // Será redirecionado no useEffect
   }
@@ -309,8 +304,16 @@ const UsersPage = () => {
               <CardContent className="p-0">
                 {error && (
                   <div className="p-4 bg-amber-50 border-l-4 border-amber-500 text-amber-700">
-                    <h3 className="font-medium">Atenção</h3>
+                    <h3 className="font-medium flex items-center gap-2">
+                      <Key className="h-4 w-4" /> 
+                      Atenção
+                    </h3>
                     <p className="text-sm">{error}</p>
+                    <div className="mt-2">
+                      <Button variant="outline" size="sm" onClick={setupEmailAccess} className="text-amber-800 hover:bg-amber-100">
+                        Configurar acesso aos emails
+                      </Button>
+                    </div>
                   </div>
                 )}
                 

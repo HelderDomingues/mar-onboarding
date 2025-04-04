@@ -95,33 +95,6 @@ const Dashboard = () => {
                 submission={submission}
                 isAdmin={isAdmin}
               />
-              
-              {/* Área de testes e desenvolvimento */}
-              <div className="mt-8 border-t pt-6">
-                <h2 className="text-xl font-bold mb-4">Acesso direto para testes</h2>
-                <div className="flex flex-wrap gap-4">
-                  <Button 
-                    variant="outline"
-                    onClick={() => window.location.href = '/quiz/review'}
-                  >
-                    Página de Revisão
-                  </Button>
-                  
-                  <Button 
-                    variant="outline"
-                    onClick={() => window.location.href = '/quiz/success'}
-                  >
-                    Página de Sucesso
-                  </Button>
-                  
-                  <Button 
-                    variant="outline"
-                    onClick={() => window.location.href = '/member'}
-                  >
-                    Área do Membro
-                  </Button>
-                </div>
-              </div>
             </div>
           </SidebarInset>
         </div>
@@ -144,26 +117,6 @@ const Dashboard = () => {
         </div>
         
         <UserDashboard submission={submission} />
-        
-        {/* Área de testes */}
-        <div className="mt-8 border-t pt-6">
-          <h2 className="text-xl font-bold mb-4">Acesso direto para testes</h2>
-          <div className="flex flex-wrap gap-4">
-            <Button 
-              variant="outline"
-              onClick={() => window.location.href = '/quiz/review'}
-            >
-              Página de Revisão
-            </Button>
-            
-            <Button 
-              variant="outline"
-              onClick={() => window.location.href = '/quiz/success'}
-            >
-              Página de Sucesso
-            </Button>
-          </div>
-        </div>
       </main>
       
       <footer className="bg-white py-4 border-t text-center text-sm text-muted-foreground">

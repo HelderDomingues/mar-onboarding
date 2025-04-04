@@ -1,14 +1,16 @@
 
-import { QuestionCard, Question } from "@/components/quiz/QuestionCard";
+import { useState, useEffect } from "react";
+import { QuestionCard } from "@/components/quiz/QuestionCard";
 import { QuizProgress } from "@/components/quiz/QuizProgress";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { Card } from "@/components/ui/card";
 import { BookOpen, Settings, ArrowRight, ArrowLeft } from "lucide-react";
 import { QuizReview } from "@/components/quiz/QuizReview";
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/utils/logger";
 
 interface QuizContentProps {
   currentModule: QuizModule;
@@ -51,15 +53,6 @@ export function QuizContent({
 }: QuizContentProps) {
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   
-  // Efeito para garantir que o painel de admin é visível quando necessário
-  useEffect(() => {
-    if (isAdmin && showAdminPanel) {
-      // Forçar a exibição do painel quando necessário
-      const timer = setTimeout(() => setShowAdminPanel(true), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isAdmin, showAdminPanel]);
-
   // Validar se temos dados necessários antes de renderizar
   if (!moduleQuestions || moduleQuestions.length === 0) {
     return null;

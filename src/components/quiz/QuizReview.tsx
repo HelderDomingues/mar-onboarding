@@ -1,12 +1,16 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, CheckCircle, Edit, ThumbsUp, Calendar, FileCheck } from "lucide-react";
+import { ArrowRight, CheckCircle, Edit, ThumbsUp, Calendar, FileCheck, ArrowLeft } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
+
 interface QuizReviewProps {
   modules: QuizModule[];
   questions: QuizQuestion[];
@@ -14,6 +18,7 @@ interface QuizReviewProps {
   onComplete: () => void;
   onEdit: (moduleIndex: number, questionIndex: number) => void;
 }
+
 export function QuizReview({
   modules,
   questions,
@@ -23,6 +28,10 @@ export function QuizReview({
 }: QuizReviewProps) {
   const [confirmed, setConfirmed] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
+  const [editedAnswers, setEditedAnswers] = useState<Record<string, string | string[]>>({...answers});
+  const { toast } = useToast();
+  
   const form = useForm({
     defaultValues: {
       agreement: false
@@ -48,9 +57,117 @@ export function QuizReview({
     if (typeof value === "string") return value;
     return value.join(", ");
   };
+  
   const handleTermsChange = (checked: boolean) => {
     setAgreedToTerms(checked);
   };
+  
+  const handleEditClick = (questionId: string) => {
+    setEditingQuestionId(questionId);
+  };
+  
+  const handleSaveEdit = (questionId: string) => {
+    setEditingQuestionId(null);
+    toast({
+      title: "Resposta atualizada",
+      description: "Sua resposta foi atualizada com sucesso.",
+    });
+  };
+  
+  const handleCancelEdit = () => {
+    setEditingQuestionId(null);
+  };
+  
+  const handleInputChange = (questionId: string, value: string | string[]) => {
+    setEditedAnswers(prev => ({
+      ...prev,
+      [questionId]: value
+    }));
+  };
+  
+  const handleCheckboxChange = (questionId: string, option: string, checked: boolean) => {
+    const currentAnswers = Array.isArray(editedAnswers[questionId]) 
+      ? editedAnswers[questionId] as string[] 
+      : [];
+      
+    let newAnswers: string[];
+    
+    if (checked) {
+      newAnswers = [...currentAnswers, option];
+    } else {
+      newAnswers = currentAnswers.filter(item => item !== option);
+    }
+    
+    setEditedAnswers(prev => ({
+      ...prev,
+      [questionId]: newAnswers
+    }));
+  };
+  
+  // Renderizar campo de edição baseado no tipo da questão
+  const renderEditField = (question: QuizQuestion) => {
+    const questionId = question.id;
+    const answer = editedAnswers[questionId];
+    
+    switch(question.type) {
+      case 'text':
+        return (
+          <Input
+            value={answer as string || ''}
+            onChange={(e) => handleInputChange(questionId, e.target.value)}
+            className="w-full text-slate-900"
+            placeholder="Digite sua resposta aqui"
+          />
+        );
+        
+      case 'textarea':
+        return (
+          <Textarea
+            value={answer as string || ''}
+            onChange={(e) => handleInputChange(questionId, e.target.value)}
+            className="w-full text-slate-900"
+            placeholder="Digite sua resposta aqui"
+          />
+        );
+        
+      case 'checkbox':
+        const options = question.options?.map(opt => opt.text) || [];
+        const selectedOptions = Array.isArray(answer) ? answer : [];
+        
+        return (
+          <div className="space-y-2">
+            {options.map((option) => (
+              <div key={option} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`${questionId}-${option}`}
+                  checked={selectedOptions.includes(option)}
+                  onCheckedChange={(checked) => 
+                    handleCheckboxChange(questionId, option, checked === true)
+                  }
+                />
+                <label 
+                  htmlFor={`${questionId}-${option}`}
+                  className="text-sm font-medium leading-none cursor-pointer text-slate-800"
+                >
+                  {option}
+                </label>
+              </div>
+            ))}
+          </div>
+        );
+        
+      default:
+        return (
+          <Input
+            value={answer as string || ''}
+            onChange={(e) => handleInputChange(questionId, e.target.value)}
+            className="w-full text-slate-900"
+            placeholder="Digite sua resposta aqui"
+          />
+        );
+    }
+  };
+  
   return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-6">
       {!confirmed ? <>
           <Card className="quiz-card">
@@ -77,22 +194,56 @@ export function QuizReview({
                     
                     <div className="space-y-4">
                       {moduleData.questions.map((question, questionIndex) => {
-                  const answer = answers[question.id];
-                  return <div key={question.id} className="border-t border-[hsl(var(--quiz-border))] pt-3">
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <p className="font-medium text-[hsl(var(--quiz-text))]">{question.text}</p>
+                        const questionId = question.id;
+                        const isEditing = editingQuestionId === questionId;
+                        const answer = editedAnswers[questionId];
+                        
+                        return <div key={questionId} className="border-t border-[hsl(var(--quiz-border))] pt-3">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <p className="font-medium text-[hsl(var(--quiz-text))]">{question.text}</p>
+                              
+                              {isEditing ? (
+                                <div className="mt-2 space-y-3">
+                                  {renderEditField(question)}
+                                  
+                                  <div className="flex gap-2 justify-end mt-3">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      onClick={handleCancelEdit}
+                                      className="text-slate-900"
+                                    >
+                                      Cancelar
+                                    </Button>
+                                    <Button 
+                                      size="sm" 
+                                      onClick={() => handleSaveEdit(questionId)}
+                                    >
+                                      Salvar
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
                                 <p className="text-[hsl(var(--quiz-text))] opacity-80 mt-1 break-words">
                                   {formatAnswerValue(answer)}
                                 </p>
-                              </div>
-                              
-                              <Button variant="outline" size="sm" onClick={() => onEdit(moduleIndex, questionIndex)} className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-zinc-950">
+                              )}
+                            </div>
+                            
+                            {!isEditing && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleEditClick(questionId)} 
+                                className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-zinc-950"
+                              >
                                 <Edit className="h-4 w-4 mr-1" /> Editar
                               </Button>
-                            </div>
-                          </div>;
-                })}
+                            )}
+                          </div>
+                        </div>;
+                      })}
                     </div>
                   </div>)}
               </div>
@@ -132,7 +283,7 @@ export function QuizReview({
             </CardContent>
             <CardFooter className="flex justify-between pt-6 border-t border-[hsl(var(--quiz-border))]">
               <Button variant="outline" onClick={() => onEdit(modules.length - 1, questions.filter(q => q.module_id === modules[modules.length - 1].id).length - 1)} className="border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))]">
-                Voltar
+                <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
               </Button>
               <Button onClick={() => setConfirmed(true)} disabled={!agreedToTerms} className="quiz-btn bg-lime-600 hover:bg-lime-500">
                 Confirmar Respostas <ArrowRight className="ml-2 h-4 w-4" />
