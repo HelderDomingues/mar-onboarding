@@ -147,7 +147,7 @@
   @apply animate-fade-in;
 }
 
-/.quiz-card div {
+.quiz-card div {
   @apply text-[hsl(var(--quiz-text))];
   font-family: 'Inter', sans-serif;
 }
