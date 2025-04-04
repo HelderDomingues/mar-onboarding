@@ -71,7 +71,7 @@ export function AdminSidebar() {
                     Adicionar Usuário
                   </Button>
                 </Link>
-                <Link to="/admin/users/import">
+                <Link to="/admin/users/import" className="bg-blue-900">
                   <Button variant="ghost" size="sm" className={`w-full justify-start ${location.pathname === '/admin/users/import' ? 'bg-sidebar-accent text-primary' : ''}`}>
                     <FileUp className="mr-2 h-4 w-4" />
                     Importar do Asaas
