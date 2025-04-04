@@ -48,6 +48,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { logger } from "@/utils/logger";
 
 export function AdminMaterialsManager() {
   // Estado para materiais e formulário
@@ -119,8 +120,11 @@ export function AdminMaterialsManager() {
             .eq("is_active", true)
             .maybeSingle();
             
-          if (onboardingError && onboardingError.code !== 'PGRST116') { // No rows returned
-            console.error("Erro ao carregar onboarding:", onboardingError);
+          if (onboardingError) {
+            logger.error("Erro ao carregar onboarding:", {
+              tag: "AdminMaterialsManager",
+              data: onboardingError
+            });
           } else if (onboardingData) {
             setOnboardingContent(onboardingData as OnboardingContent);
           }
@@ -413,7 +417,7 @@ export function AdminMaterialsManager() {
       case "audio":
         return <Music className="h-4 w-4" />;
       case "presentation":
-        return <Presentation className="h-4 w-4" />; // Corrigido: FilePresentation -> Presentation
+        return <Presentation className="h-4 w-4" />; 
       default:
         return <FileText className="h-4 w-4" />;
     }
@@ -901,4 +905,3 @@ export function AdminMaterialsManager() {
     </div>
   );
 }
-
