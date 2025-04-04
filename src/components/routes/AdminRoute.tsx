@@ -6,10 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 
 interface AdminRouteProps {
-  children: ReactNode;
+  component: React.ComponentType<any>;
 }
 
-export const AdminRoute = ({ children }: AdminRouteProps) => {
+export const AdminRoute = ({ component: Component }: AdminRouteProps) => {
   const { user, isAuthenticated } = useAuth();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,5 +69,5 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
     return <Navigate to="/dashboard" state={{ from: location.pathname, message: "Você não tem permissão para acessar esta área." }} />;
   }
   
-  return <>{children}</>;
+  return <Component />;
 };
