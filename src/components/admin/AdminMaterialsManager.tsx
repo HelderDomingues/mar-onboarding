@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { MoreHorizontal, Plus, Pencil, Trash2, UploadCloud, FileText, Video, Link2, ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Json } from "@/integrations/supabase/types";
 
 interface Material {
   id: string;
@@ -25,6 +26,7 @@ interface Material {
   category: string;
   created_at: string;
   access_count: number;
+  plan_level: string;
   type: 'document' | 'video' | 'link' | 'other';
   is_onboarding?: boolean;
 }
@@ -44,7 +46,7 @@ export const AdminMaterialsManager = () => {
   const { toast } = useToast();
   const [materials, setMaterials] = useState<Material[]>([]);
   const [onboardingContent, setOnboardingContent] = useState<OnboardingContent | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -63,6 +65,7 @@ export const AdminMaterialsManager = () => {
     file_url: '',
     type: 'document' as Material['type'],
     is_onboarding: false,
+    plan_level: 'basic',
   });
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const [thumbnailToUpload, setThumbnailToUpload] = useState<File | null>(null);
@@ -73,7 +76,7 @@ export const AdminMaterialsManager = () => {
   
   const fetchData = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       
       // Buscar materiais
       const { data: materialsData, error: materialsError } = await supabase
@@ -82,23 +85,35 @@ export const AdminMaterialsManager = () => {
         .order('created_at', { ascending: false });
       
       if (materialsError) throw materialsError;
-      setMaterials(materialsData || []);
       
-      // Buscar conteúdo de onboarding
-      const { data: onboardingData, error: onboardingError } = await supabase
-        .from('onboarding_content')
-        .select('*')
-        .eq('is_active', true)
-        .single();
+      // Precisamos garantir que todos os registros tenham o campo 'type'
+      const materialsWithType = (materialsData || []).map(material => ({
+        ...material,
+        type: material.type || 'document'
+      })) as Material[];
       
-      if (!onboardingError) {
-        setOnboardingContent(onboardingData);
-        setOnboardingForm({
-          title: onboardingData.title,
-          content: onboardingData.content,
-          video_url: onboardingData.video_url || '',
-        });
+      setMaterials(materialsWithType);
+      
+      try {
+        // Buscar conteúdo de onboarding
+        const { data: onboardingData, error: onboardingError } = await supabase
+          .from('onboarding_content')
+          .select('*')
+          .eq('is_active', true)
+          .single();
+        
+        if (!onboardingError && onboardingData) {
+          setOnboardingContent(onboardingData as OnboardingContent);
+          setOnboardingForm({
+            title: onboardingData.title,
+            content: onboardingData.content,
+            video_url: onboardingData.video_url || '',
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados de onboarding:", error);
       }
+      
     } catch (error: any) {
       console.error('Erro ao buscar dados:', error);
       toast({
@@ -107,7 +122,7 @@ export const AdminMaterialsManager = () => {
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
   
@@ -219,7 +234,7 @@ export const AdminMaterialsManager = () => {
             file_url: fileUrl,
             thumbnail_url: thumbnailUrl || currentMaterial.thumbnail_url,
             type: materialForm.type,
-            is_onboarding: materialForm.is_onboarding,
+            plan_level: materialForm.plan_level,
             updated_at: new Date().toISOString()
           })
           .eq('id', currentMaterial.id);
@@ -241,7 +256,7 @@ export const AdminMaterialsManager = () => {
             file_url: fileUrl,
             thumbnail_url: thumbnailUrl,
             type: materialForm.type,
-            is_onboarding: materialForm.is_onboarding,
+            plan_level: materialForm.plan_level,
             access_count: 0
           });
           
@@ -261,6 +276,7 @@ export const AdminMaterialsManager = () => {
         file_url: '',
         type: 'document',
         is_onboarding: false,
+        plan_level: 'basic',
       });
       setFileToUpload(null);
       setThumbnailToUpload(null);
@@ -315,6 +331,7 @@ export const AdminMaterialsManager = () => {
       file_url: material.file_url,
       type: material.type,
       is_onboarding: material.is_onboarding || false,
+      plan_level: material.plan_level,
     });
     setDialogOpen(true);
   };

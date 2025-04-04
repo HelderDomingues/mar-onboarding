@@ -54,7 +54,9 @@ export function UserDashboard({ submission }: UserDashboardProps) {
                   <span>Progresso</span>
                   <span className="font-medium">{Math.round(progress)}%</span>
                 </div>
-                <Progress value={progress} className="h-2 bg-gray-100" 
+                <Progress 
+                  value={progress} 
+                  className="h-2 bg-gray-100" 
                   indicatorClassName={submission.completed ? "bg-gradient-to-r from-green-400 to-green-500" : "bg-gradient-to-r from-blue-400 to-blue-600"} 
                 />
               </div>
