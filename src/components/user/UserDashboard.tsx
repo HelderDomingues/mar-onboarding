@@ -28,37 +28,36 @@ export function UserDashboard({ submission }: UserDashboardProps) {
       </div>
 
       {/* Seção "Comece Aqui" para novos usuários */}
-      <GetStartedSection />
+      <GetStartedSection 
+        hasStartedQuiz={!!submission} 
+        hasCompletedQuiz={!!submission?.completed} 
+      />
       
       {/* Card principal do questionário */}
-      <Card className="overflow-hidden border-0 shadow-md hover:shadow-lg transition-all rounded-xl">
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4">
+      <Card className="shadow-sm hover:shadow-md transition-all">
+        <CardHeader className="pb-3 border-b">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-xl font-bold text-white">Questionário MAR</h3>
-              <p className="text-blue-100">Mapa para Alto Rendimento</p>
+              <CardTitle className="text-xl">Questionário MAR</CardTitle>
+              <CardDescription>Mapa para Alto Rendimento</CardDescription>
             </div>
             {submission?.completed && (
-              <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+              <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
                 <CheckCircle className="h-4 w-4" />
                 Concluído
               </div>
             )}
           </div>
-        </div>
-        <CardContent className="pt-6">
+        </CardHeader>
+        <CardContent className="pt-4">
           {submission ? (
             <>
               <div className="mb-4">
                 <div className="flex justify-between mb-2 text-sm">
                   <span>Progresso</span>
-                  <span className="font-medium">{Math.round(progress)}%</span>
+                  <span>{Math.round(progress)}%</span>
                 </div>
-                <Progress 
-                  value={progress} 
-                  className="h-2 bg-gray-100" 
-                  indicatorClassName={submission.completed ? "bg-gradient-to-r from-green-400 to-green-500" : "bg-gradient-to-r from-blue-400 to-blue-600"} 
-                />
+                <Progress value={progress} className="h-2" />
               </div>
               
               {submission.completed ? (
@@ -67,14 +66,14 @@ export function UserDashboard({ submission }: UserDashboardProps) {
                     <CheckCircle className="h-4 w-4" />
                     <span>Questionário finalizado em {new Date(submission.completed_at || '').toLocaleDateString('pt-BR')}</span>
                   </div>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Você pode revisar suas respostas ou consultar os resultados a qualquer momento.
                   </p>
                   
                   {/* Alerta informando que o questionário não pode ser alterado */}
-                  <Alert className="bg-blue-50 border-blue-100 text-blue-800 mt-2">
-                    <AlertCircle className="h-4 w-4 text-blue-600" />
-                    <AlertDescription className="text-blue-700">
+                  <Alert className="bg-blue-50 text-blue-800 mt-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
                       O questionário MAR já foi validado e não pode ser alterado. Se precisar atualizar alguma informação, entre em contato com nossa equipe.
                     </AlertDescription>
                   </Alert>
@@ -85,7 +84,7 @@ export function UserDashboard({ submission }: UserDashboardProps) {
                     <Clock className="h-4 w-4" />
                     <span>Em progresso - Módulo {submission.current_module} de 8</span>
                   </div>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Continue de onde parou para completar seu questionário MAR.
                   </p>
                 </div>
@@ -93,57 +92,55 @@ export function UserDashboard({ submission }: UserDashboardProps) {
             </>
           ) : (
             <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <BookOpen className="h-4 w-4" />
                 <span>25 questões distribuídas em 8 módulos</span>
               </div>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 O questionário MAR irá mapear seu nível atual e ajudá-lo a identificar oportunidades de crescimento.
               </p>
             </div>
           )}
         </CardContent>
-        <CardFooter className="border-t p-4 bg-gray-50">
-          <div className="w-full flex flex-wrap gap-3">
+        <CardFooter className="border-t pt-4 flex flex-wrap gap-3">
+          <Button 
+            className="flex-1 bg-primary hover:bg-primary/90"
+            onClick={() => navigate("/quiz")}
+          >
+            {submission?.completed ? "Ver Respostas" : (submission ? "Continuar" : "Iniciar Questionário")}
+          </Button>
+          
+          {submission?.completed && (
             <Button 
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 transform hover:translate-y-[-2px]"
-              onClick={() => navigate("/quiz")}
+              variant="outline"
+              className="flex-1 border-primary text-primary hover:bg-primary/10"
+              onClick={() => navigate("/quiz/review")}
             >
-              {submission?.completed ? "Ver Respostas" : (submission ? "Continuar" : "Iniciar Questionário")}
+              Ver Resultados
             </Button>
-            
-            {submission?.completed && (
-              <Button 
-                variant="outline"
-                className="flex-1 border-blue-200 text-blue-700 hover:bg-blue-50 rounded-lg"
-                onClick={() => navigate("/quiz/review")}
-              >
-                Ver Resultados
-              </Button>
-            )}
-          </div>
+          )}
         </CardFooter>
       </Card>
       
       {/* Cards inferiores */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="border-0 shadow-md rounded-xl overflow-hidden">
-          <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-5">
-            <CardTitle className="flex items-center gap-2 text-white">
-              <LineChart className="h-5 w-5" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="shadow-sm hover:shadow-md transition-all">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <LineChart className="h-5 w-5 text-primary" />
               Resultados e Análises
             </CardTitle>
-            <CardDescription className="text-purple-100">Acompanhe sua evolução</CardDescription>
-          </div>
-          <CardContent className="pt-5">
-            <div className="text-sm text-gray-600">
+            <CardDescription>Acompanhe sua evolução</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-muted-foreground">
               Visualize análises e insights baseados em suas respostas ao questionário MAR.
             </div>
           </CardContent>
-          <CardFooter className="border-t bg-gray-50 p-4">
+          <CardFooter className="border-t pt-4">
             <Button 
               variant="outline" 
-              className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 rounded-lg"
+              className="w-full border-primary text-primary hover:bg-primary/10"
               disabled={!submission?.completed}
               onClick={() => navigate("/quiz/review")}
             >
@@ -152,23 +149,23 @@ export function UserDashboard({ submission }: UserDashboardProps) {
           </CardFooter>
         </Card>
         
-        <Card className="border-0 shadow-md rounded-xl overflow-hidden">
-          <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-5">
-            <CardTitle className="flex items-center gap-2 text-white">
-              <BookOpen className="h-5 w-5" />
+        <Card className="shadow-sm hover:shadow-md transition-all">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-primary" />
               Materiais Exclusivos
             </CardTitle>
-            <CardDescription className="text-cyan-100">Recursos para membros</CardDescription>
-          </div>
-          <CardContent className="pt-5">
-            <div className="text-sm text-gray-600">
+            <CardDescription>Recursos para membros</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-muted-foreground">
               Acesse conteúdos exclusivos, materiais complementares e recursos para aprofundar seus conhecimentos.
             </div>
           </CardContent>
-          <CardFooter className="border-t bg-gray-50 p-4">
+          <CardFooter className="border-t pt-4">
             <Button 
               variant="outline" 
-              className="w-full border-cyan-200 text-cyan-700 hover:bg-cyan-50 rounded-lg"
+              className="w-full border-primary text-primary hover:bg-primary/10"
               onClick={() => navigate("/member?tab=materials")}
             >
               Acessar Materiais
@@ -178,57 +175,48 @@ export function UserDashboard({ submission }: UserDashboardProps) {
       </div>
 
       {/* Seção de Suporte */}
-      <Card className="border-0 shadow-md rounded-xl overflow-hidden">
-        <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-5">
-          <CardTitle className="flex items-center gap-2 text-white">
-            <Phone className="h-5 w-5" />
+      <Card className="shadow-sm hover:shadow-md transition-all">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Phone className="h-5 w-5 text-primary" />
             Precisa de ajuda?
           </CardTitle>
-          <CardDescription className="text-emerald-100">
-            Estamos à disposição para ajudar
-          </CardDescription>
-        </div>
-        <CardContent className="py-6">
+          <CardDescription>Estamos à disposição para ajudar</CardDescription>
+        </CardHeader>
+        <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 transform hover:translate-y-[-2px]">
-              <div className="rounded-full bg-emerald-100 w-12 h-12 flex items-center justify-center mb-4">
-                <Mail className="h-5 w-5 text-emerald-600" />
-              </div>
+            <div className="p-4 border rounded-lg">
               <h3 className="font-medium mb-2">Suporte por Email</h3>
-              <p className="text-sm text-gray-500 mb-4 h-12">
+              <p className="text-sm text-muted-foreground mb-3">
                 Envie sua dúvida e responderemos em até 24h úteis
               </p>
               <a href="mailto:contato@crievalor.com.br">
-                <Button variant="outline" size="sm" className="w-full border-emerald-200 text-emerald-700 hover:bg-emerald-50">
+                <Button variant="outline" className="w-full flex gap-2">
+                  <Mail className="h-4 w-4" />
                   contato@crievalor.com.br
                 </Button>
               </a>
             </div>
             
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 transform hover:translate-y-[-2px]">
-              <div className="rounded-full bg-blue-100 w-12 h-12 flex items-center justify-center mb-4">
-                <Phone className="h-5 w-5 text-blue-600" />
-              </div>
+            <div className="p-4 border rounded-lg">
               <h3 className="font-medium mb-2">Atendimento Telefônico</h3>
-              <p className="text-sm text-gray-500 mb-4 h-12">
+              <p className="text-sm text-muted-foreground mb-3">
                 Segunda a sexta, das 9h às 18h
               </p>
               <a href="tel:+5511912345678">
-                <Button variant="outline" size="sm" className="w-full border-blue-200 text-blue-700 hover:bg-blue-50">
+                <Button variant="outline" className="w-full flex gap-2">
+                  <Phone className="h-4 w-4" />
                   (11) 91234-5678
                 </Button>
               </a>
             </div>
             
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 transform hover:translate-y-[-2px]">
-              <div className="rounded-full bg-purple-100 w-12 h-12 flex items-center justify-center mb-4">
-                <BookOpen className="h-5 w-5 text-purple-600" />
-              </div>
+            <div className="p-4 border rounded-lg">
               <h3 className="font-medium mb-2">Perguntas Frequentes</h3>
-              <p className="text-sm text-gray-500 mb-4 h-12">
+              <p className="text-sm text-muted-foreground mb-3">
                 Consulte nossa base de conhecimento
               </p>
-              <Button variant="outline" size="sm" className="w-full border-purple-200 text-purple-700 hover:bg-purple-50">
+              <Button variant="outline" className="w-full">
                 Acessar FAQ
               </Button>
             </div>

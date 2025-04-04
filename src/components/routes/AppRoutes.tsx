@@ -8,8 +8,6 @@ import Dashboard from "@/pages/Dashboard";
 import Index from "@/pages/Index";
 import Quiz from "@/pages/Quiz";
 import QuizReview from "@/pages/QuizReview";
-import QuizDiagnostic from "@/pages/QuizDiagnostic";
-import Materials from "@/pages/Materials";
 import MemberArea from "@/pages/MemberArea";
 import NotFound from "@/pages/NotFound";
 
@@ -45,21 +43,9 @@ export const AppRoutes = () => {
         </ProtectedRoute>
       } />
       
-      <Route path="/quiz/diagnostic" element={
-        <ProtectedRoute>
-          <QuizDiagnostic />
-        </ProtectedRoute>
-      } />
-      
       <Route path="/quiz/answers" element={
         <ProtectedRoute>
           <QuizViewAnswers />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/materials" element={
-        <ProtectedRoute>
-          <Materials />
         </ProtectedRoute>
       } />
       

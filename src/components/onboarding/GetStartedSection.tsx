@@ -1,126 +1,157 @@
 
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlayCircle, FileText, ChevronRight } from "lucide-react";
+import { PlayCircle, CheckSquare, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 
-export const GetStartedSection = () => {
+interface GetStartedSectionProps {
+  hasStartedQuiz: boolean;
+  hasCompletedQuiz: boolean;
+}
+
+export const GetStartedSection: React.FC<GetStartedSectionProps> = ({
+  hasStartedQuiz,
+  hasCompletedQuiz
+}) => {
   return (
-    <div className="mb-8 rounded-xl overflow-hidden bg-gradient-to-br from-blue-50 via-blue-50 to-indigo-50 shadow-lg">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-        {/* Conteúdo à esquerda */}
-        <div className="p-8 space-y-5">
-          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full font-medium text-sm">
-            <div className="bg-blue-500 p-1 rounded-full">
-              <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-              </svg>
+    <Card className="border-blue-200 bg-blue-50/50">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-xl text-blue-800">Comece Aqui</CardTitle>
+        <CardDescription>
+          Siga os passos abaixo para aproveitar ao máximo o Sistema MAR
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent>
+        <div className="space-y-6">
+          {!hasCompletedQuiz && (
+            <div className="bg-white rounded-lg border p-4">
+              <h3 className="font-medium text-lg flex items-center">
+                {hasStartedQuiz ? (
+                  <span className="inline-block w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center mr-2">
+                    1
+                  </span>
+                ) : (
+                  <span className="inline-block w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center mr-2">
+                    1
+                  </span>
+                )}
+                Complete o Questionário MAR
+              </h3>
+              
+              <p className="mt-2 text-muted-foreground">
+                O Mapa para Alto Rendimento (MAR) ajuda a identificar pontos fortes e oportunidades de melhoria na sua estratégia de marketing. O questionário leva aproximadamente 15 minutos para ser respondido.
+              </p>
+              
+              <div className="mt-4 aspect-video rounded-md overflow-hidden bg-gray-100 relative">
+                <video
+                  className="w-full h-full object-cover"
+                  poster="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b"
+                  controls
+                >
+                  <source src="#" type="video/mp4" />
+                  Seu navegador não suporta a reprodução de vídeos.
+                </video>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                  <PlayCircle className="h-16 w-16 text-white opacity-80" />
+                </div>
+              </div>
+              
+              <div className="mt-4 flex justify-end">
+                <Link to="/quiz">
+                  <Button>
+                    {hasStartedQuiz ? "Continuar Questionário" : "Iniciar Questionário"}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
             </div>
-            Comece Aqui
+          )}
+          
+          {hasCompletedQuiz && (
+            <div className="bg-white rounded-lg border border-green-200 p-4">
+              <h3 className="font-medium text-lg flex items-center">
+                <span className="inline-block w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center mr-2">
+                  <CheckSquare className="h-3.5 w-3.5" />
+                </span>
+                Questionário MAR Completo
+              </h3>
+              
+              <p className="mt-2 text-muted-foreground">
+                Você já completou o Questionário MAR. Seus resultados estão sendo analisados pela nossa equipe e em breve você receberá seu diagnóstico personalizado.
+              </p>
+              
+              <div className="mt-4 flex justify-end space-x-3">
+                <Link to="/quiz/review">
+                  <Button variant="outline">
+                    Ver Resultados
+                  </Button>
+                </Link>
+                
+                <Link to="/quiz">
+                  <Button variant="secondary">
+                    Revisar Respostas
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
+          
+          <div className="bg-white rounded-lg border p-4">
+            <h3 className="font-medium text-lg flex items-center">
+              <span className="inline-block w-6 h-6 rounded-full bg-gray-600 text-white flex items-center justify-center mr-2">
+                2
+              </span>
+              Complete seu Perfil
+            </h3>
+            
+            <p className="mt-2 text-muted-foreground">
+              Mantenha suas informações atualizadas para receber conteúdos personalizados e acesso completo aos recursos exclusivos do sistema.
+            </p>
+            
+            <div className="mt-4 flex justify-end">
+              <Link to="/member">
+                <Button variant="outline">
+                  Acessar Perfil
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
           </div>
           
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900">
-            Bem-vindo ao programa MAR
-          </h2>
-          
-          <p className="text-gray-600">
-            Parabéns por dar este importante passo para transformar o marketing da sua empresa! 
-            O <span className="font-semibold">Mapa para Alto Rendimento</span> é um programa completo 
-            que vai guiar você através de estratégias testadas e comprovadas.
-          </p>
-          
-          <div className="space-y-4 pt-2">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 bg-blue-100 p-1.5 rounded-full text-blue-600">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <p className="text-sm text-gray-600">
-                Assista ao vídeo de introdução para entender como funciona o programa
-              </p>
-            </div>
+          <div className="bg-white rounded-lg border p-4">
+            <h3 className="font-medium text-lg flex items-center">
+              <span className="inline-block w-6 h-6 rounded-full bg-gray-600 text-white flex items-center justify-center mr-2">
+                3
+              </span>
+              Explore Materiais Exclusivos
+            </h3>
             
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 bg-blue-100 p-1.5 rounded-full text-blue-600">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <p className="text-sm text-gray-600">
-                Responda ao questionário diagnóstico para receber sua análise personalizada
-              </p>
-            </div>
+            <p className="mt-2 text-muted-foreground">
+              Acesse conteúdos exclusivos, materiais complementares e recursos para aprofundar seus conhecimentos e impulsionar seus resultados.
+            </p>
             
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 bg-blue-100 p-1.5 rounded-full text-blue-600">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <p className="text-sm text-gray-600">
-                Acesse materiais exclusivos desenvolvidos para a sua jornada de transformação
-              </p>
+            <div className="mt-4 flex justify-end">
+              <Link to="/member?tab=materials">
+                <Button variant="outline">
+                  Ver Materiais
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
             </div>
-          </div>
-          
-          <div className="flex flex-wrap gap-3 pt-4">
-            <Link to="/quiz">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center gap-2 rounded-lg px-5 py-2.5 shadow-sm transition-all duration-200 transform hover:translate-y-[-2px]">
-                <FileText className="h-4 w-4" />
-                Responder Questionário
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </Link>
-            <Link to="/materials">
-              <Button variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50 flex items-center gap-2 rounded-lg px-5 py-2.5 shadow-sm transition-all duration-200">
-                <FileText className="h-4 w-4" />
-                Materiais Iniciais
-              </Button>
-            </Link>
           </div>
         </div>
-        
-        {/* Vídeo à direita */}
-        <div className="bg-gradient-to-br from-blue-900 to-indigo-900 relative overflow-hidden">
-          <div className="absolute inset-0 bg-grid-white/[0.05] bg-[length:16px_16px]"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-blue-900/80 to-transparent"></div>
-          
-          <div className="p-8 relative z-10 h-full flex flex-col">
-            <div className="flex-1 flex items-center justify-center">
-              <div className="w-full max-w-md">
-                <AspectRatio ratio={16/9} className="rounded-lg overflow-hidden shadow-xl border border-white/10">
-                  <div className="relative group cursor-pointer">
-                    {/* Thumbnail do vídeo com overlay de play */}
-                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                      <div className="bg-white/20 backdrop-blur-md rounded-full p-5 border border-white/30 group-hover:bg-white/30 group-hover:scale-110 transition-all duration-300">
-                        <PlayCircle className="h-10 w-10 text-white" />
-                      </div>
-                    </div>
-                    <iframe 
-                      src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
-                      className="w-full h-full" 
-                      title="Vídeo de Introdução ao MAR"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      loading="lazy"
-                    ></iframe>
-                  </div>
-                </AspectRatio>
-              </div>
-            </div>
-            
-            <div className="mt-6 text-white">
-              <h3 className="text-xl font-medium">Vídeo de Introdução ao MAR</h3>
-              <p className="text-white/80 mt-1">
-                Assista este vídeo para entender como funciona o programa e quais são os próximos passos.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+      
+      <CardFooter className="bg-blue-50 rounded-b-lg flex justify-between items-center">
+        <p className="text-sm text-muted-foreground">
+          Precisa de ajuda? Entre em contato com nossa equipe de suporte
+        </p>
+        <Button variant="link" className="text-primary">
+          Fale Conosco
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };

@@ -1,907 +1,846 @@
 
-import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
-import { 
-  Plus, 
-  Pencil, 
-  Trash2, 
-  Upload, 
-  FileText, 
-  Video, 
-  Music, 
-  Presentation, // Corrigido: FilePresentation -> Presentation 
-  AlertTriangle 
-} from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Material } from "@/types/material";
-import { OnboardingContent } from "@/types/onboarding";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { logger } from "@/utils/logger";
+import { useToast } from "@/components/ui/use-toast";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { MoreHorizontal, Plus, Pencil, Trash2, UploadCloud, FileText, Video, Link2, ExternalLink } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-export function AdminMaterialsManager() {
-  // Estado para materiais e formulário
+interface Material {
+  id: string;
+  title: string;
+  description: string;
+  file_url: string;
+  thumbnail_url: string | null;
+  category: string;
+  created_at: string;
+  access_count: number;
+  type: 'document' | 'video' | 'link' | 'other';
+  is_onboarding?: boolean;
+}
+
+interface OnboardingContent {
+  id: string;
+  title: string;
+  content: string;
+  video_url: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export const AdminMaterialsManager = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [materials, setMaterials] = useState<Material[]>([]);
   const [onboardingContent, setOnboardingContent] = useState<OnboardingContent | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("documents");
-  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [currentMaterial, setCurrentMaterial] = useState<Partial<Material> | null>(null);
+  const [onboardingForm, setOnboardingForm] = useState({
+    title: '',
+    content: '',
+    video_url: '',
+  });
   
-  // Estados para novo material
-  const [newMaterial, setNewMaterial] = useState<{
-    title: string;
-    description: string;
-    category: string;
-    file_url: string;
-    type: Material["type"];
-    is_onboarding: boolean;
-    plan_level: string;
-  }>({
-    title: "",
-    description: "",
-    category: "geral",
-    file_url: "",
-    type: "document",
+  // Formulário para adicionar/editar material
+  const [materialForm, setMaterialForm] = useState({
+    title: '',
+    description: '',
+    category: 'documento',
+    file_url: '',
+    type: 'document' as Material['type'],
     is_onboarding: false,
-    plan_level: "basic"
   });
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const [thumbnailToUpload, setThumbnailToUpload] = useState<File | null>(null);
   
-  const [newOnboarding, setNewOnboarding] = useState({
-    title: "",
-    content: "",
-    video_url: "",
-    is_active: true
-  });
-  
-  // Estados para edição
-  const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
-  const [editingOnboarding, setEditingOnboarding] = useState<OnboardingContent | null>(null);
-  
-  // Carrega os materiais do Supabase
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Carregar materiais
-        const { data: materialsData, error: materialsError } = await supabase
-          .from("materials")
-          .select("*")
-          .order("created_at", { ascending: false });
+    fetchData();
+  }, []);
+  
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Buscar materiais
+      const { data: materialsData, error: materialsError } = await supabase
+        .from('materials')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (materialsError) throw materialsError;
+      setMaterials(materialsData || []);
+      
+      // Buscar conteúdo de onboarding
+      const { data: onboardingData, error: onboardingError } = await supabase
+        .from('onboarding_content')
+        .select('*')
+        .eq('is_active', true)
+        .single();
+      
+      if (!onboardingError) {
+        setOnboardingContent(onboardingData);
+        setOnboardingForm({
+          title: onboardingData.title,
+          content: onboardingData.content,
+          video_url: onboardingData.video_url || '',
+        });
+      }
+    } catch (error: any) {
+      console.error('Erro ao buscar dados:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os dados",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleMaterialFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setMaterialForm(prev => ({
+        ...prev,
+        [name]: checked
+      }));
+    } else {
+      setMaterialForm(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+  
+  const handleOnboardingFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setOnboardingForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  const handleCategoryChange = (value: string) => {
+    setMaterialForm(prev => ({
+      ...prev,
+      category: value
+    }));
+  };
+  
+  const handleTypeChange = (value: Material['type']) => {
+    setMaterialForm(prev => ({
+      ...prev,
+      type: value
+    }));
+  };
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFileToUpload(e.target.files[0]);
+    }
+  };
+  
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setThumbnailToUpload(e.target.files[0]);
+    }
+  };
+  
+  const handleCreateMaterial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!materialForm.title || (!materialForm.file_url && !fileToUpload && materialForm.type !== 'link')) {
+      toast({
+        title: "Campos obrigatórios",
+        description: materialForm.type === 'link' 
+          ? "Por favor, preencha o título e o link"
+          : "Por favor, preencha o título e selecione um arquivo",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setUploadLoading(true);
+      
+      let fileUrl = materialForm.file_url;
+      let thumbnailUrl = null;
+      
+      // Upload do arquivo se houver
+      if (fileToUpload) {
+        const filePath = `materials/${Date.now()}-${fileToUpload.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('materials')
+          .upload(filePath, fileToUpload);
           
-        if (materialsError) {
-          throw materialsError;
-        }
+        if (uploadError) throw uploadError;
         
-        // Certifique-se de que todos os materiais tenham um tipo válido
-        const typedMaterials = materialsData.map(material => ({
-          ...material,
-          type: material.type || "document" // Garante que todos os materiais tenham um tipo
-        })) as Material[];
-        
-        setMaterials(typedMaterials);
-        
-        try {
-          // Carregar conteúdo de onboarding
-          const { data: onboardingData, error: onboardingError } = await supabase
-            .from("onboarding_content")
-            .select("*")
-            .eq("is_active", true)
-            .maybeSingle();
-            
-          if (onboardingError) {
-            logger.error("Erro ao carregar onboarding:", {
-              tag: "AdminMaterialsManager",
-              data: onboardingError
-            });
-          } else if (onboardingData) {
-            setOnboardingContent(onboardingData as OnboardingContent);
-          }
-        } catch (onboardingError) {
-          console.error("Erro ao carregar onboarding:", onboardingError);
-          // Não queremos que falha no onboarding impeça o carregamento dos materiais
-        }
-      } catch (error) {
-        console.error("Erro ao carregar dados:", error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao carregar materiais",
-          description: "Não foi possível carregar a lista de materiais."
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadData();
-  }, [toast]);
-  
-  // Função para adicionar novo material
-  const handleAddMaterial = async () => {
-    try {
-      const { title, description, category, file_url, plan_level, type } = newMaterial;
-      
-      if (!title || !description || !file_url) {
-        toast({
-          variant: "destructive",
-          title: "Campos obrigatórios",
-          description: "Preencha todos os campos obrigatórios."
-        });
-        return;
+        const { data: fileData } = supabase.storage.from('materials').getPublicUrl(filePath);
+        fileUrl = fileData.publicUrl;
       }
       
-      const { data, error } = await supabase
-        .from("materials")
-        .insert({
-          title,
-          description,
-          category,
-          file_url,
-          plan_level,
-          type
-        })
-        .select();
+      // Upload da thumbnail se houver
+      if (thumbnailToUpload) {
+        const filePath = `thumbnails/${Date.now()}-${thumbnailToUpload.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('materials')
+          .upload(filePath, thumbnailToUpload);
+          
+        if (uploadError) throw uploadError;
         
-      if (error) throw error;
+        const { data: fileData } = supabase.storage.from('materials').getPublicUrl(filePath);
+        thumbnailUrl = fileData.publicUrl;
+      }
       
-      const newMaterialWithDefaults = {
-        ...data[0],
-        type: data[0].type || "document" // Garante que o tipo esteja presente
-      } as Material;
+      // Se estiver editando, atualiza o material
+      if (currentMaterial?.id) {
+        const { error } = await supabase
+          .from('materials')
+          .update({
+            title: materialForm.title,
+            description: materialForm.description,
+            category: materialForm.category,
+            file_url: fileUrl,
+            thumbnail_url: thumbnailUrl || currentMaterial.thumbnail_url,
+            type: materialForm.type,
+            is_onboarding: materialForm.is_onboarding,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', currentMaterial.id);
+          
+        if (error) throw error;
+        
+        toast({
+          title: "Material atualizado",
+          description: "O material foi atualizado com sucesso"
+        });
+      } else {
+        // Se for novo, cria o material
+        const { error } = await supabase
+          .from('materials')
+          .insert({
+            title: materialForm.title,
+            description: materialForm.description,
+            category: materialForm.category,
+            file_url: fileUrl,
+            thumbnail_url: thumbnailUrl,
+            type: materialForm.type,
+            is_onboarding: materialForm.is_onboarding,
+            access_count: 0
+          });
+          
+        if (error) throw error;
+        
+        toast({
+          title: "Material criado",
+          description: "O material foi criado com sucesso"
+        });
+      }
       
-      setMaterials([newMaterialWithDefaults, ...materials]);
-      
-      // Resetar formulário
-      setNewMaterial({
-        title: "",
-        description: "",
-        category: "geral",
-        file_url: "",
-        type: "document",
+      // Limpar formulário e recarregar dados
+      setMaterialForm({
+        title: '',
+        description: '',
+        category: 'documento',
+        file_url: '',
+        type: 'document',
         is_onboarding: false,
-        plan_level: "basic"
       });
+      setFileToUpload(null);
+      setThumbnailToUpload(null);
+      setCurrentMaterial(null);
+      setDialogOpen(false);
+      fetchData();
       
-      toast({
-        title: "Material adicionado",
-        description: "O material foi adicionado com sucesso."
-      });
     } catch (error: any) {
-      console.error("Erro ao adicionar material:", error);
+      console.error('Erro ao criar material:', error);
       toast({
-        variant: "destructive",
-        title: "Erro ao adicionar material",
-        description: error.message || "Não foi possível adicionar o material."
+        title: "Erro",
+        description: error.message,
+        variant: "destructive"
       });
+    } finally {
+      setUploadLoading(false);
     }
   };
   
-  // Função para atualizar material
-  const handleUpdateMaterial = async () => {
-    if (!editingMaterial) return;
+  const handleDeleteMaterial = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir este material?')) return;
     
     try {
-      const { id, title, description, category, file_url, plan_level, type } = editingMaterial;
-      
-      if (!title || !description || !file_url) {
-        toast({
-          variant: "destructive",
-          title: "Campos obrigatórios",
-          description: "Preencha todos os campos obrigatórios."
-        });
-        return;
-      }
-      
       const { error } = await supabase
-        .from("materials")
-        .update({
-          title,
-          description,
-          category,
-          file_url,
-          plan_level,
-          type,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", id);
-        
-      if (error) throw error;
-      
-      // Atualizar a lista local
-      setMaterials(materials.map(m => m.id === id ? editingMaterial : m));
-      setEditingMaterial(null);
-      
-      toast({
-        title: "Material atualizado",
-        description: "O material foi atualizado com sucesso."
-      });
-    } catch (error: any) {
-      console.error("Erro ao atualizar material:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao atualizar material",
-        description: error.message || "Não foi possível atualizar o material."
-      });
-    }
-  };
-  
-  // Função para excluir material
-  const handleDeleteMaterial = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from("materials")
+        .from('materials')
         .delete()
-        .eq("id", id);
+        .eq('id', id);
         
       if (error) throw error;
-      
-      // Remover da lista local
-      setMaterials(materials.filter(m => m.id !== id));
       
       toast({
         title: "Material excluído",
-        description: "O material foi excluído com sucesso."
+        description: "O material foi excluído com sucesso"
       });
+      
+      fetchData();
     } catch (error: any) {
-      console.error("Erro ao excluir material:", error);
       toast({
-        variant: "destructive",
-        title: "Erro ao excluir material",
-        description: error.message || "Não foi possível excluir o material."
+        title: "Erro",
+        description: error.message,
+        variant: "destructive"
       });
     }
   };
   
-  // Funções para o conteúdo de onboarding
-  const handleSaveOnboarding = async () => {
+  const handleEditMaterial = (material: Material) => {
+    setCurrentMaterial(material);
+    setMaterialForm({
+      title: material.title,
+      description: material.description,
+      category: material.category,
+      file_url: material.file_url,
+      type: material.type,
+      is_onboarding: material.is_onboarding || false,
+    });
+    setDialogOpen(true);
+  };
+  
+  const handleUpdateOnboarding = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!onboardingForm.title || !onboardingForm.content) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha o título e o conteúdo",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
-      const { title, content, video_url, is_active } = newOnboarding;
+      setUploadLoading(true);
       
-      if (!title || !content) {
-        toast({
-          variant: "destructive",
-          title: "Campos obrigatórios",
-          description: "Preencha todos os campos obrigatórios."
-        });
-        return;
-      }
-      
-      try {
-        const { data, error } = await supabase
-          .from("onboarding_content")
-          .insert({
-            title,
-            content,
-            video_url,
-            is_active
+      if (onboardingContent) {
+        // Atualizar conteúdo existente
+        const { error } = await supabase
+          .from('onboarding_content')
+          .update({
+            title: onboardingForm.title,
+            content: onboardingForm.content,
+            video_url: onboardingForm.video_url,
+            updated_at: new Date().toISOString()
           })
-          .select();
+          .eq('id', onboardingContent.id);
           
         if (error) throw error;
-        
-        if (data && data[0]) {
-          setOnboardingContent(data[0] as OnboardingContent);
-          
-          // Resetar formulário
-          setNewOnboarding({
-            title: "",
-            content: "",
-            video_url: "",
+      } else {
+        // Criar novo conteúdo
+        const { error } = await supabase
+          .from('onboarding_content')
+          .insert({
+            title: onboardingForm.title,
+            content: onboardingForm.content,
+            video_url: onboardingForm.video_url,
             is_active: true
           });
           
-          toast({
-            title: "Conteúdo de onboarding salvo",
-            description: "O conteúdo de onboarding foi salvo com sucesso."
-          });
-        }
-      } catch (error: any) {
-        // Se a tabela não existir ou outra condição
-        console.error("Erro específico ao salvar onboarding:", error);
-        throw error;
-      }
-    } catch (error: any) {
-      console.error("Erro ao salvar onboarding:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao salvar conteúdo",
-        description: error.message || "Não foi possível salvar o conteúdo de onboarding."
-      });
-    }
-  };
-  
-  const handleUpdateOnboarding = async () => {
-    if (!editingOnboarding) return;
-    
-    try {
-      const { id, title, content, video_url, is_active } = editingOnboarding;
-      
-      if (!title || !content) {
-        toast({
-          variant: "destructive",
-          title: "Campos obrigatórios",
-          description: "Preencha todos os campos obrigatórios."
-        });
-        return;
-      }
-      
-      try {
-        const { error } = await supabase
-          .from("onboarding_content")
-          .update({
-            title,
-            content,
-            video_url,
-            is_active,
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", id);
-          
         if (error) throw error;
-        
-        setOnboardingContent(editingOnboarding);
-        setEditingOnboarding(null);
-        
-        toast({
-          title: "Conteúdo atualizado",
-          description: "O conteúdo de onboarding foi atualizado com sucesso."
-        });
-      } catch (error: any) {
-        console.error("Erro específico ao atualizar onboarding:", error);
-        throw error;
       }
-    } catch (error: any) {
-      console.error("Erro ao atualizar onboarding:", error);
+      
       toast({
-        variant: "destructive",
-        title: "Erro ao atualizar conteúdo",
-        description: error.message || "Não foi possível atualizar o conteúdo de onboarding."
+        title: "Conteúdo de onboarding atualizado",
+        description: "As informações de onboarding foram atualizadas com sucesso"
       });
+      
+      fetchData();
+      setIsEditing(false);
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setUploadLoading(false);
     }
   };
   
-  // Filtrar materiais por tipo
-  const filteredMaterials = materials.filter(m => {
-    switch (activeTab) {
-      case "documents":
-        return m.type === "document";
-      case "videos":
-        return m.type === "video";
-      case "audio":
-        return m.type === "audio";
-      case "presentations":
-        return m.type === "presentation";
-      default:
-        return true;
-    }
-  });
-
-  // Ícones para os tipos de materiais
-  const getTypeIcon = (type: Material["type"]) => {
+  const getMaterialTypeIcon = (type: Material['type']) => {
     switch (type) {
-      case "document":
-        return <FileText className="h-4 w-4" />;
-      case "video":
-        return <Video className="h-4 w-4" />;
-      case "audio":
-        return <Music className="h-4 w-4" />;
-      case "presentation":
-        return <Presentation className="h-4 w-4" />; 
-      default:
-        return <FileText className="h-4 w-4" />;
+      case 'document': return <FileText className="h-4 w-4" />;
+      case 'video': return <Video className="h-4 w-4" />;
+      case 'link': return <Link2 className="h-4 w-4" />;
+      default: return <FileText className="h-4 w-4" />;
     }
   };
-
+  
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Gerenciar Materiais</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="documents">Documentos</TabsTrigger>
-              <TabsTrigger value="videos">Vídeos</TabsTrigger>
-              <TabsTrigger value="audio">Áudio</TabsTrigger>
-              <TabsTrigger value="presentations">Apresentações</TabsTrigger>
-              <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
-            </TabsList>
+    <div className="space-y-8">
+      <Tabs defaultValue="materials" className="w-full">
+        <TabsList>
+          <TabsTrigger value="materials">Materiais</TabsTrigger>
+          <TabsTrigger value="onboarding">Conteúdo de Onboarding</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="materials" className="pt-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Gerenciar Materiais</h2>
             
-            <TabsContent value="onboarding">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Conteúdo de Onboarding</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {onboardingContent ? (
-                    <div>
-                      <div className="space-y-4 mb-6">
-                        <div>
-                          <h3 className="text-lg font-semibold">{onboardingContent.title}</h3>
-                          <p className="text-gray-500 text-sm">
-                            Última atualização: {new Date(onboardingContent.updated_at).toLocaleDateString('pt-BR')}
-                          </p>
-                        </div>
-                        
-                        <div className="whitespace-pre-wrap bg-gray-50 p-4 rounded-md border">
-                          {onboardingContent.content}
-                        </div>
-                        
-                        {onboardingContent.video_url && (
-                          <div>
-                            <h4 className="font-medium mb-2">Vídeo:</h4>
-                            <div className="aspect-video bg-gray-100 rounded-md flex items-center justify-center">
-                              <iframe 
-                                src={onboardingContent.video_url} 
-                                className="w-full h-full rounded-md"
-                                title="Vídeo de Onboarding"
-                                allowFullScreen
-                              ></iframe>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline"
-                          onClick={() => setEditingOnboarding(onboardingContent)}
-                        >
-                          <Pencil className="h-4 w-4 mr-2" /> Editar
-                        </Button>
-                      </div>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Adicionar Material
+                </Button>
+              </DialogTrigger>
+              
+              <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>{currentMaterial ? "Editar Material" : "Adicionar Novo Material"}</DialogTitle>
+                  <DialogDescription>
+                    Preencha os campos para {currentMaterial ? "editar o" : "adicionar um novo"} material ao sistema.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <form onSubmit={handleCreateMaterial} className="space-y-4 pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Título *</Label>
+                      <Input 
+                        id="title"
+                        name="title"
+                        placeholder="Título do material"
+                        value={materialForm.title}
+                        onChange={handleMaterialFormChange}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Categoria</Label>
+                      <Select 
+                        value={materialForm.category} 
+                        onValueChange={handleCategoryChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma categoria" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="documento">Documento</SelectItem>
+                          <SelectItem value="video">Vídeo</SelectItem>
+                          <SelectItem value="apresentacao">Apresentação</SelectItem>
+                          <SelectItem value="planilha">Planilha</SelectItem>
+                          <SelectItem value="outro">Outro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Descrição</Label>
+                    <Textarea 
+                      id="description"
+                      name="description"
+                      placeholder="Descreva o material"
+                      rows={3}
+                      value={materialForm.description}
+                      onChange={handleMaterialFormChange}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Tipo de Material</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant={materialForm.type === 'document' ? 'default' : 'outline'}
+                        className="flex-1"
+                        onClick={() => handleTypeChange('document')}
+                      >
+                        <FileText className="mr-2 h-4 w-4" />
+                        Documento
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={materialForm.type === 'video' ? 'default' : 'outline'}
+                        className="flex-1"
+                        onClick={() => handleTypeChange('video')}
+                      >
+                        <Video className="mr-2 h-4 w-4" />
+                        Vídeo
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={materialForm.type === 'link' ? 'default' : 'outline'}
+                        className="flex-1"
+                        onClick={() => handleTypeChange('link')}
+                      >
+                        <Link2 className="mr-2 h-4 w-4" />
+                        Link
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {materialForm.type === 'link' ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="file_url">URL do Link *</Label>
+                      <Input 
+                        id="file_url"
+                        name="file_url"
+                        placeholder="https://..."
+                        value={materialForm.file_url}
+                        onChange={handleMaterialFormChange}
+                      />
                     </div>
                   ) : (
-                    <div>
-                      <Alert className="mb-4">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription>
-                          Nenhum conteúdo de onboarding ativo encontrado. Crie um novo conteúdo abaixo.
-                        </AlertDescription>
-                      </Alert>
-                      
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="title">Título</Label>
-                          <Input 
-                            id="title" 
-                            value={newOnboarding.title} 
-                            onChange={e => setNewOnboarding({...newOnboarding, title: e.target.value})}
-                          />
+                    <div className="space-y-2">
+                      <Label htmlFor="file">Arquivo {currentMaterial ? "(deixe em branco para manter o atual)" : "*"}</Label>
+                      <Input 
+                        id="file"
+                        type="file"
+                        onChange={handleFileChange}
+                      />
+                      {currentMaterial?.file_url && (
+                        <div className="text-sm text-muted-foreground">
+                          Arquivo atual: <a href={currentMaterial.file_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{currentMaterial.file_url.split('/').pop()}</a>
                         </div>
-                        
-                        <div>
-                          <Label htmlFor="content">Conteúdo</Label>
-                          <Textarea 
-                            id="content"
-                            rows={6}
-                            value={newOnboarding.content}
-                            onChange={e => setNewOnboarding({...newOnboarding, content: e.target.value})}
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="video_url">URL do Vídeo (opcional)</Label>
-                          <Input 
-                            id="video_url" 
-                            value={newOnboarding.video_url} 
-                            onChange={e => setNewOnboarding({...newOnboarding, video_url: e.target.value})}
-                            placeholder="https://www.youtube.com/embed/..."
-                          />
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <Switch 
-                            checked={newOnboarding.is_active}
-                            onCheckedChange={checked => setNewOnboarding({...newOnboarding, is_active: checked})}
-                          />
-                          <Label>Ativo</Label>
-                        </div>
-                        
-                        <Button onClick={handleSaveOnboarding}>
-                          Salvar Conteúdo
-                        </Button>
-                      </div>
+                      )}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value={activeTab} className={activeTab !== "onboarding" ? "block" : "hidden"}>
-              <div className="flex justify-end mb-4">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" /> Adicionar Material
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Adicionar Novo Material</DialogTitle>
-                    </DialogHeader>
-                    
-                    <div className="space-y-4 py-4">
-                      <div className="grid grid-cols-1 gap-4">
-                        <div>
-                          <Label htmlFor="title">Título</Label>
-                          <Input 
-                            id="title" 
-                            value={newMaterial.title} 
-                            onChange={e => setNewMaterial({...newMaterial, title: e.target.value})}
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="description">Descrição</Label>
-                          <Textarea 
-                            id="description"
-                            value={newMaterial.description}
-                            onChange={e => setNewMaterial({...newMaterial, description: e.target.value})}
-                          />
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="type">Tipo</Label>
-                            <Select 
-                              value={newMaterial.type} 
-                              onValueChange={(value: Material["type"]) => 
-                                setNewMaterial({...newMaterial, type: value})
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="document">Documento</SelectItem>
-                                <SelectItem value="video">Vídeo</SelectItem>
-                                <SelectItem value="audio">Áudio</SelectItem>
-                                <SelectItem value="presentation">Apresentação</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          <div>
-                            <Label htmlFor="category">Categoria</Label>
-                            <Select 
-                              value={newMaterial.category} 
-                              onValueChange={value => setNewMaterial({...newMaterial, category: value})}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="geral">Geral</SelectItem>
-                                <SelectItem value="marketing">Marketing</SelectItem>
-                                <SelectItem value="vendas">Vendas</SelectItem>
-                                <SelectItem value="financeiro">Financeiro</SelectItem>
-                                <SelectItem value="operacional">Operacional</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="plan_level">Nível de Plano</Label>
-                          <Select 
-                            value={newMaterial.plan_level} 
-                            onValueChange={value => setNewMaterial({...newMaterial, plan_level: value})}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="basic">Básico</SelectItem>
-                              <SelectItem value="premium">Premium</SelectItem>
-                              <SelectItem value="enterprise">Enterprise</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="file_url">URL do Arquivo</Label>
-                          <Input 
-                            id="file_url" 
-                            value={newMaterial.file_url} 
-                            onChange={e => setNewMaterial({...newMaterial, file_url: e.target.value})}
-                            placeholder="https://..."
-                          />
-                        </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="thumbnail">Imagem de Miniatura (opcional)</Label>
+                    <Input 
+                      id="thumbnail"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleThumbnailChange}
+                    />
+                    {currentMaterial?.thumbnail_url && (
+                      <div className="text-sm text-muted-foreground flex items-center gap-2 mt-2">
+                        <span>Miniatura atual:</span>
+                        <img 
+                          src={currentMaterial.thumbnail_url} 
+                          alt="Thumbnail" 
+                          className="w-12 h-12 object-cover rounded"
+                        />
                       </div>
-                    </div>
-                    
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button variant="outline">Cancelar</Button>
-                      </DialogClose>
-                      <Button onClick={handleAddMaterial}>Adicionar</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-              
-              {isLoading ? (
-                <div className="flex justify-center py-8">
-                  <div className="h-10 w-10 animate-spin rounded-full border-2 border-gray-300 border-t-primary"></div>
-                </div>
-              ) : filteredMaterials.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Título</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Plano</TableHead>
-                      <TableHead>Acessos</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredMaterials.map((material) => (
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="is_onboarding"
+                      name="is_onboarding"
+                      type="checkbox"
+                      checked={materialForm.is_onboarding}
+                      onChange={(e) => setMaterialForm(prev => ({
+                        ...prev,
+                        is_onboarding: e.target.checked
+                      }))}
+                      className="h-4 w-4"
+                    />
+                    <Label htmlFor="is_onboarding" className="cursor-pointer">
+                      Incluir no onboarding
+                    </Label>
+                  </div>
+                  
+                  <DialogFooter>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => {
+                        setDialogOpen(false);
+                        setCurrentMaterial(null);
+                        setMaterialForm({
+                          title: '',
+                          description: '',
+                          category: 'documento',
+                          file_url: '',
+                          type: 'document',
+                          is_onboarding: false,
+                        });
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={uploadLoading}>
+                      {uploadLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Salvando...
+                        </>
+                      ) : currentMaterial ? "Atualizar" : "Adicionar"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+          
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Título</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead className="text-right">Acessos</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {materials.length > 0 ? (
+                    materials.map((material) => (
                       <TableRow key={material.id}>
-                        <TableCell className="font-medium">{material.title}</TableCell>
-                        <TableCell>{material.category}</TableCell>
-                        <TableCell className="flex items-center gap-1">
-                          {getTypeIcon(material.type)}
-                          <span>{material.type}</span>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {material.thumbnail_url && (
+                              <div className="h-8 w-8 rounded overflow-hidden flex-shrink-0">
+                                <img 
+                                  src={material.thumbnail_url} 
+                                  alt={material.title} 
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            )}
+                            <div>
+                              <div className="truncate max-w-xs">{material.title}</div>
+                              {material.is_onboarding && (
+                                <div className="text-xs text-blue-600 mt-0.5">
+                                  Incluído no onboarding
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </TableCell>
                         <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            material.plan_level === "basic" ? "bg-green-100 text-green-800" :
-                            material.plan_level === "premium" ? "bg-blue-100 text-blue-800" :
-                            "bg-purple-100 text-purple-800"
-                          }`}>
-                            {material.plan_level}
+                          <span className="inline-block px-2 py-1 bg-slate-100 rounded-full text-xs">
+                            {material.category}
                           </span>
                         </TableCell>
-                        <TableCell>{material.access_count || 0}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            {getMaterialTypeIcon(material.type)}
+                            <span className="capitalize">
+                              {material.type}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {material.access_count || 0}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(material.created_at).toLocaleDateString('pt-BR')}
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="outline" size="icon">
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Editar Material</DialogTitle>
-                                </DialogHeader>
-                                
-                                <div className="space-y-4 py-4">
-                                  {editingMaterial && (
-                                    <div className="grid grid-cols-1 gap-4">
-                                      <div>
-                                        <Label htmlFor="edit-title">Título</Label>
-                                        <Input 
-                                          id="edit-title" 
-                                          value={editingMaterial.title} 
-                                          onChange={e => setEditingMaterial({...editingMaterial, title: e.target.value})}
-                                        />
-                                      </div>
-                                      
-                                      <div>
-                                        <Label htmlFor="edit-description">Descrição</Label>
-                                        <Textarea 
-                                          id="edit-description"
-                                          value={editingMaterial.description}
-                                          onChange={e => setEditingMaterial({...editingMaterial, description: e.target.value})}
-                                        />
-                                      </div>
-                                      
-                                      <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                          <Label htmlFor="edit-type">Tipo</Label>
-                                          <Select 
-                                            value={editingMaterial.type} 
-                                            onValueChange={(value: Material["type"]) => 
-                                              setEditingMaterial({...editingMaterial, type: value})
-                                            }
-                                          >
-                                            <SelectTrigger>
-                                              <SelectValue placeholder="Selecione" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              <SelectItem value="document">Documento</SelectItem>
-                                              <SelectItem value="video">Vídeo</SelectItem>
-                                              <SelectItem value="audio">Áudio</SelectItem>
-                                              <SelectItem value="presentation">Apresentação</SelectItem>
-                                            </SelectContent>
-                                          </Select>
-                                        </div>
-                                        
-                                        <div>
-                                          <Label htmlFor="edit-category">Categoria</Label>
-                                          <Select 
-                                            value={editingMaterial.category} 
-                                            onValueChange={value => setEditingMaterial({...editingMaterial, category: value})}
-                                          >
-                                            <SelectTrigger>
-                                              <SelectValue placeholder="Selecione" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              <SelectItem value="geral">Geral</SelectItem>
-                                              <SelectItem value="marketing">Marketing</SelectItem>
-                                              <SelectItem value="vendas">Vendas</SelectItem>
-                                              <SelectItem value="financeiro">Financeiro</SelectItem>
-                                              <SelectItem value="operacional">Operacional</SelectItem>
-                                            </SelectContent>
-                                          </Select>
-                                        </div>
-                                      </div>
-                                      
-                                      <div>
-                                        <Label htmlFor="edit-plan_level">Nível de Plano</Label>
-                                        <Select 
-                                          value={editingMaterial.plan_level} 
-                                          onValueChange={value => setEditingMaterial({...editingMaterial, plan_level: value})}
-                                        >
-                                          <SelectTrigger>
-                                            <SelectValue placeholder="Selecione" />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="basic">Básico</SelectItem>
-                                            <SelectItem value="premium">Premium</SelectItem>
-                                            <SelectItem value="enterprise">Enterprise</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                      
-                                      <div>
-                                        <Label htmlFor="edit-file_url">URL do Arquivo</Label>
-                                        <Input 
-                                          id="edit-file_url" 
-                                          value={editingMaterial.file_url} 
-                                          onChange={e => setEditingMaterial({...editingMaterial, file_url: e.target.value})}
-                                          placeholder="https://..."
-                                        />
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                <DialogFooter>
-                                  <DialogClose asChild>
-                                    <Button variant="outline">Cancelar</Button>
-                                  </DialogClose>
-                                  <Button onClick={handleUpdateMaterial}>Salvar</Button>
-                                </DialogFooter>
-                              </DialogContent>
-                            </Dialog>
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => window.open(material.file_url, '_blank')}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
                             
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="destructive" size="icon">
-                                  <Trash2 className="h-4 w-4" />
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="h-4 w-4" />
                                 </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Confirmar Exclusão</DialogTitle>
-                                </DialogHeader>
-                                <p className="py-4">
-                                  Tem certeza que deseja excluir o material "{material.title}"? Esta ação não pode ser desfeita.
-                                </p>
-                                <DialogFooter>
-                                  <DialogClose asChild>
-                                    <Button variant="outline">Cancelar</Button>
-                                  </DialogClose>
-                                  <Button 
-                                    variant="destructive" 
-                                    onClick={() => handleDeleteMaterial(material.id)}
-                                  >
-                                    Excluir
-                                  </Button>
-                                </DialogFooter>
-                              </DialogContent>
-                            </Dialog>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEditMaterial(material)}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => handleDeleteMaterial(material.id)}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="py-8 text-center text-muted-foreground">
-                  Nenhum material encontrado nesta categoria.
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-      
-      {/* Dialog para editar conteúdo de onboarding */}
-      <Dialog open={!!editingOnboarding} onOpenChange={(open) => !open && setEditingOnboarding(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Conteúdo de Onboarding</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            {editingOnboarding && (
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="edit-title-onboarding">Título</Label>
-                  <Input 
-                    id="edit-title-onboarding" 
-                    value={editingOnboarding.title} 
-                    onChange={e => setEditingOnboarding({...editingOnboarding, title: e.target.value})}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="edit-content-onboarding">Conteúdo</Label>
-                  <Textarea 
-                    id="edit-content-onboarding"
-                    rows={6}
-                    value={editingOnboarding.content}
-                    onChange={e => setEditingOnboarding({...editingOnboarding, content: e.target.value})}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="edit-video_url-onboarding">URL do Vídeo (opcional)</Label>
-                  <Input 
-                    id="edit-video_url-onboarding" 
-                    value={editingOnboarding.video_url || ''} 
-                    onChange={e => setEditingOnboarding({...editingOnboarding, video_url: e.target.value})}
-                    placeholder="https://www.youtube.com/embed/..."
-                  />
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Switch 
-                    checked={editingOnboarding.is_active}
-                    onCheckedChange={checked => setEditingOnboarding({...editingOnboarding, is_active: checked})}
-                  />
-                  <Label>Ativo</Label>
-                </div>
-              </div>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        Nenhum material encontrado
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="onboarding" className="pt-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Conteúdo de Onboarding</h2>
+            {!isEditing && (
+              <Button onClick={() => setIsEditing(true)}>
+                Editar Conteúdo
+              </Button>
             )}
           </div>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingOnboarding(null)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleUpdateOnboarding}>Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <Card>
+            <CardHeader>
+              <CardTitle>Seção "Comece Aqui"</CardTitle>
+              <CardDescription>
+                Este conteúdo será exibido para os novos usuários na seção "Comece Aqui" do dashboard.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isEditing ? (
+                <form onSubmit={handleUpdateOnboarding} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Título</Label>
+                    <Input 
+                      id="title"
+                      name="title"
+                      value={onboardingForm.title}
+                      onChange={handleOnboardingFormChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="content">Conteúdo</Label>
+                    <Textarea 
+                      id="content"
+                      name="content"
+                      rows={6}
+                      value={onboardingForm.content}
+                      onChange={handleOnboardingFormChange}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Use texto simples ou formatação Markdown para formatar o conteúdo.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="video_url">URL do Vídeo (opcional)</Label>
+                    <Input 
+                      id="video_url"
+                      name="video_url"
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      value={onboardingForm.video_url}
+                      onChange={handleOnboardingFormChange}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Insira a URL de um vídeo do YouTube ou Vimeo.
+                    </p>
+                  </div>
+                  
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => {
+                        setIsEditing(false);
+                        if (onboardingContent) {
+                          setOnboardingForm({
+                            title: onboardingContent.title,
+                            content: onboardingContent.content,
+                            video_url: onboardingContent.video_url || '',
+                          });
+                        }
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button 
+                      type="submit"
+                      disabled={uploadLoading}
+                    >
+                      {uploadLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Salvando...
+                        </>
+                      ) : "Salvar Conteúdo"}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-4">
+                  {onboardingContent ? (
+                    <>
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">{onboardingContent.title}</h3>
+                        <div className="text-muted-foreground whitespace-pre-line">
+                          {onboardingContent.content}
+                        </div>
+                      </div>
+                      
+                      {onboardingContent.video_url && (
+                        <div className="mt-4">
+                          <h4 className="font-medium mb-2">Vídeo de Introdução:</h4>
+                          <div className="aspect-video bg-slate-100 rounded-md flex items-center justify-center">
+                            {/* Aqui poderia ser implementado um player de vídeo */}
+                            <div className="text-center">
+                              <Video className="h-12 w-12 mx-auto text-muted-foreground" />
+                              <p className="mt-2 text-sm">{onboardingContent.video_url}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="text-sm text-muted-foreground mt-4">
+                        Última atualização: {new Date(onboardingContent.updated_at).toLocaleDateString('pt-BR')}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">
+                        Nenhum conteúdo de onboarding configurado.
+                      </p>
+                      <Button 
+                        onClick={() => setIsEditing(true)}
+                        className="mt-4"
+                      >
+                        Criar Conteúdo de Onboarding
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
-}
+};
