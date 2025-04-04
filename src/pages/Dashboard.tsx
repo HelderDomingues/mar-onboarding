@@ -1,38 +1,26 @@
 
-import { useEffect, useState } from "react";
-import { Navigate, Link } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { QuizHeader } from "@/components/quiz/QuizHeader";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { logger } from "@/utils/logger";
-import { QuizSubmission } from "@/types/quiz";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { AdminDashboard } from "@/components/admin/AdminDashboard";
-import { AdminMaterialsManager } from "@/components/admin/AdminMaterialsManager";
+import React, { useState, useEffect } from "react";
 import { UserDashboard } from "@/components/user/UserDashboard";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { useAuth } from "@/hooks/useAuth";
+import { GetStartedSection } from "@/components/onboarding/GetStartedSection";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { FileText, Phone, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
-  const { isAuthenticated, user } = useAuth();
-  const { toast } = useToast();
-  
+  const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [submission, setSubmission] = useState<QuizSubmission | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [isFirstVisit, setIsFirstVisit] = useState(true);
+  const [hasCompletedQuiz, setHasCompletedQuiz] = useState(false);
   
   useEffect(() => {
     const checkUserRole = async () => {
       if (!user) return;
       
       try {
-        setIsLoading(true);
-        // Verificar se o usuário é admin
         const { data, error } = await supabase
           .from('user_roles')
           .select('role')
@@ -42,102 +30,114 @@ const Dashboard = () => {
           
         if (!error && data) {
           setIsAdmin(true);
-          logger.info("Usuário é administrador");
-        }
-        
-        // Buscar submissão atual
-        const { data: submissionData, error: submissionError } = await supabase
-          .from('quiz_submissions')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-          
-        if (!submissionError && submissionData) {
-          setSubmission(submissionData as unknown as QuizSubmission);
-        } else if (submissionError && submissionError.code !== 'PGRST116') { // Não é erro de 'not found'
-          console.error("Erro ao buscar submissão", submissionError);
         }
       } catch (error) {
-        logger.error('Erro ao verificar papel do usuário', { tag: 'Dashboard', data: error });
-        setLoadError("Erro ao verificar as permissões do usuário.");
-      } finally {
-        setIsLoading(false);
+        console.error('Erro ao verificar permissões:', error);
       }
     };
     
-    if (user) {
-      checkUserRole();
-    } else {
-      setIsLoading(false);
-    }
+    const checkFirstVisit = async () => {
+      if (!user) return;
+      
+      try {
+        // Verificando se o usuário já respondeu ao questionário
+        const { data, error } = await supabase
+          .from('quiz_submissions')
+          .select('completed')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (!error && data) {
+          setHasCompletedQuiz(data.completed);
+          setIsFirstVisit(false);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar primeiro acesso:', error);
+      }
+    };
+    
+    checkUserRole();
+    checkFirstVisit();
   }, [user]);
-
-  if (!isAuthenticated) {
-    return <Navigate to="/" />;
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
-        <QuizHeader isAdmin={isAdmin} />
-        <main className="flex-1 container py-8 px-4 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-        </main>
-      </div>
-    );
-  }
-
-  if (isAdmin) {
-    return (
-      <SidebarProvider defaultOpen={true}>
-        <div className="flex min-h-screen font-sans">
-          <AdminSidebar />
-          <SidebarInset className="p-6 bg-gray-100">
-            <div className="container max-w-7xl mx-auto">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList>
-                  <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                  <TabsTrigger value="materials">Materiais</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="dashboard">
-                  <AdminDashboard 
-                    submission={submission}
-                    isAdmin={isAdmin}
-                  />
-                </TabsContent>
-                
-                <TabsContent value="materials">
-                  <AdminMaterialsManager />
-                </TabsContent>
-              </Tabs>
-            </div>
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
-    );
-  }
-
+  
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
-      <QuizHeader isAdmin={isAdmin} />
-      
-      <main className="flex-1 container max-w-5xl py-8 px-4">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Dashboard Principal</h1>
-          <Link to="/member">
-            <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
-              Acessar Área do Membro
-            </Button>
-          </Link>
-        </div>
-        
-        <UserDashboard submission={submission} />
-      </main>
-      
-      <footer className="bg-white py-4 border-t text-center text-sm text-muted-foreground">
-        <p>© {new Date().getFullYear()} Crie Valor. Todos os direitos reservados.</p>
-      </footer>
+    <div className="min-h-screen">
+      {isAdmin ? (
+        <AdminDashboard />
+      ) : (
+        <UserDashboard>
+          {isFirstVisit && <GetStartedSection />}
+          
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Meu Progresso</h2>
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium">Questionário MAR</span>
+                    <span className="text-sm font-medium">
+                      {hasCompletedQuiz ? "Concluído" : "Pendente"}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-blue-500 rounded-full" 
+                      style={{ width: hasCompletedQuiz ? '100%' : '0%' }}
+                    ></div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col space-y-2">
+                  {hasCompletedQuiz ? (
+                    <>
+                      <Link to="/quiz/answers">
+                        <Button variant="outline" className="w-full justify-start">
+                          <FileText className="mr-2 h-4 w-4" />
+                          Ver minhas respostas
+                        </Button>
+                      </Link>
+                      <Link to="/quiz/diagnostic">
+                        <Button variant="outline" className="w-full justify-start">
+                          <FileText className="mr-2 h-4 w-4" />
+                          Ver meu diagnóstico
+                        </Button>
+                      </Link>
+                    </>
+                  ) : (
+                    <Link to="/quiz">
+                      <Button className="w-full">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Responder questionário
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </Card>
+            
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Precisa de ajuda?</h2>
+              <p className="text-gray-600 mb-4">
+                Entre em contato com nossa equipe de suporte caso tenha dúvidas sobre o programa ou precise de assistência.
+              </p>
+              <div className="space-y-3">
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <a href="mailto:contato@crievalor.com.br">
+                    <Mail className="mr-2 h-4 w-4" />
+                    contato@crievalor.com.br
+                  </a>
+                </Button>
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <a href="tel:+5511912345678">
+                    <Phone className="mr-2 h-4 w-4" />
+                    (11) 91234-5678
+                  </a>
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </UserDashboard>
+      )}
     </div>
   );
 };
