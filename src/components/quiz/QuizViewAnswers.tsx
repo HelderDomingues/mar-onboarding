@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/components/ui/use-toast";
-import { FilePdf, FileText, ChevronLeft } from "lucide-react";
+import { FileText, ChevronLeft, FileSpreadsheet } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 export const QuizViewAnswers = () => {
@@ -175,11 +175,11 @@ export const QuizViewAnswers = () => {
         
         <div className="flex gap-2">
           <Button variant="outline" className="flex items-center gap-2">
-            <FilePdf className="h-4 w-4" />
+            <FileText className="h-4 w-4" />
             Exportar PDF
           </Button>
           <Button variant="outline" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
+            <FileSpreadsheet className="h-4 w-4" />
             Ver Diagnóstico
           </Button>
         </div>
