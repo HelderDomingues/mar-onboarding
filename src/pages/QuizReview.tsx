@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useNavigate } from "react-router-dom";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
-import { SiteFooler } from "@/components/layout/SiteFooter";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   ChartContainer, 
@@ -181,7 +181,7 @@ const QuizReviewPage = () => {
         <div className="flex-1 flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-        <SiteFooler />
+        <SiteFooter />
       </div>
     );
   }
@@ -213,7 +213,7 @@ const QuizReviewPage = () => {
             </CardFooter>
           </Card>
         </div>
-        <SiteFooler />
+        <SiteFooter />
       </div>
     );
   }
@@ -543,7 +543,7 @@ const QuizReviewPage = () => {
         </div>
       </div>
       
-      <SiteFooler />
+      <SiteFooter />
     </div>
   );
 };
