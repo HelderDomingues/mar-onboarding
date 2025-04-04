@@ -126,7 +126,7 @@ export function QuizReview({
                 
                 <div className="flex items-center gap-2 mt-4 text-sm text-[hsl(var(--quiz-text))] opacity-80">
                   <Calendar className="h-4 w-4" />
-                  <span className="text-zinc-950">Data de validação: {currentDate}</span>
+                  <span className="bg-zinc-600 hover:bg-zinc-500 text-slate-50">Data de validação: {currentDate}</span>
                 </div>
               </div>
             </CardContent>
