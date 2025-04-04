@@ -7,24 +7,75 @@ const SUPABASE_URL = "https://nmxfknwkhnengqqjtwru.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5teGZrbndraG5lbmdxcWp0d3J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI2NTUyMjgsImV4cCI6MjA1ODIzMTIyOH0.3I_qClajzP-s1j_GF2WRY7ZkVSWC4fcLgKMH8Ut-TbA";
 const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5teGZrbndraG5lbmdxcWp0d3J1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MjY1NTIyOCwiZXhwIjoyMDU4MjMxMjI4fQ.DNLEMi5KENuma1LiC9q-Db9LkMkEeUfKxmN44R_88bc";
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
-
+// Cliente padrão para uso em toda a aplicação
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     persistSession: true,
-    autoRefreshToken: true
+    autoRefreshToken: true,
+    detectSessionInUrl: true
   }
 });
 
-// Admin client com service role para operações administrativas
-// ATENÇÃO: Este cliente deve ser usado com extremo cuidado e apenas em contextos administrativos
-// Import the admin client like this:
-// import { supabaseAdmin } from "@/integrations/supabase/client";
-
+// Cliente administrativo com service role - USAR APENAS EM CONTEXTOS ADMINISTRATIVOS
+// ATENÇÃO: Este cliente ignora todas as políticas de segurança RLS e deve ser usado com extremo cuidado
 export const supabaseAdmin = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: {
     persistSession: false,
     autoRefreshToken: false
   }
 });
+
+// Funções utilitárias
+export const isUserAdmin = async (userId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.rpc('check_if_user_is_admin', { 
+      user_id: userId 
+    });
+    
+    if (error) {
+      console.error("Erro ao verificar função de administrador:", error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error("Erro ao verificar função de administrador:", error);
+    return false;
+  }
+};
+
+// Função para completar o questionário de forma segura
+export const completeQuizSubmission = async (userId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.rpc('complete_quiz_submission', { 
+      p_user_id: userId 
+    });
+    
+    if (error) {
+      console.error("Erro ao completar questionário:", error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error("Erro ao completar questionário:", error);
+    return false;
+  }
+};
+
+// Função para obter emails de usuários (apenas para administradores)
+export const getUserEmails = async (): Promise<any[] | null> => {
+  try {
+    const { data, error } = await supabaseAdmin.rpc('get_user_emails');
+    
+    if (error) {
+      console.error("Erro ao obter emails de usuários:", error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Erro ao obter emails de usuários:", error);
+    return null;
+  }
+};

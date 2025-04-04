@@ -25,19 +25,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
+  // Função otimizada para verificar papel de administrador
   const checkAdminRole = async (): Promise<boolean> => {
     if (!user) return false;
     
     try {
-      // Usamos o cliente normal aqui, pois as políticas RLS devem permitir esta consulta
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .single();
-        
-      const hasAdminRole = !error && !!data;
+      // Usar RPC é mais eficiente e seguro do que fazer SELECT diretamente
+      const { data, error } = await supabase.rpc('check_if_user_is_admin', {
+        user_id: user.id
+      });
+      
+      if (error) {
+        logger.error('Erro ao verificar permissões de administrador', {
+          tag: 'Auth',
+          data: error
+        });
+        return false;
+      }
+      
+      const hasAdminRole = !!data;
       setIsAdmin(hasAdminRole);
       return hasAdminRole;
     } catch (error) {
@@ -54,12 +60,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         logger.info(`Evento de autenticação: ${event}`, { tag: 'Auth' });
+        
+        // Atualizações síncronas
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
-        // Verificar papel de admin quando o usuário mudar
+        // Verificações assíncronas usando setTimeout para evitar deadlocks
         if (currentSession?.user) {
-          await checkAdminRole();
+          setTimeout(async () => {
+            await checkAdminRole();
+          }, 0);
         } else {
           setIsAdmin(false);
         }
@@ -68,7 +78,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Verificar sessão existente
     supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
-      logger.info('Verificando sessão existente', { tag: 'Auth', data: currentSession ? 'Sessão encontrada' : 'Sem sessão' });
+      logger.info('Verificando sessão existente', { 
+        tag: 'Auth', 
+        data: currentSession ? 'Sessão encontrada' : 'Sem sessão' 
+      });
+      
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       

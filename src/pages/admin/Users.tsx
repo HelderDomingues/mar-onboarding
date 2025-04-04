@@ -1,8 +1,7 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
+import { supabase, supabaseAdmin, getUserEmails } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
@@ -38,37 +37,21 @@ type UserProfile = {
 };
 
 const UsersPage = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isAdmin, setIsAdmin] = useState(false);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   
   const fetchUsers = async () => {
-    if (!user) return;
+    if (!user || !isAdmin) return;
     
     setIsLoading(true);
     setError(null);
     
     try {
-      // Verificar se o usuário atual é admin
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .single();
-        
-      if (roleError || !roleData) {
-        navigate("/dashboard");
-        return;
-      }
-      
-      setIsAdmin(true);
-      
       // Buscar todos os perfis de usuários
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
@@ -84,83 +67,49 @@ const UsersPage = () => {
         return;
       }
       
-      // Tentar obter emails diretamente - isso só vai funcionar se estiver usando service role key
-      try {
-        // Buscar users da tabela auth.users diretamente via RPC
-        const { data: emailData, error: emailError } = await supabase.rpc('get_user_emails');
+      // Usar a função utilitária para obter emails
+      const emailData = await getUserEmails();
+      
+      // Buscar roles de admin
+      const { data: adminRoles, error: adminRolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'admin');
+      
+      // Buscar submissões
+      const { data: submissions, error: submissionsError } = await supabase
+        .from('quiz_submissions')
+        .select('user_id');
         
-        // Buscar roles de admin
-        const { data: adminRoles, error: adminRolesError } = await supabase
-          .from('user_roles')
-          .select('user_id')
-          .eq('role', 'admin');
-        
-        // Buscar submissões
-        const { data: submissions, error: submissionsError } = await supabase
-          .from('quiz_submissions')
-          .select('user_id');
-          
-        // Transformar dados
-        const adminUserIds = adminRoles?.map(role => role.user_id) || [];
-        const submissionUserIds = submissions?.map(sub => sub.user_id) || [];
-        
-        // Criar um mapa de emails usando os dados obtidos
-        const emailMap = new Map<string, string>();
-        if (emailData && Array.isArray(emailData)) {
-          emailData.forEach((item: any) => {
-            if (item && item.user_id && item.email) {
-              emailMap.set(item.user_id, item.email);
-            }
-          });
-        }
-        
-        // Combinar os dados de perfis com emails
-        const profilesArray = Array.isArray(profilesData) ? profilesData : [];
-        const processedUsers = profilesArray.map(profile => {
-          return {
-            ...profile,
-            email: emailMap.get(profile.id) || profile.email || "Email não disponível",
-            is_admin: adminUserIds.includes(profile.id),
-            has_submission: submissionUserIds.includes(profile.id)
-          } as UserProfile;
+      // Transformar dados
+      const adminUserIds = adminRoles?.map(role => role.user_id) || [];
+      const submissionUserIds = submissions?.map(sub => sub.user_id) || [];
+      
+      // Criar um mapa de emails usando os dados obtidos
+      const emailMap = new Map<string, string>();
+      if (emailData && Array.isArray(emailData)) {
+        emailData.forEach((item: any) => {
+          if (item && item.user_id && item.email) {
+            emailMap.set(item.user_id, item.email);
+          }
         });
-        
-        setUsers(processedUsers);
-        if (emailError) {
-          setError("Acesso limitado aos dados de email. Utilize o método alternativo para ver todos os emails.");
-        }
-      } catch (error: any) {
-        console.error("Erro ao acessar dados de email:", error);
-        setError("Erro ao acessar dados de email: " + error.message);
-        
-        // Mesmo com erro, vamos exibir os perfis básicos
-        const profilesArray = Array.isArray(profilesData) ? profilesData : [];
-        
-        // Buscar roles de admin mesmo sem emails
-        const { data: adminRoles } = await supabase
-          .from('user_roles')
-          .select('user_id')
-          .eq('role', 'admin');
-          
-        const { data: submissions } = await supabase
-          .from('quiz_submissions')
-          .select('user_id');
-          
-        const adminUserIds = adminRoles?.map(role => role.user_id) || [];
-        const submissionUserIds = submissions?.map(sub => sub.user_id) || [];
-        
-        const processedUsers = profilesArray.map(profile => {
-          return {
-            ...profile,
-            email: profile.email || "Email não disponível", 
-            is_admin: adminUserIds.includes(profile.id),
-            has_submission: submissionUserIds.includes(profile.id)
-          } as UserProfile;
-        });
-        
-        setUsers(processedUsers);
       }
       
+      // Combinar os dados de perfis com emails
+      const profilesArray = Array.isArray(profilesData) ? profilesData : [];
+      const processedUsers = profilesArray.map(profile => {
+        return {
+          ...profile,
+          email: emailMap.get(profile.id) || profile.email || "Email não disponível",
+          is_admin: adminUserIds.includes(profile.id),
+          has_submission: submissionUserIds.includes(profile.id)
+        } as UserProfile;
+      });
+      
+      setUsers(processedUsers);
+      if (!emailData) {
+        setError("Acesso limitado aos dados de email. Utilize o método alternativo para ver todos os emails.");
+      }
     } catch (error: any) {
       console.error('Erro ao buscar usuários:', error);
       toast({
@@ -176,11 +125,15 @@ const UsersPage = () => {
   
   useEffect(() => {
     if (isAuthenticated && user) {
-      fetchUsers();
+      if (isAdmin) {
+        fetchUsers();
+      } else {
+        navigate("/dashboard");
+      }
     } else if (!isAuthenticated) {
       navigate("/");
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user, isAdmin, navigate]);
   
   const filteredUsers = users.filter(user => {
     const searchLower = searchQuery.toLowerCase();
