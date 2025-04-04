@@ -109,6 +109,7 @@ export type Database = {
           plan_level: string
           thumbnail_url: string | null
           title: string
+          type: string
           updated_at: string | null
         }
         Insert: {
@@ -121,6 +122,7 @@ export type Database = {
           plan_level: string
           thumbnail_url?: string | null
           title: string
+          type?: string
           updated_at?: string | null
         }
         Update: {
@@ -133,7 +135,38 @@ export type Database = {
           plan_level?: string
           thumbnail_url?: string | null
           title?: string
+          type?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      onboarding_content: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          updated_at?: string
+          video_url?: string | null
         }
         Relationships: []
       }
