@@ -1,19 +1,14 @@
-
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, HomeIcon, User, Mail, Phone } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
-
 export function QuizSuccess() {
   const navigate = useNavigate();
-  
   const handleNavigateToDashboard = () => {
     navigate('/dashboard');
   };
-  
-  return (
-    <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-8">
+  return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-8">
       <Card className="quiz-card overflow-hidden">
         <div className="bg-green-500 h-2 w-full"></div>
         <CardHeader className="text-center pt-8">
@@ -66,12 +61,11 @@ export function QuizSuccess() {
           </Button>
           
           <a href="https://crievalor.com.br" target="_blank" rel="noopener noreferrer">
-            <Button variant="outline" className="w-full md:w-auto text-[hsl(var(--quiz-text))] border-[hsl(var(--quiz-border))]">
+            <Button variant="outline" className="w-full md:w-auto text-[hsl(var(--quiz-text))] border-[hsl(var(--quiz-border))] text-slate-900">
               <User className="h-4 w-4 mr-2" /> Visitar Perfil Crie Valor
             </Button>
           </a>
         </CardFooter>
       </Card>
-    </div>
-  );
+    </div>;
 }
