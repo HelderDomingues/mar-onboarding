@@ -8,7 +8,7 @@ import { QuizConfigurationPanel } from "@/components/quiz/QuizConfigurationPanel
 import { QuizContent } from "@/components/quiz/QuizContent";
 import { QuizSuccess } from "@/components/quiz/QuizSuccess";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { QuizModule, QuizQuestion, QuizAnswer, QuizSubmission } from "@/types/quiz";
 
@@ -22,7 +22,6 @@ const Quiz = () => {
   const location = useLocation();
   const { toast } = useToast();
   
-  // Verificar se está no modo admin pela URL e obter parâmetros
   const queryParams = new URLSearchParams(location.search);
   const adminParam = queryParams.get('admin');
   const moduleParam = queryParams.get('module');
@@ -42,7 +41,6 @@ const Quiz = () => {
   const [showReview, setShowReview] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Verificar se o usuário é admin
   const checkUserIsAdmin = async () => {
     if (!user) return false;
     
@@ -68,7 +66,6 @@ const Quiz = () => {
     const checkAdmin = async () => {
       if (user) {
         const userIsAdmin = await checkUserIsAdmin();
-        // Apenas habilitar modo admin se usuário for admin E a URL tiver o parâmetro admin=true
         setIsAdmin(userIsAdmin && adminParam === 'true');
       }
     };
@@ -120,7 +117,6 @@ const Quiz = () => {
 
           setQuestions(questionsWithOptions);
 
-          // Se temos um módulo específico na URL, usar esse para definir o módulo atual
           if (moduleParam && modulesData.some(m => m.id === moduleParam)) {
             const moduleIndex = modulesData.findIndex(m => m.id === moduleParam);
             if (moduleIndex >= 0) {
@@ -128,7 +124,6 @@ const Quiz = () => {
               const moduleQuestions = questionsWithOptions.filter(q => q.module_id === moduleParam);
               setModuleQuestions(moduleQuestions);
               
-              // Se temos uma questão específica na URL, usar essa para definir a questão atual
               if (questionParam) {
                 const questionIndex = moduleQuestions.findIndex(q => q.id === questionParam);
                 if (questionIndex >= 0) {
@@ -163,7 +158,6 @@ const Quiz = () => {
           if (userSubmission.completed) {
             setIsComplete(true);
           } else if (!moduleParam) {
-            // Só usar o módulo salvo se não tiver módulo na URL
             const moduleIndex = Math.max(0, userSubmission.current_module - 1);
             setCurrentModuleIndex(moduleIndex);
             
@@ -175,7 +169,6 @@ const Quiz = () => {
             }
           }
 
-          // Alterado para buscar da tabela quiz_answers em vez de quiz_options
           const { data: answersData, error: answersError } = await supabase
             .from('quiz_answers')
             .select('*')
@@ -244,7 +237,6 @@ const Quiz = () => {
     fetchQuizData();
   }, [isAuthenticated, user, moduleParam, questionParam]);
 
-  // Modificado para salvar na tabela quiz_answers em vez de quiz_options
   const saveAnswer = async (questionId: string, answer: string | string[]) => {
     if (!user) return;
     try {
@@ -312,34 +304,13 @@ const Quiz = () => {
         data: { userId: user.id }
       });
       
-      // Usando service role para superar possíveis restrições de RLS
-      const serviceClient = supabase.auth.admin;
+      const { error } = await supabaseAdmin.from('quiz_submissions').update({
+        completed: true,
+        completed_at: new Date().toISOString(),
+        contact_consent: true
+      }).eq('user_id', user.id);
       
-      if (!serviceClient) {
-        logger.error('Service role client não disponível', {
-          tag: 'Quiz'
-        });
-        
-        // Tentativa direta se service role não estiver disponível
-        const { error } = await supabase.from('quiz_submissions').update({
-          completed: true,
-          completed_at: new Date().toISOString(),
-          contact_consent: true
-        }).eq('user_id', user.id);
-        
-        if (error) throw error;
-      } else {
-        logger.info('Usando método alternativo para atualizar submissão', {
-          tag: 'Quiz'
-        });
-        
-        // Tentativa de atualização com supabase.rpc para contornar restrições de RLS
-        const { data, error } = await supabase.rpc('complete_quiz_submission', {
-          p_user_id: user.id
-        });
-        
-        if (error) throw error;
-      }
+      if (error) throw error;
       
       logger.info('Questionário marcado como concluído com sucesso', {
         tag: 'Quiz',
@@ -347,7 +318,7 @@ const Quiz = () => {
       });
       
       setIsComplete(true);
-      setShowSuccess(true); // Mostrar tela de sucesso
+      setShowSuccess(true);
     } catch (error: any) {
       logger.error('Erro ao completar questionário', {
         tag: 'Quiz',

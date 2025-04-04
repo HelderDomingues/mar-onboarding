@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { logger } from "@/utils/logger";
 
@@ -12,6 +12,8 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  isAdmin: boolean;
+  checkAdminRole: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,23 +22,61 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
+
+  const checkAdminRole = async (): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      // Usamos o cliente normal aqui, pois as políticas RLS devem permitir esta consulta
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .single();
+        
+      const hasAdminRole = !error && !!data;
+      setIsAdmin(hasAdminRole);
+      return hasAdminRole;
+    } catch (error) {
+      logger.error('Erro ao verificar permissões de administrador', {
+        tag: 'Auth',
+        data: error
+      });
+      return false;
+    }
+  };
 
   useEffect(() => {
     // Configurar o listener de mudanças de estado primeiro
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
+      async (event, currentSession) => {
         logger.info(`Evento de autenticação: ${event}`, { tag: 'Auth' });
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
+        
+        // Verificar papel de admin quando o usuário mudar
+        if (currentSession?.user) {
+          await checkAdminRole();
+        } else {
+          setIsAdmin(false);
+        }
       }
     );
 
     // Verificar sessão existente
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
       logger.info('Verificando sessão existente', { tag: 'Auth', data: currentSession ? 'Sessão encontrada' : 'Sem sessão' });
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
+      
+      // Verificar papel de admin quando inicializar
+      if (currentSession?.user) {
+        await checkAdminRole();
+      }
+      
       setIsLoading(false);
     });
 
@@ -65,6 +105,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: "Login bem-sucedido",
         description: "Bem-vindo de volta!",
       });
+      
+      // Verificar papel de admin após login
+      if (data.user) {
+        await checkAdminRole();
+      }
 
       return;
     } catch (error: any) {
@@ -90,6 +135,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw error;
       }
 
+      // Redefinir estado de admin
+      setIsAdmin(false);
+      
       toast({
         title: "Logout realizado",
         description: "Você foi desconectado com sucesso.",
@@ -115,6 +163,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isLoading,
         login,
         logout,
+        isAdmin,
+        checkAdminRole,
       }}
     >
       {children}
