@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,7 +54,8 @@ export function QuizReview({
   const formatAnswerValue = (value: string | string[] | undefined) => {
     if (!value) return "Sem resposta";
     if (typeof value === "string") return value;
-    return value.join(", ");
+    if (Array.isArray(value)) return value.join(", ");
+    return String(value);
   };
   
   const handleTermsChange = (checked: boolean) => {
@@ -104,7 +104,6 @@ export function QuizReview({
     }));
   };
   
-  // Renderizar campo de edição baseado no tipo da questão
   const renderEditField = (question: QuizQuestion) => {
     const questionId = question.id;
     const answer = editedAnswers[questionId];
