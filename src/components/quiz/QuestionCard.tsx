@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -190,7 +189,7 @@ export function QuestionCard({
             placeholder="Digite sua resposta aqui..." 
             value={textAnswer} 
             onChange={e => setTextAnswer(e.target.value)} 
-            className="w-full" 
+            className="w-full text-slate-900" 
           />}
         
         {question.type === 'email' && <Input 
