@@ -7,8 +7,9 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/components/ui/use-toast";
-import { FileText, ChevronLeft, FileSpreadsheet } from "lucide-react";
+import { FileText, ChevronLeft, FileSpreadsheet, Download, Printer } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const QuizViewAnswers = () => {
   const { user } = useAuth();
@@ -114,18 +115,48 @@ export const QuizViewAnswers = () => {
         return answerValue;
     }
   };
+
+  const handlePrint = () => {
+    window.print();
+  };
   
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Voltar ao Dashboard
+          </Button>
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-8 w-1/2" />
+            <Skeleton className="h-4 w-3/4" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <Skeleton className="h-20 w-full" />
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
   
   if (modules.length === 0 || questions.length === 0) {
     return (
-      <Card className="my-8">
+      <Card className="my-8 bg-white shadow-md border-0">
         <CardHeader>
           <CardTitle>Questionário não encontrado</CardTitle>
           <CardDescription>
@@ -144,7 +175,7 @@ export const QuizViewAnswers = () => {
   
   if (answers.length === 0) {
     return (
-      <Card className="my-8">
+      <Card className="my-8 bg-white shadow-md border-0">
         <CardHeader>
           <CardTitle>Nenhuma resposta encontrada</CardTitle>
           <CardDescription>
@@ -174,8 +205,12 @@ export const QuizViewAnswers = () => {
         </Button>
         
         <div className="flex gap-2">
+          <Button variant="outline" className="flex items-center gap-2" onClick={handlePrint}>
+            <Printer className="h-4 w-4" />
+            Imprimir
+          </Button>
           <Button variant="outline" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
+            <Download className="h-4 w-4" />
             Exportar PDF
           </Button>
           <Button variant="outline" className="flex items-center gap-2">
@@ -185,19 +220,22 @@ export const QuizViewAnswers = () => {
         </div>
       </div>
       
-      <Card>
-        <CardHeader>
+      <Card className="bg-white shadow-md border-0">
+        <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
           <CardTitle className="text-2xl">Suas Respostas ao Questionário MAR</CardTitle>
-          <CardDescription>
+          <CardDescription className="text-blue-100">
             Abaixo estão todas as suas respostas ao questionário Mapa para Alto Rendimento.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <div className="space-y-6">
-            <p className="text-muted-foreground">
-              <strong>Importante:</strong> As respostas do questionário não podem ser alteradas após a conclusão.
-              Se precisar atualizar alguma informação, entre em contato com nossa equipe de suporte.
-            </p>
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-blue-800">
+              <p className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-blue-600" />
+                <span className="font-medium">Importante:</span> As respostas do questionário não podem ser alteradas após a conclusão.
+                Se precisar atualizar alguma informação, entre em contato com nossa equipe de suporte.
+              </p>
+            </div>
             
             <Accordion type="single" collapsible className="w-full">
               {modules.map(module => {
@@ -205,28 +243,28 @@ export const QuizViewAnswers = () => {
                 const moduleQuestions = questions.filter(q => q.module_id === module.id);
                 
                 return (
-                  <AccordionItem key={module.id} value={module.id}>
-                    <AccordionTrigger className="text-lg font-medium py-4 hover:no-underline hover:bg-slate-50 px-4 -mx-4">
+                  <AccordionItem key={module.id} value={module.id} className="border border-slate-200 rounded-lg mb-4 overflow-hidden">
+                    <AccordionTrigger className="text-lg font-medium py-4 hover:no-underline px-4 hover:bg-slate-50 data-[state=open]:bg-blue-50 data-[state=open]:text-blue-700">
                       Módulo {module.order_number}: {module.title}
                     </AccordionTrigger>
-                    <AccordionContent className="pt-4 pb-2 px-0">
+                    <AccordionContent className="pt-4 pb-2 px-4">
                       <div className="space-y-6">
                         {module.description && (
-                          <div className="text-muted-foreground bg-slate-50 p-4 rounded-md">
+                          <div className="text-slate-600 bg-slate-50 p-4 rounded-md">
                             {module.description}
                           </div>
                         )}
                         
                         {moduleQuestions.map((question, qIndex) => (
-                          <div key={question.id} className="border rounded-md p-4">
+                          <div key={question.id} className="border border-slate-200 rounded-md p-5 bg-white">
                             <div className="flex justify-between">
-                              <h4 className="font-medium">
+                              <h4 className="font-medium text-slate-800">
                                 {module.order_number}.{question.order_number}. {question.text}
                               </h4>
                             </div>
                             
                             {question.hint && (
-                              <p className="text-sm text-muted-foreground mt-1 italic">
+                              <p className="text-sm text-slate-500 mt-1 italic">
                                 {question.hint}
                               </p>
                             )}
@@ -234,8 +272,8 @@ export const QuizViewAnswers = () => {
                             <Separator className="my-4" />
                             
                             <div className="space-y-1">
-                              <div className="text-sm text-muted-foreground">Sua resposta:</div>
-                              <div className="font-medium">
+                              <div className="text-sm text-slate-500">Sua resposta:</div>
+                              <div className="font-medium text-slate-700 p-3 bg-blue-50 rounded-md">
                                 {formatAnswer(question, getAnswerForQuestion(question.id))}
                               </div>
                             </div>
@@ -249,7 +287,7 @@ export const QuizViewAnswers = () => {
             </Accordion>
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between border-t pt-6">
+        <CardFooter className="flex justify-between border-t pt-6 p-6 bg-slate-50">
           <Button variant="outline" onClick={() => navigate('/dashboard')}>
             Voltar ao Dashboard
           </Button>

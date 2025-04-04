@@ -77,7 +77,7 @@ export function QuizHeader({
       : "US";
 
   return (
-    <header className={`${isAdmin ? 'bg-slate-800 text-white' : 'bg-primary text-white'} shadow-md py-4 px-6 flex justify-between items-center font-sans`}>
+    <header className={`${isAdmin ? 'bg-slate-800 text-white' : 'bg-primary text-white'} shadow-md py-4 px-6 lg:px-8 flex justify-between items-center font-sans sticky top-0 z-30 w-full`}>
       <div className="flex items-center gap-3">
         <Link to="/dashboard">
           <img alt="MAR - Mapa para Alto Rendimento" className="h-8" src="https://static.wixstatic.com/media/783feb_0e0fffdb3f3e4eafa422021dcea535d4~mv2.png" />

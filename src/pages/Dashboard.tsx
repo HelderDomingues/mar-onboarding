@@ -5,6 +5,7 @@ import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { QuizSubmission } from "@/types/quiz";
+import { DashboardHeader } from "@/components/layout/DashboardHeader";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -62,19 +63,29 @@ const Dashboard = () => {
   
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen">
-      {isAdmin ? (
-        <AdminDashboard isAdmin={isAdmin} submission={submission} />
-      ) : (
-        <UserDashboard submission={submission} />
-      )}
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
+      <DashboardHeader isAdmin={isAdmin} />
+      
+      <div className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {isAdmin ? (
+          <AdminDashboard isAdmin={isAdmin} submission={submission} />
+        ) : (
+          <UserDashboard submission={submission} />
+        )}
+      </div>
+      
+      <footer className="bg-white border-t border-gray-200 py-6">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
+          <p>© {new Date().getFullYear()} Crie Valor. Todos os direitos reservados.</p>
+        </div>
+      </footer>
     </div>
   );
 };

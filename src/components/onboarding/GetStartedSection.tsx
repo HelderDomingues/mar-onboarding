@@ -2,30 +2,28 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlayCircle, FileText, ChevronRight } from "lucide-react";
+import { PlayCircle, FileText, ChevronRight, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 export const GetStartedSection = () => {
   return (
-    <div className="mb-8 rounded-xl overflow-hidden bg-gradient-to-br from-blue-50 via-blue-50 to-indigo-50 shadow-lg">
+    <Card className="overflow-hidden border-0 shadow-lg bg-white">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
         {/* Conteúdo à esquerda */}
-        <div className="p-8 space-y-5">
-          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full font-medium text-sm">
+        <div className="p-8 space-y-6">
+          <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-full font-medium text-sm">
             <div className="bg-blue-500 p-1 rounded-full">
-              <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-              </svg>
+              <CheckCircle2 className="h-3 w-3 text-white" />
             </div>
             Comece Aqui
           </div>
           
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
             Bem-vindo ao programa MAR
           </h2>
           
-          <p className="text-gray-600">
+          <p className="text-slate-600">
             Parabéns por dar este importante passo para transformar o marketing da sua empresa! 
             O <span className="font-semibold">Mapa para Alto Rendimento</span> é um programa completo 
             que vai guiar você através de estratégias testadas e comprovadas.
@@ -34,33 +32,27 @@ export const GetStartedSection = () => {
           <div className="space-y-4 pt-2">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 bg-blue-100 p-1.5 rounded-full text-blue-600">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <CheckCircle2 className="h-4 w-4" />
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-600">
                 Assista ao vídeo de introdução para entender como funciona o programa
               </p>
             </div>
             
             <div className="flex items-start gap-3">
               <div className="mt-0.5 bg-blue-100 p-1.5 rounded-full text-blue-600">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <CheckCircle2 className="h-4 w-4" />
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-600">
                 Responda ao questionário diagnóstico para receber sua análise personalizada
               </p>
             </div>
             
             <div className="flex items-start gap-3">
               <div className="mt-0.5 bg-blue-100 p-1.5 rounded-full text-blue-600">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <CheckCircle2 className="h-4 w-4" />
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-600">
                 Acesse materiais exclusivos desenvolvidos para a sua jornada de transformação
               </p>
             </div>
@@ -84,14 +76,14 @@ export const GetStartedSection = () => {
         </div>
         
         {/* Vídeo à direita */}
-        <div className="bg-gradient-to-br from-blue-900 to-indigo-900 relative overflow-hidden">
-          <div className="absolute inset-0 bg-grid-white/[0.05] bg-[length:16px_16px]"></div>
+        <div className="bg-gradient-to-br from-blue-800 to-indigo-900 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iLjA1Ij48cGF0aCBkPSJNMzYgMzBoLTZWMGg2djMwem0xOCAwaC02VjBoNnYzMHpNMTIgNmg2djZoLTZWNnptMTggMGg2djZoLTZWNnptMTggMGg2djZoLTZWNnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-20"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-blue-900/80 to-transparent"></div>
           
           <div className="p-8 relative z-10 h-full flex flex-col">
             <div className="flex-1 flex items-center justify-center">
               <div className="w-full max-w-md">
-                <AspectRatio ratio={16/9} className="rounded-lg overflow-hidden shadow-xl border border-white/10">
+                <AspectRatio ratio={16/9} className="rounded-xl overflow-hidden shadow-xl border border-white/10">
                   <div className="relative group cursor-pointer">
                     {/* Thumbnail do vídeo com overlay de play */}
                     <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
@@ -121,6 +113,6 @@ export const GetStartedSection = () => {
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 };

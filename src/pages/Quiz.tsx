@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { QuizModule, QuizQuestion, QuizAnswer, QuizSubmission } from "@/types/quiz";
+import { DashboardHeader } from "@/components/layout/DashboardHeader";
 
 interface AnswerMap {
   [key: string]: string | string[];
@@ -392,15 +392,19 @@ const Quiz = () => {
     return <Navigate to="/" />;
   }
 
+  if (isComplete && !isAdmin && !showSuccess) {
+    return <Navigate to="/quiz/view-answers" />;
+  }
+
   const hasQuizData = modules.length > 0 && moduleQuestions.length > 0;
   const isFirstQuestion = currentModuleIndex === 0 && currentQuestionIndex === 0;
   const isLastQuestion = currentModuleIndex === modules.length - 1 && currentQuestionIndex === moduleQuestions.length - 1;
 
   return (
     <div className="min-h-screen flex flex-col quiz-container">
-      <QuizHeader isAdmin={isAdmin} />
+      <DashboardHeader isAdmin={isAdmin} />
       
-      <main className="flex-1 container py-8 px-4 flex flex-col items-center">
+      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col items-center">
         {showSuccess ? (
           <QuizSuccess />
         ) : !isComplete ? (
@@ -441,8 +445,10 @@ const Quiz = () => {
         )}
       </main>
       
-      <footer className="py-4 border-t border-[hsl(var(--quiz-border))] text-center text-sm text-muted-foreground">
-        <p>© {new Date().getFullYear()} Crie Valor. Todos os direitos reservados.</p>
+      <footer className="bg-white border-t border-gray-200 py-6">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
+          <p>© {new Date().getFullYear()} Crie Valor. Todos os direitos reservados.</p>
+        </div>
       </footer>
     </div>
   );
