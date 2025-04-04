@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, FileSpreadsheet, MessageSquare, Mail } from "lucide-react";
+import { Download, FileSpreadsheet, MessageSquare, Mail, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -18,9 +18,12 @@ export function QuizViewAnswers() {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [modules, setModules] = useState<QuizModule[]>([]);
   const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [hasSubmission, setHasSubmission] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  console.log("Carregando respostas para o usuário:", user?.id);
 
   // Buscar dados do questionário
   useEffect(() => {
@@ -30,6 +33,8 @@ export function QuizViewAnswers() {
       try {
         setIsLoading(true);
         
+        console.log("Iniciando busca de dados do questionário");
+        
         // Buscar módulos
         const { data: modulesData, error: modulesError } = await supabase
           .from('quiz_modules')
@@ -37,6 +42,7 @@ export function QuizViewAnswers() {
           .order('order_number', { ascending: true });
           
         if (modulesError) throw modulesError;
+        console.log("Módulos carregados:", modulesData?.length);
         
         // Buscar perguntas
         const { data: questionsData, error: questionsError } = await supabase
@@ -45,6 +51,7 @@ export function QuizViewAnswers() {
           .order('order_number', { ascending: true });
           
         if (questionsError) throw questionsError;
+        console.log("Perguntas carregadas:", questionsData?.length);
         
         // Buscar respostas do usuário
         const { data: answersData, error: answersError } = await supabase
@@ -53,32 +60,29 @@ export function QuizViewAnswers() {
           .eq('user_id', user.id);
           
         if (answersError) throw answersError;
+        console.log("Respostas carregadas:", answersData?.length);
         
         // Verificar se existe uma submissão completa
         const { data: submissionData, error: submissionError } = await supabase
           .from('quiz_submissions')
           .select('completed')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
         
-        if (submissionError) {
+        if (submissionError && submissionError.code !== "PGRST116") {
           console.error("Erro ao verificar submissão:", submissionError);
-          // Se não houver submissão, redirecionar para o questionário
-          if (submissionError.code === "PGRST116") {
-            toast({
-              title: "Questionário não iniciado",
-              description: "Você ainda não iniciou o questionário MAR.",
-              variant: "destructive"
-            });
-            navigate("/quiz");
-            return;
-          }
         }
         
-        if (!submissionData?.completed) {
+        const isCompleted = submissionData?.completed || false;
+        setHasSubmission(!!submissionData);
+        
+        console.log("Status da submissão:", isCompleted ? "Completa" : "Incompleta");
+        
+        if (!isCompleted && !answersData?.length) {
+          // Se não há submissão completa nem respostas, redirecionar para o questionário
           toast({
-            title: "Questionário não concluído",
-            description: "Você precisa concluir o questionário para ver suas respostas.",
+            title: "Questionário não iniciado",
+            description: "Você ainda não iniciou o questionário MAR.",
             variant: "destructive"
           });
           navigate("/quiz");
@@ -89,11 +93,23 @@ export function QuizViewAnswers() {
         const answersObject: Record<string, any> = {};
         answersData?.forEach(item => {
           try {
-            answersObject[item.question_id] = JSON.parse(item.answer);
+            if (typeof item.answer === 'string') {
+              // Tentar fazer o parse, se falhar, usar como string
+              try {
+                answersObject[item.question_id] = JSON.parse(item.answer);
+              } catch (e) {
+                answersObject[item.question_id] = item.answer;
+              }
+            } else {
+              answersObject[item.question_id] = item.answer;
+            }
           } catch (e) {
+            console.error("Erro ao processar resposta:", e);
             answersObject[item.question_id] = item.answer;
           }
         });
+        
+        console.log("Número de respostas formatadas:", Object.keys(answersObject).length);
         
         // Converter os tipos das perguntas para compatibilidade com QuizQuestion
         const typedQuestions = questionsData.map(q => ({
@@ -198,7 +214,25 @@ export function QuizViewAnswers() {
     );
   }
   
-  if (questionsByModule.length === 0 || Object.keys(answers).length === 0) {
+  if (questionsByModule.length === 0) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center p-6">
+            <h3 className="text-lg font-medium mb-2">Nenhuma pergunta encontrada</h3>
+            <p className="text-slate-600 mb-4">
+              Houve um problema ao carregar as perguntas do questionário.
+            </p>
+            <Button onClick={handleNavigateToQuiz}>
+              Ir para o Questionário
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (Object.keys(answers).length === 0) {
     return (
       <Card>
         <CardContent className="pt-6">
@@ -232,6 +266,27 @@ export function QuizViewAnswers() {
           </Button>
         </div>
       </div>
+      
+      {!hasSubmission && (
+        <Card className="border-amber-200 bg-amber-50 mb-4">
+          <CardContent className="p-4 flex items-start gap-3">
+            <AlertCircle className="text-amber-500 h-5 w-5 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-amber-800">Questionário não confirmado</h3>
+              <p className="text-sm text-amber-700">
+                Você ainda não concluiu o processo de validação do questionário. 
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-amber-800 font-medium underline" 
+                  onClick={handleNavigateToQuiz}
+                >
+                  Clique aqui para finalizar.
+                </Button>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       <Accordion type="single" collapsible defaultValue="module-0" className="w-full">
         {questionsByModule.map((moduleData, index) => (

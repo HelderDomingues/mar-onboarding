@@ -1,39 +1,14 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { QuizViewAnswers } from "@/components/quiz/QuizViewAnswers";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 
 const QuizViewAnswersPage = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    const checkUserRole = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .single();
-          
-        if (!error && data) {
-          setIsAdmin(true);
-        }
-      } catch (error) {
-        console.error('Erro ao verificar permissões:', error);
-      }
-    };
-    
-    checkUserRole();
-  }, [user]);
 
   useEffect(() => {
     // Atualiza o título da página

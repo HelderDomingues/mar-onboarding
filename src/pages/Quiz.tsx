@@ -13,13 +13,14 @@ import { logger } from "@/utils/logger";
 import { QuizModule, QuizQuestion, QuizAnswer, QuizSubmission } from "@/types/quiz";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { isQuizComplete } from "@/utils/supabaseUtils";
 
 interface AnswerMap {
   [key: string]: string | string[];
 }
 
 const Quiz = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -28,6 +29,7 @@ const Quiz = () => {
   const adminParam = queryParams.get('admin');
   const moduleParam = queryParams.get('module');
   const questionParam = queryParams.get('question');
+  const forceMode = queryParams.get('mode');
   
   const [modules, setModules] = useState<QuizModule[]>([]);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -39,41 +41,51 @@ const Quiz = () => {
   const [isComplete, setIsComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const checkUserIsAdmin = async () => {
-    if (!user) return false;
-    
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .single();
-        
-      return !error && data;
-    } catch (error) {
-      logger.error('Erro ao verificar permissões de administrador', {
-        tag: 'Quiz',
-        data: error
-      });
-      return false;
-    }
-  };
-
   useEffect(() => {
     const checkAdmin = async () => {
-      if (user) {
-        const userIsAdmin = await checkUserIsAdmin();
-        setIsAdmin(userIsAdmin && adminParam === 'true');
+      if (user && isAdmin) {
+        setShowAdmin(adminParam === 'true');
+      } else {
+        setShowAdmin(false);
       }
     };
     
     checkAdmin();
-  }, [user, adminParam]);
+  }, [user, adminParam, isAdmin]);
+
+  // Verifica se o questionário foi concluído ao montar o componente
+  useEffect(() => {
+    const checkQuizStatus = async () => {
+      if (!user) return;
+      
+      try {
+        // Verifica se o questionário está completo
+        const completed = await isQuizComplete(user.id);
+        console.log("Status do questionário:", completed ? "Completo" : "Incompleto");
+        
+        // Se estiver completo e não for modo admin, redirecionar para visualizar respostas
+        if (completed && !forceMode && !showAdmin) {
+          setIsComplete(true);
+          
+          // Se estamos no modo de revisão, permitir a visualização
+          if (forceMode === 'review') {
+            setShowReview(true);
+          } else if (location.pathname === '/quiz' && !location.search) {
+            // Apenas redireciona se estamos na página principal do quiz sem parâmetros
+            navigate('/quiz/view-answers');
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao verificar status do questionário:", error);
+      }
+    };
+    
+    checkQuizStatus();
+  }, [user, navigate, location, showAdmin, forceMode]);
 
   const fetchQuizData = async () => {
     if (!isAuthenticated || !user) return;
@@ -144,17 +156,18 @@ const Quiz = () => {
         const { data: submissionData, error: submissionError } = await supabase
           .from('quiz_submissions')
           .select('*')
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-        if (submissionError) {
+        if (submissionError && submissionError.code !== "PGRST116") {
           logger.error('Erro ao buscar submissão do quiz', {
             tag: 'Quiz',
             data: submissionError
           });
         }
 
-        if (submissionData && submissionData.length > 0) {
-          const userSubmission = submissionData[0] as unknown as QuizSubmission;
+        if (submissionData) {
+          const userSubmission = submissionData as unknown as QuizSubmission;
           setSubmission(userSubmission);
           
           if (userSubmission.completed) {
@@ -162,7 +175,7 @@ const Quiz = () => {
             
             // Se o questionário está completo e o usuário está tentando continuar, 
             // redirecionar para a página de visualização de respostas
-            if (!isAdmin) {
+            if (!showAdmin && !forceMode && location.pathname === '/quiz' && !location.search) {
               navigate('/quiz/view-answers');
               return;
             }
@@ -194,11 +207,13 @@ const Quiz = () => {
             const loadedAnswers: AnswerMap = {};
             answersData.forEach(ans => {
               try {
-                const parsed = JSON.parse(ans.answer || '');
-                if (Array.isArray(parsed)) {
-                  loadedAnswers[ans.question_id] = parsed;
-                } else {
-                  loadedAnswers[ans.question_id] = ans.answer || '';
+                if (ans.answer) {
+                  try {
+                    const parsed = JSON.parse(ans.answer);
+                    loadedAnswers[ans.question_id] = parsed;
+                  } catch (e) {
+                    loadedAnswers[ans.question_id] = ans.answer;
+                  }
                 }
               } catch (e) {
                 loadedAnswers[ans.question_id] = ans.answer || '';
@@ -425,7 +440,7 @@ const Quiz = () => {
     return null; // Redirecionado pelo useEffect
   }
 
-  if (isComplete && !isAdmin && !showSuccess) {
+  if (isComplete && !showAdmin && !forceMode && !showSuccess) {
     // Se o questionário está completo e não é admin, redirecionar para visualizar respostas
     navigate('/quiz/view-answers');
     return null;
@@ -462,14 +477,14 @@ const Quiz = () => {
                 onEditQuestion={handleEditQuestion}
                 allModules={modules}
                 allQuestions={questions}
-                isAdmin={isAdmin}
+                isAdmin={showAdmin}
               />
             ) : (
               <QuizConfigurationPanel
                 isLoading={isLoading}
                 loadError={loadError}
                 onRefresh={fetchQuizData}
-                isAdmin={isAdmin}
+                isAdmin={showAdmin}
                 modules={modules}
                 questions={questions}
               />

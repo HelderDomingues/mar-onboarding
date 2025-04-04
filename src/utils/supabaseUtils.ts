@@ -1,4 +1,3 @@
-
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -14,7 +13,7 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
       .from('quiz_submissions')
       .select('completed')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
       
     if (error) {
       logger.error('Erro ao verificar status do questionário', {
