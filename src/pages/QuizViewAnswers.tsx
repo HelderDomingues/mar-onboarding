@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { QuizViewAnswers } from "@/components/quiz/QuizViewAnswers";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
-import { SiteFooler } from "@/components/layout/SiteFooter";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
 const QuizViewAnswersPage = () => {
   const { isAuthenticated, user } = useAuth();
@@ -61,7 +61,7 @@ const QuizViewAnswersPage = () => {
         <QuizViewAnswers />
       </div>
       
-      <SiteFooler />
+      <SiteFooter />
     </div>
   );
 };

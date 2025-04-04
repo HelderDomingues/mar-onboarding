@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, MessageSquare, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 
 export function QuizViewAnswers() {
   const [isLoading, setIsLoading] = useState(true);
@@ -19,6 +20,7 @@ export function QuizViewAnswers() {
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Buscar dados do questionário
   useEffect(() => {
@@ -52,6 +54,37 @@ export function QuizViewAnswers() {
           
         if (answersError) throw answersError;
         
+        // Verificar se existe uma submissão completa
+        const { data: submissionData, error: submissionError } = await supabase
+          .from('quiz_submissions')
+          .select('completed')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (submissionError) {
+          console.error("Erro ao verificar submissão:", submissionError);
+          // Se não houver submissão, redirecionar para o questionário
+          if (submissionError.code === "PGRST116") {
+            toast({
+              title: "Questionário não iniciado",
+              description: "Você ainda não iniciou o questionário MAR.",
+              variant: "destructive"
+            });
+            navigate("/quiz");
+            return;
+          }
+        }
+        
+        if (!submissionData?.completed) {
+          toast({
+            title: "Questionário não concluído",
+            description: "Você precisa concluir o questionário para ver suas respostas.",
+            variant: "destructive"
+          });
+          navigate("/quiz");
+          return;
+        }
+        
         // Formatar as respostas em um objeto
         const answersObject: Record<string, any> = {};
         answersData?.forEach(item => {
@@ -73,13 +106,18 @@ export function QuizViewAnswers() {
         setAnswers(answersObject);
       } catch (error) {
         console.error("Erro ao buscar dados do questionário:", error);
+        toast({
+          title: "Erro ao carregar dados",
+          description: "Não foi possível carregar as suas respostas. Por favor, tente novamente.",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchQuestions();
-  }, [user]);
+  }, [user, navigate, toast]);
   
   // Função para converter tipos de string para os tipos específicos do QuizQuestion
   const convertQuestionType = (type: string): QuizQuestion['type'] => {
@@ -141,6 +179,14 @@ export function QuizViewAnswers() {
     navigate("/quiz");
   };
   
+  const handleExportData = () => {
+    toast({
+      title: "Exportação não disponível",
+      description: "A exportação de dados estará disponível em breve.",
+      variant: "default"
+    });
+  };
+  
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -180,7 +226,7 @@ export function QuizViewAnswers() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
+          <Button variant="outline" size="sm" className="flex items-center gap-1" onClick={handleExportData}>
             <FileSpreadsheet className="h-4 w-4" />
             <span>Exportar</span>
           </Button>
@@ -236,7 +282,7 @@ export function QuizViewAnswers() {
                 <span>Enviar Email</span>
               </Button>
             </a>
-            <a href="https://wa.me/5567999999999" target="_blank" rel="noreferrer">
+            <a href="https://wa.me/5567996542991" target="_blank" rel="noreferrer">
               <Button variant="outline" className="flex items-center gap-2 border-blue-200 bg-white">
                 <MessageSquare className="h-4 w-4" />
                 <span>WhatsApp</span>

@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { Navigate, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { QuizHeader } from "@/components/quiz/QuizHeader";
 import { QuizComplete } from "@/components/quiz/QuizComplete";
@@ -11,6 +12,7 @@ import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { QuizModule, QuizQuestion, QuizAnswer, QuizSubmission } from "@/types/quiz";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
 interface AnswerMap {
   [key: string]: string | string[];
@@ -157,6 +159,16 @@ const Quiz = () => {
           
           if (userSubmission.completed) {
             setIsComplete(true);
+            
+            // Se o questionário está completo e o usuário está tentando continuar, 
+            // redirecionar para a página de visualização de respostas
+            if (!isAdmin) {
+              navigate('/quiz/view-answers');
+              return;
+            }
+          } else if (userSubmission.current_module >= 8 && !showReview) {
+            // Se chegou ao último módulo e não está na revisão, mostrar a revisão
+            setShowReview(true);
           } else if (!moduleParam) {
             const moduleIndex = Math.max(0, userSubmission.current_module - 1);
             setCurrentModuleIndex(moduleIndex);
@@ -193,6 +205,11 @@ const Quiz = () => {
               }
             });
             setAnswers(loadedAnswers);
+            
+            // Se todas as perguntas estão respondidas, mostrar a revisão
+            if (userSubmission.current_module >= 8 && !userSubmission.completed && !showReview) {
+              setShowReview(true);
+            }
           }
         } else {
           const { data: newSubmission, error: createError } = await supabase
@@ -234,7 +251,11 @@ const Quiz = () => {
   };
 
   useEffect(() => {
-    fetchQuizData();
+    if (isAuthenticated && user) {
+      fetchQuizData();
+    } else if (!isAuthenticated) {
+      navigate('/');
+    }
   }, [isAuthenticated, user, moduleParam, questionParam]);
 
   const saveAnswer = async (questionId: string, answer: string | string[]) => {
@@ -357,6 +378,8 @@ const Quiz = () => {
       } else {
         setShowReview(true);
         window.scrollTo(0, 0);
+        // Atualizar o módulo para 8 para indicar que todos os módulos foram concluídos
+        await updateCurrentModule(8);
       }
     }
   };
@@ -388,12 +411,24 @@ const Quiz = () => {
     window.scrollTo(0, 0);
   };
 
+  useEffect(() => {
+    // Atualiza o título da página
+    document.title = "Questionário MAR | Crie Valor";
+    
+    // Redirecionar se não estiver autenticado
+    if (!isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
+
   if (!isAuthenticated) {
-    return <Navigate to="/" />;
+    return null; // Redirecionado pelo useEffect
   }
 
   if (isComplete && !isAdmin && !showSuccess) {
-    return <Navigate to="/quiz/view-answers" />;
+    // Se o questionário está completo e não é admin, redirecionar para visualizar respostas
+    navigate('/quiz/view-answers');
+    return null;
   }
 
   const hasQuizData = modules.length > 0 && moduleQuestions.length > 0;
@@ -445,11 +480,7 @@ const Quiz = () => {
         )}
       </main>
       
-      <footer className="bg-white border-t border-gray-200 py-6">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
-          <p>© {new Date().getFullYear()} Crie Valor. Todos os direitos reservados.</p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 };

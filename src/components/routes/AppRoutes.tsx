@@ -11,6 +11,7 @@ import QuizDiagnostic from "@/pages/QuizDiagnostic";
 import QuizViewAnswers from "@/pages/QuizViewAnswers";
 import Materials from "@/pages/Materials";
 import MemberArea from "@/pages/MemberArea";
+import FAQ from "@/pages/FAQ";
 import NotFound from "@/pages/NotFound";
 import IndexPage from "@/pages/Index";
 
@@ -32,6 +33,7 @@ export function AppRoutes() {
       <Route path="/quiz/diagnostic" element={<ProtectedRoute component={QuizDiagnostic} />} />
       <Route path="/materials" element={<ProtectedRoute component={Materials} />} />
       <Route path="/member" element={<ProtectedRoute component={MemberArea} />} />
+      <Route path="/faq" element={<ProtectedRoute component={FAQ} />} />
 
       {/* Admin routes */}
       <Route path="/admin/users" element={<AdminRoute component={Users} />} />
