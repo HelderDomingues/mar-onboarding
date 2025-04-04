@@ -37,7 +37,7 @@ import {
   FileText, 
   Video, 
   Music, 
-  FilePresentation, 
+  Presentation, // Corrigido: FilePresentation -> Presentation 
   AlertTriangle 
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -103,21 +103,30 @@ export function AdminMaterialsManager() {
           throw materialsError;
         }
         
-        setMaterials(materialsData as Material[]);
+        // Certifique-se de que todos os materiais tenham um tipo válido
+        const typedMaterials = materialsData.map(material => ({
+          ...material,
+          type: material.type || "document" // Garante que todos os materiais tenham um tipo
+        })) as Material[];
         
-        // Carregar conteúdo de onboarding
-        const { data: onboardingData, error: onboardingError } = await supabase
-          .from("onboarding_content")
-          .select("*")
-          .eq("is_active", true)
-          .single();
-          
-        if (onboardingError) {
-          if (onboardingError.code !== 'PGRST116') { // No rows returned
+        setMaterials(typedMaterials);
+        
+        try {
+          // Carregar conteúdo de onboarding
+          const { data: onboardingData, error: onboardingError } = await supabase
+            .from("onboarding_content")
+            .select("*")
+            .eq("is_active", true)
+            .maybeSingle();
+            
+          if (onboardingError && onboardingError.code !== 'PGRST116') { // No rows returned
             console.error("Erro ao carregar onboarding:", onboardingError);
+          } else if (onboardingData) {
+            setOnboardingContent(onboardingData as OnboardingContent);
           }
-        } else {
-          setOnboardingContent(onboardingData as OnboardingContent);
+        } catch (onboardingError) {
+          console.error("Erro ao carregar onboarding:", onboardingError);
+          // Não queremos que falha no onboarding impeça o carregamento dos materiais
         }
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
@@ -162,7 +171,12 @@ export function AdminMaterialsManager() {
         
       if (error) throw error;
       
-      setMaterials([data[0] as Material, ...materials]);
+      const newMaterialWithDefaults = {
+        ...data[0],
+        type: data[0].type || "document" // Garante que o tipo esteja presente
+      } as Material;
+      
+      setMaterials([newMaterialWithDefaults, ...materials]);
       
       // Resetar formulário
       setNewMaterial({
@@ -279,32 +293,40 @@ export function AdminMaterialsManager() {
         return;
       }
       
-      const { data, error } = await supabase
-        .from("onboarding_content")
-        .insert({
-          title,
-          content,
-          video_url,
-          is_active
-        })
-        .select();
+      try {
+        const { data, error } = await supabase
+          .from("onboarding_content")
+          .insert({
+            title,
+            content,
+            video_url,
+            is_active
+          })
+          .select();
+          
+        if (error) throw error;
         
-      if (error) throw error;
-      
-      setOnboardingContent(data[0] as OnboardingContent);
-      
-      // Resetar formulário
-      setNewOnboarding({
-        title: "",
-        content: "",
-        video_url: "",
-        is_active: true
-      });
-      
-      toast({
-        title: "Conteúdo de onboarding salvo",
-        description: "O conteúdo de onboarding foi salvo com sucesso."
-      });
+        if (data && data[0]) {
+          setOnboardingContent(data[0] as OnboardingContent);
+          
+          // Resetar formulário
+          setNewOnboarding({
+            title: "",
+            content: "",
+            video_url: "",
+            is_active: true
+          });
+          
+          toast({
+            title: "Conteúdo de onboarding salvo",
+            description: "O conteúdo de onboarding foi salvo com sucesso."
+          });
+        }
+      } catch (error: any) {
+        // Se a tabela não existir ou outra condição
+        console.error("Erro específico ao salvar onboarding:", error);
+        throw error;
+      }
     } catch (error: any) {
       console.error("Erro ao salvar onboarding:", error);
       toast({
@@ -330,26 +352,31 @@ export function AdminMaterialsManager() {
         return;
       }
       
-      const { error } = await supabase
-        .from("onboarding_content")
-        .update({
-          title,
-          content,
-          video_url,
-          is_active,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", id);
+      try {
+        const { error } = await supabase
+          .from("onboarding_content")
+          .update({
+            title,
+            content,
+            video_url,
+            is_active,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", id);
+          
+        if (error) throw error;
         
-      if (error) throw error;
-      
-      setOnboardingContent(editingOnboarding);
-      setEditingOnboarding(null);
-      
-      toast({
-        title: "Conteúdo atualizado",
-        description: "O conteúdo de onboarding foi atualizado com sucesso."
-      });
+        setOnboardingContent(editingOnboarding);
+        setEditingOnboarding(null);
+        
+        toast({
+          title: "Conteúdo atualizado",
+          description: "O conteúdo de onboarding foi atualizado com sucesso."
+        });
+      } catch (error: any) {
+        console.error("Erro específico ao atualizar onboarding:", error);
+        throw error;
+      }
     } catch (error: any) {
       console.error("Erro ao atualizar onboarding:", error);
       toast({
@@ -386,7 +413,7 @@ export function AdminMaterialsManager() {
       case "audio":
         return <Music className="h-4 w-4" />;
       case "presentation":
-        return <FilePresentation className="h-4 w-4" />;
+        return <Presentation className="h-4 w-4" />; // Corrigido: FilePresentation -> Presentation
       default:
         return <FileText className="h-4 w-4" />;
     }
