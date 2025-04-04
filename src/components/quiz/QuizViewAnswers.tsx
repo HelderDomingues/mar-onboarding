@@ -2,230 +2,242 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { QuizModule, QuizQuestion, QuizAnswer } from "@/types/quiz";
+import { QuizQuestion, QuizModule } from "@/types/quiz";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Mail, MessageSquare, BarChart } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Download, FileSpreadsheet, MessageSquare, Mail } from "lucide-react";
 
 export function QuizViewAnswers() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [modules, setModules] = useState<QuizModule[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
-  const [answers, setAnswers] = useState<{[key: string]: string | string[]}>({});
-  const [isSubmissionComplete, setIsSubmissionComplete] = useState(false);
+  const [modules, setModules] = useState<QuizModule[]>([]);
+  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const { user } = useAuth();
 
+  // Buscar dados do questionário
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchQuestions = async () => {
       if (!user) return;
-      
+
       try {
-        setLoading(true);
-        
-        // Verificar se o questionário está completo
-        const { data: submissionData, error: submissionError } = await supabase
-          .from('quiz_submissions')
-          .select('completed')
-          .eq('user_id', user.id)
-          .single();
-          
-        if (submissionError) {
-          console.error("Erro ao verificar submissão:", submissionError);
-          return;
-        }
-        
-        setIsSubmissionComplete(submissionData?.completed || false);
+        setIsLoading(true);
         
         // Buscar módulos
         const { data: modulesData, error: modulesError } = await supabase
           .from('quiz_modules')
           .select('*')
-          .order('order_number');
+          .order('order_number', { ascending: true });
           
-        if (modulesError) {
-          console.error("Erro ao buscar módulos:", modulesError);
-          return;
-        }
+        if (modulesError) throw modulesError;
         
-        setModules(modulesData);
-        
-        // Buscar questões
+        // Buscar perguntas
         const { data: questionsData, error: questionsError } = await supabase
           .from('quiz_questions')
           .select('*')
-          .order('order_number');
+          .order('order_number', { ascending: true });
           
-        if (questionsError) {
-          console.error("Erro ao buscar questões:", questionsError);
-          return;
-        }
-        
-        setQuestions(questionsData);
+        if (questionsError) throw questionsError;
         
         // Buscar respostas do usuário
         const { data: answersData, error: answersError } = await supabase
           .from('quiz_answers')
-          .select('*')
+          .select('question_id, answer_value')
           .eq('user_id', user.id);
           
-        if (answersError) {
-          console.error("Erro ao buscar respostas:", answersError);
-          return;
-        }
+        if (answersError) throw answersError;
         
-        const formattedAnswers: {[key: string]: string | string[]} = {};
-        if (answersData) {
-          answersData.forEach(answer => {
-            try {
-              const parsed = JSON.parse(answer.answer || '');
-              if (Array.isArray(parsed)) {
-                formattedAnswers[answer.question_id] = parsed;
-              } else {
-                formattedAnswers[answer.question_id] = answer.answer || '';
-              }
-            } catch (e) {
-              formattedAnswers[answer.question_id] = answer.answer || '';
-            }
-          });
-        }
+        // Formatar as respostas em um objeto
+        const answersObject: Record<string, any> = {};
+        answersData?.forEach(item => {
+          try {
+            answersObject[item.question_id] = JSON.parse(item.answer_value);
+          } catch (e) {
+            answersObject[item.question_id] = item.answer_value;
+          }
+        });
         
-        setAnswers(formattedAnswers);
+        // Converter os tipos das perguntas para compatibilidade com QuizQuestion
+        const typedQuestions = questionsData.map(q => ({
+          ...q,
+          type: convertQuestionType(q.type)
+        })) as QuizQuestion[];
+        
+        setModules(modulesData || []);
+        setQuestions(typedQuestions);
+        setAnswers(answersObject);
       } catch (error) {
-        console.error("Erro ao carregar dados:", error);
+        console.error("Erro ao buscar dados do questionário:", error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
     
-    fetchData();
+    fetchQuestions();
   }, [user]);
-
-  if (loading) {
+  
+  // Função para converter tipos de string para os tipos específicos do QuizQuestion
+  const convertQuestionType = (type: string): QuizQuestion['type'] => {
+    switch (type) {
+      case 'text': return 'text';
+      case 'textarea': return 'textarea';
+      case 'checkbox': return 'checkbox';
+      case 'radio': return 'radio';
+      case 'select': return 'select';
+      case 'number': return 'number';
+      case 'email': return 'email';
+      case 'url': return 'url';
+      case 'instagram': return 'instagram';
+      default: return 'text'; // Fallback para text como padrão
+    }
+  };
+  
+  // Agrupar questões por módulo
+  const questionsByModule = modules.map(module => ({
+    module,
+    questions: questions.filter(q => q.module_id === module.id)
+  }));
+  
+  // Formatar a resposta para exibição
+  const formatAnswer = (question: QuizQuestion, answer: any) => {
+    if (answer === undefined || answer === null) {
+      return <span className="text-slate-400 italic">Não respondido</span>;
+    }
+    
+    if (question.type === 'checkbox' && Array.isArray(answer)) {
+      return (
+        <div className="flex flex-wrap gap-1 mt-1">
+          {answer.map((option, index) => (
+            <Badge key={index} variant="outline" className="bg-blue-50">
+              {option}
+            </Badge>
+          ))}
+        </div>
+      );
+    }
+    
+    if (typeof answer === 'string' && answer.startsWith('http')) {
+      return (
+        <a 
+          href={answer} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="text-blue-600 hover:underline break-all"
+        >
+          {answer}
+        </a>
+      );
+    }
+    
+    return <div className="break-words">{answer}</div>;
+  };
+  
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-3/4" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
       </div>
     );
   }
-
-  const renderAnswerValue = (question: QuizQuestion, answer: string | string[]) => {
-    if (Array.isArray(answer)) {
-      return answer.join(", ");
-    }
-    
-    if (question.type === "option" && question.options) {
-      const option = question.options.find(opt => opt.id === answer);
-      return option ? option.text : answer;
-    }
-    
-    return answer;
-  };
-
-  const moduleQuestions = (moduleId: string) => {
-    return questions.filter(q => q.module_id === moduleId);
-  };
-
-  return (
-    <div className="w-full max-w-4xl mx-auto">
-      <Card className="shadow-md border-0 overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-          <div className="flex items-center gap-2">
-            <FileText className="h-6 w-6" />
-            <CardTitle className="text-2xl">Suas Respostas do Questionário MAR</CardTitle>
+  
+  if (questionsByModule.length === 0 || Object.keys(answers).length === 0) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center p-6">
+            <h3 className="text-lg font-medium mb-2">Nenhuma resposta encontrada</h3>
+            <p className="text-slate-600 mb-4">
+              Você ainda não respondeu ao questionário MAR ou houve um problema ao carregar suas respostas.
+            </p>
+            <Button onClick={() => window.location.href = "/quiz"}>
+              Ir para o Questionário
+            </Button>
           </div>
-          <CardDescription className="text-blue-100">
-            Veja abaixo as respostas que você enviou para o Mapa para Alto Rendimento
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent className="p-6">
-          {isSubmissionComplete ? (
-            <div className="space-y-8">
-              {modules.map(module => (
-                <div key={module.id} className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <div className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">
-                      {module.order_number}
-                    </div>
-                    <h3 className="text-lg font-semibold text-slate-800">{module.title}</h3>
-                  </div>
-                  
-                  <div className="pl-10 space-y-4">
-                    {moduleQuestions(module.id).map(question => (
-                      <div key={question.id} className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-                        <h4 className="font-medium text-slate-800 mb-2">{question.text}</h4>
-                        <div className="bg-gray-50 p-3 rounded text-slate-700">
-                          {answers[question.id] ? 
-                            renderAnswerValue(question, answers[question.id]) : 
-                            <span className="text-slate-400 italic">Sem resposta</span>
-                          }
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {module !== modules[modules.length - 1] && (
-                    <Separator className="my-6" />
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-slate-600 mb-4">Você ainda não completou o questionário MAR.</p>
-              <Button 
-                onClick={() => navigate("/quiz")}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                Continuar Questionário
-              </Button>
-            </div>
-          )}
         </CardContent>
-        
-        <CardFooter className="border-t p-6 bg-gray-50 flex flex-col gap-4">
-          <div className="flex flex-wrap gap-3 w-full">
-            <Button 
-              variant="default" 
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-              onClick={() => navigate("/dashboard")}
-            >
-              Voltar ao Dashboard
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="flex-1 border-blue-200 text-blue-700 hover:bg-blue-50"
-              onClick={() => navigate("/quiz/review")}
-            >
-              Ver Análises e Resultados
-            </Button>
+      </Card>
+    );
+  }
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900">Suas Respostas</h2>
+          <p className="text-slate-600 text-sm">
+            Respostas enviadas no questionário MAR
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="flex items-center gap-1">
+            <FileSpreadsheet className="h-4 w-4" />
+            <span>Exportar</span>
+          </Button>
+        </div>
+      </div>
+      
+      <Accordion type="single" collapsible defaultValue="module-0" className="w-full">
+        {questionsByModule.map((moduleData, index) => (
+          <AccordionItem key={moduleData.module.id} value={`module-${index}`} className="border rounded-lg mb-4 overflow-hidden">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-slate-50">
+              <div className="flex items-center">
+                <Badge variant="outline" className="mr-2 py-1 px-2 bg-blue-50 text-blue-800 border-blue-100">
+                  Módulo {index + 1}
+                </Badge>
+                <span className="font-medium text-slate-800">{moduleData.module.title}</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 py-2">
+              <div className="space-y-4 pt-2 pb-4">
+                {moduleData.questions.map((question) => (
+                  <div key={question.id} className="border-b border-slate-100 pb-4 last:border-b-0 last:pb-0">
+                    <h4 className="font-medium text-slate-800 mb-2">{question.text}</h4>
+                    {answers[question.id] !== undefined ? (
+                      <div className="text-slate-700 pl-4 border-l-2 border-slate-200">
+                        {formatAnswer(question, answers[question.id])}
+                      </div>
+                    ) : (
+                      <div className="text-slate-400 italic pl-4 border-l-2 border-slate-200">
+                        Não respondido
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+      
+      <Card className="border bg-blue-50 border-blue-100">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg text-blue-800">Precisa de ajuda?</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-slate-700 mb-4">
+            Se você tiver dúvidas sobre suas respostas ou quiser discutir os resultados,
+            entre em contato com nossa equipe.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <a href="mailto:contato@crievalor.com.br">
+              <Button className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                <span>Enviar Email</span>
+              </Button>
+            </a>
+            <a href="https://wa.me/5567999999999" target="_blank" rel="noreferrer">
+              <Button variant="outline" className="flex items-center gap-2 border-blue-200 bg-white">
+                <MessageSquare className="h-4 w-4" />
+                <span>WhatsApp</span>
+              </Button>
+            </a>
           </div>
-          
-          <Separator />
-          
-          <div>
-            <h4 className="font-medium mb-3 text-slate-800">Precisa de ajuda com suas respostas?</h4>
-            <div className="flex flex-wrap gap-3">
-              <a href="mailto:contato@crievalor.com.br">
-                <Button variant="outline" size="sm" className="flex gap-2">
-                  <Mail className="h-4 w-4" />
-                  <span>E-mail</span>
-                </Button>
-              </a>
-              
-              <a href="https://wa.me/5567999999999" target="_blank" rel="noreferrer">
-                <Button variant="outline" size="sm" className="flex gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  <span>WhatsApp</span>
-                </Button>
-              </a>
-            </div>
-          </div>
-        </CardFooter>
+        </CardContent>
       </Card>
     </div>
   );

@@ -1,17 +1,38 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useNavigate } from "react-router-dom";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooler } from "@/components/layout/SiteFooter";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { AreaChart, BarChart, LineChart, PieChart } from "@/components/ui/chart";
+import { 
+  ChartContainer, 
+  ChartTooltip, 
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent
+} from "@/components/ui/chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart3, PieChart as PieChartIcon, LineChart as LineChartIcon, AreaChart as AreaChartIcon, Download, Share2, Mail, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { 
+  Bar, 
+  Line, 
+  Pie, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer,
+  BarChart as RechartsBarChart,
+  LineChart as RechartsLineChart,
+  PieChart as RechartsPieChart,
+  AreaChart as RechartsAreaChart
+} from "recharts";
 
 const QuizReviewPage = () => {
   const { isAuthenticated, user } = useAuth();
@@ -20,7 +41,6 @@ const QuizReviewPage = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    // Atualiza o título da página
     document.title = "Análises e Resultados | MAR - Crie Valor";
   }, []);
   
@@ -52,7 +72,6 @@ const QuizReviewPage = () => {
     return <Navigate to="/" />;
   }
   
-  // Dados de exemplo para os gráficos
   const barChartData = {
     labels: ['Estratégia', 'Operação', 'Pessoas', 'Finanças', 'Inovação'],
     datasets: [
@@ -246,7 +265,21 @@ const QuizReviewPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="h-64">
-                  <BarChart data={barChartData} />
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsBarChart data={barChartData.datasets[0].data.map((value, index) => ({
+                      name: barChartData.labels[index],
+                      atual: value,
+                      mercado: barChartData.datasets[1].data[index]
+                    }))}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="atual" name="Maturidade atual" fill="#3b82f6" />
+                      <Bar dataKey="mercado" name="Média do mercado" fill="#6366f1" />
+                    </RechartsBarChart>
+                  </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
@@ -260,7 +293,26 @@ const QuizReviewPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="h-64">
-                  <PieChart data={pieChartData} />
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={pieChartData.labels.map((label, index) => ({
+                          name: label,
+                          value: pieChartData.datasets[0].data[index],
+                          fill: pieChartData.datasets[0].backgroundColor[index]
+                        }))}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                        nameKey="name"
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      />
+                      <Tooltip />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
@@ -381,14 +433,72 @@ const QuizReviewPage = () => {
                 <div>
                   <h4 className="font-medium text-slate-800 mb-2">Evolução de Desempenho</h4>
                   <div className="h-64">
-                    <LineChart data={lineChartData} />
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsLineChart
+                        data={lineChartData.labels.map((label, index) => ({
+                          name: label,
+                          atual: lineChartData.datasets[0].data[index],
+                          projecao: lineChartData.datasets[1].data[index],
+                        }))}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="atual" 
+                          name="Desempenho atual" 
+                          stroke="#3b82f6" 
+                          activeDot={{ r: 8 }} 
+                          connectNulls
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="projecao" 
+                          name="Projeção com MAR" 
+                          stroke="#10b981" 
+                          strokeDasharray="5 5" 
+                          connectNulls
+                        />
+                      </RechartsLineChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
                 
                 <div>
                   <h4 className="font-medium text-slate-800 mb-2">Áreas de Melhoria</h4>
                   <div className="h-64">
-                    <AreaChart data={areaChartData} />
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsAreaChart
+                        data={areaChartData.labels.map((label, index) => ({
+                          name: label,
+                          atual: areaChartData.datasets[0].data[index],
+                          objetivo: areaChartData.datasets[1].data[index],
+                        }))}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Area 
+                          type="monotone" 
+                          dataKey="atual" 
+                          name="Estado atual" 
+                          stroke="#3b82f6" 
+                          fill="rgba(59, 130, 246, 0.2)" 
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="objetivo" 
+                          name="Objetivo" 
+                          stroke="#10b981" 
+                          fill="rgba(16, 185, 129, 0.2)" 
+                        />
+                      </RechartsAreaChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               </div>

@@ -1,65 +1,62 @@
 
-import React, { useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import React, { useEffect } from 'react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooler } from "@/components/layout/SiteFooter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useAuth } from "@/hooks/useAuth";
 import { QuestionMarkCircledIcon } from "@radix-ui/react-icons";
+import { ChevronDown, MessageSquare, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const FAQ = () => {
   const { isAuthenticated } = useAuth();
-
+  
   useEffect(() => {
-    // Atualiza o título da página
     document.title = "Perguntas Frequentes | MAR - Crie Valor";
   }, []);
 
-  if (!isAuthenticated) {
-    return <Navigate to="/" />;
-  }
-
   const faqItems = [
     {
-      question: "O que é o MAR - Mapa para Alto Rendimento?",
-      answer: "O MAR é uma metodologia proprietária desenvolvida pela Crie Valor para diagnosticar e potencializar o desempenho de empresas através de uma abordagem sistêmica que analisa estratégia e posicionamento de mercado, processos operacionais, gestão de pessoas, finanças e inovação. É um guia completo para transformar o marketing da sua empresa."
+      question: "O que é o MAR?",
+      answer: "O MAR (Mapa para Alto Rendimento) é uma metodologia desenvolvida pela Crie Valor para avaliar a maturidade do marketing da sua empresa e fornecer um diagnóstico personalizado com recomendações estratégicas para melhorar seus resultados."
     },
     {
       question: "Como funciona o questionário MAR?",
-      answer: "O questionário MAR é composto por 25 perguntas distribuídas em 8 módulos, abordando diferentes aspectos do seu negócio. Após responder todas as questões, nossa equipe analisa suas respostas e prepara um diagnóstico personalizado com recomendações práticas para melhorar o desempenho do seu marketing."
+      answer: "O questionário MAR é composto por vários módulos com perguntas específicas sobre diferentes áreas do marketing. Ao responder todas as perguntas, nosso sistema analisa suas respostas e gera um diagnóstico personalizado com pontos fortes, pontos fracos e recomendações estratégicas."
     },
     {
-      question: "É possível editar minhas respostas após finalizar o questionário?",
-      answer: "Não, uma vez que o questionário é finalizado e validado, não é possível editar as respostas. Isso garante a integridade do diagnóstico. Caso precise atualizar alguma informação, entre em contato com nossa equipe de suporte."
+      question: "Posso editar minhas respostas depois de enviar?",
+      answer: "Sim, você pode revisar e editar suas respostas antes de finalizar o questionário. Após finalizar, você ainda pode visualizar suas respostas, mas para alterá-las será necessário entrar em contato com nossa equipe."
     },
     {
-      question: "Quanto tempo leva para receber os resultados da análise?",
-      answer: "Após a conclusão do questionário, nossa equipe leva de 3 a 5 dias úteis para analisar suas respostas e preparar o diagnóstico personalizado. Você receberá uma notificação por e-mail quando os resultados estiverem disponíveis."
+      question: "Como são calculados os resultados da análise?",
+      answer: "Os resultados são calculados através de um algoritmo proprietário que avalia suas respostas em relação a benchmarks do seu setor e melhores práticas de marketing. A análise considera diversos fatores como maturidade digital, estratégia de conteúdo, presença online, e processos de conversão."
     },
     {
-      question: "O acesso aos materiais exclusivos é permanente?",
-      answer: "Sim, uma vez que você tenha acesso à área de membros, poderá acessar todos os materiais exclusivos por tempo indeterminado. Novos materiais são adicionados regularmente para complementar sua jornada de aprendizado."
+      question: "Quanto tempo leva para completar o questionário?",
+      answer: "O tempo médio para completar o questionário é de aproximadamente 15-20 minutos, dependendo da complexidade da sua operação e da disponibilidade das informações solicitadas."
     },
     {
-      question: "Posso compartilhar meu acesso à área de membros com outras pessoas da minha empresa?",
-      answer: "Cada acesso é individual e intransferível, vinculado ao seu e-mail e credenciais. Se outras pessoas da sua empresa precisarem de acesso, recomendamos adquirir licenças adicionais. Entre em contato conosco para opções de planos empresariais."
+      question: "As informações que eu forneço são confidenciais?",
+      answer: "Sim, todas as informações fornecidas são tratadas com total confidencialidade. Utilizamos práticas seguras de armazenamento de dados e não compartilhamos suas informações com terceiros sem sua autorização expressa."
     },
     {
-      question: "Como posso obter suporte técnico se tiver problemas com a plataforma?",
-      answer: "Você pode entrar em contato com nossa equipe de suporte técnico através do e-mail contato@crievalor.com.br ou pelo WhatsApp. Nossa equipe está disponível para ajudar de segunda a sexta-feira, das 9h às 18h."
+      question: "Como posso implementar as recomendações?",
+      answer: "Após receber seu diagnóstico, você pode implementar as recomendações por conta própria ou solicitar o apoio da nossa equipe de consultores. Oferecemos serviços de consultoria para ajudar na implementação das estratégias recomendadas."
     },
     {
-      question: "Existe algum pré-requisito para utilizar o MAR?",
-      answer: "Não há pré-requisitos técnicos. A metodologia MAR foi projetada para ser acessível a empresas de todos os portes e níveis de maturidade em marketing. O importante é ter disponibilidade para responder o questionário com dados precisos sobre seu negócio."
+      question: "Posso refazer o questionário posteriormente?",
+      answer: "Sim, recomendamos refazer o questionário periodicamente (a cada 3-6 meses) para acompanhar a evolução da maturidade do seu marketing e ajustar suas estratégias conforme necessário."
     },
     {
-      question: "Como os resultados do MAR podem ajudar minha empresa?",
-      answer: "Os resultados do MAR proporcionam um diagnóstico completo da situação atual do marketing da sua empresa, identificando pontos fortes e oportunidades de melhoria. Com base nessa análise, você receberá recomendações personalizadas e um plano de ação prático para implementar melhorias que podem aumentar significativamente seus resultados."
+      question: "Tenho acesso a materiais educativos sobre os temas abordados?",
+      answer: "Sim, na área de Materiais você encontra conteúdos exclusivos sobre os temas abordados no questionário, além de guias práticos para implementar as recomendações sugeridas."
     },
     {
-      question: "A Crie Valor oferece serviços de consultoria para implementação das recomendações?",
-      answer: "Sim, além do diagnóstico, oferecemos serviços de consultoria especializada para implementação das recomendações. Nossa equipe pode trabalhar diretamente com sua empresa para colocar em prática as estratégias identificadas no MAR. Para mais informações sobre esses serviços, entre em contato conosco."
+      question: "Como posso entrar em contato se tiver mais dúvidas?",
+      answer: "Você pode entrar em contato conosco através do email contato@crievalor.com.br ou pelo WhatsApp disponível na plataforma. Nossa equipe está pronta para esclarecer qualquer dúvida adicional."
     }
   ];
 
@@ -67,27 +64,41 @@ const FAQ = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
       <DashboardHeader />
       
-      <div className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="max-w-4xl mx-auto">
-          <Card className="border-0 shadow-md rounded-xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-indigo-600 to-blue-700 text-white">
-              <div className="flex items-center gap-2">
-                <QuestionMarkCircledIcon className="h-6 w-6" />
-                <CardTitle>Perguntas Frequentes</CardTitle>
-              </div>
-              <CardDescription className="text-blue-100">
-                Encontre respostas para as dúvidas mais comuns sobre o MAR
-              </CardDescription>
+      <div className="flex-1 container mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+              <QuestionMarkCircledIcon className="h-8 w-8 text-blue-600" />
+              Perguntas Frequentes
+            </h1>
+            <p className="text-slate-600">
+              Encontre respostas para as dúvidas mais comuns sobre o MAR e nossos serviços.
+            </p>
+          </div>
+          
+          <div className="mb-8">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+              <Input 
+                className="pl-10" 
+                placeholder="Buscar perguntas..." 
+                type="search"
+              />
+            </div>
+          </div>
+
+          <Card className="mb-8 border-0 shadow-md">
+            <CardHeader className="bg-blue-600 text-white">
+              <CardTitle>Perguntas Frequentes</CardTitle>
             </CardHeader>
-            
-            <CardContent className="p-6">
+            <CardContent className="pt-6">
               <Accordion type="single" collapsible className="w-full">
                 {faqItems.map((item, index) => (
-                  <AccordionItem key={index} value={`item-${index}`} className="border-b border-slate-200 py-2">
-                    <AccordionTrigger className="text-left font-medium text-slate-800 hover:text-blue-700">
+                  <AccordionItem key={index} value={`item-${index}`}>
+                    <AccordionTrigger className="text-left font-medium text-slate-800 py-4 hover:no-underline">
                       {item.question}
                     </AccordionTrigger>
-                    <AccordionContent className="text-slate-600 pt-2 pb-4 px-4">
+                    <AccordionContent className="text-slate-600 pb-4">
                       {item.answer}
                     </AccordionContent>
                   </AccordionItem>
@@ -96,29 +107,34 @@ const FAQ = () => {
             </CardContent>
           </Card>
           
-          <div className="mt-8 text-center bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="text-lg font-medium mb-3">Não encontrou o que procurava?</h3>
-            <p className="text-slate-600 mb-4">Entre em contato conosco para obter suporte personalizado</p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <a href="mailto:contato@crievalor.com.br" className="inline-block">
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect width="20" height="16" x="2" y="4" rx="2" />
-                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                  </svg>
-                  E-mail
-                </button>
-              </a>
-              <a href="https://wa.me/5567999999999" target="_blank" rel="noreferrer" className="inline-block">
-                <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                  </svg>
-                  WhatsApp
-                </button>
-              </a>
-            </div>
-          </div>
+          <Card className="mb-8 border border-blue-100 bg-blue-50">
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">Ainda com dúvidas?</h3>
+                  <p className="text-slate-600 mb-4">
+                    Se você não encontrou o que procurava, entre em contato diretamente com nossa equipe de suporte.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <a href="mailto:contato@crievalor.com.br">
+                      <Button className="bg-blue-600">
+                        Enviar Email
+                      </Button>
+                    </a>
+                    <a href="https://wa.me/5567999999999" target="_blank" rel="noreferrer">
+                      <Button variant="outline" className="flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        <span>WhatsApp</span>
+                      </Button>
+                    </a>
+                  </div>
+                </div>
+                <div className="hidden md:block">
+                  <QuestionMarkCircledIcon className="h-24 w-24 text-blue-200" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
       
