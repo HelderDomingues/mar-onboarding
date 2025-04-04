@@ -80,7 +80,7 @@ export function AdminSidebar() {
               </CollapsibleContent>
             </Collapsible>
 
-            <Link to="/admin/data">
+            <Link to="/admin/data" className="my-[20px]">
               <Button variant="ghost" size="sm" className={`w-full justify-start ${isActive('/admin/data') ? 'bg-sidebar-accent text-primary' : ''}`}>
                 <Database className="mr-2 h-4 w-4" />
                 Dados
