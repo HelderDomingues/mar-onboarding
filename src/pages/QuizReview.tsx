@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +7,8 @@ import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { useToast } from "@/components/ui/use-toast";
+import { completeQuizSubmission } from "@/utils/supabaseUtils";
+import { logger } from "@/utils/logger";
 
 const QuizReviewPage = () => {
   const { isAuthenticated, user, isAdmin } = useAuth();
@@ -20,10 +21,8 @@ const QuizReviewPage = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Atualiza o título da página
     document.title = "Revisão do Questionário | MAR - Crie Valor";
     
-    // Redirecionar se não estiver autenticado
     if (!isAuthenticated) {
       navigate('/');
     }
@@ -40,7 +39,6 @@ const QuizReviewPage = () => {
     
     setIsLoading(true);
     try {
-      // Buscar módulos
       const { data: modulesData, error: modulesError } = await supabase
         .from('quiz_modules')
         .select('*')
@@ -48,7 +46,6 @@ const QuizReviewPage = () => {
 
       if (modulesError) throw modulesError;
       
-      // Buscar perguntas
       const { data: questionsData, error: questionsError } = await supabase
         .from('quiz_questions')
         .select('*')
@@ -56,7 +53,6 @@ const QuizReviewPage = () => {
 
       if (questionsError) throw questionsError;
       
-      // Buscar opções
       const { data: optionsData, error: optionsError } = await supabase
         .from('quiz_options')
         .select('*')
@@ -64,7 +60,6 @@ const QuizReviewPage = () => {
 
       if (optionsError) throw optionsError;
       
-      // Buscar respostas do usuário
       const { data: answersData, error: answersError } = await supabase
         .from('quiz_answers')
         .select('*')
@@ -72,13 +67,11 @@ const QuizReviewPage = () => {
 
       if (answersError) throw answersError;
       
-      // Processar perguntas com suas opções
       const questionsWithOptions = questionsData.map(question => {
         const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
         return { ...question, options } as unknown as QuizQuestion;
       });
       
-      // Processar respostas
       const processedAnswers: Record<string, string | string[]> = {};
       
       if (answersData && answersData.length > 0) {
@@ -88,11 +81,9 @@ const QuizReviewPage = () => {
             
             if (questionType === 'checkbox') {
               try {
-                // Para checkbox, tentamos interpretar como array JSON
                 const parsed = JSON.parse(ans.answer);
                 processedAnswers[ans.question_id] = Array.isArray(parsed) ? parsed : [ans.answer];
               } catch (e) {
-                // Se falhar ao analisar JSON, tratamos como uma string única
                 processedAnswers[ans.question_id] = ans.answer;
               }
             } else {
@@ -127,25 +118,33 @@ const QuizReviewPage = () => {
     if (!user) return;
     
     try {
-      const { error } = await supabase
-        .from('quiz_submissions')
-        .update({
-          completed: true,
-          completed_at: new Date().toISOString()
-        })
-        .eq('user_id', user.id);
+      logger.info('Tentando completar o questionário', {
+        tag: 'Quiz',
+        data: { userId: user.id }
+      });
       
-      if (error) throw error;
+      const success = await completeQuizSubmission(user.id);
+      
+      if (!success) {
+        throw new Error("Não foi possível completar o questionário");
+      }
+      
+      logger.info('Questionário finalizado com sucesso', {
+        tag: 'Quiz',
+        data: { userId: user.id }
+      });
       
       toast({
         title: "Sucesso!",
         description: "Questionário concluído com sucesso!",
       });
       
-      // Redirecionar para o dashboard após completar
       navigate('/dashboard');
     } catch (error: any) {
-      console.error("Erro ao finalizar questionário:", error);
+      logger.error("Erro ao finalizar questionário:", {
+        tag: 'Quiz',
+        data: error
+      });
       toast({
         title: "Erro",
         description: "Não foi possível finalizar o questionário. Por favor, tente novamente.",
@@ -159,7 +158,7 @@ const QuizReviewPage = () => {
   };
 
   if (!isAuthenticated) {
-    return null; // Será redirecionado no useEffect
+    return null;
   }
 
   if (isLoading) {
