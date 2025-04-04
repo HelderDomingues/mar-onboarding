@@ -1,6 +1,6 @@
 
-import { ReactNode } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { ReactNode, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ProtectedRouteProps {
@@ -9,10 +9,17 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ component: Component }: ProtectedRouteProps) => {
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
   
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/", { state: { from: location.pathname } });
+    }
+  }, [isAuthenticated, navigate, location.pathname]);
+  
   if (!isAuthenticated) {
-    return <Navigate to="/" state={{ from: location.pathname }} />;
+    return null; // Será redirecionado no useEffect
   }
   
   return <Component />;

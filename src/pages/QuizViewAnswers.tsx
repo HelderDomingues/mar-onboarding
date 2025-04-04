@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { QuizViewAnswers } from "@/components/quiz/QuizViewAnswers";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooler } from "@/components/layout/SiteFooter";
@@ -38,10 +38,15 @@ const QuizViewAnswersPage = () => {
   useEffect(() => {
     // Atualiza o título da página
     document.title = "Minhas Respostas | MAR - Crie Valor";
-  }, []);
+    
+    // Redirecionar se não estiver autenticado
+    if (!isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   if (!isAuthenticated) {
-    return <Navigate to="/" />;
+    return null; // Será redirecionado no useEffect
   }
 
   return (

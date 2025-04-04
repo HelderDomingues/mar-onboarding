@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, MessageSquare, Mail } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export function QuizViewAnswers() {
   const [isLoading, setIsLoading] = useState(true);
@@ -17,6 +18,7 @@ export function QuizViewAnswers() {
   const [modules, setModules] = useState<QuizModule[]>([]);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Buscar dados do questionário
   useEffect(() => {
@@ -135,6 +137,10 @@ export function QuizViewAnswers() {
     return <div className="break-words">{answer}</div>;
   };
   
+  const handleNavigateToQuiz = () => {
+    navigate("/quiz");
+  };
+  
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -155,7 +161,7 @@ export function QuizViewAnswers() {
             <p className="text-slate-600 mb-4">
               Você ainda não respondeu ao questionário MAR ou houve um problema ao carregar suas respostas.
             </p>
-            <Button onClick={() => window.location.href = "/quiz"}>
+            <Button onClick={handleNavigateToQuiz}>
               Ir para o Questionário
             </Button>
           </div>
