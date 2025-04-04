@@ -37,7 +37,7 @@ export function AdminSidebar() {
             <SidebarTrigger />
           </div>
           <div className="flex justify-center w-full mt-2">
-            <img src="/lovable-uploads/ab2ed2e2-b060-4ec5-8ebb-06a38b16e0f7.png" alt="Crie Valor" className="h-4" />
+            <img alt="Crie Valor" className="h-4" src="https://static.wixstatic.com/media/783feb_1d37d88c360245f2aee325cefb930b33~mv2.png" />
           </div>
         </div>
 
