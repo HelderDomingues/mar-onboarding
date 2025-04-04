@@ -147,16 +147,7 @@
   @apply animate-fade-in;
 }
 
-/* Texto branco para todos os elementos dentro do quiz */
-.quiz-card, 
-.quiz-card h1, 
-.quiz-card h2, 
-.quiz-card h3, 
-.quiz-card h4, 
-.quiz-card p, 
-.quiz-card span, 
-.quiz-card label, 
-.quiz-card div {
+/.quiz-card div {
   @apply text-[hsl(var(--quiz-text))];
   font-family: 'Inter', sans-serif;
 }
