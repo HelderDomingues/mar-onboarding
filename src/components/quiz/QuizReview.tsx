@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,6 @@ import { ArrowRight, CheckCircle, Edit, ThumbsUp, Calendar, FileCheck } from "lu
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-
 interface QuizReviewProps {
   modules: QuizModule[];
   questions: QuizQuestion[];
@@ -16,7 +14,6 @@ interface QuizReviewProps {
   onComplete: () => void;
   onEdit: (moduleIndex: number, questionIndex: number) => void;
 }
-
 export function QuizReview({
   modules,
   questions,
@@ -51,11 +48,9 @@ export function QuizReview({
     if (typeof value === "string") return value;
     return value.join(", ");
   };
-  
   const handleTermsChange = (checked: boolean) => {
     setAgreedToTerms(checked);
   };
-  
   return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-6">
       {!confirmed ? <>
           <Card className="quiz-card">
@@ -92,7 +87,7 @@ export function QuizReview({
                                 </p>
                               </div>
                               
-                              <Button variant="outline" size="sm" onClick={() => onEdit(moduleIndex, questionIndex)} className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))]">
+                              <Button variant="outline" size="sm" onClick={() => onEdit(moduleIndex, questionIndex)} className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-zinc-950">
                                 <Edit className="h-4 w-4 mr-1" /> Editar
                               </Button>
                             </div>
