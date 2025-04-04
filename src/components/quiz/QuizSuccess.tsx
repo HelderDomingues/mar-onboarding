@@ -31,14 +31,14 @@ export function QuizSuccess() {
           <p className="text-[hsl(var(--quiz-text))] opacity-80 mb-8">
             Agradecemos pelo tempo dedicado ao preenchimento do questionário. 
             Suas respostas são fundamentais para que possamos entender melhor o seu negócio 
-            e oferecer o suporte necessário para o seu crescimento.
+            e desenvolver o MApa para Alto Rendimento ideal o para o seu crescimento.
           </p>
           
           <div className="bg-slate-800 rounded-lg p-6 border border-[hsl(var(--quiz-border))]">
             <h3 className="font-semibold text-lg mb-3 text-[hsl(var(--quiz-text))]">Próximos passos</h3>
             <p className="mb-4 text-[hsl(var(--quiz-text))]">
               Nossa equipe irá analisar suas respostas e entraremos em contato em breve para 
-              discutir os resultados e as melhores estratégias para o seu negócio.
+              discutir os resultados e as próximas etapas do programa MAR.
             </p>
             
             <h4 className="font-medium mt-4 mb-2 text-cyan-300">Fale com um consultor</h4>
