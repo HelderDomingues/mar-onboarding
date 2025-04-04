@@ -1,23 +1,13 @@
-
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { logger } from "@/utils/logger";
 import { Home, LogOut, UserCircle } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 interface QuizHeaderProps {
   isAdmin?: boolean;
 }
-
 export function QuizHeader({
   isAdmin = false
 }: QuizHeaderProps) {
@@ -26,7 +16,6 @@ export function QuizHeader({
     logout
   } = useAuth();
   const navigate = useNavigate();
-
   const handleLogout = async () => {
     logger.info('Usuário solicitou logout', {
       tag: 'Header'
@@ -38,42 +27,24 @@ export function QuizHeader({
       console.error("Erro ao fazer logout:", error);
     }
   };
-
   const handleNavigateToDashboard = () => {
     navigate("/dashboard");
   };
-
   const userInitials = user?.email ? user.email.substring(0, 2).toUpperCase() : "US";
-
-  return (
-    <header className={`${isAdmin ? 'bg-slate-800 text-white' : 'bg-primary text-white'} shadow-md py-4 px-6 flex justify-between items-center font-sans`}>
+  return <header className={`${isAdmin ? 'bg-slate-800 text-white' : 'bg-primary text-white'} shadow-md py-4 px-6 flex justify-between items-center font-sans`}>
       <div className="flex items-center gap-3">
-        <img 
-          alt="MAR - Mapa para Alto Rendimento" 
-          src="/lovable-uploads/fc26fbf8-6a4c-4016-9ab3-5be4628828c9.png" 
-          className="h-8" 
-        />
-        {isAdmin && (
-          <div className="bg-blue-600 text-white px-3 py-1 text-xs font-medium rounded-md flex items-center gap-1">
+        <img alt="MAR - Mapa para Alto Rendimento" className="h-8" src="https://static.wixstatic.com/media/783feb_0e0fffdb3f3e4eafa422021dcea535d4~mv2.png" />
+        {isAdmin && <div className="bg-blue-600 text-white px-3 py-1 text-xs font-medium rounded-md flex items-center gap-1">
             <span className="font-sans">Admin</span>
-          </div>
-        )}
+          </div>}
       </div>
       
       <div className="flex items-center gap-4">
-        {isAdmin && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleNavigateToDashboard} 
-            className="text-white hover:bg-slate-700 hover:text-white"
-          >
+        {isAdmin && <Button variant="ghost" size="sm" onClick={handleNavigateToDashboard} className="text-white hover:bg-slate-700 hover:text-white">
             <Home className="h-4 w-4 mr-1" /> Dashboard
-          </Button>
-        )}
+          </Button>}
         
-        {user && (
-          <DropdownMenu>
+        {user && <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar>
@@ -96,9 +67,7 @@ export function QuizHeader({
                 <span>Sair</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+          </DropdownMenu>}
       </div>
-    </header>
-  );
+    </header>;
 }
