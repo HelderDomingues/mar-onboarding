@@ -1,3 +1,4 @@
+
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -26,6 +27,36 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
     return data?.completed || false;
   } catch (error) {
     logger.error('Exceção ao verificar status do questionário', {
+      tag: 'Quiz',
+      data: error
+    });
+    return false;
+  }
+};
+
+/**
+ * Utilitário para completar o questionário de um usuário
+ * @param userId ID do usuário
+ * @returns boolean indicando se a operação foi bem-sucedida
+ */
+export const completeQuizSubmission = async (userId: string): Promise<boolean> => {
+  try {
+    // Usando a função RPC do Supabase que tem permissões adequadas
+    const { data, error } = await supabase.rpc('complete_quiz_submission', {
+      p_user_id: userId
+    });
+    
+    if (error) {
+      logger.error('Erro ao completar questionário', {
+        tag: 'Quiz',
+        data: error
+      });
+      return false;
+    }
+    
+    return data || false;
+  } catch (error) {
+    logger.error('Exceção ao completar questionário', {
       tag: 'Quiz',
       data: error
     });
