@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,6 @@ import { ArrowRight, CheckCircle, Edit, ThumbsUp, Calendar, FileCheck } from "lu
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-
 interface QuizReviewProps {
   modules: QuizModule[];
   questions: QuizQuestion[];
@@ -16,7 +14,6 @@ interface QuizReviewProps {
   onComplete: () => void;
   onEdit: (moduleIndex: number, questionIndex: number) => void;
 }
-
 export function QuizReview({
   modules,
   questions,
@@ -51,21 +48,9 @@ export function QuizReview({
     if (typeof value === "string") return value;
     return value.join(", ");
   };
-
   const handleTermsChange = (checked: boolean) => {
     setAgreedToTerms(checked);
   };
-
-  const handleComplete = () => {
-    try {
-      onComplete();
-    } catch (error) {
-      console.error("Erro ao finalizar questionário:", error);
-      // Exibir mensagem de erro para o usuário
-      alert("Ocorreu um erro ao finalizar o questionário. Por favor, tente novamente.");
-    }
-  };
-
   return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-6">
       {!confirmed ? <>
           <Card className="quiz-card">
@@ -156,7 +141,7 @@ export function QuizReview({
           </Card>
         </> : <Card className="quiz-card">
           <CardHeader>
-            <CardTitle className="text-2xl font-bold flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-slate-900 text-base font-normal">
               <CheckCircle className="h-6 w-6 text-green-500" />
               Respostas Confirmadas
             </CardTitle>
@@ -167,7 +152,7 @@ export function QuizReview({
             </p>
           </CardContent>
           <CardFooter className="flex justify-center">
-            <Button onClick={handleComplete} className="quiz-btn">
+            <Button onClick={onComplete} className="quiz-btn">
               Finalizar Questionário
             </Button>
           </CardFooter>
