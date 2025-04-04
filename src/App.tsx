@@ -32,6 +32,7 @@ interface AdminRouteProps {
   children: ReactNode;
 }
 
+// Componente AdminRoute precisa ser usado dentro do AuthProvider
 const AdminRoute = ({ children }: AdminRouteProps) => {
   const { user, isAuthenticated } = useAuth();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -85,7 +86,12 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
   return <>{children}</>;
 };
 
-const ProtectedRoute = ({ children }: { children: ReactNode }) => {
+interface ProtectedRouteProps {
+  children: ReactNode;
+}
+
+// Componente ProtectedRoute também precisa ser usado dentro do AuthProvider
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
   
@@ -96,141 +102,149 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   return <>{children}</>;
 };
 
+// Componente AppRoutes: contém as rotas e é renderizado dentro do AuthProvider
+const AppRoutes = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<Index />} />
+      
+      {/* Rotas protegidas por autenticação */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/member"
+        element={
+          <ProtectedRoute>
+            <MemberArea />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/quiz"
+        element={
+          <ProtectedRoute>
+            <Quiz />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/quiz/review"
+        element={
+          <ProtectedRoute>
+            <QuizReviewPage />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/quiz/success"
+        element={
+          <ProtectedRoute>
+            <QuizSuccess />
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Rotas Admin */}
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <Dashboard />
+          </AdminRoute>
+        }
+      />
+      
+      <Route
+        path="/admin/users"
+        element={
+          <AdminRoute>
+            <UsersPage />
+          </AdminRoute>
+        }
+      />
+      
+      <Route
+        path="/admin/users/new"
+        element={
+          <AdminRoute>
+            <NewUserPage />
+          </AdminRoute>
+        }
+      />
+      
+      <Route
+        path="/admin/users/import"
+        element={
+          <AdminRoute>
+            <ImportUsersPage />
+          </AdminRoute>
+        }
+      />
+      
+      <Route
+        path="/admin/settings"
+        element={
+          <AdminRoute>
+            <SettingsPage />
+          </AdminRoute>
+        }
+      />
+      
+      <Route
+        path="/admin/data"
+        element={
+          <AdminRoute>
+            <Dashboard />
+          </AdminRoute>
+        }
+      />
+      
+      <Route
+        path="/admin/reports"
+        element={
+          <AdminRoute>
+            <Dashboard />
+          </AdminRoute>
+        }
+      />
+      
+      <Route
+        path="/admin/help"
+        element={
+          <AdminRoute>
+            <Dashboard />
+          </AdminRoute>
+        }
+      />
+      
+      {/* Rota 404 */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
+// Componente principal App: configura providers na ordem correta
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
+    <BrowserRouter>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            
-            {/* Rotas protegidas por autenticação */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/member"
-              element={
-                <ProtectedRoute>
-                  <MemberArea />
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/quiz"
-              element={
-                <ProtectedRoute>
-                  <Quiz />
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/quiz/review"
-              element={
-                <ProtectedRoute>
-                  <QuizReviewPage />
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/quiz/success"
-              element={
-                <ProtectedRoute>
-                  <QuizSuccess />
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Rotas Admin */}
-            <Route
-              path="/admin"
-              element={
-                <AdminRoute>
-                  <Dashboard />
-                </AdminRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/users"
-              element={
-                <AdminRoute>
-                  <UsersPage />
-                </AdminRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/users/new"
-              element={
-                <AdminRoute>
-                  <NewUserPage />
-                </AdminRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/users/import"
-              element={
-                <AdminRoute>
-                  <ImportUsersPage />
-                </AdminRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/settings"
-              element={
-                <AdminRoute>
-                  <SettingsPage />
-                </AdminRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/data"
-              element={
-                <AdminRoute>
-                  <Dashboard />
-                </AdminRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/reports"
-              element={
-                <AdminRoute>
-                  <Dashboard />
-                </AdminRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/help"
-              element={
-                <AdminRoute>
-                  <Dashboard />
-                </AdminRoute>
-              }
-            />
-            
-            {/* Rota 404 */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
       </TooltipProvider>
-    </AuthProvider>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 
