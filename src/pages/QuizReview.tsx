@@ -80,20 +80,31 @@ const QuizReviewPage = () => {
       
       // Processar respostas
       const processedAnswers: Record<string, string | string[]> = {};
-      answersData.forEach(ans => {
-        try {
-          if (ans.answer) {
-            try {
-              const parsed = JSON.parse(ans.answer);
-              processedAnswers[ans.question_id] = parsed;
-            } catch (e) {
+      
+      if (answersData && answersData.length > 0) {
+        answersData.forEach(ans => {
+          if (ans.answer !== null && ans.answer !== undefined) {
+            const questionType = questionsWithOptions.find(q => q.id === ans.question_id)?.type;
+            
+            if (questionType === 'checkbox') {
+              try {
+                // Para checkbox, tentamos interpretar como array JSON
+                const parsed = JSON.parse(ans.answer);
+                processedAnswers[ans.question_id] = Array.isArray(parsed) ? parsed : [ans.answer];
+              } catch (e) {
+                // Se falhar ao analisar JSON, tratamos como uma string única
+                processedAnswers[ans.question_id] = ans.answer;
+              }
+            } else {
               processedAnswers[ans.question_id] = ans.answer;
             }
+          } else {
+            processedAnswers[ans.question_id] = "";
           }
-        } catch (e) {
-          processedAnswers[ans.question_id] = ans.answer || '';
-        }
-      });
+        });
+      }
+      
+      console.log("Respostas processadas:", processedAnswers);
       
       setModules(modulesData as unknown as QuizModule[]);
       setQuestions(questionsWithOptions);

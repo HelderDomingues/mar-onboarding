@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface QuizReviewProps {
   modules: QuizModule[];
@@ -37,6 +39,11 @@ export function QuizReview({
     }
   });
 
+  // Garantir que o estado editedAnswers seja sempre sincronizado com as respostas externas
+  useEffect(() => {
+    setEditedAnswers({...answers});
+  }, [answers]);
+
   // Data atual formatada para português do Brasil
   const currentDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -53,8 +60,26 @@ export function QuizReview({
   // Formatar o valor da resposta para exibição
   const formatAnswerValue = (value: string | string[] | undefined) => {
     if (!value) return "Sem resposta";
-    if (typeof value === "string") return value;
-    if (Array.isArray(value)) return value.join(", ");
+    
+    if (Array.isArray(value)) {
+      return value.join(", ");
+    }
+    
+    if (typeof value === "string") {
+      // Verifica se é um JSON string e tenta converter para array
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          return parsed.join(", ");
+        }
+        return String(parsed);
+      } catch (e) {
+        // Se não for um JSON válido, retorna a string original
+        return value;
+      }
+    }
+    
+    // Para outros tipos, converte para string
     return String(value);
   };
   
@@ -66,16 +91,48 @@ export function QuizReview({
     setEditingQuestionId(questionId);
   };
   
-  const handleSaveEdit = (questionId: string) => {
+  const handleSaveEdit = async (questionId: string) => {
+    try {
+      const answer = editedAnswers[questionId];
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      
+      if (userId) {
+        // Salvar resposta atualizada no banco de dados
+        const answerValue = typeof answer === 'object' ? JSON.stringify(answer) : answer;
+        const { error } = await supabase
+          .from('quiz_answers')
+          .upsert({
+            user_id: userId,
+            question_id: questionId,
+            answer: answerValue
+          }, {
+            onConflict: 'user_id,question_id'
+          });
+          
+        if (error) throw error;
+        
+        toast({
+          title: "Resposta atualizada",
+          description: "Sua resposta foi atualizada com sucesso.",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao salvar resposta:", error);
+      toast({
+        title: "Erro ao atualizar resposta",
+        description: "Não foi possível salvar sua resposta. Por favor, tente novamente.",
+        variant: "destructive"
+      });
+    }
+    
     setEditingQuestionId(null);
-    toast({
-      title: "Resposta atualizada",
-      description: "Sua resposta foi atualizada com sucesso.",
-    });
   };
   
   const handleCancelEdit = () => {
     setEditingQuestionId(null);
+    
+    // Restaurar valores originais
+    setEditedAnswers({...answers});
   };
   
   const handleInputChange = (questionId: string, value: string | string[]) => {
@@ -86,15 +143,37 @@ export function QuizReview({
   };
   
   const handleCheckboxChange = (questionId: string, option: string, checked: boolean) => {
-    const currentAnswers = Array.isArray(editedAnswers[questionId]) 
-      ? editedAnswers[questionId] as string[] 
-      : [];
+    let currentAnswers: string[] = [];
+    
+    // Garante que estamos lidando com um array
+    if (Array.isArray(editedAnswers[questionId])) {
+      currentAnswers = [...(editedAnswers[questionId] as string[])];
+    } else if (typeof editedAnswers[questionId] === 'string') {
+      try {
+        // Tenta converter de JSON string para array
+        const parsed = JSON.parse(editedAnswers[questionId] as string);
+        if (Array.isArray(parsed)) {
+          currentAnswers = [...parsed];
+        } else {
+          currentAnswers = [editedAnswers[questionId] as string];
+        }
+      } catch (e) {
+        // Se não for um JSON válido, usa como item único
+        currentAnswers = [editedAnswers[questionId] as string];
+      }
+    }
       
     let newAnswers: string[];
     
     if (checked) {
-      newAnswers = [...currentAnswers, option];
+      // Adiciona à lista se não existir
+      if (!currentAnswers.includes(option)) {
+        newAnswers = [...currentAnswers, option];
+      } else {
+        newAnswers = currentAnswers;
+      }
     } else {
+      // Remove da lista
       newAnswers = currentAnswers.filter(item => item !== option);
     }
     
@@ -104,25 +183,31 @@ export function QuizReview({
     }));
   };
   
+  // Renderizar campo de edição baseado no tipo da questão
   const renderEditField = (question: QuizQuestion) => {
     const questionId = question.id;
     const answer = editedAnswers[questionId];
     
     switch(question.type) {
       case 'text':
+      case 'email':
+      case 'number':
+      case 'url':
+      case 'instagram':
         return (
           <Input
-            value={answer as string || ''}
+            value={typeof answer === 'string' ? answer : ''}
             onChange={(e) => handleInputChange(questionId, e.target.value)}
             className="w-full text-slate-900"
             placeholder="Digite sua resposta aqui"
+            type={question.type === 'number' ? 'number' : 'text'}
           />
         );
         
       case 'textarea':
         return (
           <Textarea
-            value={answer as string || ''}
+            value={typeof answer === 'string' ? answer : ''}
             onChange={(e) => handleInputChange(questionId, e.target.value)}
             className="w-full text-slate-900"
             placeholder="Digite sua resposta aqui"
@@ -130,8 +215,28 @@ export function QuizReview({
         );
         
       case 'checkbox':
+      case 'radio':
         const options = question.options?.map(opt => opt.text) || [];
-        const selectedOptions = Array.isArray(answer) ? answer : [];
+        let selectedOptions: string[] = [];
+        
+        // Processa as opções selecionadas com base no tipo de resposta
+        if (Array.isArray(answer)) {
+          selectedOptions = answer;
+        } else if (typeof answer === 'string') {
+          try {
+            // Tenta converter JSON para array se for checkbox
+            const parsed = JSON.parse(answer);
+            if (Array.isArray(parsed)) {
+              selectedOptions = parsed;
+            } else {
+              // Se for radio, pode ser uma string única
+              selectedOptions = [answer];
+            }
+          } catch (e) {
+            // Se não for JSON, trata como valor único
+            selectedOptions = [answer];
+          }
+        }
         
         return (
           <div className="space-y-2">
@@ -158,7 +263,7 @@ export function QuizReview({
       default:
         return (
           <Input
-            value={answer as string || ''}
+            value={typeof answer === 'string' ? answer : ''}
             onChange={(e) => handleInputChange(questionId, e.target.value)}
             className="w-full text-slate-900"
             placeholder="Digite sua resposta aqui"
