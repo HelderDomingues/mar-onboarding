@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Navigate, useNavigate } from "react-router-dom";
 import { QuizViewAnswers } from "@/components/quiz/QuizViewAnswers";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
+import { SiteFooler } from "@/components/layout/SiteFooter";
 
 const QuizViewAnswersPage = () => {
   const { isAuthenticated, user } = useAuth();
@@ -34,6 +35,11 @@ const QuizViewAnswersPage = () => {
     checkUserRole();
   }, [user]);
 
+  useEffect(() => {
+    // Atualiza o título da página
+    document.title = "Minhas Respostas | MAR - Crie Valor";
+  }, []);
+
   if (!isAuthenticated) {
     return <Navigate to="/" />;
   }
@@ -43,14 +49,14 @@ const QuizViewAnswersPage = () => {
       <DashboardHeader isAdmin={isAdmin} />
       
       <div className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Minhas Respostas</h1>
+          <p className="text-slate-600">Veja abaixo as respostas que você forneceu no questionário MAR.</p>
+        </div>
         <QuizViewAnswers />
       </div>
       
-      <footer className="bg-white border-t border-gray-200 py-6">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
-          <p>© {new Date().getFullYear()} Crie Valor. Todos os direitos reservados.</p>
-        </div>
-      </footer>
+      <SiteFooler />
     </div>
   );
 };

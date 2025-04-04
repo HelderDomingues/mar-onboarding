@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { Home, User, FileText, Book, Settings, LogOut } from "lucide-react";
+import { Home, User, FileText, Book, Settings, LogOut, BarChart } from "lucide-react";
 
 interface DashboardHeaderProps {
   isAdmin?: boolean;
@@ -72,7 +72,7 @@ export function DashboardHeader({ isAdmin = false }: DashboardHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-30 w-full border-b bg-blue-800 text-white shadow-md">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
@@ -83,7 +83,7 @@ export function DashboardHeader({ isAdmin = false }: DashboardHeaderProps) {
                 className="h-8"
               />
               {isAdmin && (
-                <div className="ml-2 bg-blue-600 text-white px-3 py-1 text-xs font-medium rounded-md">
+                <div className="ml-2 bg-amber-500 text-white px-3 py-1 text-xs font-medium rounded-md">
                   Admin
                 </div>
               )}
@@ -95,7 +95,7 @@ export function DashboardHeader({ isAdmin = false }: DashboardHeaderProps) {
               variant={isActive("/dashboard") ? "default" : "ghost"} 
               size="sm" 
               asChild
-              className="gap-1.5"
+              className="gap-1.5 text-white hover:bg-blue-700"
             >
               <Link to="/dashboard">
                 <Home className="h-4 w-4" />
@@ -104,10 +104,10 @@ export function DashboardHeader({ isAdmin = false }: DashboardHeaderProps) {
             </Button>
             
             <Button 
-              variant={isActive("/quiz") ? "default" : "ghost"} 
+              variant={isActive("/quiz") || location.pathname.includes("/quiz/") ? "default" : "ghost"} 
               size="sm" 
               asChild
-              className="gap-1.5"
+              className="gap-1.5 text-white hover:bg-blue-700"
             >
               <Link to="/quiz">
                 <FileText className="h-4 w-4" />
@@ -116,10 +116,22 @@ export function DashboardHeader({ isAdmin = false }: DashboardHeaderProps) {
             </Button>
             
             <Button 
+              variant={location.pathname.includes("/quiz/review") ? "default" : "ghost"} 
+              size="sm" 
+              asChild
+              className="gap-1.5 text-white hover:bg-blue-700"
+            >
+              <Link to="/quiz/review">
+                <BarChart className="h-4 w-4" />
+                <span>Análises</span>
+              </Link>
+            </Button>
+            
+            <Button 
               variant={isActive("/member") ? "default" : "ghost"} 
               size="sm" 
               asChild
-              className="gap-1.5"
+              className="gap-1.5 text-white hover:bg-blue-700"
             >
               <Link to="/member">
                 <User className="h-4 w-4" />
@@ -128,10 +140,10 @@ export function DashboardHeader({ isAdmin = false }: DashboardHeaderProps) {
             </Button>
             
             <Button 
-              variant={location.pathname.includes("/materials") ? "default" : "ghost"} 
+              variant={isActive("/materials") ? "default" : "ghost"} 
               size="sm" 
               asChild
-              className="gap-1.5"
+              className="gap-1.5 text-white hover:bg-blue-700"
             >
               <Link to="/materials">
                 <Book className="h-4 w-4" />
@@ -144,12 +156,12 @@ export function DashboardHeader({ isAdmin = false }: DashboardHeaderProps) {
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 hover:bg-slate-100">
+                  <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 hover:bg-blue-700">
                     <Avatar>
                       {profile?.avatar_url ? (
                         <AvatarImage src={profile.avatar_url} alt={profile.full_name || "Avatar do usuário"} />
                       ) : null}
-                      <AvatarFallback className="bg-primary text-white font-medium">
+                      <AvatarFallback className="bg-blue-600 text-white font-medium">
                         {userInitials}
                       </AvatarFallback>
                     </Avatar>
