@@ -1,3 +1,4 @@
+
 import { QuestionCard, Question } from "@/components/quiz/QuestionCard";
 import { QuizProgress } from "@/components/quiz/QuizProgress";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
@@ -50,6 +51,7 @@ export function QuizContent({
 }: QuizContentProps) {
   const [showAdminPanel, setShowAdminPanel] = useState(false);
 
+  // Validar se temos dados necessários antes de renderizar
   if (!moduleQuestions || moduleQuestions.length === 0) {
     return null;
   }
@@ -85,7 +87,18 @@ export function QuizContent({
     );
   }
 
+  // Garantir que existe uma questão atual
   const currentQuestion = moduleQuestions[currentQuestionIndex];
+  if (!currentQuestion) {
+    return (
+      <div className="w-full max-w-2xl mx-auto text-center p-8">
+        <p className="text-lg">Não foi possível carregar a pergunta. Por favor, tente novamente.</p>
+        <div className="mt-4">
+          <Button onClick={onPrev} disabled={isFirst}>Anterior</Button>
+        </div>
+      </div>
+    );
+  }
   
   // Determinar o tipo correto com base no texto da questão
   const getQuestionType = (question: QuizQuestion): typeof question.type => {
@@ -111,8 +124,24 @@ export function QuizContent({
   };
 
   const handleJumpToReview = () => {
-    onEditQuestion(allModules.length - 1, allQuestions.filter(q => q.module_id === allModules[allModules.length - 1].id).length - 1);
-    setTimeout(() => onNext(), 100); // Forçar ir para a revisão após ir para a última questão
+    // Verificar se temos módulos antes de tentar acessar
+    if (!allModules || allModules.length === 0) {
+      return;
+    }
+    
+    const lastModuleIndex = allModules.length - 1;
+    if (lastModuleIndex >= 0) {
+      const lastModule = allModules[lastModuleIndex];
+      // Verificar se temos o último módulo antes de tentar acessar
+      if (lastModule && lastModule.id) {
+        // Verificar quantas questões existem no último módulo
+        const lastModuleQuestions = allQuestions.filter(q => q.module_id === lastModule.id);
+        const lastQuestionIndex = lastModuleQuestions.length - 1;
+        
+        onEditQuestion(lastModuleIndex, Math.max(0, lastQuestionIndex));
+        setTimeout(() => onNext(), 100); // Forçar ir para a revisão após ir para a última questão
+      }
+    }
   };
 
   return (
@@ -151,9 +180,9 @@ export function QuizContent({
                           <SelectValue placeholder="Selecionar módulo" />
                         </SelectTrigger>
                         <SelectContent>
-                          {allModules.map((module, index) => (
-                            <SelectItem key={module.id} value={index.toString()}>
-                              Módulo {index + 1}: {module.title}
+                          {allModules && allModules.map((module, index) => (
+                            <SelectItem key={module?.id || index} value={index.toString()}>
+                              Módulo {index + 1}: {module?.title || "Sem título"}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -171,7 +200,7 @@ export function QuizContent({
                         </SelectTrigger>
                         <SelectContent>
                           {moduleQuestions.map((question, index) => (
-                            <SelectItem key={question.id} value={index.toString()}>
+                            <SelectItem key={question?.id || index} value={index.toString()}>
                               Questão {index + 1}
                             </SelectItem>
                           ))}
@@ -211,13 +240,13 @@ export function QuizContent({
                 <TabsContent value="info">
                   <div className="text-sm space-y-2">
                     <div>
-                      <span className="font-medium">ID do módulo:</span> {currentModule?.id}
+                      <span className="font-medium">ID do módulo:</span> {currentModule?.id || "N/A"}
                     </div>
                     <div>
-                      <span className="font-medium">ID da questão:</span> {currentQuestion?.id}
+                      <span className="font-medium">ID da questão:</span> {currentQuestion?.id || "N/A"}
                     </div>
                     <div>
-                      <span className="font-medium">Tipo de questão:</span> {currentQuestion?.type}
+                      <span className="font-medium">Tipo de questão:</span> {currentQuestion?.type || "N/A"}
                     </div>
                     <div>
                       <span className="font-medium">Questões no módulo:</span> {moduleQuestions.length}
@@ -240,11 +269,11 @@ export function QuizContent({
           </div>
           <div>
             <h2 className="text-2xl font-bold mb-2">
-              {currentModule?.title}
+              {currentModule?.title || "Carregando..."}
             </h2>
             {currentModule?.description && (
               <p className="text-muted-foreground">
-                {currentModule?.description}
+                {currentModule.description}
               </p>
             )}
           </div>
