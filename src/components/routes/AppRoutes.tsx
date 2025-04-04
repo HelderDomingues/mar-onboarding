@@ -2,143 +2,92 @@
 import { Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/routes/ProtectedRoute";
 import { AdminRoute } from "@/components/routes/AdminRoute";
-import Index from "@/pages/Index";
+
+// Páginas
 import Dashboard from "@/pages/Dashboard";
+import Index from "@/pages/Index";
 import Quiz from "@/pages/Quiz";
-import QuizReviewPage from "@/pages/QuizReview";
-import NotFound from "@/pages/NotFound";
-import UsersPage from "@/pages/admin/Users";
-import NewUserPage from "@/pages/admin/NewUser";
-import SettingsPage from "@/pages/admin/Settings";
-import ImportUsersPage from "@/pages/admin/ImportUsers";
+import QuizReview from "@/pages/QuizReview";
 import MemberArea from "@/pages/MemberArea";
-import { QuizSuccess } from "@/components/quiz/QuizSuccess";
+import NotFound from "@/pages/NotFound";
+
+// Páginas de Admin
+import Users from "@/pages/admin/Users";
+import Settings from "@/pages/admin/Settings";
+import ImportUsers from "@/pages/admin/ImportUsers";
+import NewUser from "@/pages/admin/NewUser";
+
+// Novo componente para visualização do questionário
+import { QuizViewAnswers } from "@/components/quiz/QuizViewAnswers";
 
 export const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
       
-      {/* Rotas protegidas por autenticação */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/dashboard" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
       
-      <Route
-        path="/member"
-        element={
-          <ProtectedRoute>
-            <MemberArea />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/quiz" element={
+        <ProtectedRoute>
+          <Quiz />
+        </ProtectedRoute>
+      } />
       
-      <Route
-        path="/quiz"
-        element={
-          <ProtectedRoute>
-            <Quiz />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/quiz/review" element={
+        <ProtectedRoute>
+          <QuizReview />
+        </ProtectedRoute>
+      } />
       
-      <Route
-        path="/quiz/review"
-        element={
-          <ProtectedRoute>
-            <QuizReviewPage />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/quiz/answers" element={
+        <ProtectedRoute>
+          <QuizViewAnswers />
+        </ProtectedRoute>
+      } />
       
-      <Route
-        path="/quiz/success"
-        element={
-          <ProtectedRoute>
-            <QuizSuccess />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/member" element={
+        <ProtectedRoute>
+          <MemberArea />
+        </ProtectedRoute>
+      } />
       
-      {/* Rotas Admin */}
-      <Route
-        path="/admin"
-        element={
+      {/* Rotas de administração */}
+      <Route path="/admin/users" element={
+        <ProtectedRoute>
           <AdminRoute>
-            <Dashboard />
+            <Users />
           </AdminRoute>
-        }
-      />
+        </ProtectedRoute>
+      } />
       
-      <Route
-        path="/admin/users"
-        element={
+      <Route path="/admin/settings" element={
+        <ProtectedRoute>
           <AdminRoute>
-            <UsersPage />
+            <Settings />
           </AdminRoute>
-        }
-      />
+        </ProtectedRoute>
+      } />
       
-      <Route
-        path="/admin/users/new"
-        element={
+      <Route path="/admin/import" element={
+        <ProtectedRoute>
           <AdminRoute>
-            <NewUserPage />
+            <ImportUsers />
           </AdminRoute>
-        }
-      />
+        </ProtectedRoute>
+      } />
       
-      <Route
-        path="/admin/users/import"
-        element={
+      <Route path="/admin/users/new" element={
+        <ProtectedRoute>
           <AdminRoute>
-            <ImportUsersPage />
+            <NewUser />
           </AdminRoute>
-        }
-      />
+        </ProtectedRoute>
+      } />
       
-      <Route
-        path="/admin/settings"
-        element={
-          <AdminRoute>
-            <SettingsPage />
-          </AdminRoute>
-        }
-      />
-      
-      <Route
-        path="/admin/data"
-        element={
-          <AdminRoute>
-            <Dashboard />
-          </AdminRoute>
-        }
-      />
-      
-      <Route
-        path="/admin/reports"
-        element={
-          <AdminRoute>
-            <Dashboard />
-          </AdminRoute>
-        }
-      />
-      
-      <Route
-        path="/admin/help"
-        element={
-          <AdminRoute>
-            <Dashboard />
-          </AdminRoute>
-        }
-      />
-      
-      {/* Rota 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

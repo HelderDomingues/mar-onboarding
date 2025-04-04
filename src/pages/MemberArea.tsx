@@ -14,7 +14,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { ChevronLeft, FileText, Settings, User, BookOpen, DownloadCloud, Share2 } from "lucide-react";
+import { AlertCircle, ChevronLeft, FileText, Settings, User, BookOpen, DownloadCloud, Share2, Phone, Mail, HelpCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface UserProfile {
   id: string;
@@ -37,9 +38,12 @@ export default function MemberArea() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<UserProfile>>({});
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [materials, setMaterials] = useState<any[]>([]);
-
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
     return name
@@ -115,7 +119,29 @@ export default function MemberArea() {
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setAvatarFile(e.target.files[0]);
+      const file = e.target.files[0];
+      
+      // Verificar o tamanho do arquivo (máximo 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        setUploadError("O arquivo deve ter no máximo 2MB");
+        return;
+      }
+      
+      // Verificar o tipo do arquivo
+      if (!file.type.startsWith('image/')) {
+        setUploadError("Por favor, selecione apenas arquivos de imagem");
+        return;
+      }
+      
+      setUploadError(null);
+      setAvatarFile(file);
+      
+      // Criar preview da imagem
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -125,13 +151,41 @@ export default function MemberArea() {
     if (!user) return;
 
     try {
+      setUploadLoading(true);
+      
       // Se tiver um novo avatar, fazer upload
       let avatarUrl = profile?.avatar_url;
       
       if (avatarFile) {
         const fileExt = avatarFile.name.split('.').pop();
-        const filePath = `avatars/${user.id}.${fileExt}`;
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
         
+        // Primeiro, verificar se o bucket existe
+        const { data: buckets, error: bucketsError } = await supabase
+          .storage
+          .listBuckets();
+          
+        if (bucketsError) {
+          throw bucketsError;
+        }
+        
+        // Se o bucket "avatars" não existir, criar
+        if (!buckets.find(bucket => bucket.name === 'avatars')) {
+          const { error: createBucketError } = await supabase
+            .storage
+            .createBucket('avatars', {
+              public: true,
+              allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif'],
+              fileSizeLimit: 2097152 // 2MB
+            });
+            
+          if (createBucketError) {
+            throw createBucketError;
+          }
+        }
+        
+        // Upload da imagem
         const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(filePath, avatarFile, { upsert: true });
@@ -140,6 +194,7 @@ export default function MemberArea() {
           throw uploadError;
         }
         
+        // Obter URL pública
         const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
         avatarUrl = data.publicUrl;
       }
@@ -165,12 +220,20 @@ export default function MemberArea() {
       
       setProfile({ ...profile, ...updates });
       setIsEditing(false);
+      
+      // Limpar preview após sucesso
+      setAvatarPreview(null);
+      setAvatarFile(null);
     } catch (error: any) {
+      console.error("Erro ao atualizar perfil:", error);
       toast({
         title: "Erro ao atualizar perfil",
         description: error.message,
         variant: "destructive",
       });
+      setUploadError(error.message);
+    } finally {
+      setUploadLoading(false);
     }
   };
 
@@ -306,6 +369,37 @@ export default function MemberArea() {
                 </nav>
               </CardContent>
             </Card>
+
+            {/* Novo bloco de suporte e contato */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <HelpCircle className="h-5 w-5 mr-2" />
+                  Precisa de ajuda?
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Entre em contato com nossa equipe de suporte:
+                </p>
+                <div className="space-y-2">
+                  <a 
+                    href="mailto:contato@crievalor.com.br" 
+                    className="flex items-center text-sm text-primary hover:underline"
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    contato@crievalor.com.br
+                  </a>
+                  <a 
+                    href="tel:+5511912345678" 
+                    className="flex items-center text-sm text-primary hover:underline"
+                  >
+                    <Phone className="h-4 w-4 mr-2" />
+                    (11) 91234-5678
+                  </a>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           <div className="md:col-span-3">
@@ -321,15 +415,35 @@ export default function MemberArea() {
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="avatar">Foto de Perfil</Label>
-                      <Input 
-                        id="avatar" 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handleAvatarChange} 
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Formatos aceitos: JPG, PNG, GIF (máx. 2MB)
-                      </p>
+                      <div className="flex flex-col md:flex-row gap-4 items-center">
+                        <div className="relative">
+                          <Avatar className="h-24 w-24 border">
+                            <AvatarImage src={avatarPreview || profile?.avatar_url || ""} />
+                            <AvatarFallback className="text-lg">{getInitials(profile?.full_name)}</AvatarFallback>
+                          </Avatar>
+                          {uploadLoading && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
+                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1 space-y-2">
+                          <Input 
+                            id="avatar" 
+                            type="file" 
+                            accept="image/jpeg,image/png,image/gif" 
+                            onChange={handleAvatarChange}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Formatos aceitos: JPG, PNG, GIF (máx. 2MB)
+                          </p>
+                          
+                          {uploadError && (
+                            <p className="text-sm text-destructive">{uploadError}</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -452,12 +566,25 @@ export default function MemberArea() {
                       <Button 
                         type="button" 
                         variant="outline" 
-                        onClick={() => setIsEditing(false)}
+                        onClick={() => {
+                          setIsEditing(false);
+                          setAvatarPreview(null);
+                          setAvatarFile(null);
+                          setUploadError(null);
+                        }}
                       >
                         Cancelar
                       </Button>
-                      <Button type="submit">
-                        Salvar alterações
+                      <Button 
+                        type="submit"
+                        disabled={uploadLoading}
+                      >
+                        {uploadLoading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Salvando...
+                          </>
+                        ) : "Salvar alterações"}
                       </Button>
                     </div>
                   </form>
@@ -469,7 +596,7 @@ export default function MemberArea() {
                   <TabsList>
                     <TabsTrigger value="profile">Meu Perfil</TabsTrigger>
                     <TabsTrigger value="materials">Materiais</TabsTrigger>
-                    <TabsTrigger value="diagnostic">Diagnóstico</TabsTrigger>
+                    <TabsTrigger value="diagnostic">Meu Diagnóstico</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="profile">

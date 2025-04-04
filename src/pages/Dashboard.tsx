@@ -8,9 +8,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { QuizSubmission } from "@/types/quiz";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { AdminMaterialsManager } from "@/components/admin/AdminMaterialsManager";
 import { UserDashboard } from "@/components/user/UserDashboard";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
@@ -22,6 +24,7 @@ const Dashboard = () => {
   const [submission, setSubmission] = useState<QuizSubmission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("dashboard");
   
   useEffect(() => {
     const checkUserRole = async () => {
@@ -91,10 +94,23 @@ const Dashboard = () => {
           <AdminSidebar />
           <SidebarInset className="p-6 bg-gray-100">
             <div className="container max-w-7xl mx-auto">
-              <AdminDashboard 
-                submission={submission}
-                isAdmin={isAdmin}
-              />
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+                <TabsList>
+                  <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                  <TabsTrigger value="materials">Materiais</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="dashboard">
+                  <AdminDashboard 
+                    submission={submission}
+                    isAdmin={isAdmin}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="materials">
+                  <AdminMaterialsManager />
+                </TabsContent>
+              </Tabs>
             </div>
           </SidebarInset>
         </div>

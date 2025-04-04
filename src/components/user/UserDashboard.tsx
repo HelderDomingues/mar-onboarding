@@ -1,10 +1,13 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, BookOpen, BarChart, CheckCircle, LineChart } from "lucide-react";
+import { Clock, BookOpen, BarChart, CheckCircle, LineChart, Phone, Mail, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { QuizSubmission } from "@/types/quiz";
 import { Progress } from "@/components/ui/progress";
+import { GetStartedSection } from "@/components/onboarding/GetStartedSection";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface UserDashboardProps {
   submission: QuizSubmission | null;
@@ -23,6 +26,12 @@ export function UserDashboard({ submission }: UserDashboardProps) {
         <h1 className="text-3xl font-bold mb-2">Bem-vindo à sua Área MAR</h1>
         <p className="text-gray-600 mb-6">Acesse o Mapa para Alto Rendimento e acompanhe seu progresso.</p>
       </div>
+
+      {/* Seção "Comece Aqui" para novos usuários */}
+      <GetStartedSection 
+        hasStartedQuiz={!!submission} 
+        hasCompletedQuiz={!!submission?.completed} 
+      />
       
       {/* Card principal do questionário */}
       <Card className="shadow-sm hover:shadow-md transition-all">
@@ -60,6 +69,14 @@ export function UserDashboard({ submission }: UserDashboardProps) {
                   <p className="text-sm text-muted-foreground">
                     Você pode revisar suas respostas ou consultar os resultados a qualquer momento.
                   </p>
+                  
+                  {/* Alerta informando que o questionário não pode ser alterado */}
+                  <Alert className="bg-blue-50 text-blue-800 mt-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      O questionário MAR já foi validado e não pode ser alterado. Se precisar atualizar alguma informação, entre em contato com nossa equipe.
+                    </AlertDescription>
+                  </Alert>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
@@ -85,7 +102,7 @@ export function UserDashboard({ submission }: UserDashboardProps) {
             </div>
           )}
         </CardContent>
-        <CardFooter className="border-t pt-4 flex gap-3">
+        <CardFooter className="border-t pt-4 flex flex-wrap gap-3">
           <Button 
             className="flex-1 bg-primary hover:bg-primary/90"
             onClick={() => navigate("/quiz")}
@@ -125,6 +142,7 @@ export function UserDashboard({ submission }: UserDashboardProps) {
               variant="outline" 
               className="w-full border-primary text-primary hover:bg-primary/10"
               disabled={!submission?.completed}
+              onClick={() => navigate("/quiz/review")}
             >
               Ver Análises
             </Button>
@@ -148,12 +166,63 @@ export function UserDashboard({ submission }: UserDashboardProps) {
             <Button 
               variant="outline" 
               className="w-full border-primary text-primary hover:bg-primary/10"
+              onClick={() => navigate("/member?tab=materials")}
             >
               Acessar Materiais
             </Button>
           </CardFooter>
         </Card>
       </div>
+
+      {/* Seção de Suporte */}
+      <Card className="shadow-sm hover:shadow-md transition-all">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Phone className="h-5 w-5 text-primary" />
+            Precisa de ajuda?
+          </CardTitle>
+          <CardDescription>Estamos à disposição para ajudar</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 border rounded-lg">
+              <h3 className="font-medium mb-2">Suporte por Email</h3>
+              <p className="text-sm text-muted-foreground mb-3">
+                Envie sua dúvida e responderemos em até 24h úteis
+              </p>
+              <a href="mailto:contato@crievalor.com.br">
+                <Button variant="outline" className="w-full flex gap-2">
+                  <Mail className="h-4 w-4" />
+                  contato@crievalor.com.br
+                </Button>
+              </a>
+            </div>
+            
+            <div className="p-4 border rounded-lg">
+              <h3 className="font-medium mb-2">Atendimento Telefônico</h3>
+              <p className="text-sm text-muted-foreground mb-3">
+                Segunda a sexta, das 9h às 18h
+              </p>
+              <a href="tel:+5511912345678">
+                <Button variant="outline" className="w-full flex gap-2">
+                  <Phone className="h-4 w-4" />
+                  (11) 91234-5678
+                </Button>
+              </a>
+            </div>
+            
+            <div className="p-4 border rounded-lg">
+              <h3 className="font-medium mb-2">Perguntas Frequentes</h3>
+              <p className="text-sm text-muted-foreground mb-3">
+                Consulte nossa base de conhecimento
+              </p>
+              <Button variant="outline" className="w-full">
+                Acessar FAQ
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
