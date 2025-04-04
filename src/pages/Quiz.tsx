@@ -52,8 +52,9 @@ const Quiz = () => {
 
   useEffect(() => {
     if (user?.email) {
-      // Verificar se é admin por email ou pela URL
-      setIsAdmin(ADMIN_EMAILS.includes(user.email) || adminParam === 'true');
+      // Verificar se é admin por email ou pela URL (apenas para admins)
+      const isAdminUser = ADMIN_EMAILS.includes(user.email);
+      setIsAdmin(isAdminUser && (adminParam === 'true' || adminParam === null));
     }
   }, [user, adminParam]);
 

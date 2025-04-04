@@ -1,20 +1,21 @@
+
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Sidebar, SidebarSeparator, SidebarTrigger } from "@/components/ui/sidebar";
-import { Settings, BarChart, Database, HelpCircle, ChevronDown, ChevronRight, LogOut, Users, LayoutDashboard, UserPlus, FileUp } from "lucide-react";
+import { Settings, BarChart, Database, HelpCircle, ChevronDown, ChevronRight, LogOut, Users, LayoutDashboard, UserPlus, FileUp, Check, User } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+
 export function AdminSidebar() {
   const [isUsersOpen, setIsUsersOpen] = useState(true);
+  const [isPagesOpen, setIsPagesOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const {
-    logout,
-    user
-  } = useAuth();
+  const { logout, user } = useAuth();
+  
   const handleLogout = async () => {
     try {
       await logout();
@@ -23,7 +24,9 @@ export function AdminSidebar() {
       console.error("Erro ao fazer logout:", error);
     }
   };
+  
   const isActive = (path: string) => location.pathname.startsWith(path);
+  
   return <Sidebar>
       <div className="flex flex-col h-full py-2">
         <div className="flex flex-col items-center gap-2 px-4 py-3 border-b mb-4">
@@ -107,19 +110,44 @@ export function AdminSidebar() {
                 Ajuda
               </Button>
             </Link>
+            
+            {/* Seção de páginas especiais */}
+            <Collapsible open={isPagesOpen} onOpenChange={setIsPagesOpen} className="w-full mt-4 border-t pt-4">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-full justify-between">
+                  <div className="flex items-center">
+                    <span>Páginas Especiais</span>
+                  </div>
+                  {isPagesOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pl-6 space-y-1">
+                <Link to="/quiz/review">
+                  <Button variant="ghost" size="sm" className={`w-full justify-start ${location.pathname === '/quiz/review' ? 'bg-sidebar-accent text-primary' : ''}`}>
+                    <Check className="mr-2 h-4 w-4" />
+                    Página de Revisão
+                  </Button>
+                </Link>
+                <Link to="/quiz/success">
+                  <Button variant="ghost" size="sm" className={`w-full justify-start ${location.pathname === '/quiz/success' ? 'bg-sidebar-accent text-primary' : ''}`}>
+                    <Check className="mr-2 h-4 w-4" />
+                    Página de Sucesso
+                  </Button>
+                </Link>
+                <Link to="/member">
+                  <Button variant="ghost" size="sm" className={`w-full justify-start ${location.pathname === '/member' ? 'bg-sidebar-accent text-primary' : ''}`}>
+                    <User className="mr-2 h-4 w-4" />
+                    Página de Membro
+                  </Button>
+                </Link>
+              </CollapsibleContent>
+            </Collapsible>
           </div>
         </div>
 
         <SidebarSeparator />
 
-        <div className="p-2 space-y-2">
-          {user && <div className="flex items-center p-2 rounded-md bg-muted">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.email}</p>
-                <p className="text-xs text-muted-foreground">Administrador</p>
-              </div>
-            </div>}
-          
+        <div className="p-2">
           <Button variant="destructive" size="sm" className="w-full justify-start opacity-90 hover:opacity-100" onClick={handleLogout} type="button">
             <LogOut className="mr-2 h-4 w-4 rotate-180" />
             Sair

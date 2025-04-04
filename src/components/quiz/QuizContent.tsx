@@ -5,7 +5,7 @@ import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { Card } from "@/components/ui/card";
 import { BookOpen, Settings, ArrowRight, ArrowLeft } from "lucide-react";
 import { QuizReview } from "@/components/quiz/QuizReview";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -50,6 +50,15 @@ export function QuizContent({
   isAdmin
 }: QuizContentProps) {
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  
+  // Efeito para garantir que o painel de admin é visível quando necessário
+  useEffect(() => {
+    if (isAdmin && showAdminPanel) {
+      // Forçar a exibição do painel quando necessário
+      const timer = setTimeout(() => setShowAdminPanel(true), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isAdmin, showAdminPanel]);
 
   // Validar se temos dados necessários antes de renderizar
   if (!moduleQuestions || moduleQuestions.length === 0) {
@@ -70,9 +79,128 @@ export function QuizContent({
                 onClick={() => setShowAdminPanel(!showAdminPanel)}
                 className="bg-orange-50 border-orange-300"
               >
-                <Settings className="h-4 w-4 mr-1" /> Painel admin
+                <Settings className="h-4 w-4 mr-1" /> {showAdminPanel ? "Ocultar painel" : "Mostrar painel"}
               </Button>
             </div>
+            
+            {showAdminPanel && (
+              <div className="mt-3 p-3 bg-orange-50 rounded-md">
+                <Tabs defaultValue="navigation">
+                  <TabsList className="mb-3">
+                    <TabsTrigger value="navigation">Navegação</TabsTrigger>
+                    <TabsTrigger value="info">Informações</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="navigation" className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-sm font-medium mb-1 block">Módulo</label>
+                        <Select
+                          value={currentModuleIndex.toString()}
+                          onValueChange={(value) => {
+                            const index = parseInt(value);
+                            onEditQuestion(index, 0);
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecionar módulo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {allModules?.map((module, index) => (
+                              <SelectItem key={module?.id || index} value={index.toString()}>
+                                Módulo {index + 1}: {module?.title || "Sem título"}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium mb-1 block">Questão</label>
+                        <Select
+                          value={currentQuestionIndex.toString()}
+                          onValueChange={(value) => {
+                            const index = parseInt(value);
+                            onEditQuestion(currentModuleIndex, index);
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecionar questão" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {moduleQuestions.map((question, index) => (
+                              <SelectItem key={question?.id || index} value={index.toString()}>
+                                Questão {index + 1}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2 justify-between pt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={onPrev}
+                        disabled={isFirst}
+                      >
+                        <ArrowLeft className="h-4 w-4 mr-1" /> Anterior
+                      </Button>
+                      
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          if (allModules && allModules.length > 0) {
+                            const lastModuleIndex = allModules.length - 1;
+                            if (lastModuleIndex >= 0) {
+                              const lastModule = allModules[lastModuleIndex];
+                              if (lastModule && lastModule.id) {
+                                const lastModuleQuestions = allQuestions.filter(q => q.module_id === lastModule.id);
+                                const lastQuestionIndex = lastModuleQuestions.length - 1;
+                                onEditQuestion(lastModuleIndex, Math.max(0, lastQuestionIndex));
+                                setTimeout(() => onNext(), 100);
+                              }
+                            }
+                          }
+                        }}
+                      >
+                        Ir para revisão
+                      </Button>
+                      
+                      <Button 
+                        variant="outline"
+                        size="sm" 
+                        onClick={onNext}
+                      >
+                        Próximo <ArrowRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="info">
+                    <div className="text-sm space-y-2">
+                      <div>
+                        <span className="font-medium">ID do módulo:</span> {currentModule?.id || "N/A"}
+                      </div>
+                      <div>
+                        <span className="font-medium">ID da questão:</span> {moduleQuestions[currentQuestionIndex]?.id || "N/A"}
+                      </div>
+                      <div>
+                        <span className="font-medium">Tipo de questão:</span> {moduleQuestions[currentQuestionIndex]?.type || "N/A"}
+                      </div>
+                      <div>
+                        <span className="font-medium">Questões no módulo:</span> {moduleQuestions.length}
+                      </div>
+                      <div>
+                        <span className="font-medium">Obrigatória:</span> {moduleQuestions[currentQuestionIndex]?.required ? "Sim" : "Não"}
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
           </Card>
         )}
 
@@ -113,37 +241,6 @@ export function QuizContent({
     return question.type;
   };
 
-  // Funções para navegação administrativa
-  const handleAdminModuleChange = (moduleIndex: string) => {
-    const index = parseInt(moduleIndex);
-    onEditQuestion(index, 0); // Ir para a primeira questão do módulo selecionado
-  };
-
-  const handleAdminQuestionChange = (questionIndex: string) => {
-    onEditQuestion(currentModuleIndex, parseInt(questionIndex));
-  };
-
-  const handleJumpToReview = () => {
-    // Verificar se temos módulos antes de tentar acessar
-    if (!allModules || allModules.length === 0) {
-      return;
-    }
-    
-    const lastModuleIndex = allModules.length - 1;
-    if (lastModuleIndex >= 0) {
-      const lastModule = allModules[lastModuleIndex];
-      // Verificar se temos o último módulo antes de tentar acessar
-      if (lastModule && lastModule.id) {
-        // Verificar quantas questões existem no último módulo
-        const lastModuleQuestions = allQuestions.filter(q => q.module_id === lastModule.id);
-        const lastQuestionIndex = lastModuleQuestions.length - 1;
-        
-        onEditQuestion(lastModuleIndex, Math.max(0, lastQuestionIndex));
-        setTimeout(() => onNext(), 100); // Forçar ir para a revisão após ir para a última questão
-      }
-    }
-  };
-
   return (
     <>
       {isAdmin && (
@@ -174,13 +271,16 @@ export function QuizContent({
                       <label className="text-sm font-medium mb-1 block">Módulo</label>
                       <Select
                         value={currentModuleIndex.toString()}
-                        onValueChange={handleAdminModuleChange}
+                        onValueChange={(value) => {
+                          const index = parseInt(value);
+                          onEditQuestion(index, 0);
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecionar módulo" />
                         </SelectTrigger>
                         <SelectContent>
-                          {allModules && allModules.map((module, index) => (
+                          {allModules?.map((module, index) => (
                             <SelectItem key={module?.id || index} value={index.toString()}>
                               Módulo {index + 1}: {module?.title || "Sem título"}
                             </SelectItem>
@@ -193,7 +293,10 @@ export function QuizContent({
                       <label className="text-sm font-medium mb-1 block">Questão</label>
                       <Select
                         value={currentQuestionIndex.toString()}
-                        onValueChange={handleAdminQuestionChange}
+                        onValueChange={(value) => {
+                          const index = parseInt(value);
+                          onEditQuestion(currentModuleIndex, index);
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecionar questão" />
@@ -222,7 +325,20 @@ export function QuizContent({
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={handleJumpToReview}
+                      onClick={() => {
+                        if (allModules && allModules.length > 0) {
+                          const lastModuleIndex = allModules.length - 1;
+                          if (lastModuleIndex >= 0) {
+                            const lastModule = allModules[lastModuleIndex];
+                            if (lastModule && lastModule.id) {
+                              const lastModuleQuestions = allQuestions.filter(q => q.module_id === lastModule.id);
+                              const lastQuestionIndex = lastModuleQuestions.length - 1;
+                              onEditQuestion(lastModuleIndex, Math.max(0, lastQuestionIndex));
+                              setTimeout(() => onNext(), 100);
+                            }
+                          }
+                        }
+                      }}
                     >
                       Ir para revisão
                     </Button>

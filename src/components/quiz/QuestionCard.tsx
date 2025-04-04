@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { PrefixInput } from "@/components/ui/prefix-input";
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, Eye, EyeOff } from "lucide-react";
 
 export type QuestionType = 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select' | 'url' | 'instagram';
 export interface Question {
@@ -38,9 +39,9 @@ export function QuestionCard({
   isLast,
   currentAnswer
 }: QuestionCardProps) {
-  const [selectedOption, setSelectedOption] = useState<string>(typeof currentAnswer === 'string' ? currentAnswer : '');
-  const [textAnswer, setTextAnswer] = useState<string>(typeof currentAnswer === 'string' ? currentAnswer : '');
-  const [checkedOptions, setCheckedOptions] = useState<string[]>(Array.isArray(currentAnswer) ? currentAnswer : []);
+  const [selectedOption, setSelectedOption] = useState<string>('');
+  const [textAnswer, setTextAnswer] = useState<string>('');
+  const [checkedOptions, setCheckedOptions] = useState<string[]>([]);
   const [otherValue, setOtherValue] = useState<string>('');
   const [showOtherInput, setShowOtherInput] = useState<boolean>(false);
 
@@ -54,30 +55,62 @@ export function QuestionCard({
     );
   };
 
-  useEffect(() => {
-    if (typeof currentAnswer === 'string') {
-      setSelectedOption(currentAnswer);
-      setTextAnswer(currentAnswer);
+  // Gerar placeholder apropriado baseado no tipo da pergunta e texto
+  const getPlaceholder = (question: Question): string => {
+    const text = question.text.toLowerCase();
+    
+    if (text.includes('telefone') || text.includes('whatsapp')) {
+      return "Insira seu número com DDD, somente números (ex: 11999999999)";
+    } else if (text.includes('e-mail')) {
+      return "Insira seu e-mail (ex: nome@empresa.com.br)";
+    } else if (text.includes('site') || text.includes('website')) {
+      return "Insira o endereço web do seu site";
+    } else if (text.includes('instagram')) {
+      return "Digite o nome de usuário (sem @)";
+    } else if (question.type === 'textarea') {
+      return "Digite sua resposta detalhada aqui...";
+    } else if (question.type === 'number') {
+      return "Digite apenas números";
+    } else {
+      return "Digite sua resposta aqui...";
+    }
+  };
 
-      if (question.options?.some(opt => opt.toLowerCase().includes('outro')) && !question.options?.includes(currentAnswer) && currentAnswer !== '') {
-        setOtherValue(currentAnswer);
-        setShowOtherInput(true);
-        if (question.type === 'radio') {
-          const otherOption = question.options?.find(opt => opt.toLowerCase().includes('outro'));
-          if (otherOption) setSelectedOption(otherOption);
+  // Limpar e carregar as respostas quando a pergunta mudar
+  useEffect(() => {
+    // Limpar todas as respostas quando a pergunta muda
+    setSelectedOption('');
+    setTextAnswer('');
+    setCheckedOptions([]);
+    setOtherValue('');
+    setShowOtherInput(false);
+    
+    // Carregar as respostas existentes apenas se houver
+    if (currentAnswer !== undefined) {
+      if (typeof currentAnswer === 'string') {
+        setSelectedOption(currentAnswer);
+        setTextAnswer(currentAnswer);
+
+        if (question.options?.some(opt => opt.toLowerCase().includes('outro')) && !question.options?.includes(currentAnswer) && currentAnswer !== '') {
+          setOtherValue(currentAnswer);
+          setShowOtherInput(true);
+          if (question.type === 'radio') {
+            const otherOption = question.options?.find(opt => opt.toLowerCase().includes('outro'));
+            if (otherOption) setSelectedOption(otherOption);
+          }
+        }
+      } else if (Array.isArray(currentAnswer)) {
+        setCheckedOptions(currentAnswer);
+
+        const otherOption = question.options?.find(opt => opt.toLowerCase().includes('outro'));
+        if (otherOption && currentAnswer.some(ans => !question.options?.includes(ans))) {
+          setShowOtherInput(true);
+          const customAnswer = currentAnswer.find(ans => !question.options?.includes(ans));
+          if (customAnswer) setOtherValue(customAnswer);
         }
       }
-    } else if (Array.isArray(currentAnswer)) {
-      setCheckedOptions(currentAnswer);
-
-      const otherOption = question.options?.find(opt => opt.toLowerCase().includes('outro'));
-      if (otherOption && currentAnswer.some(ans => !question.options?.includes(ans))) {
-        setShowOtherInput(true);
-        const customAnswer = currentAnswer.find(ans => !question.options?.includes(ans));
-        if (customAnswer) setOtherValue(customAnswer);
-      }
     }
-  }, [currentAnswer, question.id, question.options]);
+  }, [question.id, currentAnswer, question.options]);
 
   const handleCheckboxChange = (option: string) => {
     setCheckedOptions(prev => {
@@ -180,13 +213,19 @@ export function QuestionCard({
             </RadioGroup>
             
             {showOtherInput && <div className="mt-2 pl-6">
-                <Input type="text" placeholder="Especifique sua resposta..." value={otherValue} onChange={e => setOtherValue(e.target.value)} className="w-full" />
+                <Input 
+                  type="text" 
+                  placeholder="Especifique sua resposta..." 
+                  value={otherValue} 
+                  onChange={e => setOtherValue(e.target.value)} 
+                  className="w-full text-slate-900" 
+                />
               </div>}
           </div>}
         
         {question.type === 'text' && <Input 
             type="text" 
-            placeholder="Digite sua resposta aqui..." 
+            placeholder={getPlaceholder(question)} 
             value={textAnswer} 
             onChange={e => setTextAnswer(e.target.value)} 
             className="w-full text-slate-900" 
@@ -194,35 +233,48 @@ export function QuestionCard({
         
         {question.type === 'email' && <Input 
             type="email" 
-            placeholder="Digite seu e-mail aqui..." 
+            placeholder={getPlaceholder(question)} 
             value={textAnswer} 
             onChange={e => setTextAnswer(e.target.value)} 
-            className="w-full" 
+            className="w-full text-slate-900" 
           />}
         
         {question.type === 'url' && (
           <PrefixInput 
             prefix="https://" 
-            placeholder="exemplo: www.suaempresa.com.br" 
+            placeholder={getPlaceholder(question)} 
             type="text" 
             value={textAnswer} 
             onChange={e => setTextAnswer(e.target.value)}
+            className="text-slate-900"
           />
         )}
         
         {question.type === 'instagram' && (
           <PrefixInput 
             prefix="https://instagram.com/" 
-            placeholder="exemplo: suaempresa - (escrever sem o @)" 
+            placeholder={getPlaceholder(question)} 
             type="text" 
             value={textAnswer} 
             onChange={e => setTextAnswer(e.target.value)}
+            className="text-slate-900"
           />
         )}
         
-        {question.type === 'number' && <Input type="number" placeholder="Digite um número..." value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full" />}
+        {question.type === 'number' && <Input 
+            type="number" 
+            placeholder={getPlaceholder(question)} 
+            value={textAnswer} 
+            onChange={e => setTextAnswer(e.target.value)} 
+            className="w-full text-slate-900" 
+          />}
         
-        {question.type === 'textarea' && <Textarea placeholder="Digite sua resposta aqui..." value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="min-h-[120px]" />}
+        {question.type === 'textarea' && <Textarea 
+            placeholder={getPlaceholder(question)} 
+            value={textAnswer} 
+            onChange={e => setTextAnswer(e.target.value)} 
+            className="min-h-[120px] text-slate-900" 
+          />}
         
         {question.type === 'checkbox' && question.options && <div className="space-y-3">
             <p className="text-sm text-muted-foreground mb-3">
@@ -236,11 +288,21 @@ export function QuestionCard({
               </div>)}
             
             {showOtherInput && <div className="mt-2 pl-6">
-                <Input type="text" placeholder="Especifique sua resposta..." value={otherValue} onChange={e => setOtherValue(e.target.value)} className="w-full" />
+                <Input 
+                  type="text" 
+                  placeholder="Especifique sua resposta..." 
+                  value={otherValue} 
+                  onChange={e => setOtherValue(e.target.value)} 
+                  className="w-full text-slate-900" 
+                />
               </div>}
           </div>}
         
-        {question.type === 'select' && question.options && <select className="w-full border border-gray-300 rounded-md p-2" value={selectedOption} onChange={e => setSelectedOption(e.target.value)}>
+        {question.type === 'select' && question.options && <select 
+            className="w-full border border-gray-300 rounded-md p-2 text-slate-900" 
+            value={selectedOption} 
+            onChange={e => setSelectedOption(e.target.value)}
+          >
             <option value="">Selecione uma opção</option>
             {question.options.map((option, index) => <option key={index} value={option}>
                 {option}

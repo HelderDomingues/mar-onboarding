@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { ArrowRight, CheckCircle, Edit, ThumbsUp, Calendar, FileCheck } from "lu
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+
 interface QuizReviewProps {
   modules: QuizModule[];
   questions: QuizQuestion[];
@@ -14,6 +16,7 @@ interface QuizReviewProps {
   onComplete: () => void;
   onEdit: (moduleIndex: number, questionIndex: number) => void;
 }
+
 export function QuizReview({
   modules,
   questions,
@@ -48,9 +51,21 @@ export function QuizReview({
     if (typeof value === "string") return value;
     return value.join(", ");
   };
+
   const handleTermsChange = (checked: boolean) => {
     setAgreedToTerms(checked);
   };
+
+  const handleComplete = () => {
+    try {
+      onComplete();
+    } catch (error) {
+      console.error("Erro ao finalizar questionário:", error);
+      // Exibir mensagem de erro para o usuário
+      alert("Ocorreu um erro ao finalizar o questionário. Por favor, tente novamente.");
+    }
+  };
+
   return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-6">
       {!confirmed ? <>
           <Card className="quiz-card">
@@ -152,7 +167,7 @@ export function QuizReview({
             </p>
           </CardContent>
           <CardFooter className="flex justify-center">
-            <Button onClick={onComplete} className="quiz-btn">
+            <Button onClick={handleComplete} className="quiz-btn">
               Finalizar Questionário
             </Button>
           </CardFooter>
