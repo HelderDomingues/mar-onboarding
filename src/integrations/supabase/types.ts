@@ -569,6 +569,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      complete_quiz_submission: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       create_table_if_not_exists: {
         Args: {
           table_name: string
@@ -581,6 +587,13 @@ export type Database = {
           setting_key: string
         }
         Returns: string
+      }
+      get_user_emails: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: string
+          email: string
+        }[]
       }
       import_user_from_asaas: {
         Args: {
