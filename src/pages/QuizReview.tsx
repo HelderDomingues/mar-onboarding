@@ -1,317 +1,206 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { QuizReview } from "@/components/quiz/QuizReview";
+import { QuizReview as QuizReviewComponent } from "@/components/quiz/QuizReview";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, CheckCircle, Edit, ThumbsUp, Calendar, FileCheck, ArrowLeft } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useForm } from "react-hook-form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 
-interface QuizReviewProps {
-  modules: QuizModule[];
-  questions: QuizQuestion[];
-  answers: Record<string, string | string[]>;
-  onComplete: () => void;
-  onEdit: (moduleIndex: number, questionIndex: number) => void;
-}
-
-export function QuizReview({
-  modules,
-  questions,
-  answers,
-  onComplete,
-  onEdit
-}: QuizReviewProps) {
-  const [confirmed, setConfirmed] = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
-  const [editedAnswers, setEditedAnswers] = useState<Record<string, string | string[]>>({...answers});
+const QuizReviewPage = () => {
+  const { isAuthenticated, user, isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const [modules, setModules] = useState<QuizModule[]>([]);
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  
-  const form = useForm({
-    defaultValues: {
-      agreement: false
+
+  useEffect(() => {
+    // Atualiza o título da página
+    document.title = "Revisão do Questionário | MAR - Crie Valor";
+    
+    // Redirecionar se não estiver autenticado
+    if (!isAuthenticated) {
+      navigate('/');
     }
-  });
+  }, [isAuthenticated, navigate]);
 
-  // Data atual formatada para português do Brasil
-  const currentDate = new Date().toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchQuizData();
+    }
+  }, [isAuthenticated, user]);
 
-  // Agrupar perguntas por módulo
-  const questionsByModule = modules.map(module => ({
-    module,
-    questions: questions.filter(q => q.module_id === module.id)
-  }));
+  const fetchQuizData = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      // Buscar módulos
+      const { data: modulesData, error: modulesError } = await supabase
+        .from('quiz_modules')
+        .select('*')
+        .order('order_number');
 
-  // Formatar o valor da resposta para exibição
-  const formatAnswerValue = (value: string | string[] | undefined) => {
-    if (!value) return "Sem resposta";
-    if (typeof value === "string") return value;
-    return value.join(", ");
-  };
-  
-  const handleTermsChange = (checked: boolean) => {
-    setAgreedToTerms(checked);
-  };
-  
-  const handleEditClick = (questionId: string) => {
-    setEditingQuestionId(questionId);
-  };
-  
-  const handleSaveEdit = (questionId: string) => {
-    setEditingQuestionId(null);
-    toast({
-      title: "Resposta atualizada",
-      description: "Sua resposta foi atualizada com sucesso.",
-    });
-  };
-  
-  const handleCancelEdit = () => {
-    setEditingQuestionId(null);
-  };
-  
-  const handleInputChange = (questionId: string, value: string | string[]) => {
-    setEditedAnswers(prev => ({
-      ...prev,
-      [questionId]: value
-    }));
-  };
-  
-  const handleCheckboxChange = (questionId: string, option: string, checked: boolean) => {
-    const currentAnswers = Array.isArray(editedAnswers[questionId]) 
-      ? editedAnswers[questionId] as string[] 
-      : [];
+      if (modulesError) throw modulesError;
       
-    let newAnswers: string[];
-    
-    if (checked) {
-      newAnswers = [...currentAnswers, option];
-    } else {
-      newAnswers = currentAnswers.filter(item => item !== option);
+      // Buscar perguntas
+      const { data: questionsData, error: questionsError } = await supabase
+        .from('quiz_questions')
+        .select('*')
+        .order('order_number');
+
+      if (questionsError) throw questionsError;
+      
+      // Buscar opções
+      const { data: optionsData, error: optionsError } = await supabase
+        .from('quiz_options')
+        .select('*')
+        .order('order_number');
+
+      if (optionsError) throw optionsError;
+      
+      // Buscar respostas do usuário
+      const { data: answersData, error: answersError } = await supabase
+        .from('quiz_answers')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (answersError) throw answersError;
+      
+      // Processar perguntas com suas opções
+      const questionsWithOptions = questionsData.map(question => {
+        const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
+        return { ...question, options } as unknown as QuizQuestion;
+      });
+      
+      // Processar respostas
+      const processedAnswers: Record<string, string | string[]> = {};
+      answersData.forEach(ans => {
+        try {
+          if (ans.answer) {
+            try {
+              const parsed = JSON.parse(ans.answer);
+              processedAnswers[ans.question_id] = parsed;
+            } catch (e) {
+              processedAnswers[ans.question_id] = ans.answer;
+            }
+          }
+        } catch (e) {
+          processedAnswers[ans.question_id] = ans.answer || '';
+        }
+      });
+      
+      setModules(modulesData as unknown as QuizModule[]);
+      setQuestions(questionsWithOptions);
+      setAnswers(processedAnswers);
+      setError(null);
+    } catch (error: any) {
+      console.error("Erro ao buscar dados do questionário:", error);
+      setError("Não foi possível carregar os dados do questionário. Por favor, tente novamente.");
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os dados do questionário.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-    
-    setEditedAnswers(prev => ({
-      ...prev,
-      [questionId]: newAnswers
-    }));
   };
-  
-  // Renderizar campo de edição baseado no tipo da questão
-  const renderEditField = (question: QuizQuestion) => {
-    const questionId = question.id;
-    const answer = editedAnswers[questionId];
+
+  const handleComplete = async () => {
+    if (!user) return;
     
-    switch(question.type) {
-      case 'text':
-        return (
-          <Input
-            value={answer as string || ''}
-            onChange={(e) => handleInputChange(questionId, e.target.value)}
-            className="w-full text-slate-900"
-            placeholder="Digite sua resposta aqui"
-          />
-        );
-        
-      case 'textarea':
-        return (
-          <Textarea
-            value={answer as string || ''}
-            onChange={(e) => handleInputChange(questionId, e.target.value)}
-            className="w-full text-slate-900"
-            placeholder="Digite sua resposta aqui"
-          />
-        );
-        
-      case 'checkbox':
-        const options = question.options?.map(opt => opt.text) || [];
-        const selectedOptions = Array.isArray(answer) ? answer : [];
-        
-        return (
-          <div className="space-y-2">
-            {options.map((option) => (
-              <div key={option} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`${questionId}-${option}`}
-                  checked={selectedOptions.includes(option)}
-                  onCheckedChange={(checked) => 
-                    handleCheckboxChange(questionId, option, checked === true)
-                  }
-                />
-                <label 
-                  htmlFor={`${questionId}-${option}`}
-                  className="text-sm font-medium leading-none cursor-pointer text-slate-800"
-                >
-                  {option}
-                </label>
-              </div>
-            ))}
+    try {
+      const { error } = await supabase
+        .from('quiz_submissions')
+        .update({
+          completed: true,
+          completed_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso!",
+        description: "Questionário concluído com sucesso!",
+      });
+      
+      // Redirecionar para o dashboard após completar
+      navigate('/dashboard');
+    } catch (error: any) {
+      console.error("Erro ao finalizar questionário:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível finalizar o questionário. Por favor, tente novamente.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleEditQuestion = (moduleIndex: number, questionIndex: number) => {
+    navigate(`/quiz?module=${modules[moduleIndex].id}&question=${questions.filter(q => q.module_id === modules[moduleIndex].id)[questionIndex].id}`);
+  };
+
+  if (!isAuthenticated) {
+    return null; // Será redirecionado no useEffect
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
+        <DashboardHeader isAdmin={isAdmin} />
+        <div className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex items-center justify-center">
+          <p className="text-slate-600">Carregando dados do questionário...</p>
+        </div>
+        <SiteFooter />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
+        <DashboardHeader isAdmin={isAdmin} />
+        <div className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-red-600 mb-2">Erro ao carregar dados</h2>
+            <p className="text-slate-600 mb-4">{error}</p>
+            <button 
+              onClick={fetchQuizData}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            >
+              Tentar novamente
+            </button>
           </div>
-        );
-        
-      default:
-        return (
-          <Input
-            value={answer as string || ''}
-            onChange={(e) => handleInputChange(questionId, e.target.value)}
-            className="w-full text-slate-900"
-            placeholder="Digite sua resposta aqui"
-          />
-        );
-    }
-  };
-  
-  return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-6">
-      {!confirmed ? <>
-          <Card className="quiz-card">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold flex items-center gap-2">
-                <ThumbsUp className="h-6 w-6 text-[hsl(var(--quiz-accent))]" />
-                Revisão do Questionário MAR
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-6 text-[hsl(var(--quiz-text))]">
-                Por favor, revise suas respostas abaixo para confirmar que estão corretas. 
-                Você pode editar qualquer resposta clicando no botão de edição.
-              </p>
-              
-              <div className="space-y-8">
-                {questionsByModule.map((moduleData, moduleIndex) => <div key={moduleData.module.id} className="border border-[hsl(var(--quiz-border))] rounded-lg p-4">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-[hsl(var(--quiz-text))]">
-                      <Badge variant="outline" className="quiz-module-badge">
-                        Módulo {moduleIndex + 1}
-                      </Badge>
-                      {moduleData.module.title}
-                    </h3>
-                    
-                    <div className="space-y-4">
-                      {moduleData.questions.map((question, questionIndex) => {
-                        const questionId = question.id;
-                        const isEditing = editingQuestionId === questionId;
-                        const answer = editedAnswers[questionId];
-                        
-                        return <div key={questionId} className="border-t border-[hsl(var(--quiz-border))] pt-3">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <p className="font-medium text-[hsl(var(--quiz-text))]">{question.text}</p>
-                              
-                              {isEditing ? (
-                                <div className="mt-2 space-y-3">
-                                  {renderEditField(question)}
-                                  
-                                  <div className="flex gap-2 justify-end mt-3">
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm" 
-                                      onClick={handleCancelEdit}
-                                      className="text-slate-900"
-                                    >
-                                      Cancelar
-                                    </Button>
-                                    <Button 
-                                      size="sm" 
-                                      onClick={() => handleSaveEdit(questionId)}
-                                    >
-                                      Salvar
-                                    </Button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <p className="text-[hsl(var(--quiz-text))] opacity-80 mt-1 break-words">
-                                  {formatAnswerValue(answer)}
-                                </p>
-                              )}
-                            </div>
-                            
-                            {!isEditing && (
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => handleEditClick(questionId)} 
-                                className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-zinc-950"
-                              >
-                                <Edit className="h-4 w-4 mr-1" /> Editar
-                              </Button>
-                            )}
-                          </div>
-                        </div>;
-                      })}
-                    </div>
-                  </div>)}
-              </div>
-              
-              <div className="mt-8 p-4 border border-[hsl(var(--quiz-border))] rounded-lg bg-slate-800">
-                <div className="flex items-start gap-2 mb-4">
-                  <FileCheck className="h-5 w-5 mt-1 text-[hsl(var(--quiz-accent))]" />
-                  <div>
-                    <h4 className="font-semibold text-[hsl(var(--quiz-text))]">Termo de Validação</h4>
-                    <p className="text-sm text-[hsl(var(--quiz-text))] opacity-90">
-                      Para finalizar o questionário, por favor leia e concorde com os termos abaixo.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="p-3 bg-slate-700 rounded border border-slate-600 text-sm mb-4">
-                  <p className="text-[hsl(var(--quiz-text))]">
-                    Declaro que as informações fornecidas neste questionário são verdadeiras e
-                    condizem com a realidade atual da minha empresa/negócio.
-                    Compreendo que estas informações serão utilizadas pela Crie Valor para análise
-                    e diagnóstico, e que a precisão destas informações é fundamental para o sucesso do trabalho.
-                  </p>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Checkbox id="agreement" checked={agreedToTerms} onCheckedChange={handleTermsChange} className="border-white" />
-                  <label htmlFor="agreement" className="text-sm font-medium leading-none cursor-pointer text-[hsl(var(--quiz-text))]">
-                    Concordo com os termos acima e confirmo a veracidade das informações
-                  </label>
-                </div>
-                
-                <div className="flex items-center gap-2 mt-4 text-sm text-[hsl(var(--quiz-text))] opacity-80">
-                  <Calendar className="h-4 w-4" />
-                  <span className="bg-zinc-600 hover:bg-zinc-500 text-slate-50 text-sm">Data de validação: {currentDate}</span>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between pt-6 border-t border-[hsl(var(--quiz-border))]">
-              <Button variant="outline" onClick={() => onEdit(modules.length - 1, questions.filter(q => q.module_id === modules[modules.length - 1].id).length - 1)} className="border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))]">
-                <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
-              </Button>
-              <Button onClick={() => setConfirmed(true)} disabled={!agreedToTerms} className="quiz-btn bg-lime-600 hover:bg-lime-500">
-                Confirmar Respostas <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-        </> : <Card className="quiz-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-900 text-base font-normal">
-              <CheckCircle className="h-6 w-6 text-green-500" />
-              Respostas Confirmadas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4 text-center text-[hsl(var(--quiz-text))]">
-              Suas respostas foram validadas com sucesso. Clique abaixo para concluir o questionário.
-            </p>
-          </CardContent>
-          <CardFooter className="flex justify-center">
-            <Button onClick={onComplete} className="quiz-btn">
-              Finalizar Questionário
-            </Button>
-          </CardFooter>
-        </Card>}
-    </div>;
-}
+        </div>
+        <SiteFooter />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
+      <DashboardHeader isAdmin={isAdmin} />
+      
+      <div className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex justify-center">
+        <QuizReviewComponent
+          modules={modules}
+          questions={questions}
+          answers={answers}
+          onComplete={handleComplete}
+          onEdit={handleEditQuestion}
+        />
+      </div>
+      
+      <SiteFooter />
+    </div>
+  );
+};
+
+export default QuizReviewPage;
