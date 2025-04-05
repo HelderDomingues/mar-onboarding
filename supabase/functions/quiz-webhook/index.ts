@@ -49,7 +49,7 @@ serve(async (req) => {
     if (submissionId) {
       query = query.eq('submission_id', submissionId);
     } else {
-      // Sem ID específico, pegar a submissão mais recente
+      // Sem ID específico, pegar a submissão mais recente (limitado a 100 para segurança)
       query = query.order('completed_at', { ascending: false }).limit(100);
     }
     
@@ -89,10 +89,35 @@ serve(async (req) => {
     }, {});
     
     // Processar cada grupo de submissão
+    const results = [];
+    
     for (const [submissionId, responses] of Object.entries(submissionGroups)) {
       if (!Array.isArray(responses) || responses.length === 0) continue;
       
       const firstResponse = responses[0];
+      
+      // Verificar se a submissão já foi processada anteriormente
+      // Isso evita envios duplicados para o Make.com
+      const { data: processedCheck, error: processedError } = await supabase
+        .from('quiz_submissions')
+        .select('webhook_processed')
+        .eq('id', submissionId)
+        .maybeSingle();
+        
+      if (processedError) {
+        console.error(`Erro ao verificar status de processamento para submissão ${submissionId}:`, processedError);
+      }
+      
+      // Se já foi processado pelo webhook, pular para evitar duplicação
+      if (processedCheck?.webhook_processed === true) {
+        console.log(`Submissão ${submissionId} já foi processada pelo webhook anteriormente, pulando.`);
+        results.push({
+          submission_id: submissionId,
+          status: "skipped",
+          reason: "already_processed"
+        });
+        continue;
+      }
       
       // Preparar dados para envio ao Make.com
       const makeData = {
@@ -133,17 +158,41 @@ serve(async (req) => {
         }
         
         console.log(`Dados enviados com sucesso para o Make.com para submissão ${submissionId}`);
+        
+        // Marcar a submissão como processada pelo webhook para evitar duplicações
+        const { error: updateError } = await supabase
+          .from('quiz_submissions')
+          .update({ webhook_processed: true })
+          .eq('id', submissionId);
+          
+        if (updateError) {
+          console.error(`Erro ao marcar submissão ${submissionId} como processada:`, updateError);
+        } else {
+          console.log(`Submissão ${submissionId} marcada como processada com sucesso`);
+        }
+        
+        results.push({
+          submission_id: submissionId,
+          status: "success"
+        });
       } catch (makeError) {
         console.error("Erro ao enviar dados para o Make.com:", makeError);
+        
+        results.push({
+          submission_id: submissionId,
+          status: "error",
+          error: makeError.message
+        });
+        
         throw new Error(`Falha ao enviar para o Make.com: ${makeError.message}`);
       }
     }
     
     return new Response(
       JSON.stringify({ 
-        message: "Dados enviados com sucesso para o Make.com",
-        submissions_processed: Object.keys(submissionGroups).length,
-        submission_ids: Object.keys(submissionGroups)
+        message: "Processamento concluído",
+        results: results,
+        submissions_processed: Object.keys(submissionGroups).length
       }),
       { 
         headers: { 

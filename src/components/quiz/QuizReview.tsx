@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -270,7 +269,7 @@ export function QuizReview({
               />
               <label 
                 htmlFor={`${questionId}-${option}`} 
-                className="text-sm font-medium leading-none cursor-pointer text-white"
+                className="text-sm font-medium leading-none cursor-pointer text-slate-800"
               >
                 {option}
               </label>

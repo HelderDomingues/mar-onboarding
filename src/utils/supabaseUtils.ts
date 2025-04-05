@@ -46,70 +46,127 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       data: { userId }
     });
     
-    // Priorizar uso do cliente admin, que tem mais permissões
-    const { error: adminError } = await supabaseAdmin
+    // Obter ID da submissão atual para referência em logs
+    const { data: submissionData, error: fetchError } = await supabase
       .from('quiz_submissions')
-      .update({
-        completed: true,
-        completed_at: new Date().toISOString(),
-        contact_consent: true
-      })
-      .eq('user_id', userId);
-    
-    if (adminError) {
-      logger.error('Erro ao completar questionário via cliente admin, tentando RPC', {
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+      
+    if (fetchError) {
+      logger.error('Erro ao obter ID da submissão antes de completar', {
         tag: 'Quiz',
-        data: adminError
+        data: fetchError
+      });
+    }
+    
+    const submissionId = submissionData?.id;
+    logger.info('ID da submissão obtido', {
+      tag: 'Quiz',
+      data: { submissionId }
+    });
+    
+    // Tentativa 1: Via cliente admin (maior privilégio)
+    try {
+      logger.info('Tentando completar questionário via cliente admin', {
+        tag: 'Quiz',
+        data: { userId, submissionId }
       });
       
-      // Tentar com RPC como segunda opção
-      const { data, error } = await supabase.rpc('complete_quiz_submission', {
-        p_user_id: userId
-      });
+      const { error: adminError } = await supabaseAdmin
+        .from('quiz_submissions')
+        .update({
+          completed: true,
+          completed_at: new Date().toISOString(),
+          contact_consent: true
+        })
+        .eq('user_id', userId);
       
-      if (error) {
-        logger.error('Erro ao completar questionário via RPC, tentando cliente normal', {
+      if (!adminError) {
+        logger.info('Questionário completado com sucesso via cliente admin', {
           tag: 'Quiz',
-          data: error
-        });
-        
-        // Método alternativo: Atualização direta via cliente normal
-        const { error: updateError } = await supabase
-          .from('quiz_submissions')
-          .update({
-            completed: true,
-            completed_at: new Date().toISOString(),
-            contact_consent: true
-          })
-          .eq('user_id', userId);
-        
-        if (updateError) {
-          logger.error('Todos os métodos falharam ao completar questionário', {
-            tag: 'Quiz',
-            data: { adminError, rpcError: error, updateError }
-          });
-          return false;
-        }
-        
-        logger.info('Questionário completado com sucesso via cliente normal', {
-          tag: 'Quiz',
-          data: { userId }
+          data: { userId, submissionId }
         });
         return true;
       }
       
-      logger.info('Questionário completado com sucesso via RPC', {
+      logger.warn('Falha ao completar questionário via cliente admin', {
         tag: 'Quiz',
-        data: { userId, result: data }
+        data: { error: adminError, userId, submissionId }
       });
-      return true;
+    } catch (adminAttemptError) {
+      logger.error('Exceção ao tentar completar via cliente admin', {
+        tag: 'Quiz',
+        data: { error: adminAttemptError, userId, submissionId }
+      });
     }
     
-    logger.info('Questionário completado com sucesso via cliente admin', {
-      tag: 'Quiz',
-      data: { userId }
-    });
-    return true;
+    // Tentativa 2: Via RPC (função SQL específica)
+    try {
+      logger.info('Tentando completar questionário via RPC', {
+        tag: 'Quiz',
+        data: { userId, submissionId }
+      });
+      
+      const { data, error } = await supabase.rpc('complete_quiz_submission', {
+        p_user_id: userId
+      });
+      
+      if (!error) {
+        logger.info('Questionário completado com sucesso via RPC', {
+          tag: 'Quiz',
+          data: { userId, submissionId, result: data }
+        });
+        return true;
+      }
+      
+      logger.warn('Falha ao completar questionário via RPC', {
+        tag: 'Quiz',
+        data: { error, userId, submissionId }
+      });
+    } catch (rpcAttemptError) {
+      logger.error('Exceção ao tentar completar via RPC', {
+        tag: 'Quiz',
+        data: { error: rpcAttemptError, userId, submissionId }
+      });
+    }
+    
+    // Tentativa 3: Via cliente normal (última opção)
+    try {
+      logger.info('Tentando completar questionário via cliente normal', {
+        tag: 'Quiz',
+        data: { userId, submissionId }
+      });
+      
+      const { error: updateError } = await supabase
+        .from('quiz_submissions')
+        .update({
+          completed: true,
+          completed_at: new Date().toISOString(),
+          contact_consent: true
+        })
+        .eq('user_id', userId);
+      
+      if (!updateError) {
+        logger.info('Questionário completado com sucesso via cliente normal', {
+          tag: 'Quiz',
+          data: { userId, submissionId }
+        });
+        return true;
+      }
+      
+      logger.error('Todos os métodos falharam ao completar questionário', {
+        tag: 'Quiz',
+        data: { updateError, userId, submissionId }
+      });
+      return false;
+    } catch (updateAttemptError) {
+      logger.error('Exceção ao tentar completar via cliente normal', {
+        tag: 'Quiz',
+        data: { error: updateAttemptError, userId, submissionId }
+      });
+      return false;
+    }
   } catch (error) {
     logger.error('Exceção não tratada ao completar questionário', {
       tag: 'Quiz',
@@ -134,6 +191,7 @@ export const sendQuizDataToWebhook = async (submissionId: string): Promise<boole
     let retries = 2;
     let success = false;
     let lastError = null;
+    let lastResponse = null;
     
     while (retries >= 0 && !success) {
       try {
@@ -143,6 +201,7 @@ export const sendQuizDataToWebhook = async (submissionId: string): Promise<boole
         
         if (error) throw error;
         
+        lastResponse = data;
         success = true;
         logger.info('Dados enviados com sucesso para webhook', {
           tag: 'Quiz',
@@ -167,11 +226,45 @@ export const sendQuizDataToWebhook = async (submissionId: string): Promise<boole
     }
     
     if (!success) {
-      logger.error('Todas as tentativas de envio para webhook falharam', {
-        tag: 'Quiz',
-        data: lastError
-      });
-      return false;
+      // Tentar um método alternativo: chamada direta à URL do webhook
+      try {
+        logger.warn('Tentando método alternativo: chamada direta ao webhook', {
+          tag: 'Quiz',
+          data: { submissionId }
+        });
+        
+        const response = await fetch('https://nmxfknwkhnengqqjtwru.supabase.co/functions/v1/quiz-webhook', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY || ''}`
+          },
+          body: JSON.stringify({ submission_id: submissionId })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Resposta HTTP não-OK: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        logger.info('Dados enviados com sucesso para webhook (método alternativo)', {
+          tag: 'Quiz',
+          data
+        });
+        
+        return true;
+      } catch (directError) {
+        logger.error('Também falhou o método alternativo de envio para webhook', {
+          tag: 'Quiz',
+          data: directError
+        });
+        
+        logger.error('Todas as tentativas de envio para webhook falharam', {
+          tag: 'Quiz',
+          data: { lastError, lastResponse }
+        });
+        return false;
+      }
     }
     
     return true;

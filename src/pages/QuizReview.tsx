@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -175,11 +174,20 @@ const QuizReviewPage = () => {
       
       // Tentar enviar os dados para o webhook
       try {
-        await sendQuizDataToWebhook(submissionData.id);
-        logger.info('Dados enviados para webhook com sucesso', {
-          tag: 'Quiz',
-          data: { submissionId: submissionData.id }
-        });
+        const webhookSuccess = await sendQuizDataToWebhook(submissionData.id);
+        
+        if (webhookSuccess) {
+          logger.info('Dados enviados para webhook com sucesso', {
+            tag: 'Quiz',
+            data: { submissionId: submissionData.id }
+          });
+        } else {
+          // Não falhar todo o processo se o webhook falhar
+          logger.warn('O webhook falhou, mas o questionário foi finalizado com sucesso', {
+            tag: 'Quiz',
+            data: { submissionId: submissionData.id }
+          });
+        }
       } catch (webhookError) {
         // Não falhar todo o processo se o webhook falhar
         logger.error('Erro ao enviar dados para webhook, mas questionário foi finalizado', {
