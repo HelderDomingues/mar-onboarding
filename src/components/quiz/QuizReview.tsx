@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -183,7 +184,7 @@ export function QuizReview({
         return <div className="space-y-2">
             {options.map(option => <div key={option} className="flex items-center space-x-2">
                 <Checkbox id={`${questionId}-${option}`} checked={selectedOptions.includes(option)} onCheckedChange={checked => handleCheckboxChange(questionId, option, checked === true)} />
-                <label htmlFor={`${questionId}-${option}`} className="text-sm font-medium leading-none cursor-pointer text-slate-800">
+                <label htmlFor={`${questionId}-${option}`} className="text-sm font-medium leading-none cursor-pointer text-white">
                   {option}
                 </label>
               </div>)}
