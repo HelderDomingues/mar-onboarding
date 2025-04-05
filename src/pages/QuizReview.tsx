@@ -19,6 +19,7 @@ const QuizReviewPage = () => {
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCompleting, setIsCompleting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -116,7 +117,9 @@ const QuizReviewPage = () => {
   };
 
   const handleComplete = async () => {
-    if (!user) return;
+    if (!user || isCompleting) return;
+    
+    setIsCompleting(true);
     
     try {
       logger.info('Tentando completar o questionário', {
@@ -136,6 +139,11 @@ const QuizReviewPage = () => {
           tag: 'Quiz',
           data: submissionError
         });
+        throw new Error('Erro ao obter ID da submissão do questionário');
+      }
+      
+      if (!submissionData?.id) {
+        throw new Error('Submissão do questionário não encontrada');
       }
       
       // Completar o questionário usando a função RPC
@@ -147,20 +155,23 @@ const QuizReviewPage = () => {
       
       logger.info('Questionário finalizado com sucesso', {
         tag: 'Quiz',
-        data: { userId: user.id }
+        data: { userId: user.id, submissionId: submissionData.id }
       });
       
-      // Tentar enviar os dados para o webhook se tivermos o ID da submissão
-      if (submissionData?.id) {
-        try {
-          await sendQuizDataToWebhook(submissionData.id);
-        } catch (webhookError) {
-          // Não falhar todo o processo se o webhook falhar
-          logger.error('Erro ao enviar dados para webhook, mas questionário foi finalizado', {
-            tag: 'Quiz',
-            data: webhookError
-          });
-        }
+      // Tentar enviar os dados para o webhook
+      try {
+        await sendQuizDataToWebhook(submissionData.id);
+        logger.info('Dados enviados para webhook com sucesso', {
+          tag: 'Quiz',
+          data: { submissionId: submissionData.id }
+        });
+      } catch (webhookError) {
+        // Não falhar todo o processo se o webhook falhar
+        logger.error('Erro ao enviar dados para webhook, mas questionário foi finalizado', {
+          tag: 'Quiz',
+          data: webhookError
+        });
+        console.error('Erro ao enviar dados para webhook:', webhookError);
       }
       
       toast({
@@ -174,11 +185,15 @@ const QuizReviewPage = () => {
         tag: 'Quiz',
         data: error
       });
+      console.error("Detalhes do erro ao finalizar questionário:", error);
+      
       toast({
-        title: "Erro",
-        description: "Não foi possível finalizar o questionário. Por favor, tente novamente.",
+        title: "Erro ao finalizar questionário",
+        description: "Não foi possível registrar a conclusão do questionário. Por favor, tente novamente.",
         variant: "destructive"
       });
+    } finally {
+      setIsCompleting(false);
     }
   };
 

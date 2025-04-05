@@ -1,3 +1,4 @@
+
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -40,25 +41,62 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
  */
 export const completeQuizSubmission = async (userId: string): Promise<boolean> => {
   try {
-    // Usando a função RPC do Supabase que tem permissões adequadas
-    const { data, error } = await supabase.rpc('complete_quiz_submission', {
+    logger.info('Chamando função RPC para completar questionário', {
+      tag: 'Quiz',
+      data: { userId, timestamp: new Date().toISOString() }
+    });
+    
+    // Tentativa com RPC primeiro (método recomendado)
+    const { data: rpcData, error: rpcError } = await supabase.rpc('complete_quiz_submission', {
       p_user_id: userId
     });
     
-    if (error) {
-      logger.error('Erro ao completar questionário', {
+    if (rpcError) {
+      logger.error('Erro ao chamar RPC complete_quiz_submission', {
         tag: 'Quiz',
-        data: error
+        data: { error: rpcError, userId }
       });
-      return false;
+      console.error('Erro RPC:', rpcError);
+      
+      // Fallback: tenta atualizar diretamente (não é o ideal, mas pode servir como backup)
+      const { error: updateError } = await supabase
+        .from('quiz_submissions')
+        .update({
+          completed: true,
+          completed_at: new Date().toISOString(),
+          contact_consent: true
+        })
+        .eq('user_id', userId);
+        
+      if (updateError) {
+        logger.error('Erro no fallback para atualizar questionário', {
+          tag: 'Quiz',
+          data: updateError
+        });
+        console.error('Erro no fallback:', updateError);
+        return false;
+      }
+      
+      logger.info('Questionário completado via fallback', {
+        tag: 'Quiz',
+        data: { userId }
+      });
+      
+      return true; // O fallback funcionou
     }
     
-    return data || false;
+    logger.info('RPC complete_quiz_submission executado com sucesso', {
+      tag: 'Quiz',
+      data: { result: rpcData, userId }
+    });
+    
+    return !!rpcData;
   } catch (error) {
     logger.error('Exceção ao completar questionário', {
       tag: 'Quiz',
-      data: error
+      data: { error, userId }
     });
+    console.error('Exceção ao completar questionário:', error);
     return false;
   }
 };
@@ -69,6 +107,11 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
  */
 export const sendQuizDataToWebhook = async (submissionId: string): Promise<boolean> => {
   try {
+    logger.info('Enviando dados para webhook', {
+      tag: 'Quiz',
+      data: { submissionId, timestamp: new Date().toISOString() }
+    });
+    
     const { data, error } = await supabase.functions.invoke('quiz-webhook', {
       body: { submission_id: submissionId }
     });
