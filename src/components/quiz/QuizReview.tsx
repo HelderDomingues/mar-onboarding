@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
 interface QuizReviewProps {
   modules: QuizModule[];
   questions: QuizQuestion[];
@@ -18,7 +17,6 @@ interface QuizReviewProps {
   onComplete: () => void;
   onEdit: (moduleIndex: number, questionIndex: number) => void;
 }
-
 export function QuizReview({
   modules,
   questions,
@@ -29,37 +27,36 @@ export function QuizReview({
   const [confirmed, setConfirmed] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
-  const [editedAnswers, setEditedAnswers] = useState<Record<string, string | string[]>>({...answers});
-  const { toast } = useToast();
-  
+  const [editedAnswers, setEditedAnswers] = useState<Record<string, string | string[]>>({
+    ...answers
+  });
+  const {
+    toast
+  } = useToast();
   const form = useForm({
     defaultValues: {
       agreement: false
     }
   });
-
   useEffect(() => {
-    setEditedAnswers({...answers});
+    setEditedAnswers({
+      ...answers
+    });
   }, [answers]);
-
   const currentDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
   });
-
   const questionsByModule = modules.map(module => ({
     module,
     questions: questions.filter(q => q.module_id === module.id)
   }));
-
   const formatAnswerValue = (value: string | string[] | undefined) => {
     if (!value) return "Sem resposta";
-    
     if (Array.isArray(value)) {
       return value.join(", ");
     }
-    
     if (typeof value === "string") {
       try {
         const parsed = JSON.parse(value);
@@ -71,40 +68,33 @@ export function QuizReview({
         return value;
       }
     }
-    
     return String(value);
   };
-  
   const handleTermsChange = (checked: boolean) => {
     setAgreedToTerms(checked);
   };
-  
   const handleEditClick = (questionId: string) => {
     setEditingQuestionId(questionId);
   };
-  
   const handleSaveEdit = async (questionId: string) => {
     try {
       const answer = editedAnswers[questionId];
       const userId = (await supabase.auth.getUser()).data.user?.id;
-      
       if (userId) {
         const answerValue = typeof answer === 'object' ? JSON.stringify(answer) : answer;
-        const { error } = await supabase
-          .from('quiz_answers')
-          .upsert({
-            user_id: userId,
-            question_id: questionId,
-            answer: answerValue
-          }, {
-            onConflict: 'user_id,question_id'
-          });
-          
+        const {
+          error
+        } = await supabase.from('quiz_answers').upsert({
+          user_id: userId,
+          question_id: questionId,
+          answer: answerValue
+        }, {
+          onConflict: 'user_id,question_id'
+        });
         if (error) throw error;
-        
         toast({
           title: "Resposta atualizada",
-          description: "Sua resposta foi atualizada com sucesso.",
+          description: "Sua resposta foi atualizada com sucesso."
         });
       }
     } catch (error) {
@@ -115,26 +105,22 @@ export function QuizReview({
         variant: "destructive"
       });
     }
-    
     setEditingQuestionId(null);
   };
-  
   const handleCancelEdit = () => {
     setEditingQuestionId(null);
-    
-    setEditedAnswers({...answers});
+    setEditedAnswers({
+      ...answers
+    });
   };
-  
   const handleInputChange = (questionId: string, value: string | string[]) => {
     setEditedAnswers(prev => ({
       ...prev,
       [questionId]: value
     }));
   };
-  
   const handleCheckboxChange = (questionId: string, option: string, checked: boolean) => {
     let currentAnswers: string[] = [];
-    
     if (Array.isArray(editedAnswers[questionId])) {
       currentAnswers = [...(editedAnswers[questionId] as string[])];
     } else if (typeof editedAnswers[questionId] === 'string') {
@@ -149,9 +135,7 @@ export function QuizReview({
         currentAnswers = [editedAnswers[questionId] as string];
       }
     }
-      
     let newAnswers: string[];
-    
     if (checked) {
       if (!currentAnswers.includes(option)) {
         newAnswers = [...currentAnswers, option];
@@ -161,48 +145,27 @@ export function QuizReview({
     } else {
       newAnswers = currentAnswers.filter(item => item !== option);
     }
-    
     setEditedAnswers(prev => ({
       ...prev,
       [questionId]: newAnswers
     }));
   };
-  
   const renderEditField = (question: QuizQuestion) => {
     const questionId = question.id;
     const answer = editedAnswers[questionId];
-    
-    switch(question.type) {
+    switch (question.type) {
       case 'text':
       case 'email':
       case 'number':
       case 'url':
       case 'instagram':
-        return (
-          <Input
-            value={typeof answer === 'string' ? answer : ''}
-            onChange={(e) => handleInputChange(questionId, e.target.value)}
-            className="w-full text-slate-900"
-            placeholder="Digite sua resposta aqui"
-            type={question.type === 'number' ? 'number' : 'text'}
-          />
-        );
-        
+        return <Input value={typeof answer === 'string' ? answer : ''} onChange={e => handleInputChange(questionId, e.target.value)} className="w-full text-slate-900" placeholder="Digite sua resposta aqui" type={question.type === 'number' ? 'number' : 'text'} />;
       case 'textarea':
-        return (
-          <Textarea
-            value={typeof answer === 'string' ? answer : ''}
-            onChange={(e) => handleInputChange(questionId, e.target.value)}
-            className="w-full text-slate-900"
-            placeholder="Digite sua resposta aqui"
-          />
-        );
-        
+        return <Textarea value={typeof answer === 'string' ? answer : ''} onChange={e => handleInputChange(questionId, e.target.value)} className="w-full text-slate-900" placeholder="Digite sua resposta aqui" />;
       case 'checkbox':
       case 'radio':
         const options = question.options?.map(opt => opt.text) || [];
         let selectedOptions: string[] = [];
-        
         if (Array.isArray(answer)) {
           selectedOptions = answer;
         } else if (typeof answer === 'string') {
@@ -217,41 +180,18 @@ export function QuizReview({
             selectedOptions = [answer];
           }
         }
-        
-        return (
-          <div className="space-y-2">
-            {options.map((option) => (
-              <div key={option} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`${questionId}-${option}`}
-                  checked={selectedOptions.includes(option)}
-                  onCheckedChange={(checked) => 
-                    handleCheckboxChange(questionId, option, checked === true)
-                  }
-                />
-                <label 
-                  htmlFor={`${questionId}-${option}`}
-                  className="text-sm font-medium leading-none cursor-pointer text-slate-800"
-                >
+        return <div className="space-y-2">
+            {options.map(option => <div key={option} className="flex items-center space-x-2">
+                <Checkbox id={`${questionId}-${option}`} checked={selectedOptions.includes(option)} onCheckedChange={checked => handleCheckboxChange(questionId, option, checked === true)} />
+                <label htmlFor={`${questionId}-${option}`} className="text-sm font-medium leading-none cursor-pointer text-slate-800">
                   {option}
                 </label>
-              </div>
-            ))}
-          </div>
-        );
-        
+              </div>)}
+          </div>;
       default:
-        return (
-          <Input
-            value={typeof answer === 'string' ? answer : ''}
-            onChange={(e) => handleInputChange(questionId, e.target.value)}
-            className="w-full text-slate-900"
-            placeholder="Digite sua resposta aqui"
-          />
-        );
+        return <Input value={typeof answer === 'string' ? answer : ''} onChange={e => handleInputChange(questionId, e.target.value)} className="w-full text-slate-900" placeholder="Digite sua resposta aqui" />;
     }
   };
-  
   return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-6">
       {!confirmed ? <>
           <Card className="quiz-card">
@@ -278,56 +218,36 @@ export function QuizReview({
                     
                     <div className="space-y-4">
                       {moduleData.questions.map((question, questionIndex) => {
-                        const questionId = question.id;
-                        const isEditing = editingQuestionId === questionId;
-                        const answer = editedAnswers[questionId];
-                        
-                        return <div key={questionId} className="border-t border-[hsl(var(--quiz-border))] pt-3">
+                  const questionId = question.id;
+                  const isEditing = editingQuestionId === questionId;
+                  const answer = editedAnswers[questionId];
+                  return <div key={questionId} className="border-t border-[hsl(var(--quiz-border))] pt-3">
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
                               <p className="font-medium text-[hsl(var(--quiz-text))]">{question.text}</p>
                               
-                              {isEditing ? (
-                                <div className="mt-2 space-y-3">
+                              {isEditing ? <div className="mt-2 space-y-3">
                                   {renderEditField(question)}
                                   
                                   <div className="flex gap-2 justify-end mt-3">
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm" 
-                                      onClick={handleCancelEdit}
-                                      className="text-slate-200"
-                                    >
+                                    <Button variant="outline" size="sm" onClick={handleCancelEdit} className="text-slate-200">
                                       Cancelar
                                     </Button>
-                                    <Button 
-                                      size="sm" 
-                                      onClick={() => handleSaveEdit(questionId)}
-                                    >
+                                    <Button size="sm" onClick={() => handleSaveEdit(questionId)}>
                                       Salvar
                                     </Button>
                                   </div>
-                                </div>
-                              ) : (
-                                <p className="text-[hsl(var(--quiz-text))] opacity-80 mt-1 break-words">
+                                </div> : <p className="text-[hsl(var(--quiz-text))] opacity-80 mt-1 break-words">
                                   {formatAnswerValue(answer)}
-                                </p>
-                              )}
+                                </p>}
                             </div>
                             
-                            {!isEditing && (
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => handleEditClick(questionId)} 
-                                className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))]"
-                              >
+                            {!isEditing && <Button variant="outline" size="sm" onClick={() => handleEditClick(questionId)} className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-slate-900">
                                 <Edit className="h-4 w-4 mr-1" /> Editar
-                              </Button>
-                            )}
+                              </Button>}
                           </div>
                         </div>;
-                      })}
+                })}
                     </div>
                   </div>)}
               </div>
