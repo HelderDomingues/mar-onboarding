@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -231,7 +230,7 @@ export function QuizReview({
                                   {renderEditField(question)}
                                   
                                   <div className="flex gap-2 justify-end mt-3">
-                                    <Button variant="outline" size="sm" onClick={handleCancelEdit} className="text-slate-200">
+                                    <Button variant="outline" size="sm" onClick={handleCancelEdit} className="text-slate-900">
                                       Cancelar
                                     </Button>
                                     <Button size="sm" onClick={() => handleSaveEdit(questionId)}>
