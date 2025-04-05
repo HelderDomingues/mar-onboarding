@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,25 +38,21 @@ export function QuizReview({
     }
   });
 
-  // Garantir que o estado editedAnswers seja sempre sincronizado com as respostas externas
   useEffect(() => {
     setEditedAnswers({...answers});
   }, [answers]);
 
-  // Data atual formatada para português do Brasil
   const currentDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
   });
 
-  // Agrupar perguntas por módulo
   const questionsByModule = modules.map(module => ({
     module,
     questions: questions.filter(q => q.module_id === module.id)
   }));
 
-  // Formatar o valor da resposta para exibição
   const formatAnswerValue = (value: string | string[] | undefined) => {
     if (!value) return "Sem resposta";
     
@@ -66,7 +61,6 @@ export function QuizReview({
     }
     
     if (typeof value === "string") {
-      // Verifica se é um JSON string e tenta converter para array
       try {
         const parsed = JSON.parse(value);
         if (Array.isArray(parsed)) {
@@ -74,12 +68,10 @@ export function QuizReview({
         }
         return String(parsed);
       } catch (e) {
-        // Se não for um JSON válido, retorna a string original
         return value;
       }
     }
     
-    // Para outros tipos, converte para string
     return String(value);
   };
   
@@ -97,7 +89,6 @@ export function QuizReview({
       const userId = (await supabase.auth.getUser()).data.user?.id;
       
       if (userId) {
-        // Salvar resposta atualizada no banco de dados
         const answerValue = typeof answer === 'object' ? JSON.stringify(answer) : answer;
         const { error } = await supabase
           .from('quiz_answers')
@@ -131,7 +122,6 @@ export function QuizReview({
   const handleCancelEdit = () => {
     setEditingQuestionId(null);
     
-    // Restaurar valores originais
     setEditedAnswers({...answers});
   };
   
@@ -145,12 +135,10 @@ export function QuizReview({
   const handleCheckboxChange = (questionId: string, option: string, checked: boolean) => {
     let currentAnswers: string[] = [];
     
-    // Garante que estamos lidando com um array
     if (Array.isArray(editedAnswers[questionId])) {
       currentAnswers = [...(editedAnswers[questionId] as string[])];
     } else if (typeof editedAnswers[questionId] === 'string') {
       try {
-        // Tenta converter de JSON string para array
         const parsed = JSON.parse(editedAnswers[questionId] as string);
         if (Array.isArray(parsed)) {
           currentAnswers = [...parsed];
@@ -158,7 +146,6 @@ export function QuizReview({
           currentAnswers = [editedAnswers[questionId] as string];
         }
       } catch (e) {
-        // Se não for um JSON válido, usa como item único
         currentAnswers = [editedAnswers[questionId] as string];
       }
     }
@@ -166,14 +153,12 @@ export function QuizReview({
     let newAnswers: string[];
     
     if (checked) {
-      // Adiciona à lista se não existir
       if (!currentAnswers.includes(option)) {
         newAnswers = [...currentAnswers, option];
       } else {
         newAnswers = currentAnswers;
       }
     } else {
-      // Remove da lista
       newAnswers = currentAnswers.filter(item => item !== option);
     }
     
@@ -183,7 +168,6 @@ export function QuizReview({
     }));
   };
   
-  // Renderizar campo de edição baseado no tipo da questão
   const renderEditField = (question: QuizQuestion) => {
     const questionId = question.id;
     const answer = editedAnswers[questionId];
@@ -219,21 +203,17 @@ export function QuizReview({
         const options = question.options?.map(opt => opt.text) || [];
         let selectedOptions: string[] = [];
         
-        // Processa as opções selecionadas com base no tipo de resposta
         if (Array.isArray(answer)) {
           selectedOptions = answer;
         } else if (typeof answer === 'string') {
           try {
-            // Tenta converter JSON para array se for checkbox
             const parsed = JSON.parse(answer);
             if (Array.isArray(parsed)) {
               selectedOptions = parsed;
             } else {
-              // Se for radio, pode ser uma string única
               selectedOptions = [answer];
             }
           } catch (e) {
-            // Se não for JSON, trata como valor único
             selectedOptions = [answer];
           }
         }
@@ -316,7 +296,7 @@ export function QuizReview({
                                       variant="outline" 
                                       size="sm" 
                                       onClick={handleCancelEdit}
-                                      className="text-slate-900"
+                                      className="text-slate-200"
                                     >
                                       Cancelar
                                     </Button>
@@ -340,7 +320,7 @@ export function QuizReview({
                                 variant="outline" 
                                 size="sm" 
                                 onClick={() => handleEditClick(questionId)} 
-                                className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-zinc-950"
+                                className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))]"
                               >
                                 <Edit className="h-4 w-4 mr-1" /> Editar
                               </Button>
@@ -374,7 +354,7 @@ export function QuizReview({
                 
                 <div className="flex items-center gap-2">
                   <Checkbox id="agreement" checked={agreedToTerms} onCheckedChange={handleTermsChange} className="border-white" />
-                  <label htmlFor="agreement" className="text-sm font-medium leading-none cursor-pointer text-[hsl(var(--quiz-text))]">
+                  <label htmlFor="agreement" className="text-sm font-medium leading-none cursor-pointer text-white">
                     Concordo com os termos acima e confirmo a veracidade das informações
                   </label>
                 </div>
@@ -396,7 +376,7 @@ export function QuizReview({
           </Card>
         </> : <Card className="quiz-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-900 text-base font-normal">
+            <CardTitle className="flex items-center gap-2 text-white text-base font-normal">
               <CheckCircle className="h-6 w-6 text-green-500" />
               Respostas Confirmadas
             </CardTitle>

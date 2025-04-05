@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +8,7 @@ import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { useToast } from "@/components/ui/use-toast";
-import { completeQuizSubmission } from "@/utils/supabaseUtils";
+import { completeQuizSubmission, sendQuizDataToWebhook } from "@/utils/supabaseUtils";
 import { logger } from "@/utils/logger";
 
 const QuizReviewPage = () => {
@@ -123,6 +124,21 @@ const QuizReviewPage = () => {
         data: { userId: user.id }
       });
       
+      // Obter o ID da submissão atual para enviar para o webhook depois
+      const { data: submissionData, error: submissionError } = await supabase
+        .from('quiz_submissions')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+        
+      if (submissionError) {
+        logger.error('Erro ao obter ID da submissão do questionário', {
+          tag: 'Quiz',
+          data: submissionError
+        });
+      }
+      
+      // Completar o questionário usando a função RPC
       const success = await completeQuizSubmission(user.id);
       
       if (!success) {
@@ -133,6 +149,19 @@ const QuizReviewPage = () => {
         tag: 'Quiz',
         data: { userId: user.id }
       });
+      
+      // Tentar enviar os dados para o webhook se tivermos o ID da submissão
+      if (submissionData?.id) {
+        try {
+          await sendQuizDataToWebhook(submissionData.id);
+        } catch (webhookError) {
+          // Não falhar todo o processo se o webhook falhar
+          logger.error('Erro ao enviar dados para webhook, mas questionário foi finalizado', {
+            tag: 'Quiz',
+            data: webhookError
+          });
+        }
+      }
       
       toast({
         title: "Sucesso!",

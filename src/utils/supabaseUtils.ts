@@ -1,4 +1,3 @@
-
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -57,6 +56,39 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
     return data || false;
   } catch (error) {
     logger.error('Exceção ao completar questionário', {
+      tag: 'Quiz',
+      data: error
+    });
+    return false;
+  }
+};
+
+/**
+ * Utilitário para enviar dados do questionário para webhook
+ * @param submissionId ID da submissão do questionário
+ */
+export const sendQuizDataToWebhook = async (submissionId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('quiz-webhook', {
+      body: { submission_id: submissionId }
+    });
+    
+    if (error) {
+      logger.error('Erro ao enviar dados para webhook', {
+        tag: 'Quiz',
+        data: error
+      });
+      return false;
+    }
+    
+    logger.info('Dados enviados com sucesso para webhook', {
+      tag: 'Quiz',
+      data
+    });
+    
+    return true;
+  } catch (error) {
+    logger.error('Exceção ao enviar dados para webhook', {
       tag: 'Quiz',
       data: error
     });
@@ -131,39 +163,6 @@ export const importUser = async (userData: {
       data: error
     });
     throw error;
-  }
-};
-
-/**
- * Utilitário para enviar dados do questionário para webhook
- * @param submissionId ID da submissão do questionário
- */
-export const sendQuizDataToWebhook = async (submissionId: string): Promise<boolean> => {
-  try {
-    const { data, error } = await supabase.functions.invoke('quiz-webhook', {
-      body: { submission_id: submissionId }
-    });
-    
-    if (error) {
-      logger.error('Erro ao enviar dados para webhook', {
-        tag: 'Quiz',
-        data: error
-      });
-      return false;
-    }
-    
-    logger.info('Dados enviados com sucesso para webhook', {
-      tag: 'Quiz',
-      data
-    });
-    
-    return true;
-  } catch (error) {
-    logger.error('Exceção ao enviar dados para webhook', {
-      tag: 'Quiz',
-      data: error
-    });
-    return false;
   }
 };
 
