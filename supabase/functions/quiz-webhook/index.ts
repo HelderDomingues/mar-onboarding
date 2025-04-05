@@ -15,6 +15,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Função quiz-webhook iniciada");
+    
     // Configurar cliente Supabase
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -31,8 +33,12 @@ serve(async (req) => {
     try {
       const body = await req.json();
       submissionId = body.submission_id;
+      console.log("ID da submissão recebido:", submissionId);
     } catch (e) {
-      // Se não houver corpo com ID, buscaremos a submissão mais recente
+      console.log("Nenhum ID de submissão fornecido ou erro ao ler o corpo", e);
+    }
+    
+    if (!submissionId) {
       console.log("Nenhum ID de submissão fornecido, buscando a mais recente");
     }
     
@@ -50,10 +56,12 @@ serve(async (req) => {
     const { data: quizResponses, error } = await query;
     
     if (error) {
+      console.error("Erro ao buscar respostas:", error);
       throw new Error(`Erro ao buscar respostas: ${error.message}`);
     }
     
     if (!quizResponses || quizResponses.length === 0) {
+      console.log("Nenhuma resposta encontrada");
       return new Response(
         JSON.stringify({ 
           message: "Nenhuma resposta encontrada" 
@@ -68,57 +76,83 @@ serve(async (req) => {
       );
     }
     
-    // Preparar dados para envio ao Make.com
-    const makeData = {
-      submission_id: quizResponses[0].submission_id,
-      user_id: quizResponses[0].user_id,
-      email: quizResponses[0].email,
-      full_name: quizResponses[0].full_name,
-      company_name: quizResponses[0].company_name,
-      completed: quizResponses[0].completed,
-      completed_at: quizResponses[0].completed_at,
-      contact_consent: quizResponses[0].contact_consent,
-      started_at: quizResponses[0].started_at,
-      responses: quizResponses.map(r => ({
-        question_id: r.question_id,
-        question_text: r.question_text,
-        answer: r.answer
-      }))
-    };
+    console.log(`Encontradas ${quizResponses.length} respostas para a submissão`);
     
-    // Enviar dados para o webhook do Make.com
-    try {
-      const webhookUrl = "https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
-      const makeResponse = await fetch(webhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(makeData)
-      });
-      
-      if (!makeResponse.ok) {
-        throw new Error(`Make.com respondeu com status: ${makeResponse.status}`);
+    // Agrupar respostas por submissão
+    const submissionGroups = quizResponses.reduce((acc, curr) => {
+      const submissionId = curr.submission_id;
+      if (!acc[submissionId]) {
+        acc[submissionId] = [];
       }
+      acc[submissionId].push(curr);
+      return acc;
+    }, {});
+    
+    // Processar cada grupo de submissão
+    for (const [submissionId, responses] of Object.entries(submissionGroups)) {
+      if (!Array.isArray(responses) || responses.length === 0) continue;
       
-      return new Response(
-        JSON.stringify({ 
-          message: "Dados enviados com sucesso para o Make.com",
-          submission_id: quizResponses[0].submission_id
-        }),
-        { 
-          headers: { 
-            ...corsHeaders,
-            "Content-Type": "application/json" 
+      const firstResponse = responses[0];
+      
+      // Preparar dados para envio ao Make.com
+      const makeData = {
+        submission_id: submissionId,
+        user_id: firstResponse.user_id,
+        email: firstResponse.email,
+        full_name: firstResponse.full_name,
+        company_name: firstResponse.company_name,
+        completed: firstResponse.completed,
+        completed_at: firstResponse.completed_at,
+        contact_consent: firstResponse.contact_consent,
+        started_at: firstResponse.started_at,
+        responses: responses.map(r => ({
+          question_id: r.question_id,
+          question_text: r.question_text,
+          answer: r.answer
+        }))
+      };
+      
+      console.log(`Enviando dados para o Make.com para submissão ${submissionId}`);
+      
+      // Enviar dados para o webhook do Make.com
+      try {
+        const webhookUrl = "https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
+        const makeResponse = await fetch(webhookUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
           },
-          status: 200 
+          body: JSON.stringify(makeData)
+        });
+        
+        if (!makeResponse.ok) {
+          console.error(`Make.com respondeu com status: ${makeResponse.status}`);
+          const responseText = await makeResponse.text();
+          console.error(`Resposta do Make.com: ${responseText}`);
+          throw new Error(`Make.com respondeu com status: ${makeResponse.status}`);
         }
-      );
-      
-    } catch (makeError) {
-      console.error("Erro ao enviar dados para o Make.com:", makeError);
-      throw new Error(`Falha ao enviar para o Make.com: ${makeError.message}`);
+        
+        console.log(`Dados enviados com sucesso para o Make.com para submissão ${submissionId}`);
+      } catch (makeError) {
+        console.error("Erro ao enviar dados para o Make.com:", makeError);
+        throw new Error(`Falha ao enviar para o Make.com: ${makeError.message}`);
+      }
     }
+    
+    return new Response(
+      JSON.stringify({ 
+        message: "Dados enviados com sucesso para o Make.com",
+        submissions_processed: Object.keys(submissionGroups).length,
+        submission_ids: Object.keys(submissionGroups)
+      }),
+      { 
+        headers: { 
+          ...corsHeaders,
+          "Content-Type": "application/json" 
+        },
+        status: 200 
+      }
+    );
     
   } catch (error) {
     console.error("Erro na função Edge:", error);

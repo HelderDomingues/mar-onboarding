@@ -46,35 +46,35 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       data: { userId }
     });
     
-    // Primeiro, tenta com RPC (método principal)
-    const { data, error } = await supabase.rpc('complete_quiz_submission', {
-      p_user_id: userId
-    });
+    // Priorizar uso do cliente admin, que tem mais permissões
+    const { error: adminError } = await supabaseAdmin
+      .from('quiz_submissions')
+      .update({
+        completed: true,
+        completed_at: new Date().toISOString(),
+        contact_consent: true
+      })
+      .eq('user_id', userId);
     
-    if (error) {
-      logger.error('Erro ao completar questionário via RPC, tentando método alternativo', {
+    if (adminError) {
+      logger.error('Erro ao completar questionário via cliente admin, tentando RPC', {
         tag: 'Quiz',
-        data: error
+        data: adminError
       });
       
-      // Método alternativo 1: Atualização direta via cliente normal
-      const { error: updateError } = await supabase
-        .from('quiz_submissions')
-        .update({
-          completed: true,
-          completed_at: new Date().toISOString(),
-          contact_consent: true
-        })
-        .eq('user_id', userId);
+      // Tentar com RPC como segunda opção
+      const { data, error } = await supabase.rpc('complete_quiz_submission', {
+        p_user_id: userId
+      });
       
-      if (updateError) {
-        logger.error('Erro ao atualizar diretamente via cliente normal, tentando com admin', {
+      if (error) {
+        logger.error('Erro ao completar questionário via RPC, tentando cliente normal', {
           tag: 'Quiz',
-          data: updateError
+          data: error
         });
         
-        // Método alternativo 2: Atualização via admin client como último recurso
-        const { error: adminError } = await supabaseAdmin
+        // Método alternativo: Atualização direta via cliente normal
+        const { error: updateError } = await supabase
           .from('quiz_submissions')
           .update({
             completed: true,
@@ -83,31 +83,31 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
           })
           .eq('user_id', userId);
         
-        if (adminError) {
+        if (updateError) {
           logger.error('Todos os métodos falharam ao completar questionário', {
             tag: 'Quiz',
-            data: { rpcError: error, updateError, adminError }
+            data: { adminError, rpcError: error, updateError }
           });
           return false;
         }
         
-        logger.info('Questionário completado com sucesso via cliente admin', {
+        logger.info('Questionário completado com sucesso via cliente normal', {
           tag: 'Quiz',
           data: { userId }
         });
         return true;
       }
       
-      logger.info('Questionário completado com sucesso via atualização direta', {
+      logger.info('Questionário completado com sucesso via RPC', {
         tag: 'Quiz',
-        data: { userId }
+        data: { userId, result: data }
       });
       return true;
     }
     
-    logger.info('Questionário completado com sucesso via RPC', {
+    logger.info('Questionário completado com sucesso via cliente admin', {
       tag: 'Quiz',
-      data: { userId, result: data }
+      data: { userId }
     });
     return true;
   } catch (error) {
@@ -130,22 +130,49 @@ export const sendQuizDataToWebhook = async (submissionId: string): Promise<boole
       data: { submissionId, timestamp: new Date().toISOString() }
     });
     
-    const { data, error } = await supabase.functions.invoke('quiz-webhook', {
-      body: { submission_id: submissionId }
-    });
+    // Tentativa 1
+    let retries = 2;
+    let success = false;
+    let lastError = null;
     
-    if (error) {
-      logger.error('Erro ao enviar dados para webhook', {
+    while (retries >= 0 && !success) {
+      try {
+        const { data, error } = await supabase.functions.invoke('quiz-webhook', {
+          body: { submission_id: submissionId }
+        });
+        
+        if (error) throw error;
+        
+        success = true;
+        logger.info('Dados enviados com sucesso para webhook', {
+          tag: 'Quiz',
+          data
+        });
+        
+        return true;
+      } catch (error) {
+        lastError = error;
+        retries--;
+        
+        if (retries >= 0) {
+          logger.warn(`Erro ao enviar dados para webhook, tentando novamente. Tentativas restantes: ${retries}`, {
+            tag: 'Quiz',
+            data: error
+          });
+          
+          // Esperar 1 segundo antes de tentar novamente
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+    
+    if (!success) {
+      logger.error('Todas as tentativas de envio para webhook falharam', {
         tag: 'Quiz',
-        data: error
+        data: lastError
       });
       return false;
     }
-    
-    logger.info('Dados enviados com sucesso para webhook', {
-      tag: 'Quiz',
-      data
-    });
     
     return true;
   } catch (error) {

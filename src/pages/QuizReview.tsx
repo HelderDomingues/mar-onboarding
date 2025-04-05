@@ -41,6 +41,11 @@ const QuizReviewPage = () => {
     
     setIsLoading(true);
     try {
+      logger.info('Buscando dados do questionário para revisão', {
+        tag: 'Quiz',
+        data: { userId: user.id }
+      });
+      
       const { data: modulesData, error: modulesError } = await supabase
         .from('quiz_modules')
         .select('*')
@@ -97,14 +102,24 @@ const QuizReviewPage = () => {
         });
       }
       
-      console.log("Respostas processadas:", processedAnswers);
+      logger.info('Dados do questionário carregados com sucesso', {
+        tag: 'Quiz',
+        data: { 
+          modulesCount: modulesData?.length || 0,
+          questionsCount: questionsData?.length || 0,
+          answersCount: answersData?.length || 0
+        }
+      });
       
       setModules(modulesData as unknown as QuizModule[]);
       setQuestions(questionsWithOptions);
       setAnswers(processedAnswers);
       setError(null);
     } catch (error: any) {
-      console.error("Erro ao buscar dados do questionário:", error);
+      logger.error("Erro ao buscar dados do questionário:", {
+        tag: 'Quiz',
+        data: error
+      });
       setError("Não foi possível carregar os dados do questionário. Por favor, tente novamente.");
       toast({
         title: "Erro",
@@ -171,7 +186,6 @@ const QuizReviewPage = () => {
           tag: 'Quiz',
           data: webhookError
         });
-        console.error('Erro ao enviar dados para webhook:', webhookError);
       }
       
       toast({
@@ -185,7 +199,6 @@ const QuizReviewPage = () => {
         tag: 'Quiz',
         data: error
       });
-      console.error("Detalhes do erro ao finalizar questionário:", error);
       
       toast({
         title: "Erro ao finalizar questionário",
