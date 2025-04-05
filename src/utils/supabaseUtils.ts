@@ -1,4 +1,3 @@
-
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -66,42 +65,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       data: { submissionId }
     });
     
-    // Tentativa 1: Via cliente admin (maior privilégio)
-    try {
-      logger.info('Tentando completar questionário via cliente admin', {
-        tag: 'Quiz',
-        data: { userId, submissionId }
-      });
-      
-      const { error: adminError } = await supabaseAdmin
-        .from('quiz_submissions')
-        .update({
-          completed: true,
-          completed_at: new Date().toISOString(),
-          contact_consent: true
-        })
-        .eq('user_id', userId);
-      
-      if (!adminError) {
-        logger.info('Questionário completado com sucesso via cliente admin', {
-          tag: 'Quiz',
-          data: { userId, submissionId }
-        });
-        return true;
-      }
-      
-      logger.warn('Falha ao completar questionário via cliente admin', {
-        tag: 'Quiz',
-        data: { error: adminError, userId, submissionId }
-      });
-    } catch (adminAttemptError) {
-      logger.error('Exceção ao tentar completar via cliente admin', {
-        tag: 'Quiz',
-        data: { error: adminAttemptError, userId, submissionId }
-      });
-    }
-    
-    // Tentativa 2: Via RPC (função SQL específica)
+    // Tentativa 1: Via RPC (função SQL específica) - Esta é a mais recomendada
     try {
       logger.info('Tentando completar questionário via RPC', {
         tag: 'Quiz',
@@ -112,7 +76,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
         p_user_id: userId
       });
       
-      if (!error) {
+      if (!error && data) {
         logger.info('Questionário completado com sucesso via RPC', {
           tag: 'Quiz',
           data: { userId, submissionId, result: data }
@@ -131,7 +95,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       });
     }
     
-    // Tentativa 3: Via cliente normal (última opção)
+    // Tentativa 2: Diretamente via cliente normal com RLS
     try {
       logger.info('Tentando completar questionário via cliente normal', {
         tag: 'Quiz',
@@ -155,15 +119,50 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
         return true;
       }
       
-      logger.error('Todos os métodos falharam ao completar questionário', {
+      logger.error('Falha ao completar questionário via cliente normal', {
         tag: 'Quiz',
         data: { updateError, userId, submissionId }
       });
-      return false;
     } catch (updateAttemptError) {
       logger.error('Exceção ao tentar completar via cliente normal', {
         tag: 'Quiz',
         data: { error: updateAttemptError, userId, submissionId }
+      });
+    }
+    
+    // Tentativa 3: Via cliente admin (última opção)
+    try {
+      logger.info('Tentando completar questionário via cliente admin', {
+        tag: 'Quiz',
+        data: { userId, submissionId }
+      });
+      
+      const { error: adminError } = await supabaseAdmin
+        .from('quiz_submissions')
+        .update({
+          completed: true,
+          completed_at: new Date().toISOString(),
+          contact_consent: true
+        })
+        .eq('user_id', userId);
+      
+      if (!adminError) {
+        logger.info('Questionário completado com sucesso via cliente admin', {
+          tag: 'Quiz',
+          data: { userId, submissionId }
+        });
+        return true;
+      }
+      
+      logger.error('Todos os métodos falharam ao completar questionário', {
+        tag: 'Quiz',
+        data: { adminError, userId, submissionId }
+      });
+      return false;
+    } catch (adminAttemptError) {
+      logger.error('Exceção ao tentar completar via cliente admin', {
+        tag: 'Quiz',
+        data: { error: adminAttemptError, userId, submissionId }
       });
       return false;
     }
