@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -180,9 +179,7 @@ export function QuizReview({
     setIsSubmitting(true);
     
     try {
-      // Confirma antes de iniciar o processo de conclusão
       setConfirmed(true);
-      // O onComplete será acionado quando o usuário clicar no botão de finalização
     } catch (error) {
       console.error("Erro ao preparar finalização:", error);
       setConfirmed(false);
@@ -202,7 +199,6 @@ export function QuizReview({
     setIsSubmitting(true);
     
     try {
-      // Executa a função onComplete passada pelo componente pai (QuizReviewPage)
       await onComplete();
     } catch (error) {
       console.error("Erro na finalização:", error);
@@ -211,7 +207,6 @@ export function QuizReview({
         description: "Não foi possível finalizar o questionário. Por favor, tente novamente.",
         variant: "destructive"
       });
-      // Voltamos ao estado de não confirmado para permitir que o usuário tente novamente
       setConfirmed(false);
     } finally {
       setIsSubmitting(false);

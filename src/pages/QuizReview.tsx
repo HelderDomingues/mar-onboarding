@@ -146,7 +146,7 @@ const QuizReviewPage = () => {
         throw new Error('Submissão do questionário não encontrada');
       }
       
-      // Completar o questionário usando a função RPC
+      // Completar o questionário usando a função utilitária aprimorada
       const success = await completeQuizSubmission(user.id);
       
       if (!success) {

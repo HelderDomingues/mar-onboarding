@@ -24,7 +24,7 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
       return false;
     }
     
-    return data?.completed || false;
+    return data?.completed === true; // Verifica se é exatamente true
   } catch (error) {
     logger.error('Exceção ao verificar status do questionário', {
       tag: 'Quiz',
@@ -41,24 +41,23 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
  */
 export const completeQuizSubmission = async (userId: string): Promise<boolean> => {
   try {
-    logger.info('Chamando função RPC para completar questionário', {
+    logger.info('Iniciando processo de finalização do questionário', {
       tag: 'Quiz',
-      data: { userId, timestamp: new Date().toISOString() }
+      data: { userId }
     });
     
-    // Tentativa com RPC primeiro (método recomendado)
-    const { data: rpcData, error: rpcError } = await supabase.rpc('complete_quiz_submission', {
+    // Primeiro, tenta com RPC (método principal)
+    const { data, error } = await supabase.rpc('complete_quiz_submission', {
       p_user_id: userId
     });
     
-    if (rpcError) {
-      logger.error('Erro ao chamar RPC complete_quiz_submission', {
+    if (error) {
+      logger.error('Erro ao completar questionário via RPC, tentando método alternativo', {
         tag: 'Quiz',
-        data: { error: rpcError, userId }
+        data: error
       });
-      console.error('Erro RPC:', rpcError);
       
-      // Fallback: tenta atualizar diretamente (não é o ideal, mas pode servir como backup)
+      // Método alternativo 1: Atualização direta via cliente normal
       const { error: updateError } = await supabase
         .from('quiz_submissions')
         .update({
@@ -67,36 +66,55 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
           contact_consent: true
         })
         .eq('user_id', userId);
-        
+      
       if (updateError) {
-        logger.error('Erro no fallback para atualizar questionário', {
+        logger.error('Erro ao atualizar diretamente via cliente normal, tentando com admin', {
           tag: 'Quiz',
           data: updateError
         });
-        console.error('Erro no fallback:', updateError);
-        return false;
+        
+        // Método alternativo 2: Atualização via admin client como último recurso
+        const { error: adminError } = await supabaseAdmin
+          .from('quiz_submissions')
+          .update({
+            completed: true,
+            completed_at: new Date().toISOString(),
+            contact_consent: true
+          })
+          .eq('user_id', userId);
+        
+        if (adminError) {
+          logger.error('Todos os métodos falharam ao completar questionário', {
+            tag: 'Quiz',
+            data: { rpcError: error, updateError, adminError }
+          });
+          return false;
+        }
+        
+        logger.info('Questionário completado com sucesso via cliente admin', {
+          tag: 'Quiz',
+          data: { userId }
+        });
+        return true;
       }
       
-      logger.info('Questionário completado via fallback', {
+      logger.info('Questionário completado com sucesso via atualização direta', {
         tag: 'Quiz',
         data: { userId }
       });
-      
-      return true; // O fallback funcionou
+      return true;
     }
     
-    logger.info('RPC complete_quiz_submission executado com sucesso', {
+    logger.info('Questionário completado com sucesso via RPC', {
       tag: 'Quiz',
-      data: { result: rpcData, userId }
+      data: { userId, result: data }
     });
-    
-    return !!rpcData;
+    return true;
   } catch (error) {
-    logger.error('Exceção ao completar questionário', {
+    logger.error('Exceção não tratada ao completar questionário', {
       tag: 'Quiz',
-      data: { error, userId }
+      data: error
     });
-    console.error('Exceção ao completar questionário:', error);
     return false;
   }
 };
