@@ -1,24 +1,16 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Linkedin, MapPin, Phone, Mail } from 'lucide-react';
-
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  
-  return (
-    <footer className="bg-slate-900 text-white pt-12 pb-6">
+  return <footer className="bg-slate-900 text-white pt-12 pb-6">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-8">
           {/* Logo e descrição */}
           <div className="md:col-span-4 flex flex-col space-y-4">
             <div className="flex items-center">
-              <img 
-                src="/lovable-uploads/61519f42-b5d3-4dec-9ee6-b8aba97c5725.png" 
-                alt="MAR Logo" 
-                className="h-8 mr-2" 
-              />
-              <span className="font-bold text-xl">MAR</span>
+              <img alt="MAR Logo" className="h-8 mr-2" src="https://static.wixstatic.com/media/783feb_022c93ec55eb4db9bb2365378f1bd877~mv2.png" />
+              <span className="font-bold text-xl">Mapa para Alto Rendimento</span>
             </div>
             <p className="text-slate-400 text-sm">
               Transformando negócios através da inteligência artificial
@@ -26,31 +18,13 @@ export function SiteFooter() {
               tamanhos.
             </p>
             <div className="flex space-x-4 pt-2">
-              <a 
-                href="https://www.facebook.com/crievalor" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="hover:text-blue-400 transition-colors"
-                aria-label="Facebook"
-              >
+              <a href="https://www.facebook.com/crievalor" target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors" aria-label="Facebook">
                 <Facebook size={20} />
               </a>
-              <a 
-                href="https://www.instagram.com/crievalor" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="hover:text-pink-400 transition-colors"
-                aria-label="Instagram"
-              >
+              <a href="https://www.instagram.com/crievalor" target="_blank" rel="noreferrer" className="hover:text-pink-400 transition-colors" aria-label="Instagram">
                 <Instagram size={20} />
               </a>
-              <a 
-                href="https://www.linkedin.com/company/crievalor" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="hover:text-blue-500 transition-colors"
-                aria-label="LinkedIn"
-              >
+              <a href="https://www.linkedin.com/company/crievalor" target="_blank" rel="noreferrer" className="hover:text-blue-500 transition-colors" aria-label="LinkedIn">
                 <Linkedin size={20} />
               </a>
             </div>
@@ -172,6 +146,5 @@ export function SiteFooter() {
           <p>© {currentYear} Crie Valor. Todos os direitos reservados.</p>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 }
