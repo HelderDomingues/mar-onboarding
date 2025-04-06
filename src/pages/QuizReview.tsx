@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { QuizReview as QuizReviewComponent } from "@/components/quiz/QuizReview";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
@@ -142,38 +142,102 @@ const QuizReviewPage = () => {
         data: { userId: user.id }
       });
       
-      // Obter o ID da submissão atual para enviar para o webhook depois
+      // 1. Verificar status atual da submissão
       const { data: submissionData, error: submissionError } = await supabase
         .from('quiz_submissions')
-        .select('id')
+        .select('id, completed')
         .eq('user_id', user.id)
         .maybeSingle();
         
       if (submissionError) {
-        logger.error('Erro ao obter ID da submissão do questionário', {
+        logger.error('Erro ao obter dados da submissão do questionário', {
           tag: 'Quiz',
           data: submissionError
         });
-        throw new Error('Erro ao obter ID da submissão do questionário');
+        throw new Error('Erro ao obter dados da submissão do questionário');
       }
       
       if (!submissionData?.id) {
         throw new Error('Submissão do questionário não encontrada');
       }
       
-      // Completar o questionário usando a função utilitária aprimorada
-      const success = await completeQuizSubmission(user.id);
-      
-      if (!success) {
-        throw new Error("Não foi possível completar o questionário");
+      // Se já estiver completo, apenas redirecionar
+      if (submissionData.completed) {
+        logger.info('Questionário já está finalizado', {
+          tag: 'Quiz', 
+          data: { submissionId: submissionData.id }
+        });
+        
+        toast({
+          title: "Sucesso!",
+          description: "Questionário já estava concluído anteriormente.",
+        });
+        
+        navigate('/dashboard');
+        return;
       }
       
-      logger.info('Questionário finalizado com sucesso', {
-        tag: 'Quiz',
-        data: { userId: user.id, submissionId: submissionData.id }
-      });
+      // 2. Tentar atualização direta (usando admin para garantir)
+      try {
+        const { error: directUpdateError } = await supabaseAdmin
+          .from('quiz_submissions')
+          .update({
+            completed: true,
+            completed_at: new Date().toISOString(),
+            contact_consent: true
+          })
+          .eq('id', submissionData.id);
+        
+        if (directUpdateError) {
+          logger.error('Erro na atualização direta com admin', {
+            tag: 'Quiz',
+            data: directUpdateError
+          });
+          throw directUpdateError;
+        }
+        
+        logger.info('Questionário finalizado com sucesso via atualização direta', {
+          tag: 'Quiz',
+          data: { submissionId: submissionData.id }
+        });
+      } catch (directUpdateError) {
+        // 3. Se falhar, tentar via função RPC
+        logger.warn('Falha na atualização direta, tentando via RPC', {
+          tag: 'Quiz',
+          data: directUpdateError
+        });
+        
+        const success = await completeQuizSubmission(user.id);
+        
+        if (!success) {
+          throw new Error("Não foi possível completar o questionário via RPC");
+        }
+        
+        logger.info('Questionário finalizado com sucesso via RPC', {
+          tag: 'Quiz',
+          data: { userId: user.id, submissionId: submissionData.id }
+        });
+      }
       
-      // Tentar enviar os dados para o webhook
+      // 4. Tentar processar as respostas para formato simplificado
+      try {
+        await supabaseAdmin.rpc('process_quiz_completion', {
+          p_user_id: user.id
+        });
+        
+        logger.info('Respostas processadas para formato simplificado', {
+          tag: 'Quiz',
+          data: { userId: user.id }
+        });
+      } catch (processingError) {
+        // Não falhar se este passo der erro
+        logger.error('Erro ao processar respostas para formato simplificado', {
+          tag: 'Quiz',
+          data: processingError
+        });
+      }
+      
+      // 5. Tentar enviar os dados para o webhook
       try {
         const webhookSuccess = await sendQuizDataToWebhook(submissionData.id);
         
@@ -211,7 +275,7 @@ const QuizReviewPage = () => {
       
       toast({
         title: "Erro ao finalizar questionário",
-        description: "Não foi possível registrar a conclusão do questionário. Por favor, tente novamente.",
+        description: error.message || "Não foi possível registrar a conclusão do questionário. Por favor, tente novamente.",
         variant: "destructive"
       });
     } finally {

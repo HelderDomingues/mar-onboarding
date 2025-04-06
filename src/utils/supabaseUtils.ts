@@ -45,64 +45,68 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       data: { userId }
     });
     
-    // Obter ID da submissão atual para referência em logs
+    // Obter ID da submissão atual
     const { data: submissionData, error: fetchError } = await supabase
       .from('quiz_submissions')
-      .select('id')
+      .select('id, completed')
       .eq('user_id', userId)
       .maybeSingle();
       
     if (fetchError) {
-      logger.error('Erro ao obter ID da submissão antes de completar', {
+      logger.error('Erro ao obter dados da submissão', {
         tag: 'Quiz',
         data: fetchError
       });
+      return false;
     }
     
-    const submissionId = submissionData?.id;
-    logger.info('ID da submissão obtido', {
-      tag: 'Quiz',
-      data: { submissionId }
-    });
+    // Se não encontrou a submissão, falhar
+    if (!submissionData) {
+      logger.error('Submissão não encontrada para o usuário', {
+        tag: 'Quiz',
+        data: { userId }
+      });
+      return false;
+    }
     
-    // Tentativa 1: Via RPC (função SQL específica) - Esta é a mais recomendada
+    // Se já está completada, retornar sucesso imediatamente
+    if (submissionData.completed) {
+      logger.info('Questionário já estava marcado como completo', {
+        tag: 'Quiz',
+        data: { userId, submissionId: submissionData.id }
+      });
+      return true;
+    }
+    
+    // Tentativa 1: Via RPC (função SQL específica)
     try {
       logger.info('Tentando completar questionário via RPC', {
         tag: 'Quiz',
-        data: { userId, submissionId }
+        data: { userId }
       });
       
       const { data, error } = await supabase.rpc('complete_quiz_submission', {
         p_user_id: userId
       });
       
-      if (!error && data) {
+      if (!error) {
         logger.info('Questionário completado com sucesso via RPC', {
           tag: 'Quiz',
-          data: { userId, submissionId, result: data }
+          data: { userId, result: data }
         });
         
-        // Após completar o questionário, vamos processar as respostas para o formato simplificado
+        // Processar respostas para o formato simplificado
         try {
-          const { data: procResult, error: procError } = await supabase
-            .from('quiz_submissions')
-            .select('*')
-            .eq('user_id', userId)
-            .single();
+          await supabaseAdmin.rpc('process_quiz_completion', {
+            p_user_id: userId
+          });
           
-          if (procError) {
-            logger.error('Erro ao processar respostas para formato simplificado', {
-              tag: 'Quiz',
-              data: { error: procError, userId }
-            });
-          } else {
-            logger.info('Respostas processadas com sucesso para formato simplificado', {
-              tag: 'Quiz',
-              data: { userId, result: procResult }
-            });
-          }
+          logger.info('Respostas processadas com sucesso para formato simplificado após RPC', {
+            tag: 'Quiz',
+            data: { userId }
+          });
         } catch (processingException) {
-          logger.error('Exceção ao processar respostas para formato simplificado', {
+          logger.error('Exceção ao processar respostas para formato simplificado após RPC', {
             tag: 'Quiz',
             data: { error: processingException, userId }
           });
@@ -113,82 +117,20 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       
       logger.warn('Falha ao completar questionário via RPC', {
         tag: 'Quiz',
-        data: { error, userId, submissionId }
+        data: { error, userId }
       });
     } catch (rpcAttemptError) {
       logger.error('Exceção ao tentar completar via RPC', {
         tag: 'Quiz',
-        data: { error: rpcAttemptError, userId, submissionId }
+        data: { error: rpcAttemptError, userId }
       });
     }
     
-    // Tentativa 2: Diretamente via cliente normal com RLS
-    try {
-      logger.info('Tentando completar questionário via cliente normal', {
-        tag: 'Quiz',
-        data: { userId, submissionId }
-      });
-      
-      const { error: updateError } = await supabase
-        .from('quiz_submissions')
-        .update({
-          completed: true,
-          completed_at: new Date().toISOString(),
-          contact_consent: true
-        })
-        .eq('user_id', userId);
-      
-      if (!updateError) {
-        logger.info('Questionário completado com sucesso via cliente normal', {
-          tag: 'Quiz',
-          data: { userId, submissionId }
-        });
-        
-        // Processamento manual para o formato simplificado após atualização
-        try {
-          const { data: procResult, error: procError } = await supabase
-            .from('quiz_submissions')
-            .select('*')
-            .eq('user_id', userId)
-            .single();
-          
-          if (procError) {
-            logger.error('Erro ao processar respostas para formato simplificado após atualização', {
-              tag: 'Quiz',
-              data: { error: procError, userId }
-            });
-          } else {
-            logger.info('Respostas processadas com sucesso para formato simplificado após atualização', {
-              tag: 'Quiz',
-              data: { userId, result: procResult }
-            });
-          }
-        } catch (processingException) {
-          logger.error('Exceção ao processar respostas para formato simplificado após atualização', {
-            tag: 'Quiz',
-            data: { error: processingException, userId }
-          });
-        }
-        
-        return true;
-      }
-      
-      logger.error('Falha ao completar questionário via cliente normal', {
-        tag: 'Quiz',
-        data: { updateError, userId, submissionId }
-      });
-    } catch (updateAttemptError) {
-      logger.error('Exceção ao tentar completar via cliente normal', {
-        tag: 'Quiz',
-        data: { error: updateAttemptError, userId, submissionId }
-      });
-    }
-    
-    // Tentativa 3: Via cliente admin (última opção)
+    // Tentativa 2: Diretamente via admin client (mais poder)
     try {
       logger.info('Tentando completar questionário via cliente admin', {
         tag: 'Quiz',
-        data: { userId, submissionId }
+        data: { userId, submissionId: submissionData.id }
       });
       
       const { error: adminError } = await supabaseAdmin
@@ -198,28 +140,26 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
           completed_at: new Date().toISOString(),
           contact_consent: true
         })
-        .eq('user_id', userId);
+        .eq('id', submissionData.id);
       
       if (!adminError) {
         logger.info('Questionário completado com sucesso via cliente admin', {
           tag: 'Quiz',
-          data: { userId, submissionId }
+          data: { userId, submissionId: submissionData.id }
         });
         
-        // Processamento manual para o formato simplificado após atualização admin
+        // Processar respostas para o formato simplificado após atualização
         try {
-          const { data: procResult, error: procError } = await supabaseAdmin
-            .from('quiz_submissions')
-            .select('*')
-            .eq('user_id', userId)
-            .single();
+          await supabaseAdmin.rpc('process_quiz_completion', {
+            p_user_id: userId
+          });
           
-          logger.info('Respostas processadas com sucesso para formato simplificado após atualização admin', {
+          logger.info('Respostas processadas com sucesso após atualização admin', {
             tag: 'Quiz',
             data: { userId }
           });
         } catch (processingException) {
-          logger.error('Exceção ao processar respostas para formato simplificado após atualização admin', {
+          logger.error('Exceção ao processar respostas após atualização admin', {
             tag: 'Quiz',
             data: { error: processingException, userId }
           });
@@ -228,15 +168,50 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
         return true;
       }
       
-      logger.error('Todos os métodos falharam ao completar questionário', {
+      logger.error('Falha ao completar questionário via cliente admin', {
         tag: 'Quiz',
-        data: { adminError, userId, submissionId }
+        data: { adminError, userId, submissionId: submissionData.id }
       });
-      return false;
     } catch (adminAttemptError) {
       logger.error('Exceção ao tentar completar via cliente admin', {
         tag: 'Quiz',
-        data: { error: adminAttemptError, userId, submissionId }
+        data: { error: adminAttemptError, userId }
+      });
+    }
+    
+    // Tentativa 3: Atualização direta SQL via RPC
+    try {
+      logger.info('Tentando completar via SQL direto', {
+        tag: 'Quiz', 
+        data: { userId }
+      });
+      
+      // Usar uma consulta SQL genérica para atualizar diretamente
+      const { error: sqlError } = await supabaseAdmin.rpc('execute_sql', {
+        sql_query: `UPDATE public.quiz_submissions 
+                    SET completed = true, 
+                        completed_at = now(), 
+                        contact_consent = true 
+                    WHERE user_id = '${userId}'`
+      });
+      
+      if (!sqlError) {
+        logger.info('Questionário completado com sucesso via SQL direto', {
+          tag: 'Quiz',
+          data: { userId }
+        });
+        return true;
+      }
+      
+      logger.error('Todos os métodos falharam ao completar questionário', {
+        tag: 'Quiz',
+        data: { sqlError, userId, submissionId: submissionData.id }
+      });
+      return false;
+    } catch (sqlAttemptError) {
+      logger.error('Exceção ao tentar SQL direto', {
+        tag: 'Quiz', 
+        data: { error: sqlAttemptError, userId }
       });
       return false;
     }
@@ -471,9 +446,9 @@ export const hasSimplifiedAnswers = async (userId: string): Promise<boolean> => 
       .from('quiz_respostas_completas')
       .select('user_id')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
       
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       logger.error('Erro ao verificar respostas simplificadas', {
         tag: 'Quiz',
         data: error
@@ -498,27 +473,124 @@ export const hasSimplifiedAnswers = async (userId: string): Promise<boolean> => 
  */
 export const processQuizAnswersToSimplified = async (userId: string): Promise<boolean> => {
   try {
-    // Usando SQL para chamar a função no backend sem depender dos tipos TypeScript
-    const { data, error } = await supabase
-      .from('quiz_submissions')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-    
-    if (error) {
-      logger.error('Erro ao processar respostas para formato simplificado', {
-        tag: 'Quiz',
-        data: { error, userId }
+    // Tentar chamar a função RPC que processa as respostas
+    try {
+      await supabaseAdmin.rpc('process_quiz_completion', {
+        p_user_id: userId
       });
-      return false;
+      
+      logger.info('Respostas processadas com sucesso para formato simplificado via RPC', {
+        tag: 'Quiz',
+        data: { userId }
+      });
+      
+      return true;
+    } catch (rpcError) {
+      logger.error('Erro ao processar respostas via RPC', {
+        tag: 'Quiz',
+        data: { error: rpcError, userId }
+      });
+      
+      // Se falhar, tentar fazer manualmente (análise de fallback)
+      const { data: submissionData, error: submissionError } = await supabase
+        .from('quiz_submissions')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (submissionError || !submissionData) {
+        logger.error('Erro ao buscar submissão para processamento manual', {
+          tag: 'Quiz',
+          data: { error: submissionError, userId }
+        });
+        return false;
+      }
+      
+      // Verificar se já existe um registro em quiz_respostas_completas
+      const { data: existingData, error: existingError } = await supabase
+        .from('quiz_respostas_completas')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (existingError) {
+        logger.error('Erro ao verificar existência de registro simplificado', {
+          tag: 'Quiz',
+          data: { error: existingError, userId }
+        });
+      }
+      
+      // Se já existir, apenas atualizar o status de completado
+      if (existingData?.id) {
+        const { error: updateError } = await supabaseAdmin
+          .from('quiz_respostas_completas')
+          .update({
+            completed: submissionData.completed,
+            completed_at: submissionData.completed_at,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingData.id);
+        
+        if (updateError) {
+          logger.error('Erro ao atualizar registro simplificado existente', {
+            tag: 'Quiz',
+            data: { error: updateError, userId }
+          });
+          return false;
+        }
+        
+        logger.info('Registro simplificado atualizado com sucesso', {
+          tag: 'Quiz',
+          data: { userId }
+        });
+        
+        return true;
+      }
+      
+      // Caso contrário, criar um novo registro básico
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !userData.user) {
+        logger.error('Erro ao obter dados do usuário para processamento manual', {
+          tag: 'Quiz',
+          data: { error: userError, userId }
+        });
+        return false;
+      }
+      
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name, company_name')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      const { error: insertError } = await supabaseAdmin
+        .from('quiz_respostas_completas')
+        .insert({
+          user_id: userId,
+          submission_id: submissionData.id,
+          email: userData.user.email,
+          full_name: profileData?.full_name || '',
+          company_name: profileData?.company_name || '',
+          completed: submissionData.completed,
+          completed_at: submissionData.completed_at
+        });
+      
+      if (insertError) {
+        logger.error('Erro ao inserir registro simplificado manual', {
+          tag: 'Quiz',
+          data: { error: insertError, userId }
+        });
+        return false;
+      }
+      
+      logger.info('Registro simplificado básico criado manualmente', {
+        tag: 'Quiz',
+        data: { userId }
+      });
+      
+      return true;
     }
-    
-    logger.info('Respostas processadas com sucesso para formato simplificado', {
-      tag: 'Quiz',
-      data: { userId, resultData: data }
-    });
-    
-    return true;
   } catch (error) {
     logger.error('Exceção ao processar respostas para formato simplificado', {
       tag: 'Quiz',

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ export function QuizReview({
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [editedAnswers, setEditedAnswers] = useState<Record<string, string | string[]>>({
     ...answers
   });
@@ -177,6 +179,7 @@ export function QuizReview({
     if (isSubmitting) return;
     
     setIsSubmitting(true);
+    setSubmissionError(null);
     
     try {
       setConfirmed(true);
@@ -197,14 +200,65 @@ export function QuizReview({
     if (isSubmitting) return;
     
     setIsSubmitting(true);
+    setSubmissionError(null);
     
     try {
-      await onComplete();
-    } catch (error) {
+      // Verificar status da submissão atual
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) {
+        throw new Error("Usuário não autenticado");
+      }
+      
+      const { data: submissionData, error: submissionError } = await supabase
+        .from('quiz_submissions')
+        .select('id, completed')
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      if (submissionError) {
+        console.error("Erro ao verificar submissão:", submissionError);
+        throw new Error(`Erro ao verificar status da submissão: ${submissionError.message}`);
+      }
+      
+      if (!submissionData) {
+        throw new Error("Nenhuma submissão encontrada para este usuário");
+      }
+      
+      if (submissionData.completed) {
+        // A submissão já está marcada como completa
+        console.log("Questionário já estava marcado como completo");
+        await onComplete();
+        return;
+      }
+      
+      // Tentativa direta via cliente normal
+      console.log("Tentando marcar como completo via cliente normal");
+      const { error: updateError } = await supabase
+        .from('quiz_submissions')
+        .update({
+          completed: true,
+          completed_at: new Date().toISOString(),
+          contact_consent: true
+        })
+        .eq('id', submissionData.id);
+      
+      if (updateError) {
+        console.error("Erro na atualização direta:", updateError);
+        setSubmissionError(`Erro na atualização: ${updateError.message}`);
+        
+        // Se falhar, tentar através da função onComplete que usa o admin client
+        console.log("Tentando método alternativo via prop onComplete");
+        await onComplete();
+      } else {
+        console.log("Questionário marcado como completo com sucesso");
+        await onComplete();
+      }
+    } catch (error: any) {
       console.error("Erro na finalização:", error);
+      setSubmissionError(error.message || "Erro desconhecido ao finalizar questionário");
       toast({
         title: "Erro ao finalizar questionário",
-        description: "Não foi possível finalizar o questionário. Por favor, tente novamente.",
+        description: error.message || "Não foi possível finalizar o questionário. Por favor, tente novamente.",
         variant: "destructive"
       });
       setConfirmed(false);
@@ -241,7 +295,12 @@ export function QuizReview({
         
       case 'checkbox':
       case 'radio':
-        const options = question.options?.map(opt => opt.text) || [];
+        const options = question.options?.map(opt => opt.id) || [];
+        const optionTexts = question.options?.reduce((acc, opt) => {
+          acc[opt.id] = opt.text;
+          return acc;
+        }, {} as Record<string, string>) || {};
+        
         let selectedOptions: string[] = [];
         
         if (Array.isArray(answer)) {
@@ -271,7 +330,7 @@ export function QuizReview({
                 htmlFor={`${questionId}-${option}`} 
                 className="text-sm font-medium leading-none cursor-pointer text-slate-800"
               >
-                {option}
+                {optionTexts[option] || option}
               </label>
             </div>
           ))}
@@ -444,6 +503,14 @@ export function QuizReview({
             <p className="mb-4 text-center text-[hsl(var(--quiz-text))]">
               Suas respostas foram validadas com sucesso. Clique abaixo para concluir o questionário.
             </p>
+            
+            {submissionError && (
+              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded text-sm text-red-200">
+                <p className="font-semibold mb-1">Detalhes do erro:</p>
+                <p>{submissionError}</p>
+                <p className="mt-2 text-xs">Tente novamente ou entre em contato com o suporte.</p>
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex justify-center">
             <Button 
