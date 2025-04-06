@@ -6,7 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { QuizModule, QuizQuestion } from "@/types/quiz";
+import { QuizModule, QuizQuestion, QuizOption } from "@/types/quiz";
 import { processQuizAnswersToSimplified } from "@/utils/supabaseUtils";
 import { logger } from "@/utils/logger";
 
@@ -65,9 +65,16 @@ export function QuizViewAnswers() {
         if (answersError) throw answersError;
         
         // Processar dados
-        const questionsWithOptions = questionsData.map(question => {
+        const questionsWithOptions: QuizQuestion[] = questionsData.map(question => {
+          // Garantir que o tipo seja um dos valores aceitos pela interface QuizQuestion
+          const validType = validateQuestionType(question.type);
+          
           const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
-          return { ...question, options };
+          return { 
+            ...question, 
+            type: validType,
+            options: options as QuizOption[] 
+          };
         });
         
         const answerMap: Record<string, string | string[]> = {};
@@ -122,6 +129,12 @@ export function QuizViewAnswers() {
     
     fetchData();
   }, [user, toast]);
+
+  // Função auxiliar para validar o tipo da questão
+  const validateQuestionType = (type: string): QuizQuestion['type'] => {
+    const validTypes: QuizQuestion['type'][] = ['text', 'number', 'email', 'radio', 'checkbox', 'textarea', 'select', 'url', 'instagram'];
+    return validTypes.includes(type as any) ? (type as QuizQuestion['type']) : 'text';
+  };
 
   const renderAnswer = (question: QuizQuestion, answer: string | string[]) => {
     if (!answer || (Array.isArray(answer) && answer.length === 0)) {
