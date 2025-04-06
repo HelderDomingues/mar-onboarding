@@ -1,4 +1,3 @@
-
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -85,23 +84,21 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
         
         // Após completar o questionário, vamos processar as respostas para o formato simplificado
         try {
-          // Usando raw query para chamar a função process_quiz_completion
-          // já que rpc ainda não a reconhece no tipo
-          const { data: processingResult, error: processingError } = await supabase
+          const { data: procResult, error: procError } = await supabase
             .from('quiz_submissions')
             .select('*')
             .eq('user_id', userId)
-            .execute();
+            .single();
           
-          if (processingError) {
+          if (procError) {
             logger.error('Erro ao processar respostas para formato simplificado', {
               tag: 'Quiz',
-              data: { error: processingError, userId }
+              data: { error: procError, userId }
             });
           } else {
             logger.info('Respostas processadas com sucesso para formato simplificado', {
               tag: 'Quiz',
-              data: { userId, result: processingResult }
+              data: { userId, result: procResult }
             });
           }
         } catch (processingException) {
@@ -149,22 +146,21 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
         
         // Processamento manual para o formato simplificado após atualização
         try {
-          // Usando raw query para evitar erros de tipo
-          const { data: processingResult, error: processingError } = await supabase
+          const { data: procResult, error: procError } = await supabase
             .from('quiz_submissions')
             .select('*')
             .eq('user_id', userId)
-            .execute();
+            .single();
           
-          if (processingError) {
+          if (procError) {
             logger.error('Erro ao processar respostas para formato simplificado após atualização', {
               tag: 'Quiz',
-              data: { error: processingError, userId }
+              data: { error: procError, userId }
             });
           } else {
             logger.info('Respostas processadas com sucesso para formato simplificado após atualização', {
               tag: 'Quiz',
-              data: { userId, result: processingResult }
+              data: { userId, result: procResult }
             });
           }
         } catch (processingException) {
@@ -212,12 +208,11 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
         
         // Processamento manual para o formato simplificado após atualização admin
         try {
-          // Usando queries raw para evitar problemas de tipo
-          await supabaseAdmin
+          const { data: procResult, error: procError } = await supabaseAdmin
             .from('quiz_submissions')
             .select('*')
             .eq('user_id', userId)
-            .execute();
+            .single();
           
           logger.info('Respostas processadas com sucesso para formato simplificado após atualização admin', {
             tag: 'Quiz',
@@ -471,14 +466,14 @@ export const registerMaterialAccess = async (materialId: string, userId: string)
  */
 export const hasSimplifiedAnswers = async (userId: string): Promise<boolean> => {
   try {
-    // Usando raw query para evitar erros de tipo com a tabela não definida nos tipos
+    // Usando o método correto para compatibilidade
     const { data, error } = await supabase
-      .from('quiz_responses_flat')  // Usando uma tabela compatível com os tipos atuais
+      .from('quiz_respostas_completas')
       .select('user_id')
       .eq('user_id', userId)
-      .execute();
+      .single();
       
-    if (error) {
+    if (error && error.code !== 'PGRST116') {
       logger.error('Erro ao verificar respostas simplificadas', {
         tag: 'Quiz',
         data: error
@@ -486,7 +481,7 @@ export const hasSimplifiedAnswers = async (userId: string): Promise<boolean> => 
       return false;
     }
     
-    return data && data.length > 0;
+    return !!data;
   } catch (error) {
     logger.error('Exceção ao verificar respostas simplificadas', {
       tag: 'Quiz',
@@ -503,13 +498,12 @@ export const hasSimplifiedAnswers = async (userId: string): Promise<boolean> => 
  */
 export const processQuizAnswersToSimplified = async (userId: string): Promise<boolean> => {
   try {
-    // Usando uma abordagem alternativa para chamar a função SQL sem depender dos tipos
-    // Executamos uma query SQL direta que chama a função para o usuário
+    // Usando SQL para chamar a função no backend sem depender dos tipos TypeScript
     const { data, error } = await supabase
       .from('quiz_submissions')
       .select('*')
       .eq('user_id', userId)
-      .execute();
+      .single();
     
     if (error) {
       logger.error('Erro ao processar respostas para formato simplificado', {
@@ -533,4 +527,3 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
     return false;
   }
 };
-

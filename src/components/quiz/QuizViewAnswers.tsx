@@ -1,234 +1,231 @@
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { QuizModule, QuizQuestion, QuizAnswer } from "@/types/quiz";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
+import { QuizModule, QuizQuestion } from "@/types/quiz";
+import { processQuizAnswersToSimplified } from "@/utils/supabaseUtils";
+import { logger } from "@/utils/logger";
 
 export function QuizViewAnswers() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [modules, setModules] = useState<QuizModule[]>([]);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [expandedModule, setExpandedModule] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) {
-      fetchQuizData();
-    }
-  }, [user]);
-
-  const fetchQuizData = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
-    try {
-      // Buscar módulos
-      const { data: modulesData, error: modulesError } = await supabase
-        .from('quiz_modules')
-        .select('*')
-        .order('order_number');
-
-      if (modulesError) throw modulesError;
+    async function fetchData() {
+      if (!user) return;
       
-      // Buscar perguntas
-      const { data: questionsData, error: questionsError } = await supabase
-        .from('quiz_questions')
-        .select('*')
-        .order('order_number');
-
-      if (questionsError) throw questionsError;
-      
-      // Buscar opções
-      const { data: optionsData, error: optionsError } = await supabase
-        .from('quiz_options')
-        .select('*')
-        .order('order_number');
-
-      if (optionsError) throw optionsError;
-      
-      // Buscar respostas do usuário
-      const { data: answersData, error: answersError } = await supabase
-        .from('quiz_answers')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (answersError) throw answersError;
-      
-      // Processar perguntas com suas opções
-      const questionsWithOptions = questionsData.map(question => {
-        const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
-        return { ...question, options } as unknown as QuizQuestion;
-      });
-      
-      // Processar respostas
-      const processedAnswers: Record<string, string | string[]> = {};
-      
-      if (answersData && answersData.length > 0) {
-        console.log("Respostas carregadas:", answersData);
+      setIsLoading(true);
+      try {
+        logger.info('Buscando dados para exibir respostas do questionário', {
+          tag: 'QuizAnswers',
+          data: { userId: user.id }
+        });
         
-        answersData.forEach(ans => {
-          if (ans.answer !== null && ans.answer !== undefined) {
-            const questionType = questionsWithOptions.find(q => q.id === ans.question_id)?.type;
+        // Processar respostas para o formato simplificado caso necessário
+        await processQuizAnswersToSimplified(user.id);
+        
+        // Buscar módulos
+        const { data: modulesData, error: modulesError } = await supabase
+          .from('quiz_modules')
+          .select('*')
+          .order('order_number');
+        
+        if (modulesError) throw modulesError;
+        
+        // Buscar perguntas com opções
+        const { data: questionsData, error: questionsError } = await supabase
+          .from('quiz_questions')
+          .select('*')
+          .order('order_number');
+          
+        if (questionsError) throw questionsError;
+        
+        const { data: optionsData, error: optionsError } = await supabase
+          .from('quiz_options')
+          .select('*')
+          .order('order_number');
+          
+        if (optionsError) throw optionsError;
+        
+        // Buscar respostas do usuário
+        const { data: answersData, error: answersError } = await supabase
+          .from('quiz_answers')
+          .select('question_id, answer')
+          .eq('user_id', user.id);
+          
+        if (answersError) throw answersError;
+        
+        // Processar dados
+        const questionsWithOptions = questionsData.map(question => {
+          const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
+          return { ...question, options };
+        });
+        
+        const answerMap: Record<string, string | string[]> = {};
+        
+        if (answersData) {
+          answersData.forEach(answer => {
+            const questionType = questionsWithOptions.find(q => q.id === answer.question_id)?.type;
             
-            if (questionType === 'checkbox') {
+            if (questionType === 'checkbox' && answer.answer) {
               try {
-                // Para checkbox, tentamos interpretar como array JSON
-                const parsed = JSON.parse(ans.answer);
-                processedAnswers[ans.question_id] = Array.isArray(parsed) ? parsed : [ans.answer];
+                answerMap[answer.question_id] = JSON.parse(answer.answer);
               } catch (e) {
-                // Se falhar ao analisar JSON, tratamos como uma string única
-                processedAnswers[ans.question_id] = ans.answer;
+                answerMap[answer.question_id] = answer.answer || '';
               }
             } else {
-              processedAnswers[ans.question_id] = ans.answer;
+              answerMap[answer.question_id] = answer.answer || '';
             }
-          } else {
-            processedAnswers[ans.question_id] = "";
+          });
+        }
+        
+        setModules(modulesData);
+        setQuestions(questionsWithOptions);
+        setAnswers(answerMap);
+        
+        if (modulesData.length > 0) {
+          setExpandedModule(modulesData[0].id);
+        }
+        
+        logger.info('Dados carregados com sucesso', {
+          tag: 'QuizAnswers',
+          data: { 
+            modulesCount: modulesData.length, 
+            questionsCount: questionsWithOptions.length,
+            answersCount: Object.keys(answerMap).length
           }
         });
-      }
-      
-      console.log("Respostas processadas:", processedAnswers);
-      
-      setModules(modulesData as unknown as QuizModule[]);
-      setQuestions(questionsWithOptions);
-      setAnswers(processedAnswers);
-      setError(null);
-    } catch (error: any) {
-      console.error("Erro ao buscar dados do questionário:", error);
-      setError("Não foi possível carregar os dados. Por favor, tente novamente.");
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar suas respostas do questionário.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const formatAnswerValue = (value: any): string => {
-    if (value === null || value === undefined) {
-      return "Sem resposta";
-    }
-    
-    if (Array.isArray(value)) {
-      return value.join(", ");
-    }
-    
-    if (typeof value === "string") {
-      // Verifica se é um JSON string e tenta converter para array
-      try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) {
-          return parsed.join(", ");
-        }
-        return String(parsed);
-      } catch (e) {
-        // Se não for um JSON válido, retorna a string original
-        return value;
+      } catch (error: any) {
+        logger.error('Erro ao buscar dados do questionário', {
+          tag: 'QuizAnswers',
+          data: error
+        });
+        
+        toast({
+          title: "Erro ao carregar respostas",
+          description: "Não foi possível carregar suas respostas. Por favor, tente novamente.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
       }
     }
     
-    // Para outros tipos, converte para string
-    return String(value);
-  };
+    fetchData();
+  }, [user, toast]);
 
-  const exportAnswers = () => {
-    // Implementação para exportar respostas (PDF, CSV, etc.)
-    toast({
-      title: "Exportação em desenvolvimento",
-      description: "Esta funcionalidade estará disponível em breve."
-    });
+  const renderAnswer = (question: QuizQuestion, answer: string | string[]) => {
+    if (!answer || (Array.isArray(answer) && answer.length === 0)) {
+      return <span className="text-gray-400 italic">Não respondido</span>;
+    }
+
+    if (question.type === 'checkbox' && Array.isArray(answer)) {
+      return (
+        <ul className="list-disc ml-5 space-y-1">
+          {answer.map((option, idx) => {
+            const optionText = question.options?.find(opt => opt.id === option)?.text || option;
+            return <li key={idx}>{optionText}</li>;
+          })}
+        </ul>
+      );
+    } else if (question.type === 'radio') {
+      const optionText = question.options?.find(opt => opt.id === answer)?.text || answer;
+      return <span>{optionText}</span>;
+    } else if (question.type === 'textarea') {
+      return <div className="whitespace-pre-wrap">{answer}</div>;
+    } else if (question.type === 'instagram') {
+      return (
+        <a 
+          href={`https://instagram.com/${answer}`} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline"
+        >
+          @{answer}
+        </a>
+      );
+    } else if (question.type === 'url') {
+      return (
+        <a 
+          href={answer.toString()} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline"
+        >
+          {answer}
+        </a>
+      );
+    }
+
+    return <span>{answer}</span>;
   };
 
   if (isLoading) {
     return (
-      <div className="w-full flex flex-col items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
-        <p className="text-slate-600">Carregando suas respostas...</p>
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
-
-  if (error) {
-    return (
-      <div className="w-full text-center p-8">
-        <h2 className="text-xl font-bold text-red-600 mb-2">Erro ao carregar respostas</h2>
-        <p className="text-slate-600 mb-4">{error}</p>
-        <Button onClick={fetchQuizData}>Tentar novamente</Button>
-      </div>
-    );
-  }
-
-  const questionsByModule = modules.map(module => ({
-    module,
-    questions: questions.filter(q => q.module_id === module.id)
-  }));
 
   return (
-    <div className="w-full space-y-6 max-w-3xl mx-auto">
-      <Card className="shadow-sm">
-        <CardHeader className="px-6 py-5 flex flex-row items-center justify-between">
-          <CardTitle className="text-xl">Minhas Respostas</CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={exportAnswers}
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Exportar
-          </Button>
-        </CardHeader>
-        
-        <CardContent className="px-6 pb-6">
-          {questionsByModule.length === 0 ? (
-            <p className="text-center text-slate-600 py-8">Nenhuma resposta encontrada.</p>
-          ) : (
-            <div className="space-y-8">
-              {questionsByModule.map((moduleData, moduleIndex) => (
-                <div 
-                  key={moduleData.module.id} 
-                  className="border border-slate-200 rounded-lg p-4"
-                >
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Badge variant="outline" className="bg-blue-50">
-                      Módulo {moduleIndex + 1}
-                    </Badge>
-                    {moduleData.module.title}
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    {moduleData.questions.map((question) => {
-                      const answer = answers[question.id];
-                      
-                      return (
-                        <div 
-                          key={question.id} 
-                          className="border-t border-slate-100 pt-3"
-                        >
-                          <p className="font-medium text-slate-800">{question.text}</p>
-                          <p className="text-slate-600 mt-1">
-                            {formatAnswerValue(answer)}
-                          </p>
-                        </div>
-                      );
-                    })}
+    <div className="space-y-8 pb-8">
+      {modules.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-gray-500">
+              Não foram encontradas respostas para o questionário.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Accordion 
+          type="single" 
+          collapsible 
+          value={expandedModule || undefined}
+          onValueChange={(value) => setExpandedModule(value)}
+        >
+          {modules.map((module) => {
+            const moduleQuestions = questions.filter(q => q.module_id === module.id);
+            
+            return (
+              <AccordionItem key={module.id} value={module.id} className="border rounded-lg px-1 mb-4">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                  <div className="flex items-center justify-between w-full">
+                    <span className="font-medium text-lg">Módulo {module.order_number}: {module.title}</span>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4 pt-2">
+                  <div className="space-y-6">
+                    {moduleQuestions.length === 0 ? (
+                      <p className="text-gray-500 italic">Não há perguntas neste módulo.</p>
+                    ) : (
+                      moduleQuestions.map((question) => (
+                        <div key={question.id} className="space-y-2">
+                          <h4 className="font-medium text-gray-800">{question.text}</h4>
+                          <div className="pl-4 pb-2 pt-1 border-l-2 border-gray-200">
+                            {renderAnswer(question, answers[question.id] || '')}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      )}
     </div>
   );
 }
