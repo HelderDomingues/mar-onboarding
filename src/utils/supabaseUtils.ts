@@ -1,3 +1,4 @@
+
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -179,39 +180,47 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       });
     }
     
-    // Tentativa 3: Atualização direta SQL via RPC
+    // Tentativa 3: Atualização direta via função RPC de propósito específico
     try {
-      logger.info('Tentando completar via SQL direto', {
+      logger.info('Tentando completar via métodos alternativos', {
         tag: 'Quiz', 
         data: { userId }
       });
       
-      // Usar uma consulta SQL genérica para atualizar diretamente
-      const { error: sqlError } = await supabaseAdmin.rpc('execute_sql', {
-        sql_query: `UPDATE public.quiz_submissions 
-                    SET completed = true, 
-                        completed_at = now(), 
-                        contact_consent = true 
-                    WHERE user_id = '${userId}'`
-      });
+      // Tentar através do método INSERT no modo UPSERT
+      const { error: upsertError } = await supabaseAdmin
+        .from('quiz_submissions')
+        .upsert({
+          id: submissionData.id,
+          user_id: userId,
+          completed: true,
+          completed_at: new Date().toISOString(),
+          contact_consent: true
+        });
       
-      if (!sqlError) {
-        logger.info('Questionário completado com sucesso via SQL direto', {
+      if (!upsertError) {
+        logger.info('Questionário completado com sucesso via upsert', {
           tag: 'Quiz',
           data: { userId }
         });
+        
+        // Processar respostas para formato simplificado
+        await supabaseAdmin.rpc('process_quiz_completion', {
+          p_user_id: userId
+        });
+        
         return true;
       }
       
       logger.error('Todos os métodos falharam ao completar questionário', {
         tag: 'Quiz',
-        data: { sqlError, userId, submissionId: submissionData.id }
+        data: { upsertError, userId, submissionId: submissionData.id }
       });
       return false;
-    } catch (sqlAttemptError) {
-      logger.error('Exceção ao tentar SQL direto', {
+    } catch (finalAttemptError) {
+      logger.error('Exceção ao tentar métodos alternativos', {
         tag: 'Quiz', 
-        data: { error: sqlAttemptError, userId }
+        data: { error: finalAttemptError, userId }
       });
       return false;
     }
