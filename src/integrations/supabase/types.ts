@@ -233,6 +233,7 @@ export type Database = {
           created_at: string
           id: string
           question_id: string
+          question_text: string | null
           updated_at: string
           user_id: string
         }
@@ -241,6 +242,7 @@ export type Database = {
           created_at?: string
           id?: string
           question_id: string
+          question_text?: string | null
           updated_at?: string
           user_id: string
         }
@@ -249,6 +251,7 @@ export type Database = {
           created_at?: string
           id?: string
           question_id?: string
+          question_text?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -266,6 +269,34 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "quiz_responses_flat"
             referencedColumns: ["question_id"]
+          },
+          {
+            foreignKeyName: "quiz_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_submission_details"
+            referencedColumns: ["question_id"]
+          },
+          {
+            foreignKeyName: "quiz_answers_question_text_fkey"
+            columns: ["question_text"]
+            isOneToOne: true
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["text"]
+          },
+          {
+            foreignKeyName: "quiz_answers_question_text_fkey"
+            columns: ["question_text"]
+            isOneToOne: true
+            referencedRelation: "quiz_responses_flat"
+            referencedColumns: ["question_text"]
+          },
+          {
+            foreignKeyName: "quiz_answers_question_text_fkey"
+            columns: ["question_text"]
+            isOneToOne: true
+            referencedRelation: "quiz_submission_details"
+            referencedColumns: ["question_text"]
           },
         ]
       }
@@ -336,6 +367,13 @@ export type Database = {
             referencedRelation: "quiz_responses_flat"
             referencedColumns: ["question_id"]
           },
+          {
+            foreignKeyName: "quiz_options_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_submission_details"
+            referencedColumns: ["question_id"]
+          },
         ]
       }
       quiz_questions: {
@@ -346,7 +384,7 @@ export type Database = {
           module_id: string
           order_number: number
           required: boolean
-          text: string
+          text: string | null
           type: string
           updated_at: string
         }
@@ -357,7 +395,7 @@ export type Database = {
           module_id: string
           order_number: number
           required?: boolean
-          text: string
+          text?: string | null
           type: string
           updated_at?: string
         }
@@ -368,7 +406,7 @@ export type Database = {
           module_id?: string
           order_number?: number
           required?: boolean
-          text?: string
+          text?: string | null
           type?: string
           updated_at?: string
         }
@@ -382,12 +420,170 @@ export type Database = {
           },
         ]
       }
+      quiz_respostas_completas: {
+        Row: {
+          company_name: string | null
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          m1_cargo: string | null
+          m1_email: string | null
+          m1_empresa: string | null
+          m1_nome: string | null
+          m1_telefone: string | null
+          m2_faturamento: string | null
+          m2_funcionarios: string | null
+          m2_localizacao: string | null
+          m2_segmento: string | null
+          m2_site: string | null
+          m2_tempo_atuacao: string | null
+          m3_instagram_concorrente_a: string | null
+          m3_instagram_concorrente_b: string | null
+          m3_instagram_concorrente_c: string | null
+          m3_instagram_empresa: string | null
+          m3_presenca_digital: string | null
+          m3_principais_canais: string | null
+          m4_acoes_marketing: string | null
+          m4_atuais_campanhas: string | null
+          m4_desafios_atuais: string | null
+          m4_investimento_marketing: string | null
+          m5_canais_vendas: string | null
+          m5_equipe_comercial: string | null
+          m5_estrategia_comercial: string | null
+          m5_metas_vendas: string | null
+          m5_processo_vendas: string | null
+          m5_sistema_crm: string | null
+          m6_expectativas: string | null
+          m6_prazo_resultados: string | null
+          m6_principais_desafios: string | null
+          m6_resultados_esperados: string | null
+          m7_como_conheceu: string | null
+          m7_detalhes_adicionais: string | null
+          m7_preferencia_contato: string | null
+          submission_id: string | null
+          updated_at: string | null
+          user_id: string
+          webhook_processed: boolean | null
+        }
+        Insert: {
+          company_name?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          m1_cargo?: string | null
+          m1_email?: string | null
+          m1_empresa?: string | null
+          m1_nome?: string | null
+          m1_telefone?: string | null
+          m2_faturamento?: string | null
+          m2_funcionarios?: string | null
+          m2_localizacao?: string | null
+          m2_segmento?: string | null
+          m2_site?: string | null
+          m2_tempo_atuacao?: string | null
+          m3_instagram_concorrente_a?: string | null
+          m3_instagram_concorrente_b?: string | null
+          m3_instagram_concorrente_c?: string | null
+          m3_instagram_empresa?: string | null
+          m3_presenca_digital?: string | null
+          m3_principais_canais?: string | null
+          m4_acoes_marketing?: string | null
+          m4_atuais_campanhas?: string | null
+          m4_desafios_atuais?: string | null
+          m4_investimento_marketing?: string | null
+          m5_canais_vendas?: string | null
+          m5_equipe_comercial?: string | null
+          m5_estrategia_comercial?: string | null
+          m5_metas_vendas?: string | null
+          m5_processo_vendas?: string | null
+          m5_sistema_crm?: string | null
+          m6_expectativas?: string | null
+          m6_prazo_resultados?: string | null
+          m6_principais_desafios?: string | null
+          m6_resultados_esperados?: string | null
+          m7_como_conheceu?: string | null
+          m7_detalhes_adicionais?: string | null
+          m7_preferencia_contato?: string | null
+          submission_id?: string | null
+          updated_at?: string | null
+          user_id: string
+          webhook_processed?: boolean | null
+        }
+        Update: {
+          company_name?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          m1_cargo?: string | null
+          m1_email?: string | null
+          m1_empresa?: string | null
+          m1_nome?: string | null
+          m1_telefone?: string | null
+          m2_faturamento?: string | null
+          m2_funcionarios?: string | null
+          m2_localizacao?: string | null
+          m2_segmento?: string | null
+          m2_site?: string | null
+          m2_tempo_atuacao?: string | null
+          m3_instagram_concorrente_a?: string | null
+          m3_instagram_concorrente_b?: string | null
+          m3_instagram_concorrente_c?: string | null
+          m3_instagram_empresa?: string | null
+          m3_presenca_digital?: string | null
+          m3_principais_canais?: string | null
+          m4_acoes_marketing?: string | null
+          m4_atuais_campanhas?: string | null
+          m4_desafios_atuais?: string | null
+          m4_investimento_marketing?: string | null
+          m5_canais_vendas?: string | null
+          m5_equipe_comercial?: string | null
+          m5_estrategia_comercial?: string | null
+          m5_metas_vendas?: string | null
+          m5_processo_vendas?: string | null
+          m5_sistema_crm?: string | null
+          m6_expectativas?: string | null
+          m6_prazo_resultados?: string | null
+          m6_principais_desafios?: string | null
+          m6_resultados_esperados?: string | null
+          m7_como_conheceu?: string | null
+          m7_detalhes_adicionais?: string | null
+          m7_preferencia_contato?: string | null
+          submission_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+          webhook_processed?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_respostas_completas_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_responses_flat"
+            referencedColumns: ["submission_id"]
+          },
+          {
+            foreignKeyName: "quiz_respostas_completas_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_submissions: {
         Row: {
           completed: boolean
           completed_at: string | null
           contact_consent: boolean
-          contact_preference: string | null
           created_at: string
           current_module: number
           email: string | null
@@ -401,7 +597,6 @@ export type Database = {
           completed?: boolean
           completed_at?: string | null
           contact_consent?: boolean
-          contact_preference?: string | null
           created_at?: string
           current_module?: number
           email?: string | null
@@ -415,7 +610,6 @@ export type Database = {
           completed?: boolean
           completed_at?: string | null
           contact_consent?: boolean
-          contact_preference?: string | null
           created_at?: string
           current_module?: number
           email?: string | null
@@ -571,6 +765,42 @@ export type Database = {
         }
         Relationships: []
       }
+      wrappers_fdw_stats: {
+        Row: {
+          bytes_in: number | null
+          bytes_out: number | null
+          create_times: number | null
+          created_at: string
+          fdw_name: string
+          metadata: Json | null
+          rows_in: number | null
+          rows_out: number | null
+          updated_at: string
+        }
+        Insert: {
+          bytes_in?: number | null
+          bytes_out?: number | null
+          create_times?: number | null
+          created_at?: string
+          fdw_name: string
+          metadata?: Json | null
+          rows_in?: number | null
+          rows_out?: number | null
+          updated_at?: string
+        }
+        Update: {
+          bytes_in?: number | null
+          bytes_out?: number | null
+          create_times?: number | null
+          created_at?: string
+          fdw_name?: string
+          metadata?: Json | null
+          rows_in?: number | null
+          rows_out?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       quiz_responses_flat: {
@@ -590,8 +820,77 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_submission_details: {
+        Row: {
+          answer: string | null
+          question_id: string | null
+          question_text: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      airtable_fdw_handler: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      airtable_fdw_meta: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          version: string
+          author: string
+          website: string
+        }[]
+      }
+      airtable_fdw_validator: {
+        Args: {
+          options: string[]
+          catalog: unknown
+        }
+        Returns: undefined
+      }
+      auth0_fdw_handler: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      auth0_fdw_meta: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          version: string
+          author: string
+          website: string
+        }[]
+      }
+      auth0_fdw_validator: {
+        Args: {
+          options: string[]
+          catalog: unknown
+        }
+        Returns: undefined
+      }
+      big_query_fdw_handler: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      big_query_fdw_meta: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          version: string
+          author: string
+          website: string
+        }[]
+      }
+      big_query_fdw_validator: {
+        Args: {
+          options: string[]
+          catalog: unknown
+        }
+        Returns: undefined
+      }
       bootstrap_admin_role: {
         Args: {
           admin_user_id: string
@@ -608,6 +907,46 @@ export type Database = {
         }
         Returns: boolean
       }
+      click_house_fdw_handler: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      click_house_fdw_meta: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          version: string
+          author: string
+          website: string
+        }[]
+      }
+      click_house_fdw_validator: {
+        Args: {
+          options: string[]
+          catalog: unknown
+        }
+        Returns: undefined
+      }
+      cognito_fdw_handler: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      cognito_fdw_meta: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          version: string
+          author: string
+          website: string
+        }[]
+      }
+      cognito_fdw_validator: {
+        Args: {
+          options: string[]
+          catalog: unknown
+        }
+        Returns: undefined
+      }
       complete_quiz_submission: {
         Args: {
           p_user_id: string
@@ -621,6 +960,26 @@ export type Database = {
         }
         Returns: undefined
       }
+      firebase_fdw_handler: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      firebase_fdw_meta: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          version: string
+          author: string
+          website: string
+        }[]
+      }
+      firebase_fdw_validator: {
+        Args: {
+          options: string[]
+          catalog: unknown
+        }
+        Returns: undefined
+      }
       get_system_setting: {
         Args: {
           setting_key: string
@@ -630,9 +989,28 @@ export type Database = {
       get_user_emails: {
         Args: Record<PropertyKey, never>
         Returns: {
-          user_id: string
           email: string
         }[]
+      }
+      hello_world_fdw_handler: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      hello_world_fdw_meta: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          version: string
+          author: string
+          website: string
+        }[]
+      }
+      hello_world_fdw_validator: {
+        Args: {
+          options: string[]
+          catalog: unknown
+        }
+        Returns: undefined
       }
       import_user_from_asaas: {
         Args: {
@@ -655,23 +1033,104 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
-      is_quiz_admin:
-        | {
-            Args: Record<PropertyKey, never>
-            Returns: boolean
-          }
-        | {
-            Args: {
-              user_email: string
-            }
-            Returns: boolean
-          }
+      is_quiz_admin: {
+        Args: {
+          user_email: string
+        }
+        Returns: boolean
+      }
       link_user_to_asaas_customer: {
         Args: {
           user_email: string
           asaas_email: string
         }
         Returns: boolean
+      }
+      logflare_fdw_handler: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      logflare_fdw_meta: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          version: string
+          author: string
+          website: string
+        }[]
+      }
+      logflare_fdw_validator: {
+        Args: {
+          options: string[]
+          catalog: unknown
+        }
+        Returns: undefined
+      }
+      mssql_fdw_handler: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      mssql_fdw_meta: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          version: string
+          author: string
+          website: string
+        }[]
+      }
+      mssql_fdw_validator: {
+        Args: {
+          options: string[]
+          catalog: unknown
+        }
+        Returns: undefined
+      }
+      process_quiz_completion: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: string
+      }
+      redis_fdw_handler: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      redis_fdw_meta: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          version: string
+          author: string
+          website: string
+        }[]
+      }
+      redis_fdw_validator: {
+        Args: {
+          options: string[]
+          catalog: unknown
+        }
+        Returns: undefined
+      }
+      s3_fdw_handler: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      s3_fdw_meta: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          version: string
+          author: string
+          website: string
+        }[]
+      }
+      s3_fdw_validator: {
+        Args: {
+          options: string[]
+          catalog: unknown
+        }
+        Returns: undefined
       }
       setup_asaas_customers_rls_policies: {
         Args: Record<PropertyKey, never>
@@ -681,9 +1140,49 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      stripe_fdw_handler: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      stripe_fdw_meta: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          version: string
+          author: string
+          website: string
+        }[]
+      }
+      stripe_fdw_validator: {
+        Args: {
+          options: string[]
+          catalog: unknown
+        }
+        Returns: undefined
+      }
       sync_existing_users: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      wasm_fdw_handler: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      wasm_fdw_meta: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          version: string
+          author: string
+          website: string
+        }[]
+      }
+      wasm_fdw_validator: {
+        Args: {
+          options: string[]
+          catalog: unknown
+        }
+        Returns: undefined
       }
     }
     Enums: {

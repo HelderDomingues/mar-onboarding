@@ -1,3 +1,4 @@
+
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -81,6 +82,31 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
           tag: 'Quiz',
           data: { userId, submissionId, result: data }
         });
+        
+        // Após completar o questionário, vamos processar as respostas para o formato simplificado
+        try {
+          const { data: processingResult, error: processingError } = await supabase.rpc('process_quiz_completion', {
+            p_user_id: userId
+          });
+          
+          if (processingError) {
+            logger.error('Erro ao processar respostas para formato simplificado', {
+              tag: 'Quiz',
+              data: { error: processingError, userId }
+            });
+          } else {
+            logger.info('Respostas processadas com sucesso para formato simplificado', {
+              tag: 'Quiz',
+              data: { userId, resultId: processingResult }
+            });
+          }
+        } catch (processingException) {
+          logger.error('Exceção ao processar respostas para formato simplificado', {
+            tag: 'Quiz',
+            data: { error: processingException, userId }
+          });
+        }
+        
         return true;
       }
       
@@ -116,6 +142,31 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
           tag: 'Quiz',
           data: { userId, submissionId }
         });
+        
+        // Processamento manual para o formato simplificado após atualização
+        try {
+          const { data: processingResult, error: processingError } = await supabase.rpc('process_quiz_completion', {
+            p_user_id: userId
+          });
+          
+          if (processingError) {
+            logger.error('Erro ao processar respostas para formato simplificado após atualização', {
+              tag: 'Quiz',
+              data: { error: processingError, userId }
+            });
+          } else {
+            logger.info('Respostas processadas com sucesso para formato simplificado após atualização', {
+              tag: 'Quiz',
+              data: { userId, resultId: processingResult }
+            });
+          }
+        } catch (processingException) {
+          logger.error('Exceção ao processar respostas para formato simplificado após atualização', {
+            tag: 'Quiz',
+            data: { error: processingException, userId }
+          });
+        }
+        
         return true;
       }
       
@@ -151,6 +202,24 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
           tag: 'Quiz',
           data: { userId, submissionId }
         });
+        
+        // Processamento manual para o formato simplificado após atualização admin
+        try {
+          await supabaseAdmin.rpc('process_quiz_completion', {
+            p_user_id: userId
+          });
+          
+          logger.info('Respostas processadas com sucesso para formato simplificado após atualização admin', {
+            tag: 'Quiz',
+            data: { userId }
+          });
+        } catch (processingException) {
+          logger.error('Exceção ao processar respostas para formato simplificado após atualização admin', {
+            tag: 'Quiz',
+            data: { error: processingException, userId }
+          });
+        }
+        
         return true;
       }
       
@@ -380,6 +449,71 @@ export const registerMaterialAccess = async (materialId: string, userId: string)
     logger.error('Exceção ao registrar acesso ao material', {
       tag: 'Materials',
       data: error
+    });
+    return false;
+  }
+};
+
+/**
+ * Utilitário para verificar se existem respostas simplificadas para um usuário
+ * @param userId ID do usuário
+ * @returns boolean indicando se existem respostas simplificadas
+ */
+export const hasSimplifiedAnswers = async (userId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('quiz_respostas_completas')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+      
+    if (error) {
+      logger.error('Erro ao verificar respostas simplificadas', {
+        tag: 'Quiz',
+        data: error
+      });
+      return false;
+    }
+    
+    return data?.id !== undefined;
+  } catch (error) {
+    logger.error('Exceção ao verificar respostas simplificadas', {
+      tag: 'Quiz',
+      data: error
+    });
+    return false;
+  }
+};
+
+/**
+ * Utilitário para processar manualmente respostas do quiz para o formato simplificado
+ * @param userId ID do usuário
+ * @returns boolean indicando se a operação foi bem-sucedida
+ */
+export const processQuizAnswersToSimplified = async (userId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.rpc('process_quiz_completion', {
+      p_user_id: userId
+    });
+    
+    if (error) {
+      logger.error('Erro ao processar respostas para formato simplificado', {
+        tag: 'Quiz',
+        data: { error, userId }
+      });
+      return false;
+    }
+    
+    logger.info('Respostas processadas com sucesso para formato simplificado', {
+      tag: 'Quiz',
+      data: { userId, resultId: data }
+    });
+    
+    return data !== null;
+  } catch (error) {
+    logger.error('Exceção ao processar respostas para formato simplificado', {
+      tag: 'Quiz',
+      data: { error, userId }
     });
     return false;
   }

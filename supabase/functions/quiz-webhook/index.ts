@@ -42,6 +42,53 @@ serve(async (req) => {
       console.log("Nenhum ID de submissão fornecido, buscando a mais recente");
     }
     
+    // Vamos tentar primeiro buscar na nova tabela simplificada
+    let simplifiedData = null;
+    
+    if (submissionId) {
+      const { data: simplifiedResult, error: simplifiedError } = await supabase
+        .from('quiz_respostas_completas')
+        .select('*')
+        .eq('submission_id', submissionId)
+        .maybeSingle();
+      
+      if (!simplifiedError && simplifiedResult) {
+        console.log("Encontrados dados simplificados para a submissão:", submissionId);
+        simplifiedData = simplifiedResult;
+      } else {
+        console.log("Nenhum dado simplificado encontrado para a submissão:", submissionId);
+      }
+    }
+    
+    // Se temos dados simplificados, enviamos diretamente para o webhook
+    if (simplifiedData) {
+      console.log("Enviando dados simplificados para webhook do Make.com");
+      
+      // Marcar como processado
+      await supabase
+        .from('quiz_respostas_completas')
+        .update({ webhook_processed: true })
+        .eq('id', simplifiedData.id);
+      
+      return new Response(
+        JSON.stringify({ 
+          message: "Dados simplificados enviados para o webhook",
+          data_type: "simplified",
+          submission_id: submissionId
+        }),
+        { 
+          headers: { 
+            ...corsHeaders,
+            "Content-Type": "application/json" 
+          },
+          status: 200 
+        }
+      );
+    }
+    
+    // Se não temos dados simplificados, continuamos com o fluxo normal
+    console.log("Continuando com a busca de respostas detalhadas...");
+    
     // Consultar dados de submissão
     let query = supabase.from('quiz_responses_flat')
       .select('*');
@@ -119,7 +166,62 @@ serve(async (req) => {
         continue;
       }
       
-      // Preparar dados para envio ao Make.com
+      // Primeiro, vamos verificar se temos uma versão simplificada das respostas
+      const { data: simplifiedData, error: simplifiedError } = await supabase
+        .from('quiz_respostas_completas')
+        .select('*')
+        .eq('submission_id', submissionId)
+        .maybeSingle();
+        
+      if (!simplifiedError && simplifiedData) {
+        console.log(`Encontrada versão simplificada para submissão ${submissionId}, enviando...`);
+        
+        // Enviar dados simplificados para o webhook do Make.com
+        try {
+          const webhookUrl = "https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
+          const makeResponse = await fetch(webhookUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(simplifiedData)
+          });
+          
+          if (!makeResponse.ok) {
+            console.error(`Make.com respondeu com status: ${makeResponse.status}`);
+            const responseText = await makeResponse.text();
+            console.error(`Resposta do Make.com: ${responseText}`);
+            throw new Error(`Make.com respondeu com status: ${makeResponse.status}`);
+          }
+          
+          console.log(`Dados simplificados enviados com sucesso para o Make.com para submissão ${submissionId}`);
+          
+          // Marcar ambas as tabelas como processadas
+          await supabase
+            .from('quiz_respostas_completas')
+            .update({ webhook_processed: true })
+            .eq('id', simplifiedData.id);
+            
+          await supabase
+            .from('quiz_submissions')
+            .update({ webhook_processed: true })
+            .eq('id', submissionId);
+          
+          results.push({
+            submission_id: submissionId,
+            status: "success",
+            data_type: "simplified"
+          });
+          
+          continue; // Vamos para a próxima submissão
+        } catch (makeError) {
+          console.error("Erro ao enviar dados simplificados para o Make.com:", makeError);
+          // Continuamos para tentar o formato detalhado abaixo
+        }
+      }
+      
+      // Se chegamos aqui, não temos dados simplificados ou falhou o envio
+      // Preparar dados detalhados para envio ao Make.com
       const makeData = {
         submission_id: submissionId,
         user_id: firstResponse.user_id,
@@ -137,7 +239,7 @@ serve(async (req) => {
         }))
       };
       
-      console.log(`Enviando dados para o Make.com para submissão ${submissionId}`);
+      console.log(`Enviando dados detalhados para o Make.com para submissão ${submissionId}`);
       
       // Enviar dados para o webhook do Make.com
       try {
@@ -157,7 +259,7 @@ serve(async (req) => {
           throw new Error(`Make.com respondeu com status: ${makeResponse.status}`);
         }
         
-        console.log(`Dados enviados com sucesso para o Make.com para submissão ${submissionId}`);
+        console.log(`Dados detalhados enviados com sucesso para o Make.com para submissão ${submissionId}`);
         
         // Marcar a submissão como processada pelo webhook para evitar duplicações
         const { error: updateError } = await supabase
@@ -173,7 +275,8 @@ serve(async (req) => {
         
         results.push({
           submission_id: submissionId,
-          status: "success"
+          status: "success",
+          data_type: "detailed"
         });
       } catch (makeError) {
         console.error("Erro ao enviar dados para o Make.com:", makeError);

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +8,7 @@ import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { useToast } from "@/components/ui/use-toast";
-import { completeQuizSubmission, sendQuizDataToWebhook } from "@/utils/supabaseUtils";
+import { completeQuizSubmission, sendQuizDataToWebhook, processQuizAnswersToSimplified } from "@/utils/supabaseUtils";
 import { logger } from "@/utils/logger";
 
 const QuizReviewPage = () => {
@@ -171,6 +172,18 @@ const QuizReviewPage = () => {
         tag: 'Quiz',
         data: { userId: user.id, submissionId: submissionData.id }
       });
+      
+      // Processar respostas para o formato simplificado (isso já está sendo feito dentro do completeQuizSubmission, 
+      // mas fazemos aqui novamente para garantir)
+      try {
+        await processQuizAnswersToSimplified(user.id);
+      } catch (processingError) {
+        logger.warn('Aviso: Erro ao processar respostas para formato simplificado', {
+          tag: 'Quiz',
+          data: { error: processingError, userId: user.id }
+        });
+        // Não interrompemos o fluxo se isso falhar
+      }
       
       // Tentar enviar os dados para o webhook
       try {
