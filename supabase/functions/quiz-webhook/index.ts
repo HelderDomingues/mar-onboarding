@@ -67,7 +67,7 @@ serve(async (req) => {
     if (simplifiedData) {
       console.log("Enviando dados simplificados para webhook do Make.com");
       
-      // URL correta do webhook
+      // URL do webhook do Make.com
       const makeWebhookUrl = "https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
       
       try {
@@ -89,11 +89,19 @@ serve(async (req) => {
           throw new Error(`Make.com respondeu com status: ${makeResponse.status}`);
         }
         
-        // Marcar como processado
+        // Marcar como processado após envio bem-sucedido
         await supabase
           .from('quiz_respostas_completas')
           .update({ webhook_processed: true })
           .eq('id', simplifiedData.id);
+        
+        // Também atualizar a tabela quiz_submissions
+        if (submissionId) {
+          await supabase
+            .from('quiz_submissions')
+            .update({ webhook_processed: true })
+            .eq('id', submissionId);
+        }
         
         console.log("Dados enviados com sucesso para o Make.com via edge function");
       } catch (makeError) {
@@ -207,7 +215,7 @@ serve(async (req) => {
       if (!simplifiedError && simplifiedData) {
         console.log(`Encontrada versão simplificada para submissão ${submissionId}, enviando...`);
         
-        // URL correta do webhook
+        // URL do webhook do Make.com
         const makeWebhookUrl = "https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
         
         // Enviar dados simplificados para o webhook do Make.com
@@ -274,10 +282,10 @@ serve(async (req) => {
       
       console.log(`Enviando dados detalhados para o Make.com para submissão ${submissionId}`);
       
-      // URL correta do webhook
+      // URL do webhook do Make.com
       const makeWebhookUrl = "https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
       
-      // Enviar dados para o webhook do Make.com
+      // Enviar dados para o webhook do Make.com usando fetch
       try {
         const makeResponse = await fetch(makeWebhookUrl, {
           method: "POST",

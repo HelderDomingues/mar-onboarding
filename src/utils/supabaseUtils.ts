@@ -246,7 +246,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
 
 /**
  * Utilitário para enviar dados do questionário para webhook
- * Versão simplificada que não depende de supabase_functions.http_request
+ * Versão atualizada que usa a edge function quiz-webhook
  * @param submissionId ID da submissão do questionário
  */
 export const sendQuizDataToWebhook = async (submissionId: string): Promise<boolean> => {
