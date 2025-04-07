@@ -180,9 +180,9 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       });
     }
     
-    // Tentativa 3: Atualização direta via função RPC de propósito específico
+    // Tentativa 3: Atualização direta via UPSERT
     try {
-      logger.info('Tentando completar via métodos alternativos', {
+      logger.info('Tentando completar via método UPSERT', {
         tag: 'Quiz', 
         data: { userId }
       });
@@ -205,9 +205,21 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
         });
         
         // Processar respostas para formato simplificado
-        await supabaseAdmin.rpc('process_quiz_completion', {
-          p_user_id: userId
-        });
+        try {
+          await supabaseAdmin.rpc('process_quiz_completion', {
+            p_user_id: userId
+          });
+          
+          logger.info('Respostas processadas com sucesso após UPSERT', {
+            tag: 'Quiz',
+            data: { userId }
+          });
+        } catch (processingError) {
+          logger.error('Erro ao processar respostas após UPSERT', {
+            tag: 'Quiz',
+            data: { error: processingError, userId }
+          });
+        }
         
         return true;
       }
@@ -218,7 +230,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       });
       return false;
     } catch (finalAttemptError) {
-      logger.error('Exceção ao tentar métodos alternativos', {
+      logger.error('Exceção ao tentar método UPSERT', {
         tag: 'Quiz', 
         data: { error: finalAttemptError, userId }
       });

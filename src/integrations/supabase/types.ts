@@ -824,6 +824,12 @@ export type Database = {
         }
         Returns: undefined
       }
+      execute_sql: {
+        Args: {
+          sql_query: string
+        }
+        Returns: undefined
+      }
       get_system_setting: {
         Args: {
           setting_key: string
