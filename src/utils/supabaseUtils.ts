@@ -256,10 +256,10 @@ export const sendQuizDataToWebhook = async (submissionId: string): Promise<boole
       data: { submissionId, timestamp: new Date().toISOString() }
     });
     
-    // Obter dados da submissão
+    // Verificar se já foi processado anteriormente
     const { data: submissionData, error: submissionError } = await supabaseAdmin
       .from('quiz_submissions')
-      .select('*')
+      .select('id, webhook_processed, user_id')
       .eq('id', submissionId)
       .single();
     
@@ -271,25 +271,6 @@ export const sendQuizDataToWebhook = async (submissionId: string): Promise<boole
       return false;
     }
     
-    // Marcar como processado para evitar tentativas duplicadas
-    try {
-      await supabaseAdmin
-        .from('quiz_submissions')
-        .update({ webhook_processed: true })
-        .eq('id', submissionId);
-      
-      logger.info('Submissão marcada como processada', {
-        tag: 'Quiz',
-        data: { submissionId }
-      });
-    } catch (markError) {
-      logger.warn('Não foi possível marcar submissão como processada, mas continuando', {
-        tag: 'Quiz',
-        data: markError
-      });
-    }
-    
-    // Verificar se já foi processado anteriormente
     if (submissionData.webhook_processed) {
       logger.info('Submissão já foi processada anteriormente', {
         tag: 'Quiz',
@@ -298,61 +279,91 @@ export const sendQuizDataToWebhook = async (submissionId: string): Promise<boole
       return true;
     }
     
-    // Verificar se temos dados simplificados
+    // Chamar a edge function quiz-webhook que envia os dados
     try {
-      const { data: simplifiedData } = await supabaseAdmin
-        .from('quiz_respostas_completas')
-        .select('*')
-        .eq('submission_id', submissionId)
-        .single();
+      const webhookUrl = "https://nmxfknwkhnengqqjtwru.supabase.co/functions/v1/quiz-webhook";
       
-      if (simplifiedData) {
-        logger.info('Dados simplificados encontrados para submissão', {
-          tag: 'Quiz',
-          data: { submissionId }
-        });
-        
-        // Marcar como processado na tabela de respostas completas
-        try {
-          await supabaseAdmin
-            .from('quiz_respostas_completas')
-            .update({ webhook_processed: true })
-            .eq('submission_id', submissionId);
-          
-          logger.info('Resposta completa marcada como processada', {
-            tag: 'Quiz',
-            data: { submissionId }
-          });
-        } catch (markError) {
-          logger.warn('Não foi possível marcar resposta completa como processada', {
-            tag: 'Quiz',
-            data: markError
-          });
-        }
-      } else {
-        logger.info('Dados simplificados não encontrados, processando agora', {
-          tag: 'Quiz',
-          data: { submissionId }
-        });
-        
-        // Processar dados para formato simplificado
-        await supabaseAdmin.rpc('process_quiz_completion', {
-          p_user_id: submissionData.user_id
-        });
-      }
-    } catch (simplifiedError) {
-      logger.warn('Erro ao verificar ou processar dados simplificados', {
-        tag: 'Quiz',
-        data: simplifiedError
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''}`
+        },
+        body: JSON.stringify({ submission_id: submissionId })
       });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error('Resposta de erro da função webhook', {
+          tag: 'Quiz',
+          data: { status: response.status, error: errorText }
+        });
+        return false;
+      }
+      
+      const result = await response.json();
+      logger.info('Resposta da função webhook', {
+        tag: 'Quiz',
+        data: result
+      });
+      
+      return true;
+    } catch (fetchError) {
+      logger.error('Erro ao chamar função webhook', {
+        tag: 'Quiz',
+        data: fetchError
+      });
+      
+      // Se falhar ao chamar a edge function, tentar atualizar as flags diretamente
+      try {
+        // Verificar e processar respostas para o formato simplificado
+        if (submissionData.user_id) {
+          try {
+            await supabaseAdmin.rpc('process_quiz_completion', {
+              p_user_id: submissionData.user_id
+            });
+            
+            // Marcar quiz_respostas_completas como processado
+            const { data: simplifiedData } = await supabaseAdmin
+              .from('quiz_respostas_completas')
+              .select('id')
+              .eq('submission_id', submissionId)
+              .maybeSingle();
+              
+            if (simplifiedData?.id) {
+              await supabaseAdmin
+                .from('quiz_respostas_completas')
+                .update({ webhook_processed: true })
+                .eq('id', simplifiedData.id);
+            }
+          } catch (processError) {
+            logger.warn('Erro ao processar respostas para formato simplificado', {
+              tag: 'Quiz',
+              data: processError
+            });
+          }
+        }
+        
+        // Marcar submission como processado pelo webhook
+        await supabaseAdmin
+          .from('quiz_submissions')
+          .update({ webhook_processed: true })
+          .eq('id', submissionId);
+          
+        logger.info('Submissão marcada como processada manualmente após falha no webhook', {
+          tag: 'Quiz',
+          data: { submissionId }
+        });
+        
+        return true;
+      } catch (fallbackError) {
+        logger.error('Erro no processamento de fallback após falha no webhook', {
+          tag: 'Quiz',
+          data: fallbackError
+        });
+        return false;
+      }
     }
-    
-    logger.info('Processo de webhook concluído com sucesso', {
-      tag: 'Quiz',
-      data: { submissionId }
-    });
-    
-    return true;
   } catch (error) {
     logger.error('Exceção não tratada ao enviar dados para webhook', {
       tag: 'Quiz',

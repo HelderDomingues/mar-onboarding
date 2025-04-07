@@ -70,6 +70,30 @@ serve(async (req) => {
         .update({ webhook_processed: true })
         .eq('id', simplifiedData.id);
       
+      // Enviando diretamente para o Make.com usando fetch
+      try {
+        const webhookUrl = "https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
+        const makeResponse = await fetch(webhookUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(simplifiedData)
+        });
+        
+        if (!makeResponse.ok) {
+          console.error(`Make.com respondeu com status: ${makeResponse.status}`);
+          const responseText = await makeResponse.text();
+          console.error(`Resposta do Make.com: ${responseText}`);
+          throw new Error(`Make.com respondeu com status: ${makeResponse.status}`);
+        }
+        
+        console.log("Dados enviados com sucesso para o Make.com via edge function");
+      } catch (makeError) {
+        console.error("Erro ao enviar para o Make.com:", makeError);
+        throw makeError;
+      }
+      
       return new Response(
         JSON.stringify({ 
           message: "Dados simplificados enviados para o webhook",
