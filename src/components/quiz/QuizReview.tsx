@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
 interface QuizReviewProps {
   modules: QuizModule[];
   questions: QuizQuestion[];
@@ -19,7 +17,6 @@ interface QuizReviewProps {
   onComplete: () => void;
   onEdit: (moduleIndex: number, questionIndex: number) => void;
 }
-
 export function QuizReview({
   modules,
   questions,
@@ -35,32 +32,28 @@ export function QuizReview({
   const [editedAnswers, setEditedAnswers] = useState<Record<string, string | string[]>>({
     ...answers
   });
-  
-  const { toast } = useToast();
-  
+  const {
+    toast
+  } = useToast();
   const form = useForm({
     defaultValues: {
       agreement: false
     }
   });
-  
   useEffect(() => {
     setEditedAnswers({
       ...answers
     });
   }, [answers]);
-  
   const currentDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
   });
-  
   const questionsByModule = modules.map(module => ({
     module,
     questions: questions.filter(q => q.module_id === module.id)
   }));
-  
   const formatAnswerValue = (value: string | string[] | undefined) => {
     if (!value) return "Sem resposta";
     if (Array.isArray(value)) {
@@ -79,36 +72,30 @@ export function QuizReview({
     }
     return String(value);
   };
-  
   const handleTermsChange = (checked: boolean) => {
     setAgreedToTerms(checked);
   };
-  
   const handleEditClick = (questionId: string) => {
     setEditingQuestionId(questionId);
   };
-  
   const handleSaveEdit = async (questionId: string) => {
     try {
       const answer = editedAnswers[questionId];
       const userId = (await supabase.auth.getUser()).data.user?.id;
-      
       if (!userId) {
         throw new Error("Usuário não autenticado");
       }
-      
       const answerValue = typeof answer === 'object' ? JSON.stringify(answer) : answer;
-      
-      const { error } = await supabase.from('quiz_answers').upsert({
+      const {
+        error
+      } = await supabase.from('quiz_answers').upsert({
         user_id: userId,
         question_id: questionId,
         answer: answerValue
       }, {
         onConflict: 'user_id,question_id'
       });
-      
       if (error) throw error;
-      
       toast({
         title: "Resposta atualizada",
         description: "Sua resposta foi atualizada com sucesso."
@@ -121,27 +108,22 @@ export function QuizReview({
         variant: "destructive"
       });
     }
-    
     setEditingQuestionId(null);
   };
-  
   const handleCancelEdit = () => {
     setEditingQuestionId(null);
     setEditedAnswers({
       ...answers
     });
   };
-  
   const handleInputChange = (questionId: string, value: string | string[]) => {
     setEditedAnswers(prev => ({
       ...prev,
       [questionId]: value
     }));
   };
-  
   const handleCheckboxChange = (questionId: string, option: string, checked: boolean) => {
     let currentAnswers: string[] = [];
-    
     if (Array.isArray(editedAnswers[questionId])) {
       currentAnswers = [...(editedAnswers[questionId] as string[])];
     } else if (typeof editedAnswers[questionId] === 'string') {
@@ -156,9 +138,7 @@ export function QuizReview({
         currentAnswers = [editedAnswers[questionId] as string];
       }
     }
-    
     let newAnswers: string[];
-    
     if (checked) {
       if (!currentAnswers.includes(option)) {
         newAnswers = [...currentAnswers, option];
@@ -168,19 +148,15 @@ export function QuizReview({
     } else {
       newAnswers = currentAnswers.filter(item => item !== option);
     }
-    
     setEditedAnswers(prev => ({
       ...prev,
       [questionId]: newAnswers
     }));
   };
-  
   const handleCompleteQuiz = async () => {
     if (isSubmitting) return;
-    
     setIsSubmitting(true);
     setSubmissionError(null);
-    
     try {
       setConfirmed(true);
     } catch (error) {
@@ -195,57 +171,47 @@ export function QuizReview({
       setIsSubmitting(false);
     }
   };
-  
   const handleFinalizeQuiz = async () => {
     if (isSubmitting) return;
-    
     setIsSubmitting(true);
     setSubmissionError(null);
-    
     try {
       // Verificar status da submissão atual
       const userId = (await supabase.auth.getUser()).data.user?.id;
       if (!userId) {
         throw new Error("Usuário não autenticado");
       }
-      
-      const { data: submissionData, error: submissionError } = await supabase
-        .from('quiz_submissions')
-        .select('id, completed')
-        .eq('user_id', userId)
-        .maybeSingle();
-        
+      const {
+        data: submissionData,
+        error: submissionError
+      } = await supabase.from('quiz_submissions').select('id, completed').eq('user_id', userId).maybeSingle();
       if (submissionError) {
         console.error("Erro ao verificar submissão:", submissionError);
         throw new Error(`Erro ao verificar status da submissão: ${submissionError.message}`);
       }
-      
       if (!submissionData) {
         throw new Error("Nenhuma submissão encontrada para este usuário");
       }
-      
       if (submissionData.completed) {
         // A submissão já está marcada como completa
         console.log("Questionário já estava marcado como completo");
         await onComplete();
         return;
       }
-      
+
       // Tentativa direta via cliente normal
       console.log("Tentando marcar como completo via cliente normal");
-      const { error: updateError } = await supabase
-        .from('quiz_submissions')
-        .update({
-          completed: true,
-          completed_at: new Date().toISOString(),
-          contact_consent: true
-        })
-        .eq('id', submissionData.id);
-      
+      const {
+        error: updateError
+      } = await supabase.from('quiz_submissions').update({
+        completed: true,
+        completed_at: new Date().toISOString(),
+        contact_consent: true
+      }).eq('id', submissionData.id);
       if (updateError) {
         console.error("Erro na atualização direta:", updateError);
         setSubmissionError(`Erro na atualização: ${updateError.message}`);
-        
+
         // Se falhar, tentar através da função onComplete que usa o admin client
         console.log("Tentando método alternativo via prop onComplete");
         await onComplete();
@@ -266,33 +232,18 @@ export function QuizReview({
       setIsSubmitting(false);
     }
   };
-  
   const renderEditField = (question: QuizQuestion) => {
     const questionId = question.id;
     const answer = editedAnswers[questionId];
-    
     switch (question.type) {
       case 'text':
       case 'email':
       case 'number':
       case 'url':
       case 'instagram':
-        return <Input 
-          value={typeof answer === 'string' ? answer : ''} 
-          onChange={e => handleInputChange(questionId, e.target.value)} 
-          className="w-full text-slate-900" 
-          placeholder="Digite sua resposta aqui" 
-          type={question.type === 'number' ? 'number' : 'text'} 
-        />;
-        
+        return <Input value={typeof answer === 'string' ? answer : ''} onChange={e => handleInputChange(questionId, e.target.value)} className="w-full text-slate-900" placeholder="Digite sua resposta aqui" type={question.type === 'number' ? 'number' : 'text'} />;
       case 'textarea':
-        return <Textarea 
-          value={typeof answer === 'string' ? answer : ''} 
-          onChange={e => handleInputChange(questionId, e.target.value)} 
-          className="w-full text-slate-900" 
-          placeholder="Digite sua resposta aqui" 
-        />;
-        
+        return <Textarea value={typeof answer === 'string' ? answer : ''} onChange={e => handleInputChange(questionId, e.target.value)} className="w-full text-slate-900" placeholder="Digite sua resposta aqui" />;
       case 'checkbox':
       case 'radio':
         const options = question.options?.map(opt => opt.id) || [];
@@ -300,9 +251,7 @@ export function QuizReview({
           acc[opt.id] = opt.text;
           return acc;
         }, {} as Record<string, string>) || {};
-        
         let selectedOptions: string[] = [];
-        
         if (Array.isArray(answer)) {
           selectedOptions = answer;
         } else if (typeof answer === 'string') {
@@ -317,39 +266,20 @@ export function QuizReview({
             selectedOptions = [answer];
           }
         }
-        
         return <div className="space-y-2">
-          {options.map(option => (
-            <div key={option} className="flex items-center space-x-2">
-              <Checkbox 
-                id={`${questionId}-${option}`} 
-                checked={selectedOptions.includes(option)} 
-                onCheckedChange={checked => handleCheckboxChange(questionId, option, checked === true)} 
-              />
-              <label 
-                htmlFor={`${questionId}-${option}`} 
-                className="text-sm font-medium leading-none cursor-pointer text-slate-800"
-              >
+          {options.map(option => <div key={option} className="flex items-center space-x-2">
+              <Checkbox id={`${questionId}-${option}`} checked={selectedOptions.includes(option)} onCheckedChange={checked => handleCheckboxChange(questionId, option, checked === true)} />
+              <label htmlFor={`${questionId}-${option}`} className="text-sm font-medium leading-none cursor-pointer text-slate-800">
                 {optionTexts[option] || option}
               </label>
-            </div>
-          ))}
+            </div>)}
         </div>;
-        
       default:
-        return <Input 
-          value={typeof answer === 'string' ? answer : ''} 
-          onChange={e => handleInputChange(questionId, e.target.value)} 
-          className="w-full text-slate-900" 
-          placeholder="Digite sua resposta aqui" 
-        />;
+        return <Input value={typeof answer === 'string' ? answer : ''} onChange={e => handleInputChange(questionId, e.target.value)} className="w-full text-slate-900" placeholder="Digite sua resposta aqui" />;
     }
   };
-  
-  return (
-    <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-6">
-      {!confirmed ? (
-        <>
+  return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-6">
+      {!confirmed ? <>
           <Card className="quiz-card">
             <CardHeader>
               <CardTitle className="text-2xl font-bold flex items-center gap-2">
@@ -364,8 +294,7 @@ export function QuizReview({
               </p>
               
               <div className="space-y-8">
-                {questionsByModule.map((moduleData, moduleIndex) => (
-                  <div key={moduleData.module.id} className="border border-[hsl(var(--quiz-border))] rounded-lg p-4">
+                {questionsByModule.map((moduleData, moduleIndex) => <div key={moduleData.module.id} className="border border-[hsl(var(--quiz-border))] rounded-lg p-4">
                     <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-[hsl(var(--quiz-text))]">
                       <Badge variant="outline" className="quiz-module-badge">
                         Módulo {moduleIndex + 1}
@@ -375,61 +304,38 @@ export function QuizReview({
                     
                     <div className="space-y-4">
                       {moduleData.questions.map((question, questionIndex) => {
-                        const questionId = question.id;
-                        const isEditing = editingQuestionId === questionId;
-                        const answer = editedAnswers[questionId];
-                        
-                        return (
-                          <div key={questionId} className="border-t border-[hsl(var(--quiz-border))] pt-3">
+                  const questionId = question.id;
+                  const isEditing = editingQuestionId === questionId;
+                  const answer = editedAnswers[questionId];
+                  return <div key={questionId} className="border-t border-[hsl(var(--quiz-border))] pt-3">
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
                                 <p className="font-medium text-[hsl(var(--quiz-text))]">{question.text}</p>
                                 
-                                {isEditing ? (
-                                  <div className="mt-2 space-y-3">
+                                {isEditing ? <div className="mt-2 space-y-3">
                                     {renderEditField(question)}
                                     
                                     <div className="flex gap-2 justify-end mt-3">
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        onClick={handleCancelEdit} 
-                                        className="text-slate-200"
-                                      >
+                                      <Button variant="outline" size="sm" onClick={handleCancelEdit} className="text-slate-200">
                                         Cancelar
                                       </Button>
-                                      <Button 
-                                        size="sm" 
-                                        onClick={() => handleSaveEdit(questionId)}
-                                      >
+                                      <Button size="sm" onClick={() => handleSaveEdit(questionId)}>
                                         Salvar
                                       </Button>
                                     </div>
-                                  </div>
-                                ) : (
-                                  <p className="text-[hsl(var(--quiz-text))] opacity-80 mt-1 break-words">
+                                  </div> : <p className="text-[hsl(var(--quiz-text))] opacity-80 mt-1 break-words">
                                     {formatAnswerValue(answer)}
-                                  </p>
-                                )}
+                                  </p>}
                               </div>
                               
-                              {!isEditing && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  onClick={() => handleEditClick(questionId)} 
-                                  className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-slate-200"
-                                >
+                              {!isEditing && <Button variant="outline" size="sm" onClick={() => handleEditClick(questionId)} className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-slate-800">
                                   <Edit className="h-4 w-4 mr-1" /> Editar
-                                </Button>
-                              )}
+                                </Button>}
                             </div>
-                          </div>
-                        );
-                      })}
+                          </div>;
+                })}
                     </div>
-                  </div>
-                ))}
+                  </div>)}
               </div>
               
               <div className="mt-8 p-4 border border-[hsl(var(--quiz-border))] rounded-lg bg-slate-800">
@@ -453,16 +359,8 @@ export function QuizReview({
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Checkbox 
-                    id="agreement" 
-                    checked={agreedToTerms} 
-                    onCheckedChange={handleTermsChange} 
-                    className="border-white" 
-                  />
-                  <label 
-                    htmlFor="agreement" 
-                    className="text-sm font-medium leading-none cursor-pointer text-white"
-                  >
+                  <Checkbox id="agreement" checked={agreedToTerms} onCheckedChange={handleTermsChange} className="border-white" />
+                  <label htmlFor="agreement" className="text-sm font-medium leading-none cursor-pointer text-white">
                     Concordo com os termos acima e confirmo a veracidade das informações
                   </label>
                 </div>
@@ -474,25 +372,15 @@ export function QuizReview({
               </div>
             </CardContent>
             <CardFooter className="flex justify-between pt-6 border-t border-[hsl(var(--quiz-border))]">
-              <Button 
-                variant="outline" 
-                onClick={() => onEdit(modules.length - 1, questions.filter(q => q.module_id === modules[modules.length - 1].id).length - 1)} 
-                className="border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-slate-200"
-              >
+              <Button variant="outline" onClick={() => onEdit(modules.length - 1, questions.filter(q => q.module_id === modules[modules.length - 1].id).length - 1)} className="border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-slate-200">
                 <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
               </Button>
-              <Button 
-                onClick={handleCompleteQuiz} 
-                disabled={!agreedToTerms || isSubmitting} 
-                className="quiz-btn bg-lime-600 hover:bg-lime-500"
-              >
+              <Button onClick={handleCompleteQuiz} disabled={!agreedToTerms || isSubmitting} className="quiz-btn bg-lime-600 hover:bg-lime-500">
                 {isSubmitting ? 'Processando...' : 'Confirmar Respostas'} <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </CardFooter>
           </Card>
-        </>
-      ) : (
-        <Card className="quiz-card">
+        </> : <Card className="quiz-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-white text-base font-normal">
               <CheckCircle className="h-6 w-6 text-green-500" />
@@ -504,25 +392,17 @@ export function QuizReview({
               Suas respostas foram validadas com sucesso. Clique abaixo para concluir o questionário.
             </p>
             
-            {submissionError && (
-              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded text-sm text-red-200">
+            {submissionError && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded text-sm text-red-200">
                 <p className="font-semibold mb-1">Detalhes do erro:</p>
                 <p>{submissionError}</p>
                 <p className="mt-2 text-xs">Tente novamente ou entre em contato com o suporte.</p>
-              </div>
-            )}
+              </div>}
           </CardContent>
           <CardFooter className="flex justify-center">
-            <Button 
-              onClick={handleFinalizeQuiz} 
-              disabled={isSubmitting}
-              className="quiz-btn"
-            >
+            <Button onClick={handleFinalizeQuiz} disabled={isSubmitting} className="quiz-btn">
               {isSubmitting ? 'Processando...' : 'Finalizar Questionário'}
             </Button>
           </CardFooter>
-        </Card>
-      )}
-    </div>
-  );
+        </Card>}
+    </div>;
 }
