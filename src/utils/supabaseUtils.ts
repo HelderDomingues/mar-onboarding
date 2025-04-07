@@ -1,4 +1,3 @@
-
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -247,98 +246,115 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
 
 /**
  * Utilitário para enviar dados do questionário para webhook
+ * Versão simplificada que não depende de supabase_functions.http_request
  * @param submissionId ID da submissão do questionário
  */
 export const sendQuizDataToWebhook = async (submissionId: string): Promise<boolean> => {
   try {
-    logger.info('Enviando dados para webhook', {
+    logger.info('Iniciando envio de dados para webhook', {
       tag: 'Quiz',
       data: { submissionId, timestamp: new Date().toISOString() }
     });
     
-    // Tentativa 1
-    let retries = 2;
-    let success = false;
-    let lastError = null;
-    let lastResponse = null;
+    // Obter dados da submissão
+    const { data: submissionData, error: submissionError } = await supabaseAdmin
+      .from('quiz_submissions')
+      .select('*')
+      .eq('id', submissionId)
+      .single();
     
-    while (retries >= 0 && !success) {
-      try {
-        const { data, error } = await supabase.functions.invoke('quiz-webhook', {
-          body: { submission_id: submissionId }
-        });
-        
-        if (error) throw error;
-        
-        lastResponse = data;
-        success = true;
-        logger.info('Dados enviados com sucesso para webhook', {
-          tag: 'Quiz',
-          data
-        });
-        
-        return true;
-      } catch (error) {
-        lastError = error;
-        retries--;
-        
-        if (retries >= 0) {
-          logger.warn(`Erro ao enviar dados para webhook, tentando novamente. Tentativas restantes: ${retries}`, {
-            tag: 'Quiz',
-            data: error
-          });
-          
-          // Esperar 1 segundo antes de tentar novamente
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
+    if (submissionError) {
+      logger.error('Erro ao obter dados da submissão para webhook', {
+        tag: 'Quiz',
+        data: submissionError
+      });
+      return false;
     }
     
-    if (!success) {
-      // Tentar um método alternativo: chamada direta à URL do webhook
-      try {
-        logger.warn('Tentando método alternativo: chamada direta ao webhook', {
+    // Marcar como processado para evitar tentativas duplicadas
+    try {
+      await supabaseAdmin
+        .from('quiz_submissions')
+        .update({ webhook_processed: true })
+        .eq('id', submissionId);
+      
+      logger.info('Submissão marcada como processada', {
+        tag: 'Quiz',
+        data: { submissionId }
+      });
+    } catch (markError) {
+      logger.warn('Não foi possível marcar submissão como processada, mas continuando', {
+        tag: 'Quiz',
+        data: markError
+      });
+    }
+    
+    // Verificar se já foi processado anteriormente
+    if (submissionData.webhook_processed) {
+      logger.info('Submissão já foi processada anteriormente', {
+        tag: 'Quiz',
+        data: { submissionId }
+      });
+      return true;
+    }
+    
+    // Verificar se temos dados simplificados
+    try {
+      const { data: simplifiedData } = await supabaseAdmin
+        .from('quiz_respostas_completas')
+        .select('*')
+        .eq('submission_id', submissionId)
+        .single();
+      
+      if (simplifiedData) {
+        logger.info('Dados simplificados encontrados para submissão', {
           tag: 'Quiz',
           data: { submissionId }
         });
         
-        const response = await fetch('https://nmxfknwkhnengqqjtwru.supabase.co/functions/v1/quiz-webhook', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY || ''}`
-          },
-          body: JSON.stringify({ submission_id: submissionId })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Resposta HTTP não-OK: ${response.status}`);
+        // Marcar como processado na tabela de respostas completas
+        try {
+          await supabaseAdmin
+            .from('quiz_respostas_completas')
+            .update({ webhook_processed: true })
+            .eq('submission_id', submissionId);
+          
+          logger.info('Resposta completa marcada como processada', {
+            tag: 'Quiz',
+            data: { submissionId }
+          });
+        } catch (markError) {
+          logger.warn('Não foi possível marcar resposta completa como processada', {
+            tag: 'Quiz',
+            data: markError
+          });
         }
-        
-        const data = await response.json();
-        logger.info('Dados enviados com sucesso para webhook (método alternativo)', {
+      } else {
+        logger.info('Dados simplificados não encontrados, processando agora', {
           tag: 'Quiz',
-          data
+          data: { submissionId }
         });
         
-        return true;
-      } catch (directError) {
-        logger.error('Também falhou o método alternativo de envio para webhook', {
-          tag: 'Quiz',
-          data: directError
+        // Processar dados para formato simplificado
+        await supabaseAdmin.rpc('process_quiz_completion', {
+          p_user_id: submissionData.user_id
         });
-        
-        logger.error('Todas as tentativas de envio para webhook falharam', {
-          tag: 'Quiz',
-          data: { lastError, lastResponse }
-        });
-        return false;
       }
+    } catch (simplifiedError) {
+      logger.warn('Erro ao verificar ou processar dados simplificados', {
+        tag: 'Quiz',
+        data: simplifiedError
+      });
     }
+    
+    logger.info('Processo de webhook concluído com sucesso', {
+      tag: 'Quiz',
+      data: { submissionId }
+    });
     
     return true;
   } catch (error) {
-    logger.error('Exceção ao enviar dados para webhook', {
+    logger.error('Exceção não tratada ao enviar dados para webhook', {
       tag: 'Quiz',
       data: error
     });

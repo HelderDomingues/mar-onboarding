@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+
 interface QuizReviewProps {
   modules: QuizModule[];
   questions: QuizQuestion[];
@@ -17,6 +18,7 @@ interface QuizReviewProps {
   onComplete: () => void;
   onEdit: (moduleIndex: number, questionIndex: number) => void;
 }
+
 export function QuizReview({
   modules,
   questions,
@@ -40,20 +42,24 @@ export function QuizReview({
       agreement: false
     }
   });
+
   useEffect(() => {
     setEditedAnswers({
       ...answers
     });
   }, [answers]);
+
   const currentDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
   });
+
   const questionsByModule = modules.map(module => ({
     module,
     questions: questions.filter(q => q.module_id === module.id)
   }));
+
   const formatAnswerValue = (value: string | string[] | undefined) => {
     if (!value) return "Sem resposta";
     if (Array.isArray(value)) {
@@ -72,12 +78,15 @@ export function QuizReview({
     }
     return String(value);
   };
+
   const handleTermsChange = (checked: boolean) => {
     setAgreedToTerms(checked);
   };
+
   const handleEditClick = (questionId: string) => {
     setEditingQuestionId(questionId);
   };
+
   const handleSaveEdit = async (questionId: string) => {
     try {
       const answer = editedAnswers[questionId];
@@ -110,18 +119,21 @@ export function QuizReview({
     }
     setEditingQuestionId(null);
   };
+
   const handleCancelEdit = () => {
     setEditingQuestionId(null);
     setEditedAnswers({
       ...answers
     });
   };
+
   const handleInputChange = (questionId: string, value: string | string[]) => {
     setEditedAnswers(prev => ({
       ...prev,
       [questionId]: value
     }));
   };
+
   const handleCheckboxChange = (questionId: string, option: string, checked: boolean) => {
     let currentAnswers: string[] = [];
     if (Array.isArray(editedAnswers[questionId])) {
@@ -153,6 +165,7 @@ export function QuizReview({
       [questionId]: newAnswers
     }));
   };
+
   const handleCompleteQuiz = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -171,6 +184,7 @@ export function QuizReview({
       setIsSubmitting(false);
     }
   };
+
   const handleFinalizeQuiz = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -181,17 +195,22 @@ export function QuizReview({
       if (!userId) {
         throw new Error("Usuário não autenticado");
       }
+      
+      // Verificar se o questionário já está completo
       const {
         data: submissionData,
         error: submissionError
       } = await supabase.from('quiz_submissions').select('id, completed').eq('user_id', userId).maybeSingle();
+      
       if (submissionError) {
         console.error("Erro ao verificar submissão:", submissionError);
         throw new Error(`Erro ao verificar status da submissão: ${submissionError.message}`);
       }
+      
       if (!submissionData) {
         throw new Error("Nenhuma submissão encontrada para este usuário");
       }
+      
       if (submissionData.completed) {
         // A submissão já está marcada como completa
         console.log("Questionário já estava marcado como completo");
@@ -199,8 +218,8 @@ export function QuizReview({
         return;
       }
 
-      // Tentativa direta via cliente normal
-      console.log("Tentando marcar como completo via cliente normal");
+      // Tentativa através de método update padrão
+      console.log("Tentando marcar como completo via cliente padrão");
       const {
         error: updateError
       } = await supabase.from('quiz_submissions').update({
@@ -208,11 +227,12 @@ export function QuizReview({
         completed_at: new Date().toISOString(),
         contact_consent: true
       }).eq('id', submissionData.id);
+      
       if (updateError) {
         console.error("Erro na atualização direta:", updateError);
         setSubmissionError(`Erro na atualização: ${updateError.message}`);
 
-        // Se falhar, tentar através da função onComplete que usa o admin client
+        // Se falhar, tentar através da função onComplete que usa o cliente admin
         console.log("Tentando método alternativo via prop onComplete");
         await onComplete();
       } else {
@@ -232,6 +252,7 @@ export function QuizReview({
       setIsSubmitting(false);
     }
   };
+
   const renderEditField = (question: QuizQuestion) => {
     const questionId = question.id;
     const answer = editedAnswers[questionId];
@@ -278,6 +299,7 @@ export function QuizReview({
         return <Input value={typeof answer === 'string' ? answer : ''} onChange={e => handleInputChange(questionId, e.target.value)} className="w-full text-slate-900" placeholder="Digite sua resposta aqui" />;
     }
   };
+
   return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-6">
       {!confirmed ? <>
           <Card className="quiz-card">
