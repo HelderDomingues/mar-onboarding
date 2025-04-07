@@ -18,8 +18,8 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
     if (error) throw error;
     
     return data?.completed === true;
-  } catch (error) {
-    logger.error("Erro ao verificar status do questionário:", error);
+  } catch (error: any) {
+    logger.error("Erro ao verificar status do questionário:", { error });
     return false;
   }
 };
@@ -45,7 +45,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
     if (fetchError) {
       logger.error('Erro ao obter dados da submissão', {
         tag: 'Quiz',
-        data: fetchError
+        error: fetchError
       });
       return false;
     }
@@ -54,7 +54,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
     if (!submissionData) {
       logger.error('Submissão não encontrada para o usuário', {
         tag: 'Quiz',
-        data: { userId }
+        userId
       });
       return false;
     }
@@ -63,7 +63,8 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
     if (submissionData.completed) {
       logger.info('Questionário já estava marcado como completo', {
         tag: 'Quiz',
-        data: { userId, submissionId: submissionData.id }
+        userId,
+        submissionId: submissionData.id
       });
       return true;
     }
@@ -72,7 +73,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
     try {
       logger.info('Tentando completar questionário via RPC', {
         tag: 'Quiz',
-        data: { userId }
+        userId
       });
       
       const { data, error } = await supabase.rpc('complete_quiz_submission', {
@@ -82,7 +83,8 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       if (!error) {
         logger.info('Questionário completado com sucesso via RPC', {
           tag: 'Quiz',
-          data: { userId, result: data }
+          userId,
+          result: data
         });
         
         // Processar respostas para o formato simplificado
@@ -94,10 +96,11 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
           logger.info('Respostas processadas com sucesso para formato simplificado após RPC', {
             tag: 'Quiz'
           });
-        } catch (processingException) {
+        } catch (processingException: any) {
           logger.error('Exceção ao processar respostas para formato simplificado após RPC', {
             tag: 'Quiz',
-            data: { error: processingException, userId }
+            error: processingException,
+            userId
           });
         }
         
@@ -106,12 +109,14 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       
       logger.warn('Falha ao completar questionário via RPC', {
         tag: 'Quiz',
-        data: { error, userId }
+        error,
+        userId
       });
-    } catch (rpcAttemptError) {
+    } catch (rpcAttemptError: any) {
       logger.error('Exceção ao tentar completar via RPC', {
         tag: 'Quiz',
-        data: { error: rpcAttemptError, userId }
+        error: rpcAttemptError,
+        userId
       });
     }
     
@@ -119,7 +124,8 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
     try {
       logger.info('Tentando completar questionário via update direto', {
         tag: 'Quiz',
-        data: { userId, submissionId: submissionData.id }
+        userId,
+        submissionId: submissionData.id
       });
       
       const { error: updateError } = await supabase
@@ -134,16 +140,18 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       if (!updateError) {
         logger.info('Questionário completado com sucesso via update direto', {
           tag: 'Quiz',
-          data: { userId, submissionId: submissionData.id }
+          userId,
+          submissionId: submissionData.id
         });
         
         // Tentar processar as respostas para o formato simplificado
         try {
           await processQuizAnswersToSimplified(userId);
-        } catch (processingError) {
+        } catch (processingError: any) {
           logger.error('Erro ao processar respostas após update direto', {
             tag: 'Quiz',
-            data: { error: processingError, userId }
+            error: processingError,
+            userId
           });
         }
         
@@ -152,12 +160,14 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       
       logger.error('Erro ao atualizar status de completude do questionário', {
         tag: 'Quiz',
-        data: { updateError, userId }
+        error: updateError,
+        userId
       });
-    } catch (directAttemptError) {
+    } catch (directAttemptError: any) {
       logger.error('Exceção ao tentar update direto', {
         tag: 'Quiz', 
-        data: { error: directAttemptError, userId }
+        error: directAttemptError,
+        userId
       });
     }
     
@@ -165,7 +175,8 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
     try {
       logger.info('Tentando completar questionário via cliente admin', {
         tag: 'Quiz',
-        data: { userId, submissionId: submissionData.id }
+        userId,
+        submissionId: submissionData.id
       });
       
       const { error: adminError } = await supabaseAdmin
@@ -180,7 +191,8 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       if (!adminError) {
         logger.info('Questionário completado com sucesso via cliente admin', {
           tag: 'Quiz',
-          data: { userId, submissionId: submissionData.id }
+          userId,
+          submissionId: submissionData.id
         });
         
         // Processar respostas para o formato simplificado após atualização
@@ -192,10 +204,11 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
           logger.info('Respostas processadas com sucesso após atualização admin', {
             tag: 'Quiz'
           });
-        } catch (processingException) {
+        } catch (processingException: any) {
           logger.error('Exceção ao processar respostas após atualização admin', {
             tag: 'Quiz',
-            data: { error: processingException, userId }
+            error: processingException,
+            userId
           });
         }
         
@@ -204,12 +217,15 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       
       logger.error('Falha ao completar questionário via cliente admin', {
         tag: 'Quiz',
-        data: { adminError, userId, submissionId: submissionData.id }
+        error: adminError,
+        userId,
+        submissionId: submissionData.id
       });
-    } catch (adminAttemptError) {
+    } catch (adminAttemptError: any) {
       logger.error('Exceção ao tentar completar via cliente admin', {
         tag: 'Quiz',
-        data: { error: adminAttemptError, userId }
+        error: adminAttemptError,
+        userId
       });
     }
     
@@ -244,10 +260,11 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
           logger.info('Respostas processadas com sucesso após UPSERT', {
             tag: 'Quiz'
           });
-        } catch (processingError) {
+        } catch (processingError: any) {
           logger.error('Erro ao processar respostas após UPSERT', {
             tag: 'Quiz',
-            data: { error: processingError, userId }
+            error: processingError,
+            userId
           });
         }
         
@@ -256,19 +273,22 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       
       logger.error('Todos os métodos falharam ao completar questionário', {
         tag: 'Quiz',
-        data: { upsertError, userId, submissionId: submissionData.id }
+        error: upsertError,
+        userId,
+        submissionId: submissionData.id
       });
       return false;
-    } catch (finalAttemptError) {
+    } catch (finalAttemptError: any) {
       logger.error('Exceção ao tentar método UPSERT', {
-        tag: 'Quiz'
+        tag: 'Quiz',
+        error: finalAttemptError
       });
       return false;
     }
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Exceção não tratada ao completar questionário', {
       tag: 'Quiz',
-      data: error
+      error
     });
     return false;
   }
@@ -293,21 +313,22 @@ export const sendQuizDataToWebhook = async (submissionId: string): Promise<boole
     if (error) {
       logger.error("Erro ao invocar função quiz-webhook:", {
         tag: 'Quiz',
-        data: error
+        error
       });
       return false;
     }
     
     logger.info('Dados enviados para webhook com sucesso', {
       tag: 'Quiz',
-      data: { submissionId, response: data }
+      submissionId,
+      response: data
     });
     
     return true;
-  } catch (error) {
+  } catch (error: any) {
     logger.error("Erro ao enviar dados para webhook:", {
       tag: 'Quiz',
-      data: error
+      error
     });
     return false;
   }
@@ -335,7 +356,7 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
     if (fetchError) {
       logger.error('Erro ao obter dados da submissão', {
         tag: 'Quiz',
-        data: fetchError
+        error: fetchError
       });
       return false;
     }
@@ -343,7 +364,7 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
     if (!submissionData) {
       logger.error('Submissão não encontrada', {
         tag: 'Quiz',
-        data: { userId }
+        userId
       });
       return false;
     }
@@ -352,7 +373,8 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
     if (submissionData.completed) {
       logger.info('Questionário já marcado como completo', {
         tag: 'Quiz',
-        data: { userId, submissionId: submissionData.id }
+        userId,
+        submissionId: submissionData.id
       });
       return true;
     }
@@ -370,7 +392,8 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
     if (updateError) {
       logger.error('Erro ao atualizar status de completude do questionário', {
         tag: 'Quiz',
-        data: { updateError, userId }
+        error: updateError,
+        userId
       });
       
       // Tentar com supabaseAdmin se o cliente normal falhar
@@ -386,7 +409,8 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
       if (adminError) {
         logger.error('Erro também ao usar cliente admin para completar questionário', {
           tag: 'Quiz',
-          data: { adminError, userId }
+          error: adminError,
+          userId
         });
         return false;
       }
@@ -394,17 +418,19 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
     
     logger.info('Questionário marcado como completo com sucesso', {
       tag: 'Quiz',
-      data: { userId, submissionId: submissionData.id }
+      userId,
+      submissionId: submissionData.id
     });
     
     // Tentar processar as respostas para o formato simplificado
     try {
       await processQuizAnswersToSimplified(userId);
-    } catch (processingError) {
+    } catch (processingError: any) {
       // Não falhar completamente se ocorrer erro no processamento
       logger.warn('Aviso: Erro ao processar respostas para formato simplificado', {
         tag: 'Quiz',
-        data: { processingError, userId }
+        error: processingError,
+        userId
       });
     }
     
@@ -413,19 +439,20 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
       if (submissionData.id) {
         await sendQuizDataToWebhook(submissionData.id);
       }
-    } catch (webhookError) {
+    } catch (webhookError: any) {
       // Não falhar completamente se o webhook falhar
       logger.warn('Aviso: Erro ao enviar dados para webhook', {
         tag: 'Quiz',
-        data: { webhookError, userId }
+        error: webhookError,
+        userId
       });
     }
     
     return true;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Erro ao completar questionário manualmente', {
       tag: 'Quiz',
-      data: error
+      error
     });
     return false;
   }
@@ -587,14 +614,15 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
       
       logger.info('Respostas processadas com sucesso para formato simplificado via RPC', {
         tag: 'Quiz',
-        data: { userId }
+        userId
       });
       
       return true;
-    } catch (rpcError) {
+    } catch (rpcError: any) {
       logger.error('Erro ao processar respostas via RPC', {
         tag: 'Quiz',
-        data: { error: rpcError, userId }
+        error: rpcError,
+        userId
       });
       
       // Se falhar, tentar fazer manualmente (análise de fallback)
@@ -607,7 +635,8 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
       if (submissionError || !submissionData) {
         logger.error('Erro ao buscar submissão para processamento manual', {
           tag: 'Quiz',
-          data: { error: submissionError, userId }
+          error: submissionError,
+          userId
         });
         return false;
       }
@@ -622,7 +651,8 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
       if (existingError) {
         logger.error('Erro ao verificar existência de registro simplificado', {
           tag: 'Quiz',
-          data: { error: existingError, userId }
+          error: existingError,
+          userId
         });
       }
       
@@ -640,14 +670,15 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
         if (updateError) {
           logger.error('Erro ao atualizar registro simplificado existente', {
             tag: 'Quiz',
-            data: { error: updateError, userId }
+            error: updateError,
+            userId
           });
           return false;
         }
         
         logger.info('Registro simplificado atualizado com sucesso', {
           tag: 'Quiz',
-          data: { userId }
+          userId
         });
         
         return true;
@@ -659,7 +690,8 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
       if (userError || !userData.user) {
         logger.error('Erro ao obter dados do usuário para processamento manual', {
           tag: 'Quiz',
-          data: { error: userError, userId }
+          error: userError,
+          userId
         });
         return false;
       }
@@ -685,22 +717,24 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
       if (insertError) {
         logger.error('Erro ao inserir registro simplificado manual', {
           tag: 'Quiz',
-          data: { error: insertError, userId }
+          error: insertError,
+          userId
         });
         return false;
       }
       
       logger.info('Registro simplificado básico criado manualmente', {
         tag: 'Quiz',
-        data: { userId }
+        userId
       });
       
       return true;
     }
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Exceção ao processar respostas para formato simplificado', {
       tag: 'Quiz',
-      data: { error, userId }
+      error,
+      userId
     });
     return false;
   }

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -196,6 +197,7 @@ export function QuizReview({
         throw new Error("Usuário não autenticado");
       }
       
+      // Utilizando a função de completar manualmente que evita problemas de permissão
       const success = await completeQuizManually(userId);
       
       if (!success) {
