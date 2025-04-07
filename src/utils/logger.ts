@@ -4,6 +4,13 @@ type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 interface LogOptions {
   tag?: string;
   data?: any;
+  // Adicionando as propriedades faltantes para resolver os erros
+  error?: any;
+  userId?: string;
+  submissionId?: string;
+  // Outras propriedades que podem ser usadas nos logs
+  result?: any;
+  response?: any;
 }
 
 class Logger {
