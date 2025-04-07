@@ -1,4 +1,3 @@
-
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -33,8 +32,7 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
 export const completeQuizSubmission = async (userId: string): Promise<boolean> => {
   try {
     logger.info('Iniciando processo de finalização do questionário', {
-      tag: 'Quiz',
-      data: { userId }
+      tag: 'Quiz'
     });
     
     // Obter ID da submissão atual
@@ -94,8 +92,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
           });
           
           logger.info('Respostas processadas com sucesso para formato simplificado após RPC', {
-            tag: 'Quiz',
-            data: { userId }
+            tag: 'Quiz'
           });
         } catch (processingException) {
           logger.error('Exceção ao processar respostas para formato simplificado após RPC', {
@@ -118,7 +115,53 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       });
     }
     
-    // Tentativa 2: Diretamente via admin client (mais poder)
+    // Tentativa 2: Diretamente via cliente regular
+    try {
+      logger.info('Tentando completar questionário via update direto', {
+        tag: 'Quiz',
+        data: { userId, submissionId: submissionData.id }
+      });
+      
+      const { error: updateError } = await supabase
+        .from('quiz_submissions')
+        .update({
+          completed: true,
+          completed_at: new Date().toISOString(),
+          contact_consent: true
+        })
+        .eq('id', submissionData.id);
+      
+      if (!updateError) {
+        logger.info('Questionário completado com sucesso via update direto', {
+          tag: 'Quiz',
+          data: { userId, submissionId: submissionData.id }
+        });
+        
+        // Tentar processar as respostas para o formato simplificado
+        try {
+          await processQuizAnswersToSimplified(userId);
+        } catch (processingError) {
+          logger.error('Erro ao processar respostas após update direto', {
+            tag: 'Quiz',
+            data: { error: processingError, userId }
+          });
+        }
+        
+        return true;
+      }
+      
+      logger.error('Erro ao atualizar status de completude do questionário', {
+        tag: 'Quiz',
+        data: { updateError, userId }
+      });
+    } catch (directAttemptError) {
+      logger.error('Exceção ao tentar update direto', {
+        tag: 'Quiz', 
+        data: { error: directAttemptError, userId }
+      });
+    }
+    
+    // Tentativa 3: Via admin client (mais poder)
     try {
       logger.info('Tentando completar questionário via cliente admin', {
         tag: 'Quiz',
@@ -147,8 +190,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
           });
           
           logger.info('Respostas processadas com sucesso após atualização admin', {
-            tag: 'Quiz',
-            data: { userId }
+            tag: 'Quiz'
           });
         } catch (processingException) {
           logger.error('Exceção ao processar respostas após atualização admin', {
@@ -171,11 +213,10 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       });
     }
     
-    // Tentativa 3: Atualização direta via UPSERT
+    // Tentativa 4: Atualização direta via UPSERT
     try {
       logger.info('Tentando completar via método UPSERT', {
-        tag: 'Quiz', 
-        data: { userId }
+        tag: 'Quiz'
       });
       
       // Tentar através do método INSERT no modo UPSERT
@@ -191,8 +232,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       
       if (!upsertError) {
         logger.info('Questionário completado com sucesso via upsert', {
-          tag: 'Quiz',
-          data: { userId }
+          tag: 'Quiz'
         });
         
         // Processar respostas para formato simplificado
@@ -202,8 +242,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
           });
           
           logger.info('Respostas processadas com sucesso após UPSERT', {
-            tag: 'Quiz',
-            data: { userId }
+            tag: 'Quiz'
           });
         } catch (processingError) {
           logger.error('Erro ao processar respostas após UPSERT', {
@@ -222,8 +261,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       return false;
     } catch (finalAttemptError) {
       logger.error('Exceção ao tentar método UPSERT', {
-        tag: 'Quiz', 
-        data: { error: finalAttemptError, userId }
+        tag: 'Quiz'
       });
       return false;
     }
@@ -244,8 +282,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
 export const sendQuizDataToWebhook = async (submissionId: string): Promise<boolean> => {
   try {
     logger.info('Tentando enviar dados para webhook via função edge', {
-      tag: 'Quiz',
-      data: { submissionId }
+      tag: 'Quiz'
     });
     
     // Usar a função edge diretamente para evitar problemas de permissão
@@ -285,8 +322,7 @@ export const sendQuizDataToWebhook = async (submissionId: string): Promise<boole
 export const completeQuizManually = async (userId: string): Promise<boolean> => {
   try {
     logger.info('Tentando completar questionário manualmente', {
-      tag: 'Quiz',
-      data: { userId }
+      tag: 'Quiz'
     });
     
     // Obter a submissão atual
@@ -321,7 +357,7 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
       return true;
     }
     
-    // Atualizar diretamente a tabela quiz_submissions sem usar auth.users
+    // Atualizar diretamente a tabela quiz_submissions pelo ID (evitando condição user_id)
     const { error: updateError } = await supabase
       .from('quiz_submissions')
       .update({
@@ -329,14 +365,31 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
         completed_at: new Date().toISOString(),
         contact_consent: true
       })
-      .eq('user_id', userId);
+      .eq('id', submissionData.id);
     
     if (updateError) {
       logger.error('Erro ao atualizar status de completude do questionário', {
         tag: 'Quiz',
         data: { updateError, userId }
       });
-      return false;
+      
+      // Tentar com supabaseAdmin se o cliente normal falhar
+      const { error: adminError } = await supabaseAdmin
+        .from('quiz_submissions')
+        .update({
+          completed: true,
+          completed_at: new Date().toISOString(),
+          contact_consent: true
+        })
+        .eq('id', submissionData.id);
+      
+      if (adminError) {
+        logger.error('Erro também ao usar cliente admin para completar questionário', {
+          tag: 'Quiz',
+          data: { adminError, userId }
+        });
+        return false;
+      }
     }
     
     logger.info('Questionário marcado como completo com sucesso', {
@@ -652,4 +705,3 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
     return false;
   }
 };
-

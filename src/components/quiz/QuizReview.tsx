@@ -191,38 +191,11 @@ export function QuizReview({
     setIsSubmitting(true);
     setSubmissionError(null);
     try {
-      // Verificar status da submissão atual
       const userId = (await supabase.auth.getUser()).data.user?.id;
       if (!userId) {
         throw new Error("Usuário não autenticado");
       }
       
-      // Verificar se o questionário já está completo
-      const {
-        data: submissionData,
-        error: submissionError
-      } = await supabase.from('quiz_submissions').select('id, completed').eq('user_id', userId).maybeSingle();
-      
-      if (submissionError) {
-        console.error("Erro ao verificar submissão:", submissionError);
-        throw new Error(`Erro ao verificar status da submissão: ${submissionError.message}`);
-      }
-      
-      if (!submissionData) {
-        throw new Error("Nenhuma submissão encontrada para este usuário");
-      }
-      
-      if (submissionData.completed) {
-        // A submissão já está marcada como completa
-        console.log("Questionário já estava marcado como completo");
-        await onComplete();
-        return;
-      }
-
-      // Importar a função de utilidade
-      const { completeQuizManually } = await import('@/utils/supabaseUtils');
-      
-      // Tentar completar o questionário usando o método manual
       const success = await completeQuizManually(userId);
       
       if (!success) {
