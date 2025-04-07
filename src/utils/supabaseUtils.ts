@@ -242,18 +242,137 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
  */
 export const sendQuizDataToWebhook = async (submissionId: string): Promise<boolean> => {
   try {
+    logger.info('Tentando enviar dados para webhook via função edge', {
+      tag: 'Quiz',
+      data: { submissionId }
+    });
+    
+    // Usar a função edge diretamente para evitar problemas de permissão
     const { data, error } = await supabase.functions.invoke('quiz-webhook', {
       body: { submissionId },
     });
     
     if (error) {
-      console.error("Erro ao invocar função quiz-webhook:", error);
+      logger.error("Erro ao invocar função quiz-webhook:", {
+        tag: 'Quiz',
+        data: error
+      });
       return false;
+    }
+    
+    logger.info('Dados enviados para webhook com sucesso', {
+      tag: 'Quiz',
+      data: { submissionId, response: data }
+    });
+    
+    return true;
+  } catch (error) {
+    logger.error("Erro ao enviar dados para webhook:", {
+      tag: 'Quiz',
+      data: error
+    });
+    return false;
+  }
+};
+
+/**
+ * Utilitário para completar o questionário de um usuário manualmente
+ * Método alternativo sem acessar a tabela auth.users
+ * @param userId ID do usuário
+ * @returns boolean indicando se a operação foi bem-sucedida
+ */
+export const completeQuizManually = async (userId: string): Promise<boolean> => {
+  try {
+    logger.info('Tentando completar questionário manualmente', {
+      tag: 'Quiz',
+      data: { userId }
+    });
+    
+    // Obter a submissão atual
+    const { data: submissionData, error: fetchError } = await supabase
+      .from('quiz_submissions')
+      .select('id, completed')
+      .eq('user_id', userId)
+      .maybeSingle();
+      
+    if (fetchError) {
+      logger.error('Erro ao obter dados da submissão', {
+        tag: 'Quiz',
+        data: fetchError
+      });
+      return false;
+    }
+    
+    if (!submissionData) {
+      logger.error('Submissão não encontrada', {
+        tag: 'Quiz',
+        data: { userId }
+      });
+      return false;
+    }
+    
+    // Se já está completa, retornar sucesso
+    if (submissionData.completed) {
+      logger.info('Questionário já marcado como completo', {
+        tag: 'Quiz',
+        data: { userId, submissionId: submissionData.id }
+      });
+      return true;
+    }
+    
+    // Atualizar diretamente a tabela quiz_submissions sem usar auth.users
+    const { error: updateError } = await supabase
+      .from('quiz_submissions')
+      .update({
+        completed: true,
+        completed_at: new Date().toISOString(),
+        contact_consent: true
+      })
+      .eq('user_id', userId);
+    
+    if (updateError) {
+      logger.error('Erro ao atualizar status de completude do questionário', {
+        tag: 'Quiz',
+        data: { updateError, userId }
+      });
+      return false;
+    }
+    
+    logger.info('Questionário marcado como completo com sucesso', {
+      tag: 'Quiz',
+      data: { userId, submissionId: submissionData.id }
+    });
+    
+    // Tentar processar as respostas para o formato simplificado
+    try {
+      await processQuizAnswersToSimplified(userId);
+    } catch (processingError) {
+      // Não falhar completamente se ocorrer erro no processamento
+      logger.warn('Aviso: Erro ao processar respostas para formato simplificado', {
+        tag: 'Quiz',
+        data: { processingError, userId }
+      });
+    }
+    
+    // Tentar enviar os dados para o webhook
+    try {
+      if (submissionData.id) {
+        await sendQuizDataToWebhook(submissionData.id);
+      }
+    } catch (webhookError) {
+      // Não falhar completamente se o webhook falhar
+      logger.warn('Aviso: Erro ao enviar dados para webhook', {
+        tag: 'Quiz',
+        data: { webhookError, userId }
+      });
     }
     
     return true;
   } catch (error) {
-    console.error("Erro ao enviar dados para webhook:", error);
+    logger.error('Erro ao completar questionário manualmente', {
+      tag: 'Quiz',
+      data: error
+    });
     return false;
   }
 };
@@ -529,36 +648,6 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
       tag: 'Quiz',
       data: { error, userId }
     });
-    return false;
-  }
-};
-
-/**
- * Utilitário para completar o questionário de um usuário manualmente
- * @param userId ID do usuário
- * @returns boolean indicando se a operação foi bem-sucedida
- */
-export const completeQuizManually = async (userId: string): Promise<boolean> => {
-  try {
-    const { data, error } = await supabase
-      .from('quiz_submissions')
-      .update({
-        completed: true,
-        completed_at: new Date().toISOString(),
-        contact_consent: true
-      })
-      .eq('user_id', userId);
-    
-    if (error) {
-      console.error("Erro ao completar questionário manualmente:", error);
-      
-      // Tente uma abordagem alternativa com RPC
-      return await completeQuizSubmission(userId);
-    }
-    
-    return true;
-  } catch (error) {
-    console.error("Erro ao completar questionário:", error);
     return false;
   }
 };

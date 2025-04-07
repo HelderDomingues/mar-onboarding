@@ -367,7 +367,7 @@ export function QuizReview({
                 <div className="p-3 bg-slate-700 rounded border border-slate-600 text-sm mb-4">
                   <p className="text-[hsl(var(--quiz-text))]">
                     Declaro que as informações fornecidas neste questionário são verdadeiras e
-                    condizem com a realidade atual da minha empresa/neg��cio.
+                    condizem com a realidade atual da minha empresa/negcio.
                     Compreendo que estas informações serão utilizadas pela Crie Valor para análise
                     e diagnóstico, e que a precisão destas informações é fundamental para o sucesso do trabalho.
                   </p>
