@@ -11,6 +11,14 @@ project_id = "nmxfknwkhnengqqjtwru"
 [studio]
 # Configurações do Studio
 
+[auth]
+# Site URL para redirecionamento após autenticação
+site_url = "https://nmxfknwkhnengqqjtwru.supabase.co"
+additional_redirect_urls = ["https://nmxfknwkhnengqqjtwru.supabase.co"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+
 [functions]
 [functions.quiz-webhook]
 verify_jwt = false

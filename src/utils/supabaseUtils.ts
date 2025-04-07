@@ -1,4 +1,3 @@
-
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -16,20 +15,11 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
       .eq('user_id', userId)
       .maybeSingle();
       
-    if (error) {
-      logger.error('Erro ao verificar status do questionário', {
-        tag: 'Quiz',
-        data: error
-      });
-      return false;
-    }
+    if (error) throw error;
     
-    return data?.completed === true; // Verifica se é exatamente true
+    return data?.completed === true;
   } catch (error) {
-    logger.error('Exceção ao verificar status do questionário', {
-      tag: 'Quiz',
-      data: error
-    });
+    logger.error("Erro ao verificar status do questionário:", error);
     return false;
   }
 };
@@ -252,125 +242,18 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
  */
 export const sendQuizDataToWebhook = async (submissionId: string): Promise<boolean> => {
   try {
-    logger.info('Iniciando envio de dados para webhook', {
-      tag: 'Quiz',
-      data: { submissionId, timestamp: new Date().toISOString() }
+    const { data, error } = await supabase.functions.invoke('quiz-webhook', {
+      body: { submissionId },
     });
     
-    // Verificar se já foi processado anteriormente
-    const { data: submissionData, error: submissionError } = await supabaseAdmin
-      .from('quiz_submissions')
-      .select('id, webhook_processed, user_id')
-      .eq('id', submissionId)
-      .single();
-    
-    if (submissionError) {
-      logger.error('Erro ao obter dados da submissão para webhook', {
-        tag: 'Quiz',
-        data: submissionError
-      });
+    if (error) {
+      console.error("Erro ao invocar função quiz-webhook:", error);
       return false;
     }
     
-    if (submissionData.webhook_processed) {
-      logger.info('Submissão já foi processada anteriormente', {
-        tag: 'Quiz',
-        data: { submissionId }
-      });
-      return true;
-    }
-    
-    // Chamar a edge function quiz-webhook diretamente
-    try {
-      // URL completa da função edge
-      const webhookUrl = "https://nmxfknwkhnengqqjtwru.supabase.co/functions/v1/quiz-webhook";
-      
-      const response = await fetch(webhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''}`
-        },
-        body: JSON.stringify({ submission_id: submissionId })
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error('Resposta de erro da função webhook', {
-          tag: 'Quiz',
-          data: { status: response.status, error: errorText }
-        });
-        return false;
-      }
-      
-      const result = await response.json();
-      logger.info('Resposta da função webhook', {
-        tag: 'Quiz',
-        data: result
-      });
-      
-      return true;
-    } catch (fetchError) {
-      logger.error('Erro ao chamar função webhook', {
-        tag: 'Quiz',
-        data: fetchError
-      });
-      
-      // Plano B: Se falhar ao chamar a edge function, tentar atualizar as flags diretamente
-      try {
-        // Verificar e processar respostas para o formato simplificado
-        if (submissionData.user_id) {
-          try {
-            await supabaseAdmin.rpc('process_quiz_completion', {
-              p_user_id: submissionData.user_id
-            });
-            
-            // Marcar quiz_respostas_completas como processado
-            const { data: simplifiedData } = await supabaseAdmin
-              .from('quiz_respostas_completas')
-              .select('id')
-              .eq('submission_id', submissionId)
-              .maybeSingle();
-              
-            if (simplifiedData?.id) {
-              await supabaseAdmin
-                .from('quiz_respostas_completas')
-                .update({ webhook_processed: true })
-                .eq('id', simplifiedData.id);
-            }
-          } catch (processError) {
-            logger.warn('Erro ao processar respostas para formato simplificado', {
-              tag: 'Quiz',
-              data: processError
-            });
-          }
-        }
-        
-        // Marcar submission como processado pelo webhook
-        await supabaseAdmin
-          .from('quiz_submissions')
-          .update({ webhook_processed: true })
-          .eq('id', submissionId);
-          
-        logger.info('Submissão marcada como processada manualmente após falha no webhook', {
-          tag: 'Quiz',
-          data: { submissionId }
-        });
-        
-        return true;
-      } catch (fallbackError) {
-        logger.error('Erro no processamento de fallback após falha no webhook', {
-          tag: 'Quiz',
-          data: fallbackError
-        });
-        return false;
-      }
-    }
+    return true;
   } catch (error) {
-    logger.error('Exceção não tratada ao enviar dados para webhook', {
-      tag: 'Quiz',
-      data: error
-    });
+    console.error("Erro ao enviar dados para webhook:", error);
     return false;
   }
 };
@@ -646,6 +529,36 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
       tag: 'Quiz',
       data: { error, userId }
     });
+    return false;
+  }
+};
+
+/**
+ * Utilitário para completar o questionário de um usuário manualmente
+ * @param userId ID do usuário
+ * @returns boolean indicando se a operação foi bem-sucedida
+ */
+export const completeQuizManually = async (userId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('quiz_submissions')
+      .update({
+        completed: true,
+        completed_at: new Date().toISOString(),
+        contact_consent: true
+      })
+      .eq('user_id', userId);
+    
+    if (error) {
+      console.error("Erro ao completar questionário manualmente:", error);
+      
+      // Tente uma abordagem alternativa com RPC
+      return await completeQuizSubmission(userId);
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Erro ao completar questionário:", error);
     return false;
   }
 };

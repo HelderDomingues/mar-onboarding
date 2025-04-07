@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { completeQuizManually } from "@/utils/supabaseUtils";
 
 interface QuizReviewProps {
   modules: QuizModule[];
@@ -218,27 +219,19 @@ export function QuizReview({
         return;
       }
 
-      // Tentativa através de método update padrão
-      console.log("Tentando marcar como completo via cliente padrão");
-      const {
-        error: updateError
-      } = await supabase.from('quiz_submissions').update({
-        completed: true,
-        completed_at: new Date().toISOString(),
-        contact_consent: true
-      }).eq('id', submissionData.id);
+      // Importar a função de utilidade
+      const { completeQuizManually } = await import('@/utils/supabaseUtils');
       
-      if (updateError) {
-        console.error("Erro na atualização direta:", updateError);
-        setSubmissionError(`Erro na atualização: ${updateError.message}`);
-
-        // Se falhar, tentar através da função onComplete que usa o cliente admin
-        console.log("Tentando método alternativo via prop onComplete");
-        await onComplete();
-      } else {
-        console.log("Questionário marcado como completo com sucesso");
-        await onComplete();
+      // Tentar completar o questionário usando o método manual
+      const success = await completeQuizManually(userId);
+      
+      if (!success) {
+        throw new Error("Não foi possível completar o questionário");
       }
+      
+      console.log("Questionário marcado como completo com sucesso");
+      await onComplete();
+      
     } catch (error: any) {
       console.error("Erro na finalização:", error);
       setSubmissionError(error.message || "Erro desconhecido ao finalizar questionário");
@@ -374,7 +367,7 @@ export function QuizReview({
                 <div className="p-3 bg-slate-700 rounded border border-slate-600 text-sm mb-4">
                   <p className="text-[hsl(var(--quiz-text))]">
                     Declaro que as informações fornecidas neste questionário são verdadeiras e
-                    condizem com a realidade atual da minha empresa/negócio.
+                    condizem com a realidade atual da minha empresa/neg��cio.
                     Compreendo que estas informações serão utilizadas pela Crie Valor para análise
                     e diagnóstico, e que a precisão destas informações é fundamental para o sucesso do trabalho.
                   </p>

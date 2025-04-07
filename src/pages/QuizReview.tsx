@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
@@ -142,6 +141,8 @@ const QuizReviewPage = () => {
         data: { userId: user.id }
       });
       
+      const { completeQuizManually } = await import('@/utils/supabaseUtils');
+      
       // 1. Verificar status atual da submissão
       const { data: submissionData, error: submissionError } = await supabase
         .from('quiz_submissions')
@@ -177,67 +178,14 @@ const QuizReviewPage = () => {
         return;
       }
       
-      // 2. Tentar atualização direta (usando admin para garantir)
-      try {
-        const { error: directUpdateError } = await supabaseAdmin
-          .from('quiz_submissions')
-          .update({
-            completed: true,
-            completed_at: new Date().toISOString(),
-            contact_consent: true
-          })
-          .eq('id', submissionData.id);
-        
-        if (directUpdateError) {
-          logger.error('Erro na atualização direta com admin', {
-            tag: 'Quiz',
-            data: directUpdateError
-          });
-          throw directUpdateError;
-        }
-        
-        logger.info('Questionário finalizado com sucesso via atualização direta', {
-          tag: 'Quiz',
-          data: { submissionId: submissionData.id }
-        });
-      } catch (directUpdateError) {
-        // 3. Se falhar, tentar via função RPC
-        logger.warn('Falha na atualização direta, tentando via RPC', {
-          tag: 'Quiz',
-          data: directUpdateError
-        });
-        
-        const success = await completeQuizSubmission(user.id);
-        
-        if (!success) {
-          throw new Error("Não foi possível completar o questionário via RPC");
-        }
-        
-        logger.info('Questionário finalizado com sucesso via RPC', {
-          tag: 'Quiz',
-          data: { userId: user.id, submissionId: submissionData.id }
-        });
+      // 2. Tentar completar o questionário manualmente
+      const success = await completeQuizManually(user.id);
+      
+      if (!success) {
+        throw new Error("Não foi possível completar o questionário");
       }
       
-      // 4. Tentar processar as respostas para formato simplificado
-      try {
-        await supabaseAdmin.rpc('process_quiz_completion', {
-          p_user_id: user.id
-        });
-        
-        logger.info('Respostas processadas para formato simplificado', {
-          tag: 'Quiz',
-          data: { userId: user.id }
-        });
-      } catch (processingError) {
-        // Não falhar se este passo der erro
-        logger.error('Erro ao processar respostas para formato simplificado', {
-          tag: 'Quiz',
-          data: processingError
-        });
-      }
-      
-      // 5. Tentar enviar os dados para o webhook
+      // 3. Tentar enviar os dados para o webhook
       try {
         const webhookSuccess = await sendQuizDataToWebhook(submissionData.id);
         
