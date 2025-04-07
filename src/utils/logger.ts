@@ -9,6 +9,7 @@ interface LogOptions {
   submissionId?: string;
   result?: any;
   response?: any;
+  isAdmin?: boolean;
 }
 
 class Logger {

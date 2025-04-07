@@ -1,4 +1,3 @@
-
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -342,7 +341,6 @@ export const sendQuizDataToWebhook = async (submissionId: string): Promise<boole
  * Utilitário para completar o questionário de um usuário manualmente
  * Método alternativo sem acessar a tabela auth.users
  * @param userId ID do usuário
- * @returns boolean indicando se a operação foi bem-sucedida
  */
 export const completeQuizManually = async (userId: string): Promise<boolean> => {
   try {

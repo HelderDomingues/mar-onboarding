@@ -46,7 +46,7 @@ export const AdminRoute = ({ component: Component }: AdminRouteProps) => {
           setIsAdmin(!!data);
           logger.info('Verificação de admin concluída', {
             tag: 'AdminRoute',
-            isAdmin: !!data
+            data: { isAdmin: !!data }
           });
         }
       } catch (error: any) {
