@@ -825,9 +825,7 @@ export type Database = {
         Returns: undefined
       }
       execute_sql: {
-        Args: {
-          sql_query: string
-        }
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       get_system_setting: {

@@ -42,7 +42,7 @@ serve(async (req) => {
       console.log("Nenhum ID de submissão fornecido, buscando a mais recente");
     }
     
-    // Vamos tentar primeiro buscar na nova tabela simplificada
+    // Vamos tentar primeiro buscar na tabela simplificada
     let simplifiedData = null;
     
     if (submissionId) {
@@ -57,6 +57,9 @@ serve(async (req) => {
         simplifiedData = simplifiedResult;
       } else {
         console.log("Nenhum dado simplificado encontrado para a submissão:", submissionId);
+        if (simplifiedError) {
+          console.error("Erro ao buscar dados simplificados:", simplifiedError);
+        }
       }
     }
     
@@ -64,16 +67,12 @@ serve(async (req) => {
     if (simplifiedData) {
       console.log("Enviando dados simplificados para webhook do Make.com");
       
-      // Marcar como processado
-      await supabase
-        .from('quiz_respostas_completas')
-        .update({ webhook_processed: true })
-        .eq('id', simplifiedData.id);
+      // URL correta do webhook
+      const makeWebhookUrl = "https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
       
-      // Enviando diretamente para o Make.com usando fetch
       try {
-        const webhookUrl = "https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
-        const makeResponse = await fetch(webhookUrl, {
+        console.log("Enviando para Make.com:", makeWebhookUrl);
+        const makeResponse = await fetch(makeWebhookUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -81,12 +80,20 @@ serve(async (req) => {
           body: JSON.stringify(simplifiedData)
         });
         
+        console.log("Resposta do Make.com status:", makeResponse.status);
+        
         if (!makeResponse.ok) {
           console.error(`Make.com respondeu com status: ${makeResponse.status}`);
           const responseText = await makeResponse.text();
           console.error(`Resposta do Make.com: ${responseText}`);
           throw new Error(`Make.com respondeu com status: ${makeResponse.status}`);
         }
+        
+        // Marcar como processado
+        await supabase
+          .from('quiz_respostas_completas')
+          .update({ webhook_processed: true })
+          .eq('id', simplifiedData.id);
         
         console.log("Dados enviados com sucesso para o Make.com via edge function");
       } catch (makeError) {
@@ -200,10 +207,12 @@ serve(async (req) => {
       if (!simplifiedError && simplifiedData) {
         console.log(`Encontrada versão simplificada para submissão ${submissionId}, enviando...`);
         
+        // URL correta do webhook
+        const makeWebhookUrl = "https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
+        
         // Enviar dados simplificados para o webhook do Make.com
         try {
-          const webhookUrl = "https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
-          const makeResponse = await fetch(webhookUrl, {
+          const makeResponse = await fetch(makeWebhookUrl, {
             method: "POST",
             headers: {
               "Content-Type": "application/json"
@@ -265,10 +274,12 @@ serve(async (req) => {
       
       console.log(`Enviando dados detalhados para o Make.com para submissão ${submissionId}`);
       
+      // URL correta do webhook
+      const makeWebhookUrl = "https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
+      
       // Enviar dados para o webhook do Make.com
       try {
-        const webhookUrl = "https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
-        const makeResponse = await fetch(webhookUrl, {
+        const makeResponse = await fetch(makeWebhookUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"

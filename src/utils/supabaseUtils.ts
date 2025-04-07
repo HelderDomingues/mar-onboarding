@@ -281,6 +281,7 @@ export const sendQuizDataToWebhook = async (submissionId: string): Promise<boole
     
     // Chamar a edge function quiz-webhook que envia os dados
     try {
+      // URL correta da função edge
       const webhookUrl = "https://nmxfknwkhnengqqjtwru.supabase.co/functions/v1/quiz-webhook";
       
       const response = await fetch(webhookUrl, {
