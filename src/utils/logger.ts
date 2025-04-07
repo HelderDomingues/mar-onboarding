@@ -62,7 +62,7 @@ class Logger {
     const formattedMessage = this.formatMessage('error', message, options);
     
     if (this.logToConsole) {
-      console.error(formattedMessage, options?.data || '');
+      console.error(formattedMessage, options?.data || '', options?.error || '');
     }
   }
 

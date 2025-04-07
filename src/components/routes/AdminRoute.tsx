@@ -24,6 +24,11 @@ export const AdminRoute = ({ component: Component }: AdminRouteProps) => {
       }
       
       try {
+        logger.info('Verificando papel de administrador', {
+          tag: 'AdminRoute',
+          userId: user.id
+        });
+        
         const { data, error } = await supabase
           .from('user_roles')
           .select('role')
@@ -34,15 +39,20 @@ export const AdminRoute = ({ component: Component }: AdminRouteProps) => {
         if (error) {
           logger.error('Erro ao verificar papel do usuário:', {
             tag: 'AdminRoute',
-            data: error
+            error
+          });
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(!!data);
+          logger.info('Verificação de admin concluída', {
+            tag: 'AdminRoute',
+            isAdmin: !!data
           });
         }
-          
-        setIsAdmin(!!data);
-      } catch (error) {
+      } catch (error: any) {
         logger.error('Erro ao verificar papel do usuário:', {
           tag: 'AdminRoute',
-          data: error
+          error
         });
         setIsAdmin(false);
       } finally {

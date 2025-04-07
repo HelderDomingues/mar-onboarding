@@ -1,3 +1,4 @@
+
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -19,7 +20,10 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
     
     return data?.completed === true;
   } catch (error: any) {
-    logger.error("Erro ao verificar status do questionário:", { error });
+    logger.error("Erro ao verificar status do questionário:", { 
+      error,
+      tag: "QuizStatus" 
+    });
     return false;
   }
 };
@@ -513,16 +517,16 @@ export const importUser = async (userData: {
     if (error) {
       logger.error('Erro ao importar usuário', {
         tag: 'Admin',
-        data: error
+        error
       });
       throw error;
     }
     
     return data;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Exceção ao importar usuário', {
       tag: 'Admin',
-      data: error
+      error
     });
     throw error;
   }
