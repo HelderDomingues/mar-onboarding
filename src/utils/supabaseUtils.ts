@@ -1,3 +1,4 @@
+
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -651,3 +652,4 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
     return false;
   }
 };
+
