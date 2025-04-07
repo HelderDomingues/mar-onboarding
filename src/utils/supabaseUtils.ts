@@ -1,3 +1,4 @@
+
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -246,7 +247,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
 
 /**
  * Utilitário para enviar dados do questionário para webhook
- * Versão atualizada que usa a edge function quiz-webhook
+ * Versão atualizada que usa a edge function quiz-webhook diretamente
  * @param submissionId ID da submissão do questionário
  */
 export const sendQuizDataToWebhook = async (submissionId: string): Promise<boolean> => {
@@ -279,9 +280,9 @@ export const sendQuizDataToWebhook = async (submissionId: string): Promise<boole
       return true;
     }
     
-    // Chamar a edge function quiz-webhook que envia os dados
+    // Chamar a edge function quiz-webhook diretamente
     try {
-      // URL correta da função edge
+      // URL completa da função edge
       const webhookUrl = "https://nmxfknwkhnengqqjtwru.supabase.co/functions/v1/quiz-webhook";
       
       const response = await fetch(webhookUrl, {
@@ -315,7 +316,7 @@ export const sendQuizDataToWebhook = async (submissionId: string): Promise<boole
         data: fetchError
       });
       
-      // Se falhar ao chamar a edge function, tentar atualizar as flags diretamente
+      // Plano B: Se falhar ao chamar a edge function, tentar atualizar as flags diretamente
       try {
         // Verificar e processar respostas para o formato simplificado
         if (submissionData.user_id) {
