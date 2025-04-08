@@ -2,7 +2,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, ArrowLeft, Home } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Home, ExternalLink } from "lucide-react";
 
 const NotFound = () => {
   const location = useLocation();
@@ -10,10 +10,17 @@ const NotFound = () => {
 
   useEffect(() => {
     console.error(
-      "404 Error: User attempted to access non-existent route:",
+      "404 Error: Usuário tentou acessar rota inexistente:",
       location.pathname
     );
+    
+    // Definir o título da página
+    document.title = "Página não encontrada | Crie Valor";
   }, [location.pathname]);
+
+  const handleOpenWixQuestionnaire = () => {
+    window.open("https://www.crievalor.com.br/mapa-para-alto-rendimento", "_blank");
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -29,7 +36,7 @@ const NotFound = () => {
           A página que você está tentando acessar não existe ou foi movida.
         </p>
         
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="flex flex-col gap-3">
           <Button 
             variant="outline" 
             className="gap-2"
@@ -41,10 +48,19 @@ const NotFound = () => {
           
           <Button 
             className="gap-2"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/wix-redirect")}
           >
             <Home className="h-4 w-4" />
-            Página Inicial
+            Ir para o Questionário MAR
+          </Button>
+          
+          <Button 
+            variant="outline"
+            className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 mt-2"
+            onClick={handleOpenWixQuestionnaire}
+          >
+            <ExternalLink className="h-4 w-4" />
+            Abrir Questionário Original
           </Button>
         </div>
       </div>
