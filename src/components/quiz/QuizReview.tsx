@@ -191,6 +191,7 @@ export function QuizReview({
     if (isSubmitting) return;
     setIsSubmitting(true);
     setSubmissionError(null);
+    
     try {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       if (!userId) {
@@ -202,10 +203,83 @@ export function QuizReview({
         userId
       });
       
+      const { data: submissionData, error: submissionError } = await supabase
+        .from('quiz_submissions')
+        .select('id, completed')
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      if (submissionError || !submissionData) {
+        logger.error('Erro ao buscar dados da submissão', {
+          tag: 'Quiz',
+          error: submissionError
+        });
+        throw new Error("Não foi possível encontrar sua submissão do questionário");
+      }
+      
+      if (submissionData.completed) {
+        logger.info('Questionário já estava marcado como completo', {
+          tag: 'Quiz',
+          userId,
+          submissionId: submissionData.id
+        });
+        await onComplete();
+        return;
+      }
+      
+      try {
+        logger.db('Tentando finalizar questionário com atualização direta', {
+          tag: 'Quiz',
+          userId,
+          submissionId: submissionData.id
+        });
+        
+        const { error: updateError } = await supabase
+          .from('quiz_submissions')
+          .update({
+            completed: true,
+            completed_at: new Date().toISOString(),
+            contact_consent: true
+          })
+          .eq('id', submissionData.id)
+          .eq('user_id', userId);
+        
+        if (!updateError) {
+          logger.info('Questionário finalizado com sucesso via atualização direta', {
+            tag: 'Quiz',
+            userId,
+            submissionId: submissionData.id
+          });
+          
+          try {
+            await processQuizAnswersToSimplified(userId);
+            await sendQuizDataToWebhook(submissionData.id);
+          } catch (processingError) {
+            logger.warn('Aviso: Erro ao processar dados adicionais, mas questionário foi completado', {
+              tag: 'Quiz',
+              error: processingError
+            });
+          }
+          
+          await onComplete();
+          return;
+        } else {
+          logger.warn('Erro na atualização direta, tentando via função completeQuizManually', {
+            tag: 'Quiz',
+            error: updateError
+          });
+        }
+      } catch (directUpdateError) {
+        logger.warn('Exceção na atualização direta, tentando abordagem alternativa', {
+          tag: 'Quiz',
+          error: directUpdateError
+        });
+      }
+      
       const success = await completeQuizManually(userId);
       
       if (!success) {
-        throw new Error("Não foi possível completar o questionário");
+        throw new Error("Não foi possível completar o questionário. Por favor, tente novamente.");
       }
       
       logger.info("Questionário marcado como completo com sucesso", {
@@ -216,17 +290,33 @@ export function QuizReview({
       await onComplete();
       
     } catch (error: any) {
-      console.error("Erro na finalização:", error);
-      logger.error("Erro ao finalizar questionário", {
-        tag: 'Quiz',
-        error
-      });
-      setSubmissionError(error.message || "Erro desconhecido ao finalizar questionário");
+      logger.error("Erro na finalização:", error);
+      
+      let errorMessage = "Não foi possível finalizar o questionário.";
+      
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.code) {
+        switch (error.code) {
+          case '42501':
+            errorMessage = "Erro de permissão ao atualizar o questionário. Por favor, tente novamente ou entre em contato com o suporte.";
+            break;
+          case '23505':
+            errorMessage = "Já existe um registro similar. Por favor, atualize a página e tente novamente.";
+            break;
+          default:
+            errorMessage = `Erro ao finalizar questionário (${error.code}). Por favor, tente novamente.`;
+        }
+      }
+      
+      setSubmissionError(errorMessage);
+      
       toast({
         title: "Erro ao finalizar questionário",
-        description: error.message || "Não foi possível finalizar o questionário. Por favor, tente novamente.",
+        description: errorMessage,
         variant: "destructive"
       });
+      
       setConfirmed(false);
     } finally {
       setIsSubmitting(false);

@@ -136,12 +136,10 @@ const QuizReviewPage = () => {
     setIsCompleting(true);
     
     try {
-      logger.info('Tentando completar o questionário', {
+      logger.info('Iniciando processo de conclusão do questionário', {
         tag: 'Quiz',
         data: { userId: user.id }
       });
-      
-      const { completeQuizManually } = await import('@/utils/supabaseUtils');
       
       // 1. Verificar status atual da submissão
       const { data: submissionData, error: submissionError } = await supabase
@@ -178,43 +176,130 @@ const QuizReviewPage = () => {
         return;
       }
       
-      // 2. Tentar completar o questionário manualmente
-      const success = await completeQuizManually(user.id);
-      
-      if (!success) {
-        throw new Error("Não foi possível completar o questionário");
-      }
-      
-      // 3. Tentar enviar os dados para o webhook
+      // 2. Tentativa direta: atualizar usando o cliente padrão com permissões do usuário
       try {
-        const webhookSuccess = await sendQuizDataToWebhook(submissionData.id);
+        logger.db('Tentando concluir questionário com update direto', {
+          tag: 'Quiz',
+          userId: user.id,
+          submissionId: submissionData.id
+        });
         
-        if (webhookSuccess) {
-          logger.info('Dados enviados para webhook com sucesso', {
+        const { error: updateError } = await supabase
+          .from('quiz_submissions')
+          .update({
+            completed: true,
+            completed_at: new Date().toISOString(),
+            contact_consent: true
+          })
+          .eq('id', submissionData.id)
+          .eq('user_id', user.id);
+        
+        if (!updateError) {
+          logger.info('Questionário concluído com sucesso via update direto', {
             tag: 'Quiz',
-            data: { submissionId: submissionData.id }
+            userId: user.id,
+            submissionId: submissionData.id
           });
+          
+          // Processar respostas e enviar para webhook
+          try {
+            await processQuizAnswersToSimplified(user.id);
+            await sendQuizDataToWebhook(submissionData.id);
+          } catch (processingError) {
+            logger.warn('Erro ao processar dados adicionais, mas questionário foi concluído', {
+              tag: 'Quiz',
+              error: processingError
+            });
+          }
+          
+          toast({
+            title: "Sucesso!",
+            description: "Questionário concluído com sucesso!",
+          });
+          
+          navigate('/dashboard');
+          return;
         } else {
-          // Não falhar todo o processo se o webhook falhar
-          logger.warn('O webhook falhou, mas o questionário foi finalizado com sucesso', {
+          logger.warn('Falha no update direto, tentando método alternativo', {
             tag: 'Quiz',
-            data: { submissionId: submissionData.id }
+            error: updateError
           });
         }
-      } catch (webhookError) {
-        // Não falhar todo o processo se o webhook falhar
-        logger.error('Erro ao enviar dados para webhook, mas questionário foi finalizado', {
+      } catch (directUpdateError) {
+        logger.warn('Exceção na atualização direta, tentando método alternativo', {
           tag: 'Quiz',
-          data: webhookError
+          error: directUpdateError
         });
       }
       
-      toast({
-        title: "Sucesso!",
-        description: "Questionário concluído com sucesso!",
-      });
+      // 3. Tentativa com função RPC
+      try {
+        logger.db('Tentando completar questionário via RPC', {
+          tag: 'Quiz',
+          userId: user.id
+        });
+        
+        const { data: rpcResult, error: rpcError } = await supabase.rpc('complete_quiz_submission', {
+          p_user_id: user.id
+        });
+        
+        if (!rpcError) {
+          logger.info('Questionário completado com sucesso via RPC', {
+            tag: 'Quiz',
+            userId: user.id,
+            result: rpcResult
+          });
+          
+          // Processar respostas e webhook
+          try {
+            await processQuizAnswersToSimplified(user.id);
+            await sendQuizDataToWebhook(submissionData.id);
+          } catch (processingError) {
+            logger.warn('Erro ao processar dados adicionais, mas questionário foi concluído', {
+              tag: 'Quiz',
+              error: processingError
+            });
+          }
+          
+          toast({
+            title: "Sucesso!",
+            description: "Questionário concluído com sucesso!",
+          });
+          
+          navigate('/dashboard');
+          return;
+        } else {
+          logger.warn('Falha na tentativa via RPC, tentando último recurso', {
+            tag: 'Quiz',
+            error: rpcError
+          });
+        }
+      } catch (rpcError) {
+        logger.warn('Exceção ao tentar RPC, tentando último recurso', {
+          tag: 'Quiz',
+          error: rpcError
+        });
+      }
       
-      navigate('/dashboard');
+      // 4. Último recurso: usar função utilitária completeQuizManually
+      const success = await completeQuizManually(user.id);
+      
+      if (success) {
+        logger.info('Questionário completado com sucesso via completeQuizManually', {
+          tag: 'Quiz',
+          userId: user.id
+        });
+        
+        toast({
+          title: "Sucesso!",
+          description: "Questionário concluído com sucesso!",
+        });
+        
+        navigate('/dashboard');
+      } else {
+        throw new Error("Não foi possível completar o questionário usando nenhum dos métodos disponíveis");
+      }
+      
     } catch (error: any) {
       logger.error("Erro ao finalizar questionário:", {
         tag: 'Quiz',

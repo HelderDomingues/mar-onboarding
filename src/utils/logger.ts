@@ -11,6 +11,7 @@ interface LogOptions {
   isAdmin?: boolean;
   result?: any;
   response?: any;
+  status?: string;
   
   // Campo dinâmico para outros dados
   [key: string]: any;
@@ -35,5 +36,9 @@ export const logger = {
     if (process.env.NODE_ENV !== 'production') {
       console.debug(`[DEBUG] ${message}`, options);
     }
+  },
+  // Nova função para registrar operações de banco de dados
+  db: (message: string, options?: LogOptions) => {
+    console.info(`[DATABASE] ${message}`, options);
   }
 };
