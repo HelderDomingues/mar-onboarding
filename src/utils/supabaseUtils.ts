@@ -425,7 +425,7 @@ export const hasSimplifiedAnswers = async (userId: string): Promise<boolean> => 
  * @param userId ID do usuário
  * @returns boolean indicando se a operação foi bem-sucedida
  */
-async function processAnswersManually(userId: string): Promise<boolean> => {
+async function processAnswersManually(userId: string): Promise<boolean> {
   try {
     // Obter dados da submissão
     const { data: submissionData, error: submissionError } = await supabase
