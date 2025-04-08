@@ -72,7 +72,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       return true;
     }
     
-    // Tentativa 1: Via RPC (função SQL específica)
+    // Abordagem principal: tentar RPC (função SQL específica)
     try {
       logger.info('Tentando completar questionário via RPC', {
         tag: 'Quiz',
@@ -91,22 +91,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
         });
         
         // Processar respostas para o formato simplificado
-        try {
-          await supabaseAdmin.rpc('process_quiz_completion', {
-            p_user_id: userId
-          });
-          
-          logger.info('Respostas processadas com sucesso para formato simplificado após RPC', {
-            tag: 'Quiz'
-          });
-        } catch (processingException: any) {
-          logger.error('Exceção ao processar respostas para formato simplificado após RPC', {
-            tag: 'Quiz',
-            error: processingException,
-            userId
-          });
-        }
-        
+        await processQuizAnswersToSimplified(userId);
         return true;
       }
       
@@ -123,7 +108,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
       });
     }
     
-    // Tentativa 2: Diretamente via cliente regular
+    // Abordagem de fallback: atualização direta
     try {
       logger.info('Tentando completar questionário via update direto', {
         tag: 'Quiz',
@@ -131,7 +116,7 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
         submissionId: submissionData.id
       });
       
-      const { error: updateError } = await supabase
+      const { error: updateError } = await supabaseAdmin
         .from('quiz_submissions')
         .update({
           completed: true,
@@ -147,17 +132,8 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
           submissionId: submissionData.id
         });
         
-        // Tentar processar as respostas para o formato simplificado
-        try {
-          await processQuizAnswersToSimplified(userId);
-        } catch (processingError: any) {
-          logger.error('Erro ao processar respostas após update direto', {
-            tag: 'Quiz',
-            error: processingError,
-            userId
-          });
-        }
-        
+        // Processar respostas
+        await processQuizAnswersToSimplified(userId);
         return true;
       }
       
@@ -166,125 +142,12 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
         error: updateError,
         userId
       });
-    } catch (directAttemptError: any) {
-      logger.error('Exceção ao tentar update direto', {
-        tag: 'Quiz', 
-        error: directAttemptError,
-        userId
-      });
-    }
-    
-    // Tentativa 3: Via admin client (mais poder)
-    try {
-      logger.info('Tentando completar questionário via cliente admin', {
-        tag: 'Quiz',
-        userId,
-        submissionId: submissionData.id
-      });
-      
-      const { error: adminError } = await supabaseAdmin
-        .from('quiz_submissions')
-        .update({
-          completed: true,
-          completed_at: new Date().toISOString(),
-          contact_consent: true
-        })
-        .eq('id', submissionData.id);
-      
-      if (!adminError) {
-        logger.info('Questionário completado com sucesso via cliente admin', {
-          tag: 'Quiz',
-          userId,
-          submissionId: submissionData.id
-        });
-        
-        // Processar respostas para o formato simplificado após atualização
-        try {
-          await supabaseAdmin.rpc('process_quiz_completion', {
-            p_user_id: userId
-          });
-          
-          logger.info('Respostas processadas com sucesso após atualização admin', {
-            tag: 'Quiz'
-          });
-        } catch (processingException: any) {
-          logger.error('Exceção ao processar respostas após atualização admin', {
-            tag: 'Quiz',
-            error: processingException,
-            userId
-          });
-        }
-        
-        return true;
-      }
-      
-      logger.error('Falha ao completar questionário via cliente admin', {
-        tag: 'Quiz',
-        error: adminError,
-        userId,
-        submissionId: submissionData.id
-      });
-    } catch (adminAttemptError: any) {
-      logger.error('Exceção ao tentar completar via cliente admin', {
-        tag: 'Quiz',
-        error: adminAttemptError,
-        userId
-      });
-    }
-    
-    // Tentativa 4: Atualização direta via UPSERT
-    try {
-      logger.info('Tentando completar via método UPSERT', {
-        tag: 'Quiz'
-      });
-      
-      // Tentar através do método INSERT no modo UPSERT
-      const { error: upsertError } = await supabaseAdmin
-        .from('quiz_submissions')
-        .upsert({
-          id: submissionData.id,
-          user_id: userId,
-          completed: true,
-          completed_at: new Date().toISOString(),
-          contact_consent: true
-        });
-      
-      if (!upsertError) {
-        logger.info('Questionário completado com sucesso via upsert', {
-          tag: 'Quiz'
-        });
-        
-        // Processar respostas para formato simplificado
-        try {
-          await supabaseAdmin.rpc('process_quiz_completion', {
-            p_user_id: userId
-          });
-          
-          logger.info('Respostas processadas com sucesso após UPSERT', {
-            tag: 'Quiz'
-          });
-        } catch (processingError: any) {
-          logger.error('Erro ao processar respostas após UPSERT', {
-            tag: 'Quiz',
-            error: processingError,
-            userId
-          });
-        }
-        
-        return true;
-      }
-      
-      logger.error('Todos os métodos falharam ao completar questionário', {
-        tag: 'Quiz',
-        error: upsertError,
-        userId,
-        submissionId: submissionData.id
-      });
       return false;
-    } catch (finalAttemptError: any) {
-      logger.error('Exceção ao tentar método UPSERT', {
+    } catch (updateError: any) {
+      logger.error('Erro ao completar questionário', {
         tag: 'Quiz',
-        error: finalAttemptError
+        error: updateError,
+        userId
       });
       return false;
     }
@@ -355,17 +218,10 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
       .eq('user_id', userId)
       .maybeSingle();
       
-    if (fetchError) {
+    if (fetchError || !submissionData) {
       logger.error('Erro ao obter dados da submissão', {
         tag: 'Quiz',
-        error: fetchError
-      });
-      return false;
-    }
-    
-    if (!submissionData) {
-      logger.error('Submissão não encontrada', {
-        tag: 'Quiz',
+        error: fetchError,
         userId
       });
       return false;
@@ -381,8 +237,8 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
       return true;
     }
     
-    // Atualizar diretamente a tabela quiz_submissions pelo ID (evitando condição user_id)
-    const { error: updateError } = await supabase
+    // Atualizar diretamente a tabela quiz_submissions pelo ID 
+    const { error: updateError } = await supabaseAdmin
       .from('quiz_submissions')
       .update({
         completed: true,
@@ -397,25 +253,7 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
         error: updateError,
         userId
       });
-      
-      // Tentar com supabaseAdmin se o cliente normal falhar
-      const { error: adminError } = await supabaseAdmin
-        .from('quiz_submissions')
-        .update({
-          completed: true,
-          completed_at: new Date().toISOString(),
-          contact_consent: true
-        })
-        .eq('id', submissionData.id);
-      
-      if (adminError) {
-        logger.error('Erro também ao usar cliente admin para completar questionário', {
-          tag: 'Quiz',
-          error: adminError,
-          userId
-        });
-        return false;
-      }
+      return false;
     }
     
     logger.info('Questionário marcado como completo com sucesso', {
@@ -610,6 +448,11 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
   try {
     // Tentar chamar a função RPC que processa as respostas
     try {
+      logger.info('Processando respostas via RPC', {
+        tag: 'Quiz',
+        userId
+      });
+      
       await supabaseAdmin.rpc('process_quiz_completion', {
         p_user_id: userId
       });
@@ -628,109 +471,7 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
       });
       
       // Se falhar, tentar fazer manualmente (análise de fallback)
-      const { data: submissionData, error: submissionError } = await supabase
-        .from('quiz_submissions')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-      
-      if (submissionError || !submissionData) {
-        logger.error('Erro ao buscar submissão para processamento manual', {
-          tag: 'Quiz',
-          error: submissionError,
-          userId
-        });
-        return false;
-      }
-      
-      // Verificar se já existe um registro em quiz_respostas_completas
-      const { data: existingData, error: existingError } = await supabase
-        .from('quiz_respostas_completas')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
-      
-      if (existingError) {
-        logger.error('Erro ao verificar existência de registro simplificado', {
-          tag: 'Quiz',
-          error: existingError,
-          userId
-        });
-      }
-      
-      // Se já existir, apenas atualizar o status de completado
-      if (existingData?.id) {
-        const { error: updateError } = await supabaseAdmin
-          .from('quiz_respostas_completas')
-          .update({
-            completed: submissionData.completed,
-            completed_at: submissionData.completed_at,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingData.id);
-        
-        if (updateError) {
-          logger.error('Erro ao atualizar registro simplificado existente', {
-            tag: 'Quiz',
-            error: updateError,
-            userId
-          });
-          return false;
-        }
-        
-        logger.info('Registro simplificado atualizado com sucesso', {
-          tag: 'Quiz',
-          userId
-        });
-        
-        return true;
-      }
-      
-      // Caso contrário, criar um novo registro básico
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !userData.user) {
-        logger.error('Erro ao obter dados do usuário para processamento manual', {
-          tag: 'Quiz',
-          error: userError,
-          userId
-        });
-        return false;
-      }
-      
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('full_name, company_name')
-        .eq('id', userId)
-        .maybeSingle();
-      
-      const { error: insertError } = await supabaseAdmin
-        .from('quiz_respostas_completas')
-        .insert({
-          user_id: userId,
-          submission_id: submissionData.id,
-          email: userData.user.email,
-          full_name: profileData?.full_name || '',
-          company_name: profileData?.company_name || '',
-          completed: submissionData.completed,
-          completed_at: submissionData.completed_at
-        });
-      
-      if (insertError) {
-        logger.error('Erro ao inserir registro simplificado manual', {
-          tag: 'Quiz',
-          error: insertError,
-          userId
-        });
-        return false;
-      }
-      
-      logger.info('Registro simplificado básico criado manualmente', {
-        tag: 'Quiz',
-        userId
-      });
-      
-      return true;
+      return await processAnswersManually(userId);
     }
   } catch (error: any) {
     logger.error('Exceção ao processar respostas para formato simplificado', {
@@ -741,3 +482,124 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
     return false;
   }
 };
+
+/**
+ * Função auxiliar para processar respostas manualmente quando o RPC falha
+ * @param userId ID do usuário
+ * @returns boolean indicando se a operação foi bem-sucedida
+ */
+async function processAnswersManually(userId: string): Promise<boolean> {
+  try {
+    // Obter dados da submissão
+    const { data: submissionData, error: submissionError } = await supabase
+      .from('quiz_submissions')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (submissionError || !submissionData) {
+      logger.error('Erro ao buscar submissão para processamento manual', {
+        tag: 'Quiz',
+        error: submissionError,
+        userId
+      });
+      return false;
+    }
+    
+    // Verificar se já existe um registro em quiz_respostas_completas
+    const { data: existingData, error: existingError } = await supabase
+      .from('quiz_respostas_completas')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (existingError) {
+      logger.error('Erro ao verificar existência de registro simplificado', {
+        tag: 'Quiz',
+        error: existingError,
+        userId
+      });
+    }
+    
+    // Se já existir, apenas atualizar o status de completado
+    if (existingData?.id) {
+      const { error: updateError } = await supabaseAdmin
+        .from('quiz_respostas_completas')
+        .update({
+          completed: submissionData.completed,
+          completed_at: submissionData.completed_at,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingData.id);
+      
+      if (updateError) {
+        logger.error('Erro ao atualizar registro simplificado existente', {
+          tag: 'Quiz',
+          error: updateError,
+          userId
+        });
+        return false;
+      }
+      
+      logger.info('Registro simplificado atualizado com sucesso', {
+        tag: 'Quiz',
+        userId
+      });
+      
+      return true;
+    }
+    
+    // Caso contrário, criar um novo registro básico
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !userData.user) {
+      logger.error('Erro ao obter dados do usuário para processamento manual', {
+        tag: 'Quiz',
+        error: userError,
+        userId
+      });
+      return false;
+    }
+    
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('full_name, company_name')
+      .eq('id', userId)
+      .maybeSingle();
+    
+    const { error: insertError } = await supabaseAdmin
+      .from('quiz_respostas_completas')
+      .insert({
+        user_id: userId,
+        submission_id: submissionData.id,
+        email: userData.user.email,
+        full_name: profileData?.full_name || '',
+        company_name: profileData?.company_name || '',
+        completed: submissionData.completed,
+        completed_at: submissionData.completed_at
+      });
+    
+    if (insertError) {
+      logger.error('Erro ao inserir registro simplificado manual', {
+        tag: 'Quiz',
+        error: insertError,
+        userId
+      });
+      return false;
+    }
+    
+    logger.info('Registro simplificado básico criado manualmente', {
+      tag: 'Quiz',
+      userId
+    });
+    
+    return true;
+  } catch (error: any) {
+    logger.error('Erro ao processar respostas manualmente', {
+      tag: 'Quiz',
+      error,
+      userId
+    });
+    return false;
+  }
+}
