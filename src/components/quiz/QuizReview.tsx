@@ -89,39 +89,42 @@ export function QuizReview({
     setEditingQuestionId(questionId);
   };
 
-  const handleSaveEdit = async (questionId: string) => {
-    try {
-      const answer = editedAnswers[questionId];
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-      if (!userId) {
-        throw new Error("Usuário não autenticado");
-      }
-      const answerValue = typeof answer === 'object' ? JSON.stringify(answer) : answer;
-      const {
-        error
-      } = await supabase.from('quiz_answers').upsert({
-        user_id: userId,
-        question_id: questionId,
-        answer: answerValue
-      }, {
-        onConflict: 'user_id,question_id'
-      });
-      if (error) throw error;
-      toast({
-        title: "Resposta atualizada",
-        description: "Sua resposta foi atualizada com sucesso."
-      });
-    } catch (error) {
-      console.error("Erro ao salvar resposta:", error);
-      toast({
-        title: "Erro ao atualizar resposta",
-        description: "Não foi possível salvar sua resposta. Por favor, tente novamente.",
-        variant: "destructive"
-      });
+const handleSaveEdit = async (questionId: string) => {
+  try {
+    const answer = editedAnswers[questionId];
+    
+    // Fixed line - using getSession() instead of getUser()
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+    
+    if (!userId) {
+      throw new Error("Usuário não autenticado");
     }
-    setEditingQuestionId(null);
-  };
+    
+    // Rest of your function remains the same
+    const answerValue = typeof answer === 'object' ? JSON.stringify(answer) : answer;
+    const { error } = await supabase.from('quiz_answers').upsert({
+      user_id: userId,
+      question_id: questionId,
+      answer: answerValue
+    }, { onConflict: 'user_id,question_id' });
+    
+    if (error) throw error;
+    
+    toast({
+      title: "Resposta atualizada",
+      description: "Sua resposta foi atualizada com sucesso."
+    });
+  } catch (error) {
+    console.error("Erro ao salvar resposta:", error);
+    toast({
+      title: "Erro ao atualizar resposta",
+      description: "Não foi possível salvar sua resposta. Por favor, tente novamente.",
+      variant: "destructive"
+    });
+  }
+  setEditingQuestionId(null);
+};
 
   const handleCancelEdit = () => {
     setEditingQuestionId(null);
