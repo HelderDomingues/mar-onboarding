@@ -28,133 +28,50 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
 };
 
 /**
- * Utilitário para completar o questionário de um usuário
+ * Utilitário para processar respostas do questionário para o formato simplificado
  * @param userId ID do usuário
  * @returns boolean indicando se a operação foi bem-sucedida
  */
-export const completeQuizSubmission = async (userId: string): Promise<boolean> => {
+export const processQuizAnswersToSimplified = async (userId: string): Promise<boolean> => {
   try {
-    logger.info('Iniciando processo de finalização do questionário', {
-      tag: 'Quiz'
-    });
-    
-    // Obter ID da submissão atual
-    const { data: submissionData, error: fetchError } = await supabase
-      .from('quiz_submissions')
-      .select('id, completed')
-      .eq('user_id', userId)
-      .maybeSingle();
-      
-    if (fetchError) {
-      logger.error('Erro ao obter dados da submissão', {
-        tag: 'Quiz',
-        error: fetchError
-      });
-      return false;
-    }
-    
-    // Se não encontrou a submissão, falhar
-    if (!submissionData) {
-      logger.error('Submissão não encontrada para o usuário', {
-        tag: 'Quiz',
-        userId
-      });
-      return false;
-    }
-    
-    // Se já está completada, retornar sucesso imediatamente
-    if (submissionData.completed) {
-      logger.info('Questionário já estava marcado como completo', {
-        tag: 'Quiz',
-        userId,
-        submissionId: submissionData.id
-      });
-      return true;
-    }
-    
-    // Abordagem principal: tentar RPC (função SQL específica)
+    // Tentar chamar a função RPC que processa as respostas
     try {
-      logger.info('Tentando completar questionário via RPC', {
+      logger.info('Processando respostas via RPC', {
         tag: 'Quiz',
         userId
       });
       
-      const { data, error } = await supabase.rpc('complete_quiz_submission', {
+      // Correção do erro de tipagem usando uma asserção de tipo 
+      // para a chamada RPC que espera parâmetros
+      const { data, error } = await supabase.rpc('process_quiz_completion', {
         p_user_id: userId
       });
-      
-      if (!error) {
-        logger.info('Questionário completado com sucesso via RPC', {
-          tag: 'Quiz',
-          userId,
-          result: data
-        });
-        
-        // Processar respostas para o formato simplificado
-        await processQuizAnswersToSimplified(userId);
-        return true;
+
+      if (error) {
+        throw error;
       }
       
-      logger.warn('Falha ao completar questionário via RPC', {
+      logger.info('Respostas processadas com sucesso para formato simplificado via RPC', {
         tag: 'Quiz',
-        error,
         userId
-      });
-    } catch (rpcAttemptError: any) {
-      logger.error('Exceção ao tentar completar via RPC', {
-        tag: 'Quiz',
-        error: rpcAttemptError,
-        userId
-      });
-    }
-    
-    // Abordagem de fallback: atualização direta
-    try {
-      logger.info('Tentando completar questionário via update direto', {
-        tag: 'Quiz',
-        userId,
-        submissionId: submissionData.id
       });
       
-      const { error: updateError } = await supabaseAdmin
-        .from('quiz_submissions')
-        .update({
-          completed: true,
-          completed_at: new Date().toISOString(),
-          contact_consent: true
-        })
-        .eq('id', submissionData.id);
-      
-      if (!updateError) {
-        logger.info('Questionário completado com sucesso via update direto', {
-          tag: 'Quiz',
-          userId,
-          submissionId: submissionData.id
-        });
-        
-        // Processar respostas
-        await processQuizAnswersToSimplified(userId);
-        return true;
-      }
-      
-      logger.error('Erro ao atualizar status de completude do questionário', {
+      return true;
+    } catch (rpcError: any) {
+      logger.error('Erro ao processar respostas via RPC', {
         tag: 'Quiz',
-        error: updateError,
+        error: rpcError,
         userId
       });
-      return false;
-    } catch (updateError: any) {
-      logger.error('Erro ao completar questionário', {
-        tag: 'Quiz',
-        error: updateError,
-        userId
-      });
-      return false;
+      
+      // Se falhar, tentar fazer manualmente (análise de fallback)
+      return await processAnswersManually(userId);
     }
   } catch (error: any) {
-    logger.error('Exceção não tratada ao completar questionário', {
+    logger.error('Exceção ao processar respostas para formato simplificado', {
       tag: 'Quiz',
-      error
+      error,
+      userId
     });
     return false;
   }
@@ -162,7 +79,6 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
 
 /**
  * Utilitário para enviar dados do questionário para webhook
- * Versão atualizada que usa a edge function quiz-webhook diretamente
  * @param submissionId ID da submissão do questionário
  */
 export const sendQuizDataToWebhook = async (submissionId: string): Promise<boolean> => {
@@ -202,9 +118,9 @@ export const sendQuizDataToWebhook = async (submissionId: string): Promise<boole
 };
 
 /**
- * Utilitário para completar o questionário de um usuário manualmente
- * Método que permite aos usuários normais completarem seus próprios questionários
+ * Utilitário para completar o questionário de forma manual
  * @param userId ID do usuário
+ * @returns boolean indicando se a operação foi bem-sucedida
  */
 export const completeQuizManually = async (userId: string): Promise<boolean> => {
   try {
@@ -249,120 +165,15 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
       });
       return true;
     }
-    
-    // Estratégia 1: Usar RPC (função no banco de dados) - geralmente a opção mais segura
+
+    // Tentativa 1: Atualização direta com permissões do usuário
     try {
-      logger.db('Tentando completar questionário via RPC', {
+      logger.info('Tentando atualização direta como usuário', {
         tag: 'Quiz',
-        userId,
-        submissionId: submissionData.id
+        userId
       });
       
-      const { data: rpcResult, error: rpcError } = await supabase.rpc('complete_quiz_submission', {
-        p_user_id: userId
-      });
-      
-      if (!rpcError) {
-        logger.info('Questionário completado com sucesso via RPC', {
-          tag: 'Quiz',
-          userId,
-          result: rpcResult,
-          status: 'success'
-        });
-        
-        // Processar respostas
-        await processQuizAnswersToSimplified(userId);
-        
-        // Tentar enviar para webhook
-        if (submissionData.id) {
-          await sendQuizDataToWebhook(submissionData.id);
-        }
-        
-        return true;
-      } else {
-        logger.warn('Falha ao completar via RPC, tentando abordagem direta', {
-          tag: 'Quiz',
-          error: rpcError,
-          status: 'failed'
-        });
-      }
-    } catch (rpcError) {
-      logger.warn('Exceção ao completar via RPC', {
-        tag: 'Quiz',
-        error: rpcError
-      });
-    }
-    
-    // Estratégia 2: Atualização direta com token do usuário
-    try {
-      logger.db('Tentando completar questionário com update direto (token do usuário)', {
-        tag: 'Quiz',
-        userId,
-        submissionId: submissionData.id
-      });
-      
-      const { error: updateError } = await supabase
-        .from('quiz_submissions')
-        .update({
-          completed: true,
-          completed_at: new Date().toISOString(),
-          contact_consent: true
-        })
-        .eq('id', submissionData.id)
-        .eq('user_id', userId);
-      
-      if (!updateError) {
-        logger.info('Questionário marcado como completo com sucesso (update direto)', {
-          tag: 'Quiz',
-          userId,
-          submissionId: submissionData.id,
-          status: 'success'
-        });
-        
-        // Processar as respostas
-        try {
-          await processQuizAnswersToSimplified(userId);
-        } catch (processingError) {
-          logger.warn('Aviso: Erro ao processar respostas, mas questionário foi completado', {
-            tag: 'Quiz',
-            error: processingError
-          });
-        }
-        
-        // Tentar enviar para webhook
-        try {
-          await sendQuizDataToWebhook(submissionData.id);
-        } catch (webhookError) {
-          logger.warn('Aviso: Erro ao enviar dados para webhook, mas questionário foi completado', {
-            tag: 'Quiz',
-            error: webhookError
-          });
-        }
-        
-        return true;
-      } else {
-        logger.warn('Erro ao atualizar com update direto, tentando com Admin como último recurso', {
-          tag: 'Quiz',
-          error: updateError,
-          status: 'failed'
-        });
-      }
-    } catch (clientError) {
-      logger.warn('Exceção ao atualizar com update direto', {
-        tag: 'Quiz',
-        error: clientError
-      });
-    }
-    
-    // Estratégia 3 (último recurso): Usar o cliente Admin
-    try {
-      logger.db('Tentando completar questionário com cliente Admin (último recurso)', {
-        tag: 'Quiz',
-        userId,
-        submissionId: submissionData.id
-      });
-      
-      const { error: adminUpdateError } = await supabaseAdmin
+      const { error } = await supabase
         .from('quiz_submissions')
         .update({
           completed: true,
@@ -371,40 +182,97 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
         })
         .eq('id', submissionData.id);
       
-      if (!adminUpdateError) {
-        logger.info('Questionário marcado como completo com sucesso (admin fallback)', {
+      if (!error) {
+        logger.info('Questionário completado com sucesso via atualização direta', {
           tag: 'Quiz',
-          userId,
-          submissionId: submissionData.id,
-          status: 'success'
+          userId
         });
-        
-        // Processar as respostas
-        await processQuizAnswersToSimplified(userId);
-        
-        // Tentar enviar os dados para o webhook
-        if (submissionData.id) {
-          await sendQuizDataToWebhook(submissionData.id);
-        }
-        
         return true;
       } else {
-        logger.error('Falha em todas as tentativas de completar o questionário', {
+        logger.warn('Falha na atualização direta', {
           tag: 'Quiz',
-          error: adminUpdateError,
-          status: 'critical_failure'
+          error,
+          userId
         });
-        return false;
+      }
+    } catch (directError) {
+      logger.warn('Exceção na atualização direta', {
+        tag: 'Quiz',
+        error: directError
+      });
+    }
+    
+    // Tentativa 2: RPC (função no banco de dados)
+    try {
+      logger.info('Tentando via RPC', {
+        tag: 'Quiz',
+        userId
+      });
+      
+      const { data, error } = await supabase.rpc('complete_quiz_submission', {
+        p_user_id: userId
+      });
+      
+      if (!error) {
+        logger.info('Questionário completado com sucesso via RPC', {
+          tag: 'Quiz',
+          userId,
+          result: data
+        });
+        return true;
+      } else {
+        logger.warn('Falha via RPC', {
+          tag: 'Quiz',
+          error,
+          userId
+        });
+      }
+    } catch (rpcError) {
+      logger.warn('Exceção na tentativa via RPC', {
+        tag: 'Quiz',
+        error: rpcError
+      });
+    }
+    
+    // Último recurso: Admin
+    try {
+      logger.info('Tentando com privilégios administrativos', {
+        tag: 'Quiz',
+        userId
+      });
+      
+      const { error } = await supabaseAdmin
+        .from('quiz_submissions')
+        .update({
+          completed: true,
+          completed_at: new Date().toISOString(),
+          contact_consent: true
+        })
+        .eq('id', submissionData.id);
+      
+      if (!error) {
+        logger.info('Questionário completado com sucesso via admin', {
+          tag: 'Quiz',
+          userId
+        });
+        return true;
+      } else {
+        logger.error('Falha em todas as tentativas', {
+          tag: 'Quiz',
+          error,
+          userId
+        });
       }
     } catch (adminError) {
-      logger.error('Erro crítico ao completar questionário com cliente admin', {
+      logger.error('Exceção na tentativa admin', {
         tag: 'Quiz',
         error: adminError
       });
-      return false;
     }
-  } catch (error) {
-    logger.error('Erro não tratado ao completar questionário manualmente', {
+    
+    return false;
+  } catch (error: any) {
+    logger.error('Erro não tratado ao completar questionário', {
       tag: 'Quiz',
       error
     });
@@ -569,9 +437,13 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
       
       // Correção do erro de tipagem usando uma asserção de tipo 
       // para a chamada RPC que espera parâmetros
-      await (supabaseAdmin.rpc as any)('process_quiz_completion', {
+      const { data, error } = await supabase.rpc('process_quiz_completion', {
         p_user_id: userId
       });
+
+      if (error) {
+        throw error;
+      }
       
       logger.info('Respostas processadas com sucesso para formato simplificado via RPC', {
         tag: 'Quiz',
@@ -639,7 +511,7 @@ async function processAnswersManually(userId: string): Promise<boolean> {
     
     // Se já existir, apenas atualizar o status de completado
     if (existingData?.id) {
-      const { error: updateError } = await supabaseAdmin
+      const { error: updateError } = await supabase
         .from('quiz_respostas_completas')
         .update({
           completed: submissionData.completed,
@@ -683,7 +555,7 @@ async function processAnswersManually(userId: string): Promise<boolean> {
       .eq('id', userId)
       .maybeSingle();
     
-    const { error: insertError } = await supabaseAdmin
+    const { error: insertError } = await supabase
       .from('quiz_respostas_completas')
       .insert({
         user_id: userId,

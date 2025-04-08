@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { QuizReview as QuizReviewComponent } from "@/components/quiz/QuizReview";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { useToast } from "@/components/ui/use-toast";
-import { completeQuizSubmission, sendQuizDataToWebhook } from "@/utils/supabaseUtils";
+import { completeQuizManually, processQuizAnswersToSimplified, sendQuizDataToWebhook } from "@/utils/supabaseUtils";
 import { logger } from "@/utils/logger";
 
 const QuizReviewPage = () => {
