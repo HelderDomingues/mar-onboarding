@@ -92,7 +92,8 @@ export function QuizReview({
   const handleSaveEdit = async (questionId: string) => {
     try {
       const answer = editedAnswers[questionId];
-      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!userId) {
         throw new Error("Usuário não autenticado");
       }
