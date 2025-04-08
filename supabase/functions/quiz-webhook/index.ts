@@ -1,215 +1,190 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.5.0'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
 
-// Define CORS headers
+// Definir cabeçalhos CORS para permitir chamadas do frontend
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
-Deno.serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+console.log("Função quiz-webhook iniciada.");
+
+serve(async (req) => {
+  // Lidar com requisições OPTIONS (preflight CORS)
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      headers: {
+        ...corsHeaders,
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      },
+      status: 204,
+    });
   }
 
   try {
-    const body = await req.json();
-    const submissionId = body.submissionId;
-
+    // Obter dados da requisição
+    const { submissionId } = await req.json();
+    
     if (!submissionId) {
+      console.error("Erro: ID de submissão não fornecido");
       return new Response(
-        JSON.stringify({ error: 'Missing submissionId parameter' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        JSON.stringify({ error: "ID de submissão é obrigatório" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
         }
       );
     }
 
-    // Cria uma conexão com o Supabase
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    console.log(`Processando submissão ID: ${submissionId}`);
     
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('Missing environment variables for Supabase connection');
+    // Criar cliente Supabase com chave de serviço
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Erro: Variáveis de ambiente SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não definidas");
       return new Response(
-        JSON.stringify({ error: 'Server configuration error' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        JSON.stringify({ error: "Configuração do servidor incompleta" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500,
         }
       );
     }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Buscar dados da submissão
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Obter dados da submissão
     const { data: submission, error: submissionError } = await supabase
-      .from('quiz_submissions')
-      .select(`
-        id,
-        user_id,
-        completed,
-        completed_at,
-        contact_consent,
-        profiles(email, full_name, company_name, phone)
-      `)
-      .eq('id', submissionId)
+      .from("quiz_submissions")
+      .select("*, user:user_id(email)")
+      .eq("id", submissionId)
       .single();
-
-    if (submissionError || !submission) {
-      console.error('Error fetching submission data:', submissionError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch submission data', details: submissionError }),
-        { 
-          status: 404, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // Buscar as respostas do questionário
-    const { data: answers, error: answersError } = await supabase
-      .from('quiz_answers')
-      .select(`
-        question_id,
-        answer,
-        quiz_questions(text, type, module_id)
-      `)
-      .eq('user_id', submission.user_id);
-
-    if (answersError) {
-      console.error('Error fetching answers:', answersError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch answers', details: answersError }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // Buscar os módulos do questionário
-    const { data: modules, error: modulesError } = await supabase
-      .from('quiz_modules')
-      .select('id, title')
-      .order('order_number');
-
-    if (modulesError) {
-      console.error('Error fetching modules:', modulesError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch modules', details: modulesError }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // Preparar os dados para envio
-    const preparedData = {
-      submission: {
-        id: submission.id,
-        completed: submission.completed,
-        completedAt: submission.completed_at,
-        contactConsent: submission.contact_consent
-      },
-      user: {
-        id: submission.user_id,
-        email: submission.profiles?.email || '',
-        name: submission.profiles?.full_name || '',
-        companyName: submission.profiles?.company_name || '',
-        phone: submission.profiles?.phone || ''
-      },
-      answers: answers.map(answer => ({
-        questionId: answer.question_id,
-        moduleId: answer.quiz_questions?.module_id,
-        questionText: answer.quiz_questions?.text || '',
-        questionType: answer.quiz_questions?.type || '',
-        answer: answer.answer
-      })),
-      modules: modules.reduce((acc, module) => {
-        acc[module.id] = module.title;
-        return acc;
-      }, {})
-    };
-
-    // URL do webhook na plataforma Make.com
-    const webhookUrl = Deno.env.get('MAKE_WEBHOOK_URL') || '';
     
-    if (!webhookUrl) {
-      console.error('Missing webhook URL configuration');
+    if (submissionError || !submission) {
+      console.error("Erro ao buscar submissão:", submissionError);
       return new Response(
-        JSON.stringify({ error: 'Server configuration error: missing webhook URL' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        JSON.stringify({ error: "Submissão não encontrada", details: submissionError }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 404,
         }
       );
     }
-
-    // Enviar os dados para o webhook
-    try {
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(preparedData)
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Webhook response error:', response.status, errorText);
-        return new Response(
-          JSON.stringify({ 
-            error: 'Webhook response error', 
-            status: response.status, 
-            details: errorText 
-          }),
-          { 
-            status: 502, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      }
-
-      const responseData = await response.json();
+    
+    // Verifica se a submissão já foi processada pelo webhook
+    if (submission.webhook_processed) {
+      console.log(`Submissão ${submissionId} já foi processada anteriormente`);
+      return new Response(
+        JSON.stringify({ message: "Submissão já processada", status: "already_processed" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+    
+    // Obter as respostas completas
+    const { data: respostas, error: respostasError } = await supabase
+      .from("quiz_respostas_completas")
+      .select("*")
+      .eq("submission_id", submissionId)
+      .maybeSingle();
+    
+    // Obter o perfil do usuário
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", submission.user_id)
+      .single();
+    
+    if (profileError) {
+      console.warn("Aviso: Perfil não encontrado:", profileError);
+    }
+    
+    // Preparar dados para enviar para o webhook externo
+    const webhookPayload = {
+      submission_id: submissionId,
+      user_id: submission.user_id,
+      email: submission.email || (profile ? profile.email : null),
+      nome: profile ? profile.full_name : null,
+      empresa: profile ? profile.company_name : null,
+      completed_at: submission.completed_at,
+      respostas: respostas || null
+    };
+    
+    console.log("Enviando dados para webhook externo");
+    
+    // URL do webhook (use o token configurado nas variáveis de ambiente)
+    const webhookToken = Deno.env.get("ASAAS_WEBHOOK_TOKEN") || "wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
+    const webhookUrl = `https://hook.eu2.make.com/${webhookToken}`;
+    
+    // Enviar dados para o webhook externo
+    const makeResponse = await fetch(webhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(webhookPayload)
+    });
+    
+    if (!makeResponse.ok) {
+      const errorText = await makeResponse.text();
+      console.error("Erro ao enviar para webhook externo:", errorText);
+      return new Response(
+        JSON.stringify({ error: "Falha ao enviar para webhook externo", details: errorText }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500,
+        }
+      );
+    }
+    
+    // Marcar submissão como processada pelo webhook
+    const { error: updateError } = await supabase
+      .from("quiz_submissions")
+      .update({ webhook_processed: true })
+      .eq("id", submissionId);
+    
+    if (updateError) {
+      console.error("Erro ao atualizar status de processamento:", updateError);
+    } else {
+      console.log(`Submissão ${submissionId} marcada como processada com sucesso`);
+    }
+    
+    // Marcar respostas_completas como processada pelo webhook se existir
+    if (respostas) {
+      const { error: updateRespostasError } = await supabase
+        .from("quiz_respostas_completas")
+        .update({ webhook_processed: true })
+        .eq("submission_id", submissionId);
       
-      console.log('Data sent successfully to webhook:', {
-        submissionId,
-        responseStatus: response.status
-      });
-
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'Data sent successfully to webhook',
-          response: responseData
-        }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    } catch (fetchError) {
-      console.error('Error sending data to webhook:', fetchError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to send data to webhook', details: fetchError.message }),
-        { 
-          status: 502, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+      if (updateRespostasError) {
+        console.error("Erro ao atualizar status de processamento em respostas_completas:", updateRespostasError);
+      }
     }
-  } catch (error) {
-    console.error('Unexpected error in webhook function:', error);
+    
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      JSON.stringify({
+        message: "Dados enviados com sucesso",
+        submission_id: submissionId,
+        status: "success"
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
+    
+  } catch (error) {
+    console.error("Erro não tratado:", error);
+    return new Response(
+      JSON.stringify({ error: "Erro interno", details: error.message }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
       }
     );
   }

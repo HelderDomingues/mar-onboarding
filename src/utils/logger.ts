@@ -24,6 +24,11 @@ export const logger = {
     console.warn(`[WARN] ${message}`, options);
   },
   error: (message: string, options?: LogOptions) => {
-    console.error(`[ERROR] ${message}`, options);
+    console.error(`[ERROR] ${message}`, options?.error || options);
+  },
+  debug: (message: string, options?: LogOptions) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug(`[DEBUG] ${message}`, options);
+    }
   }
 };

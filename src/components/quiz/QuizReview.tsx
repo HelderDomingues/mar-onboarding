@@ -198,17 +198,30 @@ export function QuizReview({
       }
       
       // Utilizando a função de completar manualmente que evita problemas de permissão
+      logger.info('Iniciando finalização do questionário', {
+        tag: 'Quiz',
+        userId
+      });
+      
       const success = await completeQuizManually(userId);
       
       if (!success) {
         throw new Error("Não foi possível completar o questionário");
       }
       
-      console.log("Questionário marcado como completo com sucesso");
+      logger.info("Questionário marcado como completo com sucesso", {
+        tag: 'Quiz',
+        userId
+      });
+      
       await onComplete();
       
     } catch (error: any) {
       console.error("Erro na finalização:", error);
+      logger.error("Erro ao finalizar questionário", {
+        tag: 'Quiz',
+        error
+      });
       setSubmissionError(error.message || "Erro desconhecido ao finalizar questionário");
       toast({
         title: "Erro ao finalizar questionário",

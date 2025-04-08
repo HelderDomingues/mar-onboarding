@@ -168,7 +168,8 @@ export const completeQuizSubmission = async (userId: string): Promise<boolean> =
 export const sendQuizDataToWebhook = async (submissionId: string): Promise<boolean> => {
   try {
     logger.info('Tentando enviar dados para webhook via função edge', {
-      tag: 'Quiz'
+      tag: 'Quiz',
+      submissionId
     });
     
     // Usar a função edge diretamente para evitar problemas de permissão
@@ -208,7 +209,8 @@ export const sendQuizDataToWebhook = async (submissionId: string): Promise<boole
 export const completeQuizManually = async (userId: string): Promise<boolean> => {
   try {
     logger.info('Tentando completar questionário manualmente', {
-      tag: 'Quiz'
+      tag: 'Quiz',
+      userId
     });
     
     // Obter a submissão atual
@@ -238,6 +240,7 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
     }
     
     // Atualizar diretamente a tabela quiz_submissions pelo ID 
+    // IMPORTANTE: Usando supabaseAdmin em vez de supabase para esta operação
     const { error: updateError } = await supabaseAdmin
       .from('quiz_submissions')
       .update({
