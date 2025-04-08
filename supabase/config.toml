@@ -1,5 +1,6 @@
 
 
+
 # A string used to distinguish different Supabase projects on the same host. Defaults to the project ID.
 project_id = "nmxfknwkhnengqqjtwru"
 
@@ -32,4 +33,3 @@ api_url = "http://localhost"
 [functions]
 [functions.quiz-webhook]
 verify_jwt = false
-
