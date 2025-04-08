@@ -1,3 +1,4 @@
+
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -416,56 +417,6 @@ export const hasSimplifiedAnswers = async (userId: string): Promise<boolean> => 
     logger.error('Exceção ao verificar respostas simplificadas', {
       tag: 'Quiz',
       data: error
-    });
-    return false;
-  }
-};
-
-/**
- * Utilitário para processar manualmente respostas do quiz para o formato simplificado
- * @param userId ID do usuário
- * @returns boolean indicando se a operação foi bem-sucedida
- */
-export const processQuizAnswersToSimplified = async (userId: string): Promise<boolean> => {
-  try {
-    // Tentar chamar a função RPC que processa as respostas
-    try {
-      logger.info('Processando respostas via RPC', {
-        tag: 'Quiz',
-        userId
-      });
-      
-      // Correção do erro de tipagem usando uma asserção de tipo 
-      // para a chamada RPC que espera parâmetros
-      const { data, error } = await supabase.rpc('process_quiz_completion', {
-        p_user_id: userId
-      });
-
-      if (error) {
-        throw error;
-      }
-      
-      logger.info('Respostas processadas com sucesso para formato simplificado via RPC', {
-        tag: 'Quiz',
-        userId
-      });
-      
-      return true;
-    } catch (rpcError: any) {
-      logger.error('Erro ao processar respostas via RPC', {
-        tag: 'Quiz',
-        error: rpcError,
-        userId
-      });
-      
-      // Se falhar, tentar fazer manualmente (análise de fallback)
-      return await processAnswersManually(userId);
-    }
-  } catch (error: any) {
-    logger.error('Exceção ao processar respostas para formato simplificado', {
-      tag: 'Quiz',
-      error,
-      userId
     });
     return false;
   }
