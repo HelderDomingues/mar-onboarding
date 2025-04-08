@@ -1,4 +1,3 @@
-
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { OnboardingContent } from "@/types/onboarding";
@@ -42,11 +41,10 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
         userId
       });
       
-      // Correção do erro de tipagem usando uma asserção de tipo 
-      // para a chamada RPC que espera parâmetros
+      // Correção do erro de tipagem - definindo o tipo do retorno explicitamente como any para evitar conflito de tipos
       const { data, error } = await supabase.rpc('process_quiz_completion', {
         p_user_id: userId
-      });
+      } as any);
 
       if (error) {
         throw error;
@@ -427,7 +425,7 @@ export const hasSimplifiedAnswers = async (userId: string): Promise<boolean> => 
  * @param userId ID do usuário
  * @returns boolean indicando se a operação foi bem-sucedida
  */
-async function processAnswersManually(userId: string): Promise<boolean> {
+async function processAnswersManually(userId: string): Promise<boolean> => {
   try {
     // Obter dados da submissão
     const { data: submissionData, error: submissionError } = await supabase
