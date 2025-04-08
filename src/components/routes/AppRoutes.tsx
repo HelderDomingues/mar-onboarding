@@ -36,10 +36,12 @@ export function AppRoutes() {
       <Route path="/faq" element={<ProtectedRoute component={FAQ} />} />
 
       {/* Admin routes */}
-      <Route path="/admin/users" element={<AdminRoute component={Users} />} />
-      <Route path="/admin/users/new" element={<AdminRoute component={NewUser} />} />
-      <Route path="/admin/users/import" element={<AdminRoute component={ImportUsers} />} />
-      <Route path="/admin/settings" element={<AdminRoute component={Settings} />} />
+      <Route path="/admin" element={<AdminRoute />}>
+        <Route path="users" element={<Users />} />
+        <Route path="users/new" element={<NewUser />} />
+        <Route path="users/import" element={<ImportUsers />} />
+        <Route path="settings" element={<Settings />} />
+      </Route>
 
       <Route path="*" element={<NotFound />} />
     </Routes>
