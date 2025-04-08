@@ -25,6 +25,11 @@ export const logger = {
   },
   error: (message: string, options?: LogOptions) => {
     console.error(`[ERROR] ${message}`, options?.error || options);
+    
+    // Log da stack trace para facilitar a depuração
+    if (options?.error instanceof Error) {
+      console.error(`[ERROR STACK] ${options.error.stack}`);
+    }
   },
   debug: (message: string, options?: LogOptions) => {
     if (process.env.NODE_ENV !== 'production') {

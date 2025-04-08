@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { completeQuizManually } from "@/utils/supabaseUtils";
+import { logger } from "@/utils/logger";
 
 interface QuizReviewProps {
   modules: QuizModule[];
@@ -197,7 +197,6 @@ export function QuizReview({
         throw new Error("Usuário não autenticado");
       }
       
-      // Utilizando a função de completar manualmente que evita problemas de permissão
       logger.info('Iniciando finalização do questionário', {
         tag: 'Quiz',
         userId

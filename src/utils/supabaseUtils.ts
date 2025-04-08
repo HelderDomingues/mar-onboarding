@@ -203,7 +203,7 @@ export const sendQuizDataToWebhook = async (submissionId: string): Promise<boole
 
 /**
  * Utilitário para completar o questionário de um usuário manualmente
- * Método alternativo sem acessar a tabela auth.users
+ * Método que permite aos usuários normais completarem seus próprios questionários
  * @param userId ID do usuário
  */
 export const completeQuizManually = async (userId: string): Promise<boolean> => {
@@ -212,6 +212,17 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
       tag: 'Quiz',
       userId
     });
+    
+    // Verificar se o usuário está tentando completar o próprio questionário
+    const currentUser = await supabase.auth.getUser();
+    if (!currentUser.data?.user || currentUser.data.user.id !== userId) {
+      logger.error('Erro de permissão: usuário tentando completar questionário de outro usuário', {
+        tag: 'Quiz',
+        userId,
+        currentUserId: currentUser.data?.user?.id
+      });
+      return false;
+    }
     
     // Obter a submissão atual
     const { data: submissionData, error: fetchError } = await supabase
@@ -239,61 +250,137 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
       return true;
     }
     
-    // Atualizar diretamente a tabela quiz_submissions pelo ID 
-    // IMPORTANTE: Usando supabaseAdmin em vez de supabase para esta operação
-    const { error: updateError } = await supabaseAdmin
-      .from('quiz_submissions')
-      .update({
-        completed: true,
-        completed_at: new Date().toISOString(),
-        contact_consent: true
-      })
-      .eq('id', submissionData.id);
-    
-    if (updateError) {
-      logger.error('Erro ao atualizar status de completude do questionário', {
+    // Tentativa 1: Atualizar usando o cliente normal com a sessão do usuário
+    try {
+      const { error: updateError } = await supabase
+        .from('quiz_submissions')
+        .update({
+          completed: true,
+          completed_at: new Date().toISOString(),
+          contact_consent: true
+        })
+        .eq('id', submissionData.id)
+        .eq('user_id', userId);
+      
+      if (!updateError) {
+        logger.info('Questionário marcado como completo com sucesso (client padrão)', {
+          tag: 'Quiz',
+          userId,
+          submissionId: submissionData.id
+        });
+        
+        // Processar as respostas
+        try {
+          await processQuizAnswersToSimplified(userId);
+        } catch (processingError) {
+          logger.warn('Aviso: Erro ao processar respostas, mas questionário foi completado', {
+            tag: 'Quiz',
+            error: processingError
+          });
+        }
+        
+        // Tentar enviar para webhook
+        try {
+          await sendQuizDataToWebhook(submissionData.id);
+        } catch (webhookError) {
+          logger.warn('Aviso: Erro ao enviar dados para webhook, mas questionário foi completado', {
+            tag: 'Quiz',
+            error: webhookError
+          });
+        }
+        
+        return true;
+      } else {
+        logger.warn('Erro ao atualizar com cliente padrão, tentando com RPC', {
+          tag: 'Quiz',
+          error: updateError
+        });
+      }
+    } catch (clientError) {
+      logger.warn('Exceção ao atualizar com cliente padrão', {
         tag: 'Quiz',
-        error: updateError,
-        userId
+        error: clientError
+      });
+    }
+    
+    // Tentativa 2: Usar RPC (função no banco de dados)
+    try {
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('complete_quiz_submission', {
+        p_user_id: userId
+      });
+      
+      if (!rpcError) {
+        logger.info('Questionário completado com sucesso via RPC', {
+          tag: 'Quiz',
+          userId,
+          result: rpcResult
+        });
+        
+        // Processar respostas
+        await processQuizAnswersToSimplified(userId);
+        
+        // Tentar enviar para webhook
+        if (submissionData.id) {
+          await sendQuizDataToWebhook(submissionData.id);
+        }
+        
+        return true;
+      } else {
+        logger.warn('Erro ao completar via RPC, última tentativa com Admin', {
+          tag: 'Quiz',
+          error: rpcError
+        });
+      }
+    } catch (rpcError) {
+      logger.warn('Exceção ao completar via RPC', {
+        tag: 'Quiz',
+        error: rpcError
+      });
+    }
+    
+    // Última tentativa: Usar o cliente Admin (somente se as outras abordagens falharem)
+    try {
+      const { error: adminUpdateError } = await supabaseAdmin
+        .from('quiz_submissions')
+        .update({
+          completed: true,
+          completed_at: new Date().toISOString(),
+          contact_consent: true
+        })
+        .eq('id', submissionData.id);
+      
+      if (!adminUpdateError) {
+        logger.info('Questionário marcado como completo com sucesso (admin fallback)', {
+          tag: 'Quiz',
+          userId,
+          submissionId: submissionData.id
+        });
+        
+        // Processar as respostas
+        await processQuizAnswersToSimplified(userId);
+        
+        // Tentar enviar os dados para o webhook
+        if (submissionData.id) {
+          await sendQuizDataToWebhook(submissionData.id);
+        }
+        
+        return true;
+      } else {
+        logger.error('Falha em todas as tentativas de completar o questionário', {
+          tag: 'Quiz',
+          error: adminUpdateError
+        });
+        return false;
+      }
+    } catch (adminError) {
+      logger.error('Erro crítico ao completar questionário com cliente admin', {
+        tag: 'Quiz',
+        error: adminError
       });
       return false;
     }
-    
-    logger.info('Questionário marcado como completo com sucesso', {
-      tag: 'Quiz',
-      userId,
-      submissionId: submissionData.id
-    });
-    
-    // Tentar processar as respostas para o formato simplificado
-    try {
-      await processQuizAnswersToSimplified(userId);
-    } catch (processingError: any) {
-      // Não falhar completamente se ocorrer erro no processamento
-      logger.warn('Aviso: Erro ao processar respostas para formato simplificado', {
-        tag: 'Quiz',
-        error: processingError,
-        userId
-      });
-    }
-    
-    // Tentar enviar os dados para o webhook
-    try {
-      if (submissionData.id) {
-        await sendQuizDataToWebhook(submissionData.id);
-      }
-    } catch (webhookError: any) {
-      // Não falhar completamente se o webhook falhar
-      logger.warn('Aviso: Erro ao enviar dados para webhook', {
-        tag: 'Quiz',
-        error: webhookError,
-        userId
-      });
-    }
-    
-    return true;
-  } catch (error: any) {
-    logger.error('Erro ao completar questionário manualmente', {
+  } catch (error) {
+    logger.error('Erro não tratado ao completar questionário manualmente', {
       tag: 'Quiz',
       error
     });
