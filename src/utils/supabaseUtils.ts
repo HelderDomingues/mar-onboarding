@@ -453,7 +453,9 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
         userId
       });
       
-      await supabaseAdmin.rpc('process_quiz_completion', {
+      // Correção do erro de tipagem usando uma asserção de tipo 
+      // para a chamada RPC que espera parâmetros
+      await (supabaseAdmin.rpc as any)('process_quiz_completion', {
         p_user_id: userId
       });
       

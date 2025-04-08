@@ -1,83 +1,51 @@
 
-import { ReactNode, useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 
-interface AdminRouteProps {
-  component: React.ComponentType<any>;
-}
+/**
+ * Componente de rota para páginas administrativas
+ * Apenas usuários com função de administrador podem acessar
+ */
+const AdminRoute = () => {
+  const { user, isAuthenticated, isAdmin, loading } = useAuth();
 
-export const AdminRoute = ({ component: Component }: AdminRouteProps) => {
-  const { user, isAuthenticated } = useAuth();
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
-  const location = useLocation();
-  
   useEffect(() => {
-    const checkAdminRole = async () => {
-      if (!user) {
-        setIsAdmin(false);
-        setLoading(false);
-        return;
-      }
-      
-      try {
-        logger.info('Verificando papel de administrador', {
-          tag: 'AdminRoute',
-          userId: user.id
-        });
-        
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .single();
-          
-        if (error) {
-          logger.error('Erro ao verificar papel do usuário:', {
-            tag: 'AdminRoute',
-            error
-          });
-          setIsAdmin(false);
-        } else {
-          setIsAdmin(!!data);
-          logger.info('Verificação de admin concluída', {
-            tag: 'AdminRoute',
-            data: { isAdmin: !!data }
-          });
-        }
-      } catch (error: any) {
-        logger.error('Erro ao verificar papel do usuário:', {
-          tag: 'AdminRoute',
-          error
-        });
-        setIsAdmin(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    if (isAuthenticated) {
-      checkAdminRole();
-    } else {
-      setLoading(false);
+    if (user && isAuthenticated && !loading) {
+      // Registrar tentativa de acesso à área administrativa
+      logger.info('Verificação de acesso administrativo', {
+        tag: 'Admin',
+        userId: user.id,
+        isAdmin: isAdmin || false
+      });
     }
-  }, [user, isAuthenticated]);
-  
+  }, [user, isAuthenticated, isAdmin, loading]);
+
+  // Enquanto carregando, mostrar nada
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-      </div>
-    );
+    return null;
   }
-  
+
+  // Se não estiver autenticado, redirecionar para login
+  if (!isAuthenticated) {
+    logger.warn('Tentativa de acesso à área administrativa sem autenticação', {
+      tag: 'Admin'
+    });
+    return <Navigate to="/login" replace />;
+  }
+
+  // Se não for administrador, redirecionar para o dashboard
   if (!isAdmin) {
-    return <Navigate to="/dashboard" state={{ from: location.pathname, message: "Você não tem permissão para acessar esta área." }} />;
+    logger.warn('Tentativa de acesso à área administrativa por usuário sem permissão', {
+      tag: 'Admin',
+      userId: user?.id
+    });
+    return <Navigate to="/dashboard" replace />;
   }
-  
-  return <Component />;
+
+  // Se for administrador, permitir acesso
+  return <Outlet />;
 };
+
+export default AdminRoute;
