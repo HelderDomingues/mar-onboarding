@@ -20,6 +20,7 @@ import ImportUsers from "@/pages/admin/ImportUsers";
 import NewUser from "@/pages/admin/NewUser";
 import Settings from "@/pages/admin/Settings";
 import Users from "@/pages/admin/Users";
+import Reports from "@/pages/admin/Reports";
 
 export function AppRoutes() {
   return (
@@ -30,7 +31,9 @@ export function AppRoutes() {
       <Route path="/quiz" element={<ProtectedRoute component={Quiz} />} />
       <Route path="/quiz/review" element={<ProtectedRoute component={QuizReview} />} />
       <Route path="/quiz/view-answers" element={<ProtectedRoute component={QuizViewAnswers} />} />
+      <Route path="/quiz/answers" element={<ProtectedRoute component={QuizViewAnswers} />} />
       <Route path="/quiz/diagnostic" element={<ProtectedRoute component={QuizDiagnostic} />} />
+      <Route path="/quiz/success" element={<ProtectedRoute component={QuizDiagnostic} />} />
       <Route path="/materials" element={<ProtectedRoute component={Materials} />} />
       <Route path="/member" element={<ProtectedRoute component={MemberArea} />} />
       <Route path="/faq" element={<ProtectedRoute component={FAQ} />} />
@@ -41,6 +44,7 @@ export function AppRoutes() {
         <Route path="users/new" element={<NewUser />} />
         <Route path="users/import" element={<ImportUsers />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="reports" element={<Reports />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

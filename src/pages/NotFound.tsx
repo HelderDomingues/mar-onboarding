@@ -1,8 +1,12 @@
-import { useLocation } from "react-router-dom";
+
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, ArrowLeft, Home } from "lucide-react";
 
 const NotFound = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.error(
@@ -12,13 +16,37 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
-        </a>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full p-8 bg-white rounded-lg shadow-lg text-center">
+        <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-red-100 mb-6">
+          <AlertTriangle className="h-10 w-10 text-red-600" />
+        </div>
+        
+        <h1 className="text-6xl font-bold text-gray-900 mb-2">404</h1>
+        <p className="text-xl text-gray-600 mb-6">Oops! Página não encontrada</p>
+        
+        <p className="text-gray-500 mb-8">
+          A página que você está tentando acessar não existe ou foi movida.
+        </p>
+        
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button 
+            variant="outline" 
+            className="gap-2"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </Button>
+          
+          <Button 
+            className="gap-2"
+            onClick={() => navigate("/")}
+          >
+            <Home className="h-4 w-4" />
+            Página Inicial
+          </Button>
+        </div>
       </div>
     </div>
   );

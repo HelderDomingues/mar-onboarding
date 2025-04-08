@@ -15,7 +15,8 @@ import {
   LogOut,
   FileClock,
   FileCheck,
-  User
+  User,
+  BarChart
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -163,6 +164,15 @@ export function AdminSidebar() {
               </Button>
               
               <Button
+                variant={isActive("/admin/reports") ? "secondary" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => navigate('/admin/reports')}
+              >
+                <BarChart className="h-4 w-4 mr-2" />
+                Relatórios
+              </Button>
+              
+              <Button
                 variant={isActive("/admin/settings") ? "secondary" : "ghost"}
                 className="w-full justify-start"
                 onClick={() => navigate('/admin/settings')}
@@ -190,10 +200,10 @@ export function AdminSidebar() {
               <Button
                 variant="ghost"
                 className="w-full justify-start"
-                onClick={() => navigate('/quiz/success')}
+                onClick={() => navigate('/quiz/diagnostic')}
               >
                 <FileCheck className="h-4 w-4 mr-2" />
-                Página de Sucesso
+                Página de Diagnóstico
               </Button>
               
               <Button
