@@ -18,9 +18,7 @@ const Index = () => {
         <div className="max-w-md space-y-4 animate-slide-in">
           <img alt="MAR - Mapa para Alto Rendimento" src="/lovable-uploads/b0f8ebcc-1d80-4da4-b9a4-e6d781f68084.png" className="h-20 mb-10" />
           <h1 className="text-4xl font-bold text-blue-900">Área Exclusiva de Membros</h1>
-          <p className="text-lg text-gray-600">
-            Acesse avaliações e questionários exclusivos desenvolvidos para nossos membros.
-          </p>
+          <p className="text-lg text-gray-600">Acesse e comece sua jornada exclusivamente desenvolvida para nossos membros.</p>
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
             <Button className="bg-quiz hover:bg-quiz-dark" onClick={() => window.open("https://crievalor.com.br/mar", "_blank")}>
               Saiba Mais
