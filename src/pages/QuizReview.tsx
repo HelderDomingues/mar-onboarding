@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -141,57 +142,13 @@ const QuizReviewPage = () => {
         data: { userId: user.id }
       });
       
-      // Verificar status atual da submissão
-      const { data: submissionData, error: submissionError } = await supabase
-        .from('quiz_submissions')
-        .select('id, completed')
-        .eq('user_id', user.id)
-        .maybeSingle();
-        
-      if (submissionError) {
-        logger.error('Erro ao obter dados da submissão do questionário', {
+      // Abordagem simplificada: usar diretamente a função utilitária
+      const success = await completeQuizManually(user.id);
+      
+      if (success) {
+        logger.info('Questionário completado com sucesso', {
           tag: 'Quiz',
-          data: submissionError
-        });
-        throw new Error('Erro ao obter dados da submissão do questionário');
-      }
-      
-      if (!submissionData?.id) {
-        throw new Error('Submissão do questionário não encontrada');
-      }
-      
-      // Se já estiver completo, apenas redirecionar
-      if (submissionData.completed) {
-        logger.info('Questionário já está finalizado', {
-          tag: 'Quiz', 
-          data: { submissionId: submissionData.id }
-        });
-        
-        toast({
-          title: "Sucesso!",
-          description: "Questionário já estava concluído anteriormente.",
-        });
-        
-        navigate('/dashboard');
-        return;
-      }
-      
-      // Atualizar diretamente
-      const { error: updateError } = await supabase
-        .from('quiz_submissions')
-        .update({
-          completed: true,
-          completed_at: new Date().toISOString(),
-          contact_consent: true
-        })
-        .eq('id', submissionData.id)
-        .eq('user_id', user.id);
-      
-      if (!updateError) {
-        logger.info('Questionário concluído com sucesso', {
-          tag: 'Quiz',
-          userId: user.id,
-          submissionId: submissionData.id
+          userId: user.id
         });
         
         toast({
@@ -200,26 +157,8 @@ const QuizReviewPage = () => {
         });
         
         navigate('/dashboard');
-        return;
       } else {
-        // Último recurso: usar função utilitária completeQuizManually
-        const success = await completeQuizManually(user.id);
-        
-        if (success) {
-          logger.info('Questionário completado com sucesso via completeQuizManually', {
-            tag: 'Quiz',
-            userId: user.id
-          });
-          
-          toast({
-            title: "Sucesso!",
-            description: "Questionário concluído com sucesso!",
-          });
-          
-          navigate('/dashboard');
-        } else {
-          throw new Error("Não foi possível completar o questionário usando nenhum dos métodos disponíveis");
-        }
+        throw new Error("Não foi possível completar o questionário");
       }
     } catch (error: any) {
       logger.error("Erro ao finalizar questionário:", {

@@ -91,8 +91,8 @@ export const getActiveOnboardingContent = async (): Promise<OnboardingContent | 
 };
 
 /**
- * Função para processar as respostas do questionário para um formato simplificado
- * Esta é uma versão simplificada que apenas devolve sucesso para compatibilidade
+ * Função simplificada para processar as respostas do questionário
+ * Esta é uma versão simplificada para compatibilidade com o código existente
  */
 export const processQuizAnswersToSimplified = async (userId: string): Promise<boolean> => {
   try {
@@ -111,12 +111,12 @@ export const processQuizAnswersToSimplified = async (userId: string): Promise<bo
 };
 
 /**
- * Função para enviar dados do questionário para webhook
- * Esta é uma versão simplificada que apenas devolve sucesso para compatibilidade
+ * Função simplificada para enviar dados do questionário para webhook
+ * Esta é uma versão simplificada para compatibilidade com o código existente
  */
 export const sendQuizDataToWebhook = async (submissionId: string): Promise<boolean> => {
   try {
-    logger.info('Enviando dados do questionário para webhook', {
+    logger.info('Simulando envio de dados do questionário para webhook', {
       tag: 'Quiz',
       submissionId
     });
@@ -159,5 +159,22 @@ export const registerMaterialAccess = async (materialId: string, userId: string)
       data: error
     });
     return false;
+  }
+};
+
+/**
+ * Função para obter emails dos usuários
+ */
+export const getUserEmails = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, email');
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    logger.error("Erro ao obter emails dos usuários:", error);
+    return [];
   }
 };
