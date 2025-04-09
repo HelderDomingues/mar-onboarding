@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock, BookOpen, BarChart, CheckCircle, LineChart, Phone, Mail, AlertCircle, MessageSquare } from "lucide-react";
@@ -9,18 +8,17 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-
 interface UserDashboardProps {
   submission: QuizSubmission | null;
 }
-
-export function UserDashboard({ submission }: UserDashboardProps) {
+export function UserDashboard({
+  submission
+}: UserDashboardProps) {
   const navigate = useNavigate();
-  
+
   // Calcular progresso se tiver submissão
-  const progress = submission ? 
-    (submission.completed ? 100 : (submission.current_module / 8) * 100) : 0;
-  
+  const progress = submission ? submission.completed ? 100 : submission.current_module / 8 * 100 : 0;
+
   // Determinar a ação do botão principal baseado no status do questionário
   const getMainActionButton = () => {
     if (!submission) {
@@ -30,7 +28,6 @@ export function UserDashboard({ submission }: UserDashboardProps) {
         variant: "default" as const
       };
     }
-    
     if (submission.completed) {
       return {
         text: "Ver Minhas Respostas",
@@ -38,7 +35,6 @@ export function UserDashboard({ submission }: UserDashboardProps) {
         variant: "default" as const
       };
     }
-    
     if (progress === 100 && !submission.completed) {
       return {
         text: "Finalizar Questionário",
@@ -46,21 +42,17 @@ export function UserDashboard({ submission }: UserDashboardProps) {
         variant: "default" as const
       };
     }
-    
     return {
       text: "Continuar Questionário",
       action: () => navigate("/quiz"),
       variant: "default" as const
     };
   };
-  
   const mainAction = getMainActionButton();
-  
-  return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+  return <div className="space-y-8 max-w-6xl mx-auto">
       <div className="text-center md:text-left">
-        <h1 className="text-3xl font-bold mb-2 text-slate-900">Bem-vindo à sua Área MAR</h1>
-        <p className="text-slate-600 max-w-3xl mx-auto md:mx-0">Acesse o Mapa para Alto Rendimento e acompanhe seu progresso para transformar o marketing da sua empresa.</p>
+        <h1 className="text-3xl font-bold mb-2 text-slate-900">Bem-vindo à sua Área de Membro MAR</h1>
+        <p className="text-slate-600 max-w-3xl mx-auto md:mx-0">Acesse o Mapa para Alto Rendimento e acompanhe seu progresso para dar clareza aos camnhos da sua empresa.</p>
       </div>
 
       {/* Layout principal com duas colunas */}
@@ -86,12 +78,7 @@ export function UserDashboard({ submission }: UserDashboardProps) {
               
               <div className="mb-6">
                 <AspectRatio ratio={16 / 9} className="bg-slate-100 rounded-lg overflow-hidden mb-4">
-                  <iframe
-                    src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
-                    title="Vídeo de Introdução ao MAR"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    className="w-full h-full object-cover"
-                  />
+                  <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Vídeo de Introdução ao MAR" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" className="w-full h-full object-cover" />
                 </AspectRatio>
                 <h4 className="font-medium text-white mt-2">Vídeo de Introdução ao MAR</h4>
                 <p className="text-blue-100 text-sm">
@@ -144,11 +131,7 @@ export function UserDashboard({ submission }: UserDashboardProps) {
               <p className="text-slate-600 mb-4">
                 Acesse conteúdos exclusivos, materiais complementares e recursos para aprofundar seus conhecimentos.
               </p>
-              <Button 
-                variant="outline" 
-                className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 rounded-lg"
-                onClick={() => navigate("/materials")}
-              >
+              <Button variant="outline" className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 rounded-lg" onClick={() => navigate("/materials")}>
                 Acessar Materiais
               </Button>
             </CardContent>
@@ -164,31 +147,23 @@ export function UserDashboard({ submission }: UserDashboardProps) {
                   <h3 className="text-2xl font-bold text-white">Questionário MAR</h3>
                   <p className="text-blue-100 mt-1">Mapa para Alto Rendimento</p>
                 </div>
-                {submission?.completed && (
-                  <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                {submission?.completed && <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
                     <CheckCircle className="h-4 w-4" />
                     Concluído
-                  </div>
-                )}
+                  </div>}
               </div>
             </div>
             <CardContent className="pt-6 px-8">
-              {submission ? (
-                <>
+              {submission ? <>
                   <div className="mb-5">
                     <div className="flex justify-between mb-2 text-sm">
                       <span>Progresso</span>
                       <span className="font-medium">{Math.round(progress)}%</span>
                     </div>
-                    <Progress 
-                      value={progress} 
-                      className="h-2.5 bg-gray-100" 
-                      indicatorClassName={submission.completed ? "bg-gradient-to-r from-green-400 to-green-500" : "bg-gradient-to-r from-blue-400 to-blue-600"} 
-                    />
+                    <Progress value={progress} className="h-2.5 bg-gray-100" indicatorClassName={submission.completed ? "bg-gradient-to-r from-green-400 to-green-500" : "bg-gradient-to-r from-blue-400 to-blue-600"} />
                   </div>
                   
-                  {submission.completed ? (
-                    <div className="flex flex-col gap-3">
+                  {submission.completed ? <div className="flex flex-col gap-3">
                       <div className="flex items-center gap-2 text-sm text-green-600">
                         <CheckCircle className="h-4 w-4" />
                         <span>Questionário finalizado em {new Date(submission.completed_at || '').toLocaleDateString('pt-BR')}</span>
@@ -203,9 +178,7 @@ export function UserDashboard({ submission }: UserDashboardProps) {
                           O questionário MAR já foi validado e não pode ser alterado. Se precisar atualizar alguma informação, entre em contato com nossa equipe.
                         </AlertDescription>
                       </Alert>
-                    </div>
-                  ) : progress === 100 ? (
-                    <div className="flex flex-col gap-3">
+                    </div> : progress === 100 ? <div className="flex flex-col gap-3">
                       <div className="flex items-center gap-2 text-sm text-amber-600">
                         <Clock className="h-4 w-4" />
                         <span>Módulo 8 de 8 completo - Finalize seu questionário</span>
@@ -219,9 +192,7 @@ export function UserDashboard({ submission }: UserDashboardProps) {
                           Por favor, revise e confirme suas respostas para finalizar o questionário e receber sua análise personalizada.
                         </AlertDescription>
                       </Alert>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-3">
+                    </div> : <div className="flex flex-col gap-3">
                       <div className="flex items-center gap-2 text-sm text-amber-600">
                         <Clock className="h-4 w-4" />
                         <span>Em progresso - Módulo {submission.current_module} de 8</span>
@@ -229,11 +200,8 @@ export function UserDashboard({ submission }: UserDashboardProps) {
                       <p className="text-slate-600">
                         Continue de onde parou para completar seu questionário MAR.
                       </p>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="flex flex-col gap-3">
+                    </div>}
+                </> : <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2 text-sm text-slate-600">
                     <BookOpen className="h-4 w-4" />
                     <span>25 questões distribuídas em 8 módulos</span>
@@ -241,27 +209,17 @@ export function UserDashboard({ submission }: UserDashboardProps) {
                   <p className="text-slate-600">
                     O questionário MAR irá mapear seu nível atual e ajudá-lo a identificar oportunidades de crescimento.
                   </p>
-                </div>
-              )}
+                </div>}
             </CardContent>
             <CardFooter className="border-t p-6 px-8 bg-gray-50">
               <div className="w-full flex flex-wrap gap-3">
-                <Button 
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 transform hover:translate-y-[-2px]"
-                  onClick={mainAction.action}
-                >
+                <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 transform hover:translate-y-[-2px]" onClick={mainAction.action}>
                   {mainAction.text}
                 </Button>
                 
-                {submission?.completed && (
-                  <Button 
-                    variant="outline"
-                    className="flex-1 border-blue-200 text-blue-700 hover:bg-blue-50 rounded-lg"
-                    onClick={() => navigate("/quiz/review")}
-                  >
+                {submission?.completed && <Button variant="outline" className="flex-1 border-blue-200 text-blue-700 hover:bg-blue-50 rounded-lg" onClick={() => navigate("/quiz/review")}>
                     Ver Resultados
-                  </Button>
-                )}
+                  </Button>}
               </div>
             </CardFooter>
           </Card>
@@ -328,6 +286,5 @@ export function UserDashboard({ submission }: UserDashboardProps) {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 }
