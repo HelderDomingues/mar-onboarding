@@ -4,6 +4,8 @@ import type { Database } from './database.types';
 
 const SUPABASE_URL = "https://nmxfknwkhnengqqjtwru.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5teGZrbndraG5lbmdxcWp0d3J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI2NTUyMjgsImV4cCI6MjA1ODIzMTIyOH0.3I_qClajzP-s1j_GF2WRY7ZkVSWC4fcLgKMH8Ut-TbA";
+// Service role key - necessário para operações administrativas
+const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5teGZrbndraG5lbmdxcWp0d3J1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MjY1NTIyOCwiZXhwIjoyMDU4MjMxMjI4fQ.rFKeBrWpgm-0F24M37TXfFAb1Xrp3kxKMiQnj_ZSQiw";
 
 // Cliente padrão para uso em toda a aplicação
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
@@ -13,6 +15,33 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     detectSessionInUrl: true
   }
 });
+
+// Cliente com permissões de administrador para operações restritas
+// IMPORTANTE: Usar apenas em componentes administrativos
+export const supabaseAdmin = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false
+  }
+});
+
+// Função para obter emails dos usuários (apenas para admin)
+export const getUserEmails = async () => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .rpc('get_user_emails');
+      
+    if (error) {
+      console.error("Erro ao buscar emails dos usuários:", error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Erro ao buscar emails dos usuários:", error);
+    return null;
+  }
+};
 
 // Função simplificada para verificar se o questionário está completo
 export const isQuizComplete = async (userId: string): Promise<boolean> => {

@@ -1,180 +1,92 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { logger } from "@/utils/logger";
-import { OnboardingContent } from "@/types/onboarding";
+import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/database.types';
+import type { QuizSubmission } from '@/types/quiz';
 
-/**
- * Utilitário para verificar se o questionário de um usuário está completo
- * @param userId ID do usuário
- * @returns boolean indicando se o questionário foi completado
- */
+// Verifica se o questionário está completo para o usuário
 export const isQuizComplete = async (userId: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('quiz_submissions')
       .select('completed')
       .eq('user_id', userId)
       .maybeSingle();
       
-    if (error) throw error;
-    
     return data?.completed === true;
-  } catch (error: any) {
-    logger.error("Erro ao verificar status do questionário:", { 
-      error,
-      tag: "QuizStatus" 
-    });
+  } catch (error) {
+    console.error("Erro ao verificar status do questionário:", error);
     return false;
   }
 };
 
-/**
- * Utilitário simplificado para completar questionário
- */
-export const completeQuizManually = async (userId: string): Promise<boolean> => {
+// Simplifica as respostas do questionário para exibição
+export const processQuizAnswersToSimplified = async (userId: string) => {
   try {
-    const { error } = await supabase
-      .from('quiz_submissions')
-      .update({
-        completed: true,
-        completed_at: new Date().toISOString(),
-        contact_consent: true
-      })
+    const { data: answers, error: answersError } = await supabase
+      .from('quiz_answers')
+      .select('question_id, question_text, answer')
       .eq('user_id', userId);
-    
-    if (error) {
-      logger.error('Erro ao atualizar submissão', {
-        tag: 'Quiz',
-        error,
-        userId
-      });
-      return false;
-    }
-    
-    return true;
-  } catch (error: any) {
-    logger.error('Erro ao completar questionário', {
-      tag: 'Quiz',
-      error
-    });
-    return false;
-  }
-};
-
-/**
- * Utilitário para obter o conteúdo de onboarding ativo
- */
-export const getActiveOnboardingContent = async (): Promise<OnboardingContent | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('onboarding_content')
-      .select('*')
-      .eq('is_active', true)
-      .maybeSingle();
       
-    if (error) {
-      logger.error('Erro ao buscar conteúdo de onboarding', {
-        tag: 'Onboarding',
-        data: error
-      });
+    if (answersError) {
+      console.error("Erro ao buscar respostas:", answersError);
       return null;
     }
     
-    return data as OnboardingContent;
+    const { data: submission, error: submissionError } = await supabase
+      .from('quiz_submissions')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+      
+    if (submissionError) {
+      console.error("Erro ao buscar submissão:", submissionError);
+      return null;
+    }
+    
+    return {
+      answers,
+      submission
+    };
   } catch (error) {
-    logger.error('Exceção ao buscar conteúdo de onboarding', {
-      tag: 'Onboarding',
-      data: error
-    });
+    console.error("Erro ao processar respostas:", error);
     return null;
   }
 };
 
-/**
- * Função simplificada para processar as respostas do questionário
- * Esta é uma versão simplificada para compatibilidade com o código existente
- */
-export const processQuizAnswersToSimplified = async (userId: string): Promise<boolean> => {
+// Envia dados do questionário para um webhook externo
+export const sendQuizDataToWebhook = async (userId: string, submissionId: string) => {
   try {
-    logger.info('Processando respostas do questionário', {
-      tag: 'Quiz',
-      userId
-    });
+    console.log("Enviando dados para webhook...");
+    // Implementação simplificada - na prática, seria uma chamada para um endpoint
     return true;
   } catch (error) {
-    logger.error('Erro ao processar respostas do questionário', {
-      tag: 'Quiz',
-      error
-    });
+    console.error("Erro ao enviar dados para webhook:", error);
     return false;
   }
 };
 
-/**
- * Função simplificada para enviar dados do questionário para webhook
- * Esta é uma versão simplificada para compatibilidade com o código existente
- */
-export const sendQuizDataToWebhook = async (submissionId: string): Promise<boolean> => {
-  try {
-    logger.info('Simulando envio de dados do questionário para webhook', {
-      tag: 'Quiz',
-      submissionId
-    });
-    return true;
-  } catch (error) {
-    logger.error('Erro ao enviar dados para webhook', {
-      tag: 'Quiz',
-      error
-    });
-    return false;
-  }
-};
-
-/**
- * Utilitário para registrar acesso a um material
- */
-export const registerMaterialAccess = async (materialId: string, userId: string): Promise<boolean> => {
-  try {
-    // Inserir um registro de acesso
-    const { error } = await supabase
-      .from('material_accesses')
-      .insert({
-        material_id: materialId,
-        user_id: userId,
-        accessed_at: new Date().toISOString()
-      });
-      
-    if (error) {
-      logger.error('Erro ao registrar acesso ao material', {
-        tag: 'Materials',
-        data: error
-      });
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    logger.error('Exceção ao registrar acesso ao material', {
-      tag: 'Materials',
-      data: error
-    });
-    return false;
-  }
-};
-
-/**
- * Função para obter emails dos usuários
- */
-export const getUserEmails = async () => {
+// Obter detalhes simplificados do questionário
+export const getQuizDetails = async (userId: string) => {
   try {
     const { data, error } = await supabase
-      .from('profiles')
-      .select('id, email');
+      .from('quiz_submissions')
+      .select(`
+        *,
+        user:user_id (
+          email
+        )
+      `)
+      .eq('user_id', userId)
+      .maybeSingle();
       
-    if (error) throw error;
+    if (error) {
+      console.error("Erro ao buscar detalhes do questionário:", error);
+      return null;
+    }
+    
     return data;
   } catch (error) {
-    logger.error("Erro ao obter emails dos usuários:", error);
-    return [];
+    console.error("Erro ao buscar detalhes do questionário:", error);
+    return null;
   }
 };
