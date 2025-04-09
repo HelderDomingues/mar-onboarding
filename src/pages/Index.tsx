@@ -11,7 +11,7 @@ const Index = () => {
   }
   return <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-blue-50">
       <header className="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
-        <img src="/lovable-uploads/e109ec41-0f89-456d-8081-f73393ed4fd5.png" alt="Crie Valor" className="h-10 object-scale-down" />
+        <img src="/lovable-uploads/e109ec41-0f89-456d-8081-f73393ed4fd5.png" alt="Crie Valor" className="h-7 object-scale-down" />
       </header>
       
       <div className="flex-1 flex flex-col md:flex-row items-center justify-center p-6 gap-10 md:gap-20">
