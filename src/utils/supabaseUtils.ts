@@ -100,18 +100,46 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
       data: { userId }
     });
     
-    const { error } = await supabase
+    // Verificar se há uma submissão existente para o usuário
+    const { data: existingSubmission } = await supabase
       .from('quiz_submissions')
-      .update({
-        completed: true,
-        completed_at: new Date().toISOString(),
-        contact_consent: true
-      })
-      .eq('user_id', userId);
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
     
-    if (error) {
-      logger.error("Erro ao completar questionário manualmente:", error);
-      return false;
+    if (!existingSubmission) {
+      // Se não houver submissão, criar uma nova
+      const { error: insertError } = await supabase
+        .from('quiz_submissions')
+        .insert({
+          user_id: userId,
+          completed: true,
+          completed_at: new Date().toISOString(),
+          contact_consent: true,
+          current_module: 7, // Assumindo que o último módulo é o 7
+          started_at: new Date().toISOString()
+        });
+      
+      if (insertError) {
+        logger.error("Erro ao criar submissão de questionário:", insertError);
+        return false;
+      }
+    } else {
+      // Se houver submissão, atualizá-la
+      const { error: updateError } = await supabase
+        .from('quiz_submissions')
+        .update({
+          completed: true,
+          completed_at: new Date().toISOString(),
+          contact_consent: true,
+          current_module: 7 // Assumindo que o último módulo é o 7
+        })
+        .eq('user_id', userId);
+      
+      if (updateError) {
+        logger.error("Erro ao atualizar submissão de questionário:", updateError);
+        return false;
+      }
     }
     
     logger.info('Questionário completado com sucesso', {

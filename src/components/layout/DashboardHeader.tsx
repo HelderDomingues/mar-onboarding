@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Cog, Home, LogOut, ChevronDown } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { logger } from "@/utils/logger";
 
 interface DashboardHeaderProps {
   isAdmin?: boolean;
@@ -16,6 +17,7 @@ export function DashboardHeader({ isAdmin = false }: DashboardHeaderProps) {
   const navigate = useNavigate();
   
   const handleLogout = async () => {
+    logger.info('Iniciando logout a partir do header', { tag: 'Header' });
     await logout();
     navigate('/');
   };
@@ -75,6 +77,10 @@ export function DashboardHeader({ isAdmin = false }: DashboardHeaderProps) {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => navigate('/dashboard')}>
                 Dashboard
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem onClick={() => navigate('/member')}>
+                Área do Membro
               </DropdownMenuItem>
               
               <DropdownMenuSeparator />

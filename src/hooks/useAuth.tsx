@@ -30,18 +30,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // Configurar listener para mudanças na autenticação
+    // Primeiro configura o listener para mudanças de autenticação
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setUser(session?.user || null);
+        const currentUser = session?.user || null;
+        setUser(currentUser);
         
         // Verificar se é admin apenas se o usuário estiver autenticado
-        if (session?.user) {
+        if (currentUser) {
           try {
             const { data: roleData } = await supabase
               .from('user_roles')
               .select('role')
-              .eq('user_id', session.user.id)
+              .eq('user_id', currentUser.id)
               .eq('role', 'admin');
               
             setIsAdmin(roleData && roleData.length > 0);
@@ -57,18 +58,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Verificar sessão atual ao inicializar
+    // Depois verifica a sessão atual
     const checkSession = async () => {
       try {
         const { data } = await supabase.auth.getSession();
-        setUser(data.session?.user || null);
+        const currentUser = data.session?.user || null;
+        setUser(currentUser);
         
-        if (data.session?.user) {
+        if (currentUser) {
           try {
             const { data: roleData } = await supabase
               .from('user_roles')
               .select('role')
-              .eq('user_id', data.session.user.id)
+              .eq('user_id', currentUser.id)
               .eq('role', 'admin');
               
             setIsAdmin(roleData && roleData.length > 0);
@@ -102,17 +104,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
+        logger.error('Falha no login:', { 
+          tag: 'Auth', 
+          data: { error: error.message, email }
+        });
+        
         return {
           success: false,
           message: error.message,
         };
       }
 
+      logger.info('Login realizado com sucesso', { 
+        tag: 'Auth', 
+        data: { email, userId: data.user?.id }
+      });
+      
       return {
         success: true,
         message: "Login realizado com sucesso",
       };
     } catch (error: any) {
+      logger.error('Erro inesperado no login:', { 
+        tag: 'Auth', 
+        data: { error: error.message, email }
+      });
+      
       return {
         success: false,
         message: error.message || "Erro ao fazer login",
@@ -123,6 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       await supabase.auth.signOut();
+      logger.info('Logout realizado com sucesso', { tag: 'Auth' });
     } catch (error) {
       logger.error("Erro ao fazer logout:", error);
     }
