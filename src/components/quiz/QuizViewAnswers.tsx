@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { QuizModule, QuizQuestion, QuizOption } from "@/types/quiz";
-import { processQuizAnswersToSimplified } from "@/utils/supabaseUtils";
 import { logger } from "@/utils/logger";
 
 export function QuizViewAnswers() {
@@ -29,9 +27,6 @@ export function QuizViewAnswers() {
           tag: 'QuizAnswers',
           data: { userId: user.id }
         });
-        
-        // Processar respostas para o formato simplificado caso necessário
-        await processQuizAnswersToSimplified(user.id);
         
         // Buscar módulos
         const { data: modulesData, error: modulesError } = await supabase
@@ -130,7 +125,6 @@ export function QuizViewAnswers() {
     fetchData();
   }, [user, toast]);
 
-  // Função auxiliar para validar o tipo da questão
   const validateQuestionType = (type: string): QuizQuestion['type'] => {
     const validTypes: QuizQuestion['type'][] = ['text', 'number', 'email', 'radio', 'checkbox', 'textarea', 'select', 'url', 'instagram'];
     return validTypes.includes(type as any) ? (type as QuizQuestion['type']) : 'text';

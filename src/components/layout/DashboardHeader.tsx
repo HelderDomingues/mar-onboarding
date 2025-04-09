@@ -1,29 +1,36 @@
+
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, LogOut, PieChart, User, Home, BookOpen, BarChart, FileText, HelpCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 interface DashboardHeaderProps {
   isAdmin?: boolean;
 }
+
 export function DashboardHeader({
   isAdmin = false
 }: DashboardHeaderProps) {
   const {
     user,
-    signOut
+    logout
   } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  
   const initials = user?.user_metadata?.full_name ? `${user.user_metadata.full_name.split(' ')[0][0]}${user.user_metadata.full_name.split(' ').slice(-1)[0][0]}` : user?.email?.substring(0, 2).toUpperCase() || 'U';
+  
   const handleLogout = async () => {
-    await signOut();
+    await logout();
     navigate('/');
   };
+  
   const getActiveClass = (path: string) => {
     return location.pathname === path ? "bg-blue-700 text-white" : "text-white/80 hover:text-white hover:bg-blue-700/50";
   };
+  
   return <header className="bg-blue-600 shadow-md sticky top-0 z-40">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">

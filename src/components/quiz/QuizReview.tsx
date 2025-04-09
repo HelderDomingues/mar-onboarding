@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { completeQuizManually, processQuizAnswersToSimplified, sendQuizDataToWebhook } from "@/utils/supabaseUtils";
+import { completeQuizManually } from "@/utils/supabaseUtils";
 import { logger } from "@/utils/logger";
 
 interface QuizReviewProps {

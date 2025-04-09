@@ -52,7 +52,6 @@ const UsersPage = () => {
     setError(null);
     
     try {
-      // Buscar todos os perfis de usuários
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*');
@@ -67,25 +66,20 @@ const UsersPage = () => {
         return;
       }
       
-      // Usar a função utilitária para obter emails
       const emailData = await getUserEmails();
       
-      // Buscar roles de admin
       const { data: adminRoles, error: adminRolesError } = await supabase
         .from('user_roles')
         .select('user_id')
         .eq('role', 'admin');
       
-      // Buscar submissões
       const { data: submissions, error: submissionsError } = await supabase
         .from('quiz_submissions')
         .select('user_id');
         
-      // Transformar dados
       const adminUserIds = adminRoles?.map(role => role.user_id) || [];
       const submissionUserIds = submissions?.map(sub => sub.user_id) || [];
       
-      // Criar um mapa de emails usando os dados obtidos
       const emailMap = new Map<string, string>();
       if (emailData && Array.isArray(emailData)) {
         emailData.forEach((item: any) => {
@@ -95,7 +89,6 @@ const UsersPage = () => {
         });
       }
       
-      // Combinar os dados de perfis com emails
       const profilesArray = Array.isArray(profilesData) ? profilesData : [];
       const processedUsers = profilesArray.map(profile => {
         return {
@@ -158,20 +151,17 @@ const UsersPage = () => {
   const handleToggleAdmin = async (userId: string, isCurrentlyAdmin: boolean) => {
     try {
       if (isCurrentlyAdmin) {
-        // Remover permissão de admin
         await supabase
           .from('user_roles')
           .delete()
           .eq('user_id', userId)
           .eq('role', 'admin');
       } else {
-        // Adicionar permissão de admin
         await supabase
           .from('user_roles')
           .insert({ user_id: userId, role: 'admin' });
       }
       
-      // Atualizar a lista de usuários
       setUsers(users.map(u => {
         if (u.id === userId) {
           return { ...u, is_admin: !isCurrentlyAdmin };
@@ -201,7 +191,7 @@ const UsersPage = () => {
   };
   
   if (!isAuthenticated) {
-    return null; // Será redirecionado no useEffect
+    return null;
   }
   
   return (

@@ -61,3 +61,18 @@ export const completeQuiz = async (userId: string): Promise<boolean> => {
     return false;
   }
 };
+
+// Função auxiliar para obter email dos usuários (simplificada)
+export const getUserEmails = async () => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .select('id, email')
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Erro ao obter emails dos usuários:", error);
+    return null;
+  }
+};

@@ -9,10 +9,10 @@ import { logger } from "@/utils/logger";
  * Apenas usuários com função de administrador podem acessar
  */
 const AdminRoute = () => {
-  const { user, isAuthenticated, isAdmin, loading } = useAuth();
+  const { user, isAuthenticated, isAdmin, isLoading } = useAuth();
 
   useEffect(() => {
-    if (user && isAuthenticated && !loading) {
+    if (user && isAuthenticated && !isLoading) {
       // Registrar tentativa de acesso à área administrativa
       logger.info('Verificação de acesso administrativo', {
         tag: 'Admin',
@@ -20,10 +20,10 @@ const AdminRoute = () => {
         isAdmin: isAdmin || false
       });
     }
-  }, [user, isAuthenticated, isAdmin, loading]);
+  }, [user, isAuthenticated, isAdmin, isLoading]);
 
   // Enquanto carregando, mostrar nada
-  if (loading) {
+  if (isLoading) {
     return null;
   }
 
