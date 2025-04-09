@@ -17,12 +17,26 @@ export function DashboardHeader({ isAdmin = false }: DashboardHeaderProps) {
   const navigate = useNavigate();
   
   const handleLogout = async () => {
-    logger.info('Iniciando logout a partir do header', { tag: 'Header' });
-    await logout();
-    navigate('/');
+    try {
+      logger.info('Iniciando logout a partir do header', { tag: 'Header' });
+      await logout();
+      // Navegação feita após o logout para garantir que estados são limpos
+      navigate('/');
+      logger.info('Navegação após logout concluída', { tag: 'Header' });
+    } catch (error) {
+      logger.error('Erro durante o processo de logout', { 
+        tag: 'Header', 
+        data: error 
+      });
+    }
   };
   
-  const userInitials = user?.email ? user.email.slice(0, 2).toUpperCase() : "??";
+  // Determinar as iniciais do usuário de forma segura
+  const userInitials = React.useMemo(() => {
+    if (!user) return "??";
+    if (!user.email) return "??";
+    return user.email.slice(0, 2).toUpperCase();
+  }, [user]);
   
   return (
     <header className="bg-white border-b py-3 px-4 sm:px-6 lg:px-8 sticky top-0 z-30">
@@ -69,7 +83,7 @@ export function DashboardHeader({ isAdmin = false }: DashboardHeaderProps) {
                   </AvatarFallback>
                 </Avatar>
                 <span className="hidden sm:inline text-slate-600">
-                  {user?.email?.split('@')[0]}
+                  {user?.email ? user.email.split('@')[0] : 'Usuário'}
                 </span>
                 <ChevronDown className="h-4 w-4 text-slate-600" />
               </Button>

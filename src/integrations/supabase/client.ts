@@ -7,28 +7,37 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Service role key - necessário para operações administrativas
 const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5teGZrbndraG5lbmdxcWp0d3J1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MjY1NTIyOCwiZXhwIjoyMDU4MjMxMjI4fQ.rFKeBrWpgm-0F24M37TXfFAb1Xrp3kxKMiQnj_ZSQiw";
 
-// Cliente padrão para uso em toda a aplicação
-// Configuração ajustada para evitar problemas com múltiplas instâncias
+// Configuração otimizada para o cliente Supabase principal
+// Especificando explicitamente todas as configurações importantes
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false, // Alterado para false para evitar problemas de redirecionamento
+    persistSession: true,
+    detectSessionInUrl: false, // Importante: mantém como false para evitar redirecionamentos indesejados
     storage: localStorage
+  },
+  global: {
+    headers: {
+      'Content-Type': 'application/json'
+    }
   }
 });
 
-// Cliente com permissões de administrador para operações restritas
-// IMPORTANTE: Usar apenas em componentes administrativos
+// Cliente com permissões administrativas - configurado para não persistir sessão
 export const supabaseAdmin = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: {
-    persistSession: false,
     autoRefreshToken: false,
+    persistSession: false,
     detectSessionInUrl: false
+  },
+  global: {
+    headers: {
+      'Content-Type': 'application/json'
+    }
   }
 });
 
-// Função para obter emails dos usuários (apenas para admin)
+// Função segura para obter emails dos usuários (apenas para admin)
 export const getUserEmails = async () => {
   try {
     const { data, error } = await supabaseAdmin
@@ -36,25 +45,32 @@ export const getUserEmails = async () => {
       
     if (error) {
       console.error("Erro ao buscar emails dos usuários:", error);
-      return null;
+      return [];
     }
     
-    return data;
+    return data || [];
   } catch (error) {
     console.error("Erro ao buscar emails dos usuários:", error);
-    return null;
+    return [];
   }
 };
 
-// Função simplificada para verificar se o questionário está completo
+// Função segura para verificar status do questionário
 export const isQuizComplete = async (userId: string): Promise<boolean> => {
+  if (!userId) return false;
+  
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('quiz_submissions')
       .select('completed')
       .eq('user_id', userId)
       .maybeSingle();
       
+    if (error) {
+      console.error("Erro ao verificar status do questionário:", error);
+      return false;
+    }
+    
     return data?.completed === true;
   } catch (error) {
     console.error("Erro ao verificar status do questionário:", error);
@@ -62,24 +78,21 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
   }
 };
 
-// Função simplificada para completar o questionário
+// Função segura para completar o questionário usando RPC
 export const completeQuiz = async (userId: string): Promise<boolean> => {
+  if (!userId) return false;
+  
   try {
-    const { error } = await supabase
-      .from('quiz_submissions')
-      .update({
-        completed: true,
-        completed_at: new Date().toISOString(),
-        contact_consent: true
-      })
-      .eq('user_id', userId);
+    const { data, error } = await supabaseAdmin
+      .rpc('complete_quiz', { user_id: userId });
     
     if (error) {
-      console.error("Erro ao completar questionário:", error);
+      console.error("Erro ao completar questionário via RPC:", error);
+      console.error("Detalhes do erro:", JSON.stringify(error));
       return false;
     }
     
-    return true;
+    return data === true;
   } catch (error) {
     console.error("Erro ao completar questionário:", error);
     return false;

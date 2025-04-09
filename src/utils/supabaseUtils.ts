@@ -6,22 +6,37 @@ import { logger } from '@/utils/logger';
 
 // Verifica se o questionário está completo para o usuário
 export const isQuizComplete = async (userId: string): Promise<boolean> => {
+  if (!userId) return false;
+  
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('quiz_submissions')
       .select('completed')
       .eq('user_id', userId)
       .maybeSingle();
       
+    if (error) {
+      logger.error("Erro ao verificar status do questionário:", {
+        tag: 'Quiz',
+        data: { userId, error }
+      });
+      return false;
+    }
+    
     return data?.completed === true;
   } catch (error) {
-    console.error("Erro ao verificar status do questionário:", error);
+    logger.error("Erro ao verificar status do questionário:", {
+      tag: 'Quiz',
+      data: { userId, error }
+    });
     return false;
   }
 };
 
 // Simplifica as respostas do questionário para exibição
 export const processQuizAnswersToSimplified = async (userId: string) => {
+  if (!userId) return null;
+  
   try {
     const { data: answers, error: answersError } = await supabase
       .from('quiz_answers')
@@ -29,7 +44,10 @@ export const processQuizAnswersToSimplified = async (userId: string) => {
       .eq('user_id', userId);
       
     if (answersError) {
-      console.error("Erro ao buscar respostas:", answersError);
+      logger.error("Erro ao buscar respostas:", {
+        tag: 'Quiz',
+        data: { userId, error: answersError }
+      });
       return null;
     }
     
@@ -40,7 +58,10 @@ export const processQuizAnswersToSimplified = async (userId: string) => {
       .maybeSingle();
       
     if (submissionError) {
-      console.error("Erro ao buscar submissão:", submissionError);
+      logger.error("Erro ao buscar submissão:", {
+        tag: 'Quiz',
+        data: { userId, error: submissionError }
+      });
       return null;
     }
     
@@ -49,7 +70,10 @@ export const processQuizAnswersToSimplified = async (userId: string) => {
       submission
     };
   } catch (error) {
-    console.error("Erro ao processar respostas:", error);
+    logger.error("Erro ao processar respostas:", {
+      tag: 'Quiz',
+      data: { userId, error }
+    });
     return null;
   }
 };
@@ -57,17 +81,25 @@ export const processQuizAnswersToSimplified = async (userId: string) => {
 // Envia dados do questionário para um webhook externo
 export const sendQuizDataToWebhook = async (userId: string, submissionId: string) => {
   try {
-    console.log("Enviando dados para webhook...");
+    logger.info("Enviando dados para webhook...", {
+      tag: 'Quiz',
+      data: { userId, submissionId }
+    });
     // Implementação simplificada - na prática, seria uma chamada para um endpoint
     return true;
   } catch (error) {
-    console.error("Erro ao enviar dados para webhook:", error);
+    logger.error("Erro ao enviar dados para webhook:", {
+      tag: 'Quiz',
+      data: { userId, submissionId, error }
+    });
     return false;
   }
 };
 
 // Obter detalhes simplificados do questionário
 export const getQuizDetails = async (userId: string) => {
+  if (!userId) return null;
+  
   try {
     const { data, error } = await supabase
       .from('quiz_submissions')
@@ -81,75 +113,56 @@ export const getQuizDetails = async (userId: string) => {
       .maybeSingle();
       
     if (error) {
-      console.error("Erro ao buscar detalhes do questionário:", error);
+      logger.error("Erro ao buscar detalhes do questionário:", {
+        tag: 'Quiz',
+        data: { userId, error }
+      });
       return null;
     }
     
     return data;
   } catch (error) {
-    console.error("Erro ao buscar detalhes do questionário:", error);
+    logger.error("Erro ao buscar detalhes do questionário:", {
+      tag: 'Quiz',
+      data: { userId, error }
+    });
     return null;
   }
 };
 
 // Completa o questionário manualmente para o usuário
 export const completeQuizManually = async (userId: string): Promise<boolean> => {
+  if (!userId) return false;
+  
   try {
-    logger.info('Completando questionário manualmente', {
+    logger.info('Iniciando processo para completar questionário manualmente', {
       tag: 'Quiz',
       data: { userId }
     });
     
-    // Verificar se há uma submissão existente para o usuário
-    const { data: existingSubmission } = await supabase
-      .from('quiz_submissions')
-      .select('id')
-      .eq('user_id', userId)
-      .maybeSingle();
+    // Usamos diretamente a RPC que foi criada no SQL para garantir privilégios adequados
+    const { data, error } = await supabaseAdmin
+      .rpc('complete_quiz', { user_id: userId });
     
-    if (!existingSubmission) {
-      // Se não houver submissão, criar uma nova
-      const { error: insertError } = await supabase
-        .from('quiz_submissions')
-        .insert({
-          user_id: userId,
-          completed: true,
-          completed_at: new Date().toISOString(),
-          contact_consent: true,
-          current_module: 7, // Assumindo que o último módulo é o 7
-          started_at: new Date().toISOString()
-        });
-      
-      if (insertError) {
-        logger.error("Erro ao criar submissão de questionário:", insertError);
-        return false;
-      }
-    } else {
-      // Se houver submissão, atualizá-la
-      const { error: updateError } = await supabase
-        .from('quiz_submissions')
-        .update({
-          completed: true,
-          completed_at: new Date().toISOString(),
-          contact_consent: true,
-          current_module: 7 // Assumindo que o último módulo é o 7
-        })
-        .eq('user_id', userId);
-      
-      if (updateError) {
-        logger.error("Erro ao atualizar submissão de questionário:", updateError);
-        return false;
-      }
+    if (error) {
+      logger.error("Erro ao completar questionário via RPC:", {
+        tag: 'Quiz',
+        data: { userId, error: JSON.stringify(error) }
+      });
+      return false;
     }
     
-    logger.info('Questionário completado com sucesso', {
+    logger.info('Questionário completado com sucesso via RPC', {
       tag: 'Quiz',
-      data: { userId }
+      data: { userId, result: data }
     });
     
-    return true;
+    return data === true;
   } catch (error) {
-    logger.error("Erro ao completar questionário manualmente:", error);
+    logger.error("Erro ao completar questionário manualmente:", {
+      tag: 'Quiz',
+      data: { userId, error }
+    });
     return false;
   }
 };

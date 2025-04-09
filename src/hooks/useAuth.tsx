@@ -30,26 +30,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // Primeiro configura o listener para mudanças de autenticação
+    // IMPORTANTE: Primeiro configura o listener para mudanças de autenticação
+    // Isso garante que não percamos eventos durante a inicialização
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        logger.info(`Evento de autenticação detectado: ${event}`, { 
+          tag: 'Auth', 
+          data: { event, hasSession: !!session }
+        });
+        
         const currentUser = session?.user || null;
         setUser(currentUser);
         
         // Verificar se é admin apenas se o usuário estiver autenticado
         if (currentUser) {
-          try {
-            const { data: roleData } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', currentUser.id)
-              .eq('role', 'admin');
+          // Aqui usamos setTimeout para evitar bloqueio e potenciais recursões
+          // Isso faz com que a verificação de admin aconteça em um ciclo separado
+          setTimeout(async () => {
+            try {
+              const { data: roleData, error } = await supabase
+                .from('user_roles')
+                .select('role')
+                .eq('user_id', currentUser.id)
+                .eq('role', 'admin');
+                
+              if (error) {
+                logger.error('Erro ao verificar papel do usuário:', {
+                  tag: 'Auth',
+                  data: error
+                });
+                setIsAdmin(false);
+                return;
+              }
               
-            setIsAdmin(roleData && roleData.length > 0);
-          } catch (error) {
-            logger.error('Erro ao verificar papel do usuário:', error);
-            setIsAdmin(false);
-          }
+              setIsAdmin(roleData && roleData.length > 0);
+              logger.info('Status de admin atualizado', {
+                tag: 'Auth',
+                data: { isAdmin: roleData && roleData.length > 0 }
+              });
+            } catch (error) {
+              logger.error('Erro ao verificar papel do usuário:', {
+                tag: 'Auth',
+                data: error
+              });
+              setIsAdmin(false);
+            }
+          }, 0);
         } else {
           setIsAdmin(false);
         }
@@ -58,31 +84,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Depois verifica a sessão atual
+    // DEPOIS verifica a sessão atual
     const checkSession = async () => {
       try {
-        const { data } = await supabase.auth.getSession();
+        logger.info('Verificando sessão atual', { tag: 'Auth' });
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          logger.error('Erro ao verificar sessão:', {
+            tag: 'Auth',
+            data: error
+          });
+          setUser(null);
+          setIsAdmin(false);
+          setIsLoading(false);
+          return;
+        }
+        
         const currentUser = data.session?.user || null;
         setUser(currentUser);
         
         if (currentUser) {
           try {
-            const { data: roleData } = await supabase
+            const { data: roleData, error: roleError } = await supabase
               .from('user_roles')
               .select('role')
               .eq('user_id', currentUser.id)
               .eq('role', 'admin');
               
-            setIsAdmin(roleData && roleData.length > 0);
+            if (roleError) {
+              logger.error('Erro ao verificar papel do usuário:', {
+                tag: 'Auth',
+                data: roleError
+              });
+              setIsAdmin(false);
+            } else {
+              setIsAdmin(roleData && roleData.length > 0);
+              logger.info('Status de admin verificado', {
+                tag: 'Auth',
+                data: { isAdmin: roleData && roleData.length > 0 }
+              });
+            }
           } catch (error) {
-            logger.error('Erro ao verificar papel do usuário:', error);
+            logger.error('Erro ao verificar papel do usuário:', {
+              tag: 'Auth',
+              data: error
+            });
             setIsAdmin(false);
           }
+        } else {
+          logger.info('Nenhum usuário na sessão atual', { tag: 'Auth' });
         }
         
         setIsLoading(false);
       } catch (error) {
-        logger.error("Erro ao inicializar autenticação:", error);
+        logger.error("Erro ao inicializar autenticação:", {
+          tag: 'Auth',
+          data: error
+        });
         setUser(null);
         setIsAdmin(false);
         setIsLoading(false);
@@ -92,12 +151,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkSession();
 
     return () => {
-      authListener.subscription.unsubscribe();
+      logger.info('Removendo listener de autenticação', { tag: 'Auth' });
+      if (authListener && authListener.subscription) {
+        authListener.subscription.unsubscribe();
+      }
     };
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
+      logger.info('Tentando fazer login', { 
+        tag: 'Auth', 
+        data: { email }
+      });
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -139,10 +206,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
+      logger.info('Iniciando processo de logout', { tag: 'Auth' });
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        logger.error("Erro ao fazer logout:", {
+          tag: 'Auth',
+          data: error
+        });
+        return;
+      }
+      
       logger.info('Logout realizado com sucesso', { tag: 'Auth' });
+      // Não precisamos chamar setUser(null) aqui porque o listener de autenticação já fará isso
     } catch (error) {
-      logger.error("Erro ao fazer logout:", error);
+      logger.error("Erro ao fazer logout:", {
+        tag: 'Auth',
+        data: error
+      });
     }
   };
 
