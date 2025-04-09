@@ -2,6 +2,7 @@
 import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/database.types';
 import type { QuizSubmission } from '@/types/quiz';
+import { logger } from '@/utils/logger';
 
 // Verifica se o questionário está completo para o usuário
 export const isQuizComplete = async (userId: string): Promise<boolean> => {
@@ -88,5 +89,39 @@ export const getQuizDetails = async (userId: string) => {
   } catch (error) {
     console.error("Erro ao buscar detalhes do questionário:", error);
     return null;
+  }
+};
+
+// Completa o questionário manualmente para o usuário
+export const completeQuizManually = async (userId: string): Promise<boolean> => {
+  try {
+    logger.info('Completando questionário manualmente', {
+      tag: 'Quiz',
+      data: { userId }
+    });
+    
+    const { error } = await supabase
+      .from('quiz_submissions')
+      .update({
+        completed: true,
+        completed_at: new Date().toISOString(),
+        contact_consent: true
+      })
+      .eq('user_id', userId);
+    
+    if (error) {
+      logger.error("Erro ao completar questionário manualmente:", error);
+      return false;
+    }
+    
+    logger.info('Questionário completado com sucesso', {
+      tag: 'Quiz',
+      data: { userId }
+    });
+    
+    return true;
+  } catch (error) {
+    logger.error("Erro ao completar questionário manualmente:", error);
+    return false;
   }
 };
