@@ -5,14 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 interface AuthContextType {
   isAuthenticated: boolean;
   user: any | null;
-  loading: boolean;
-  isAdmin: boolean;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{
-    success: boolean;
-    message: string;
-  }>;
-  signOut: () => Promise<void>;
+  isAdmin: boolean;
   login: (email: string, password: string) => Promise<{
     success: boolean;
     message: string;
@@ -23,80 +17,60 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   user: null,
-  loading: true,
-  isAdmin: false,
   isLoading: true,
-  signIn: async () => ({ success: false, message: "Contexto de autenticação não inicializado" }),
-  signOut: async () => {},
+  isAdmin: false,
   login: async () => ({ success: false, message: "Contexto de autenticação não inicializado" }),
   logout: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // Verifica se há uma sessão ativa
-    const checkUser = async () => {
+    // Configuração simples para verificar sessão ao inicializar
+    const initAuth = async () => {
       try {
+        // Configurar listener para mudanças na autenticação primeiro
+        const { data: authListener } = supabase.auth.onAuthStateChange(
+          (event, session) => {
+            setUser(session?.user || null);
+            setIsLoading(false);
+          }
+        );
+
+        // Então verificar sessão atual
         const { data } = await supabase.auth.getSession();
         setUser(data.session?.user || null);
+        
+        // Verificar se é admin de forma simples, sem RPC
+        if (data.session?.user) {
+          const { data: roleData } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', data.session.user.id)
+            .eq('role', 'admin');
+            
+          setIsAdmin(roleData && roleData.length > 0);
+        }
+        
+        setIsLoading(false);
+        
+        return () => {
+          authListener.subscription.unsubscribe();
+        };
       } catch (error) {
-        console.error("Erro ao verificar sessão:", error);
+        console.error("Erro ao inicializar autenticação:", error);
         setUser(null);
-      } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    checkUser();
-
-    // Configura listener para mudanças na autenticação
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user || null);
-        setLoading(false);
-      }
-    );
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
+    initAuth();
   }, []);
 
-  // Verifica se o usuário é administrador
-  useEffect(() => {
-    const checkUserRole = async () => {
-      if (!user) {
-        setIsAdmin(false);
-        return;
-      }
-      
-      try {
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .single();
-          
-        if (!error && data) {
-          setIsAdmin(true);
-        } else {
-          setIsAdmin(false);
-        }
-      } catch (error) {
-        console.error('Erro ao verificar permissões:', error);
-        setIsAdmin(false);
-      }
-    };
-    
-    checkUserRole();
-  }, [user]);
-
-  const signIn = async (email: string, password: string) => {
+  const login = async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -122,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signOut = async () => {
+  const logout = async () => {
     try {
       await supabase.auth.signOut();
     } catch (error) {
@@ -130,20 +104,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Aliases para compatibilidade com o código existente
-  const login = signIn;
-  const logout = signOut;
-
   return (
     <AuthContext.Provider
       value={{
         isAuthenticated: !!user,
         user,
-        loading,
+        isLoading,
         isAdmin,
-        isLoading: loading,
-        signIn,
-        signOut,
         login,
         logout,
       }}

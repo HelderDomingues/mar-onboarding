@@ -746,6 +746,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           id: string
+          name: string | null
           role: string
           user_id: string | null
         }
@@ -753,6 +754,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id?: string
+          name?: string | null
           role: string
           user_id?: string | null
         }
@@ -760,6 +762,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id?: string
+          name?: string | null
           role?: string
           user_id?: string | null
         }
@@ -866,7 +869,7 @@ export type Database = {
       }
       setup_subscriptions_rls_policies: {
         Args: Record<PropertyKey, never>
-        Returns: boolean
+        Returns: undefined
       }
       sync_existing_users: {
         Args: Record<PropertyKey, never>

@@ -89,42 +89,40 @@ export function QuizReview({
     setEditingQuestionId(questionId);
   };
 
-const handleSaveEdit = async (questionId: string) => {
-  try {
-    const answer = editedAnswers[questionId];
-    
-    // Fixed line - using getSession() instead of getUser()
-    const { data: { session } } = await supabase.auth.getSession();
-    const userId = session?.user?.id;
-    
-    if (!userId) {
-      throw new Error("Usuário não autenticado");
+  const handleSaveEdit = async (questionId: string) => {
+    try {
+      const answer = editedAnswers[questionId];
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      
+      if (!userId) {
+        throw new Error("Usuário não autenticado");
+      }
+      
+      const answerValue = typeof answer === 'object' ? JSON.stringify(answer) : answer;
+      const { error } = await supabase.from('quiz_answers').upsert({
+        user_id: userId,
+        question_id: questionId,
+        answer: answerValue
+      }, { onConflict: 'user_id,question_id' });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Resposta atualizada",
+        description: "Sua resposta foi atualizada com sucesso."
+      });
+    } catch (error) {
+      console.error("Erro ao salvar resposta:", error);
+      toast({
+        title: "Erro ao atualizar resposta",
+        description: "Não foi possível salvar sua resposta. Por favor, tente novamente.",
+        variant: "destructive"
+      });
     }
-    
-    // Rest of your function remains the same
-    const answerValue = typeof answer === 'object' ? JSON.stringify(answer) : answer;
-    const { error } = await supabase.from('quiz_answers').upsert({
-      user_id: userId,
-      question_id: questionId,
-      answer: answerValue
-    }, { onConflict: 'user_id,question_id' });
-    
-    if (error) throw error;
-    
-    toast({
-      title: "Resposta atualizada",
-      description: "Sua resposta foi atualizada com sucesso."
-    });
-  } catch (error) {
-    console.error("Erro ao salvar resposta:", error);
-    toast({
-      title: "Erro ao atualizar resposta",
-      description: "Não foi possível salvar sua resposta. Por favor, tente novamente.",
-      variant: "destructive"
-    });
-  }
-  setEditingQuestionId(null);
-};
+    setEditingQuestionId(null);
+  };
 
   const handleCancelEdit = () => {
     setEditingQuestionId(null);
@@ -207,83 +205,17 @@ const handleSaveEdit = async (questionId: string) => {
         userId
       });
       
-      const { data: submissionData, error: submissionError } = await supabase
+      const { error } = await supabase
         .from('quiz_submissions')
-        .select('id, completed')
-        .eq('user_id', userId)
-        .maybeSingle();
-        
-      if (submissionError || !submissionData) {
-        logger.error('Erro ao buscar dados da submissão', {
-          tag: 'Quiz',
-          error: submissionError
-        });
-        throw new Error("Não foi possível encontrar sua submissão do questionário");
-      }
+        .update({
+          completed: true,
+          completed_at: new Date().toISOString(),
+          contact_consent: true
+        })
+        .eq('user_id', userId);
       
-      if (submissionData.completed) {
-        logger.info('Questionário já estava marcado como completo', {
-          tag: 'Quiz',
-          userId,
-          submissionId: submissionData.id
-        });
-        await onComplete();
-        return;
-      }
-      
-      try {
-        logger.db('Tentando finalizar questionário com atualização direta', {
-          tag: 'Quiz',
-          userId,
-          submissionId: submissionData.id
-        });
-        
-        const { error: updateError } = await supabase
-          .from('quiz_submissions')
-          .update({
-            completed: true,
-            completed_at: new Date().toISOString(),
-            contact_consent: true
-          })
-          .eq('id', submissionData.id)
-          .eq('user_id', userId);
-        
-        if (!updateError) {
-          logger.info('Questionário finalizado com sucesso via atualização direta', {
-            tag: 'Quiz',
-            userId,
-            submissionId: submissionData.id
-          });
-          
-          try {
-            await processQuizAnswersToSimplified(userId);
-            await sendQuizDataToWebhook(submissionData.id);
-          } catch (processingError) {
-            logger.warn('Aviso: Erro ao processar dados adicionais, mas questionário foi completado', {
-              tag: 'Quiz',
-              error: processingError
-            });
-          }
-          
-          await onComplete();
-          return;
-        } else {
-          logger.warn('Erro na atualização direta, tentando via função completeQuizManually', {
-            tag: 'Quiz',
-            error: updateError
-          });
-        }
-      } catch (directUpdateError) {
-        logger.warn('Exceção na atualização direta, tentando abordagem alternativa', {
-          tag: 'Quiz',
-          error: directUpdateError
-        });
-      }
-      
-      const success = await completeQuizManually(userId);
-      
-      if (!success) {
-        throw new Error("Não foi possível completar o questionário. Por favor, tente novamente.");
+      if (error) {
+        throw error;
       }
       
       logger.info("Questionário marcado como completo com sucesso", {
@@ -296,28 +228,11 @@ const handleSaveEdit = async (questionId: string) => {
     } catch (error: any) {
       logger.error("Erro na finalização:", error);
       
-      let errorMessage = "Não foi possível finalizar o questionário.";
-      
-      if (error?.message) {
-        errorMessage = error.message;
-      } else if (error?.code) {
-        switch (error.code) {
-          case '42501':
-            errorMessage = "Erro de permissão ao atualizar o questionário. Por favor, tente novamente ou entre em contato com o suporte.";
-            break;
-          case '23505':
-            errorMessage = "Já existe um registro similar. Por favor, atualize a página e tente novamente.";
-            break;
-          default:
-            errorMessage = `Erro ao finalizar questionário (${error.code}). Por favor, tente novamente.`;
-        }
-      }
-      
-      setSubmissionError(errorMessage);
+      setSubmissionError("Não foi possível finalizar o questionário. Por favor, tente novamente.");
       
       toast({
         title: "Erro ao finalizar questionário",
-        description: errorMessage,
+        description: "Não foi possível finalizar o questionário. Por favor, tente novamente.",
         variant: "destructive"
       });
       

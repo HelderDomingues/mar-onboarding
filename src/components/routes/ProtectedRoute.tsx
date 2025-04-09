@@ -1,6 +1,6 @@
 
-import { ReactNode, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ProtectedRouteProps {
@@ -8,19 +8,21 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ component: Component }: ProtectedRouteProps) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/", { state: { from: location.pathname } });
+    // Apenas redirecionar se não estiver autenticado e não estiver carregando
+    if (!isAuthenticated && !isLoading) {
+      navigate("/");
     }
-  }, [isAuthenticated, navigate, location.pathname]);
+  }, [isAuthenticated, isLoading, navigate]);
   
-  if (!isAuthenticated) {
-    return null; // Será redirecionado no useEffect
+  // Mostrar nada durante o carregamento para evitar flashes
+  if (isLoading) {
+    return null;
   }
   
-  return <Component />;
+  // Renderizar o componente apenas se estiver autenticado
+  return isAuthenticated ? <Component /> : null;
 };
