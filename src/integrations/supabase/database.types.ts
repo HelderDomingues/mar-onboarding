@@ -14,94 +14,127 @@ export interface Database {
         Row: {
           id: string
           full_name: string | null
-          email: string | null
-          avatar_url: string | null
           username: string | null
-          company_name: string | null
-          company_address: string | null
-          website: string | null
+          avatar_url: string | null
+          email: string | null
+          created_at: string
           updated_at: string | null
-          role: string | null
-          social_media: any | null
-          has_asaas_customer: boolean | null
-          phone: string | null
-          cnpj: string | null
-          cpf: string | null
         }
         Insert: {
           id: string
           full_name?: string | null
-          email?: string | null
-          avatar_url?: string | null
           username?: string | null
-          company_name?: string | null
-          company_address?: string | null
-          website?: string | null
+          avatar_url?: string | null
+          email?: string | null
+          created_at?: string
           updated_at?: string | null
-          role?: string | null
-          social_media?: any | null
-          has_asaas_customer?: boolean | null
-          phone?: string | null
-          cnpj?: string | null
-          cpf?: string | null
         }
         Update: {
           id?: string
           full_name?: string | null
-          email?: string | null
-          avatar_url?: string | null
           username?: string | null
-          company_name?: string | null
-          company_address?: string | null
-          website?: string | null
+          avatar_url?: string | null
+          email?: string | null
+          created_at?: string
           updated_at?: string | null
-          role?: string | null
-          social_media?: any | null
-          has_asaas_customer?: boolean | null
-          phone?: string | null
-          cnpj?: string | null
-          cpf?: string | null
         }
       }
-      quiz_submissions: {
+      user_roles: {
         Row: {
           id: string
           user_id: string
-          completed: boolean
-          completed_at: string | null
-          contact_consent: boolean
+          role: string
           created_at: string
-          updated_at: string
-          current_module: number
-          started_at: string
-          webhook_processed: boolean | null
-          email: string | null
         }
         Insert: {
           id?: string
           user_id: string
-          completed?: boolean
-          completed_at?: string | null
-          contact_consent?: boolean
+          role: string
           created_at?: string
-          updated_at?: string
-          current_module?: number
-          started_at?: string
-          webhook_processed?: boolean | null
-          email?: string | null
         }
         Update: {
           id?: string
           user_id?: string
-          completed?: boolean
-          completed_at?: string | null
-          contact_consent?: boolean
+          role?: string
           created_at?: string
-          updated_at?: string
-          current_module?: number
-          started_at?: string
-          webhook_processed?: boolean | null
-          email?: string | null
+        }
+      }
+      quiz_modules: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          order_number: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          order_number: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          order_number?: number
+          created_at?: string
+        }
+      }
+      quiz_questions: {
+        Row: {
+          id: string
+          module_id: string
+          text: string
+          type: string
+          required: boolean
+          order_number: number
+          hint: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          module_id: string
+          text: string
+          type: string
+          required?: boolean
+          order_number: number
+          hint?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          module_id?: string
+          text?: string
+          type?: string
+          required?: boolean
+          order_number?: number
+          hint?: string | null
+          created_at?: string
+        }
+      }
+      quiz_options: {
+        Row: {
+          id: string
+          question_id: string
+          text: string
+          order_number: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          question_id: string
+          text: string
+          order_number: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          question_id?: string
+          text?: string
+          order_number?: number
+          created_at?: string
         }
       }
       quiz_answers: {
@@ -111,8 +144,7 @@ export interface Database {
           question_id: string
           answer: string | null
           created_at: string
-          updated_at: string
-          question_text: string | null
+          updated_at: string | null
         }
         Insert: {
           id?: string
@@ -120,8 +152,7 @@ export interface Database {
           question_id: string
           answer?: string | null
           created_at?: string
-          updated_at?: string
-          question_text?: string | null
+          updated_at?: string | null
         }
         Update: {
           id?: string
@@ -129,46 +160,174 @@ export interface Database {
           question_id?: string
           answer?: string | null
           created_at?: string
-          updated_at?: string
-          question_text?: string | null
+          updated_at?: string | null
         }
       }
-      user_roles: {
+      quiz_submissions: {
         Row: {
           id: string
           user_id: string
-          role: string
-          created_at: string
-          email: string | null
-          name: string | null
+          current_module: number
+          completed: boolean
+          started_at: string
+          completed_at: string | null
+          contact_preference: string | null
+          contact_consent: boolean | null
         }
         Insert: {
           id?: string
           user_id: string
-          role: string
-          created_at?: string
-          email?: string | null
-          name?: string | null
+          current_module?: number
+          completed?: boolean
+          started_at?: string
+          completed_at?: string | null
+          contact_preference?: string | null
+          contact_consent?: boolean | null
         }
         Update: {
           id?: string
           user_id?: string
-          role?: string
+          current_module?: number
+          completed?: boolean
+          started_at?: string
+          completed_at?: string | null
+          contact_preference?: string | null
+          contact_consent?: boolean | null
+        }
+      }
+      materials: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          category: string | null
+          file_url: string
+          plan_level: string
+          type: string
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          category?: string | null
+          file_url: string
+          plan_level: string
+          type: string
           created_at?: string
-          email?: string | null
-          name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          category?: string | null
+          file_url?: string
+          plan_level?: string
+          type?: string
+          created_at?: string
+          updated_at?: string | null
+        }
+      }
+      material_views: {
+        Row: {
+          id: string
+          material_id: string
+          user_id: string
+          access_count: number
+          last_accessed: string
+        }
+        Insert: {
+          id?: string
+          material_id: string
+          user_id: string
+          access_count?: number
+          last_accessed?: string
+        }
+        Update: {
+          id?: string
+          material_id?: string
+          user_id?: string
+          access_count?: number
+          last_accessed?: string
+        }
+      }
+      onboarding_videos: {
+        Row: {
+          id: string
+          title: string
+          content: string | null
+          video_url: string
+          is_active: boolean
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          content?: string | null
+          video_url: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string
+          content?: string | null
+          video_url?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string | null
+        }
+      }
+      faq_entries: {
+        Row: {
+          id: string
+          question: string
+          answer: string
+          category: string | null
+          is_active: boolean
+          order_number: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          question: string
+          answer: string
+          category?: string | null
+          is_active?: boolean
+          order_number?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          question?: string
+          answer?: string
+          category?: string | null
+          is_active?: boolean
+          order_number?: number
+          created_at?: string
         }
       }
     }
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
-      get_user_emails: {
-        Args: Record<string, never>
-        Returns: { user_id: string, email: string }[]
-      }
       complete_quiz: {
-        Args: { user_id: string }
+        Args: {
+          user_id: string
+        }
         Returns: boolean
       }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }
