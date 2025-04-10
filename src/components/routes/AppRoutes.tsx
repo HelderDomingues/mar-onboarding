@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/routes/ProtectedRoute";
@@ -21,7 +20,7 @@ import NewUser from "@/pages/admin/NewUser";
 import Settings from "@/pages/admin/Settings";
 import Users from "@/pages/admin/Users";
 
-export function AppRoutes() {
+const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<IndexPage />} />
@@ -43,7 +42,15 @@ export function AppRoutes() {
         <Route path="settings" element={<Settings />} />
       </Route>
 
+      <Route path="/test-connection" element={
+        <ProtectedRoute>
+          <TestConnectionPage />
+        </ProtectedRoute>
+      } />
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
-}
+};
+
+export default AppRoutes;

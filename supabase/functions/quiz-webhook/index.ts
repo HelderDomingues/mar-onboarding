@@ -23,8 +23,21 @@ serve(async (req) => {
   }
 
   try {
-    // Obter dados da requisição
-    const { submissionId } = await req.json();
+    // Verificar se é apenas um teste de conexão
+    const body = await req.json();
+    if (body.test === true) {
+      console.log("Teste de conexão com webhook recebido");
+      return new Response(
+        JSON.stringify({ status: "success", message: "Teste de conexão bem-sucedido" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+  
+    // Obter dados da requisição para processamento real
+    const { submissionId } = body;
     
     if (!submissionId) {
       console.error("Erro: ID de submissão não fornecido");
@@ -118,7 +131,7 @@ serve(async (req) => {
     console.log("Enviando dados para webhook externo");
     
     // URL do webhook (use o token configurado nas variáveis de ambiente)
-    const webhookToken = Deno.env.get("ASAAS_WEBHOOK_TOKEN") || "wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
+    const webhookToken = Deno.env.get("MAKE_WEBHOOK_TOKEN") || "wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
     const webhookUrl = `https://hook.eu2.make.com/${webhookToken}`;
     
     // Enviar dados para o webhook externo
