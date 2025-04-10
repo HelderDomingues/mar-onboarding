@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Download, FilePdf, FileSpreadsheet, CheckCircle, Circle } from "lucide-react";
+import { FileText, Download, File , FileSpreadsheet, CheckCircle, Circle } from "lucide-react";
 import { logger } from "@/utils/logger";
 
 interface Answer {
