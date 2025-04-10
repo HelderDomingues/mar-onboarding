@@ -26,30 +26,31 @@
    - [x] Adicionar marcação de submissões processadas
 
 3. **Populando Banco de Dados com Questionário**
-   - [ ] Inserir as 40 perguntas do questionário MAR com seus respectivos módulos
-   - [ ] Configurar os tipos de perguntas e opções para múltipla escolha
+   - [x] Criar script para inserir os dados do questionário
+   - [x] Inserir as 40 perguntas do questionário MAR com seus respectivos módulos
+   - [x] Configurar os tipos de perguntas e opções para múltipla escolha
 
 4. **Implementação da Interface do Usuário**
-   - [ ] Ajustar componentes existentes para utilizar o novo modelo de dados
-   - [ ] Implementar formulário de questionário com navegação entre módulos
-   - [ ] Criar página de revisão final de respostas
-   - [ ] Implementar sistema de progresso e conclusão do questionário
+   - [x] Ajustar componentes existentes para utilizar o novo modelo de dados
+   - [x] Implementar formulário de questionário com navegação entre módulos
+   - [x] Criar página de revisão final de respostas
+   - [x] Implementar sistema de progresso e conclusão do questionário
 
 5. **Interface de Administração**
-   - [ ] Criar página para visualização de todas as respostas
-   - [ ] Implementar exportação de respostas em formato CSV
-   - [ ] Adicionar funcionalidade de revisão individual por usuário
-   - [ ] Implementar controles para disparar webhook manualmente
+   - [x] Criar página para visualização de todas as respostas
+   - [x] Implementar exportação de respostas em formato CSV
+   - [x] Adicionar funcionalidade de revisão individual por usuário
+   - [x] Implementar controles para disparar webhook manualmente
 
 6. **Autenticação e Autorização**
-   - [ ] Ajustar lógica de autenticação para utilizar Supabase
-   - [ ] Implementar verificação de perfil de administrador
-   - [ ] Configurar rotas protegidas baseadas em autenticação
+   - [x] Ajustar lógica de autenticação para utilizar Supabase
+   - [x] Implementar verificação de perfil de administrador
+   - [x] Configurar rotas protegidas baseadas em autenticação
 
 7. **Testes e Otimização**
-   - [ ] Testar fluxo completo do questionário
-   - [ ] Verificar envio de dados para webhook do Make.com
-   - [ ] Otimizar consultas ao banco de dados
+   - [x] Testar fluxo completo do questionário
+   - [x] Verificar envio de dados para webhook do Make.com
+   - [x] Otimizar consultas ao banco de dados
    - [ ] Verificar e corrigir possíveis erros
 
 ## Progresso Atual
@@ -57,8 +58,11 @@
 - [x] Configuração inicial do banco de dados Supabase
 - [x] Implementação do webhook para integração com Make.com
 - [x] Criação de componente de teste para validar a configuração
-- [ ] População do banco com as perguntas do questionário
-- [ ] Ajuste dos componentes de UI para o novo modelo de dados
+- [x] População do banco com as perguntas do questionário
+- [x] Ajuste dos componentes de UI para o novo modelo de dados
+- [x] Implementação da interface administrativa para visualização de respostas
+- [x] Adição de recursos de exportação em CSV e PDF
+- [x] Implementação de controles para disparar webhook manualmente
 
 ## Lições Aprendidas e Boas Práticas
 
@@ -67,3 +71,5 @@
 - Testar cada componente antes de avançar para o próximo
 - Utilizar Row Level Security (RLS) para garantir a segurança dos dados
 - Documentar cada passo e decisão tomada
+- Utilizar componentes modulares para facilitar a manutenção
+- Implementar logging detalhado para facilitar a depuração

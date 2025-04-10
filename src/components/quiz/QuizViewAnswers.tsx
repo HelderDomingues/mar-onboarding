@@ -1,238 +1,594 @@
+
 import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Card, CardContent } from "@/components/ui/card";
+import { QuizModule, QuizQuestion } from "@/types/quiz";
+import { processQuizAnswersToSimplified } from "@/utils/supabaseUtils";
+import { downloadQuizPDF } from "@/utils/pdfGenerator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { QuizModule, QuizQuestion, QuizOption } from "@/types/quiz";
+import { FileText, Download, FilePdf, FileSpreadsheet, CheckCircle, Circle } from "lucide-react";
 import { logger } from "@/utils/logger";
 
+interface Answer {
+  question_id: string;
+  question_text: string;
+  answer: string;
+}
+
+interface Submission {
+  id: string;
+  user_id: string;
+  current_module: number;
+  is_complete: boolean;
+  started_at: string;
+  completed_at: string | null;
+}
+
 export function QuizViewAnswers() {
-  const { user } = useAuth();
+  const { user, isAuthenticated, isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  
   const [modules, setModules] = useState<QuizModule[]>([]);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
-  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [expandedModule, setExpandedModule] = useState<string | null>(null);
-
+  const [answers, setAnswers] = useState<Answer[]>([]);
+  const [submission, setSubmission] = useState<Submission | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedTab, setSelectedTab] = useState("all");
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
+  const [downloadingCSV, setDownloadingCSV] = useState(false);
+  
+  // Verificar se estamos no modo administrador e com ID específico
+  const queryParams = new URLSearchParams(location.search);
+  const adminMode = queryParams.get('admin') === 'true' && isAdmin;
+  const specificUserId = queryParams.get('id');
+  
   useEffect(() => {
-    async function fetchData() {
-      if (!user) return;
-      
-      setIsLoading(true);
-      try {
-        logger.info('Buscando dados para exibir respostas do questionário', {
-          tag: 'QuizAnswers',
-          data: { userId: user.id }
-        });
-        
-        // Buscar módulos
-        const { data: modulesData, error: modulesError } = await supabase
-          .from('quiz_modules')
-          .select('*')
-          .order('order_number');
-        
-        if (modulesError) throw modulesError;
-        
-        // Buscar perguntas com opções
-        const { data: questionsData, error: questionsError } = await supabase
-          .from('quiz_questions')
-          .select('*')
-          .order('order_number');
-          
-        if (questionsError) throw questionsError;
-        
-        const { data: optionsData, error: optionsError } = await supabase
-          .from('quiz_options')
-          .select('*')
-          .order('order_number');
-          
-        if (optionsError) throw optionsError;
-        
-        // Buscar respostas do usuário
-        const { data: answersData, error: answersError } = await supabase
-          .from('quiz_answers')
-          .select('question_id, answer')
-          .eq('user_id', user.id);
-          
-        if (answersError) throw answersError;
-        
-        // Processar dados
-        const questionsWithOptions: QuizQuestion[] = questionsData.map(question => {
-          // Garantir que o tipo seja um dos valores aceitos pela interface QuizQuestion
-          const validType = validateQuestionType(question.type);
-          
-          const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
-          return { 
-            ...question, 
-            type: validType,
-            options: options as QuizOption[] 
-          };
-        });
-        
-        const answerMap: Record<string, string | string[]> = {};
-        
-        if (answersData) {
-          answersData.forEach(answer => {
-            const questionType = questionsWithOptions.find(q => q.id === answer.question_id)?.type;
-            
-            if (questionType === 'checkbox' && answer.answer) {
-              try {
-                answerMap[answer.question_id] = JSON.parse(answer.answer);
-              } catch (e) {
-                answerMap[answer.question_id] = answer.answer || '';
-              }
-            } else {
-              answerMap[answer.question_id] = answer.answer || '';
-            }
-          });
-        }
-        
-        setModules(modulesData);
-        setQuestions(questionsWithOptions);
-        setAnswers(answerMap);
-        
-        if (modulesData.length > 0) {
-          setExpandedModule(modulesData[0].id);
-        }
-        
-        logger.info('Dados carregados com sucesso', {
-          tag: 'QuizAnswers',
-          data: { 
-            modulesCount: modulesData.length, 
-            questionsCount: questionsWithOptions.length,
-            answersCount: Object.keys(answerMap).length
-          }
-        });
-      } catch (error: any) {
-        logger.error('Erro ao buscar dados do questionário', {
-          tag: 'QuizAnswers',
-          data: error
-        });
-        
-        toast({
-          title: "Erro ao carregar respostas",
-          description: "Não foi possível carregar suas respostas. Por favor, tente novamente.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
+    if (!isAuthenticated) {
+      navigate('/');
+      return;
     }
     
-    fetchData();
-  }, [user, toast]);
-
-  const validateQuestionType = (type: string): QuizQuestion['type'] => {
-    const validTypes: QuizQuestion['type'][] = ['text', 'number', 'email', 'radio', 'checkbox', 'textarea', 'select', 'url', 'instagram'];
-    return validTypes.includes(type as any) ? (type as QuizQuestion['type']) : 'text';
-  };
-
-  const renderAnswer = (question: QuizQuestion, answer: string | string[]) => {
-    if (!answer || (Array.isArray(answer) && answer.length === 0)) {
-      return <span className="text-gray-400 italic">Não respondido</span>;
+    if (specificUserId && !isAdmin) {
+      navigate('/dashboard');
+      return;
     }
-
-    if (question.type === 'checkbox' && Array.isArray(answer)) {
-      return (
-        <ul className="list-disc ml-5 space-y-1">
-          {answer.map((option, idx) => {
-            const optionText = question.options?.find(opt => opt.id === option)?.text || option;
-            return <li key={idx}>{optionText}</li>;
-          })}
-        </ul>
-      );
-    } else if (question.type === 'radio') {
-      const optionText = question.options?.find(opt => opt.id === answer)?.text || answer;
-      return <span>{optionText}</span>;
-    } else if (question.type === 'textarea') {
-      return <div className="whitespace-pre-wrap">{answer}</div>;
-    } else if (question.type === 'instagram') {
+    
+    fetchQuizData();
+  }, [isAuthenticated, user, adminMode, specificUserId]);
+  
+  const fetchQuizData = async () => {
+    try {
+      setLoading(true);
+      
+      // Determinar qual usuário estamos visualizando
+      const targetUserId = specificUserId && adminMode ? specificUserId : user?.id;
+      
+      if (!targetUserId) {
+        throw new Error("ID do usuário não encontrado");
+      }
+      
+      logger.info('Buscando dados do questionário para visualização', {
+        tag: 'Quiz',
+        data: { targetUserId, adminMode, specificUserId }
+      });
+      
+      // Buscar módulos e perguntas
+      const { data: modulesData, error: modulesError } = await supabase
+        .from('quiz_modules')
+        .select('*')
+        .order('order_number');
+      
+      if (modulesError) throw modulesError;
+      
+      const { data: questionsData, error: questionsError } = await supabase
+        .from('quiz_questions')
+        .select('*')
+        .order('order_number');
+      
+      if (questionsError) throw questionsError;
+      
+      // Buscar respostas simplificadas e submissão
+      const result = await processQuizAnswersToSimplified(targetUserId);
+      
+      if (!result) {
+        throw new Error("Erro ao processar respostas do questionário");
+      }
+      
+      setModules(modulesData as unknown as QuizModule[]);
+      setQuestions(questionsData as unknown as QuizQuestion[]);
+      setAnswers(result.answers as unknown as Answer[]);
+      setSubmission(result.submission as unknown as Submission);
+      setError(null);
+    } catch (error: any) {
+      logger.error("Erro ao buscar dados do questionário:", {
+        tag: 'Quiz',
+        data: error
+      });
+      
+      setError("Não foi possível carregar as respostas do questionário. Por favor, tente novamente.");
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível carregar as respostas do questionário.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const getModuleAnswers = (moduleId: string) => {
+    const moduleQuestions = questions.filter(q => q.module_id === moduleId);
+    const moduleQuestionIds = moduleQuestions.map(q => q.id);
+    return answers.filter(a => moduleQuestionIds.includes(a.question_id))
+      .sort((a, b) => {
+        const questionA = questions.find(q => q.id === a.question_id);
+        const questionB = questions.find(q => q.id === b.question_id);
+        return (questionA?.order_number || 0) - (questionB?.order_number || 0);
+      });
+  };
+  
+  const formatAnswer = (answer: string | null, questionId: string): React.ReactNode => {
+    if (!answer) return <span className="text-muted-foreground italic">Sem resposta</span>;
+    
+    // Verificar o tipo da pergunta
+    const question = questions.find(q => q.id === questionId);
+    
+    try {
+      // Se for múltipla escolha (array de respostas)
+      if (answer.startsWith('[') && answer.endsWith(']')) {
+        const options = JSON.parse(answer);
+        if (Array.isArray(options)) {
+          return (
+            <ul className="list-disc pl-5 space-y-1">
+              {options.map((option, index) => (
+                <li key={index}>{option}</li>
+              ))}
+            </ul>
+          );
+        }
+      }
+    } catch (e) {
+      // Se não for possível parsear, mostrar como texto simples
+    }
+    
+    // Se for uma URL ou Instagram
+    if (question?.type === 'url' && !answer.includes('://')) {
       return (
         <a 
-          href={`https://instagram.com/${answer}`} 
+          href={`https://${answer}`} 
           target="_blank" 
-          rel="noopener noreferrer"
-          className="text-blue-600 hover:underline"
-        >
-          @{answer}
-        </a>
-      );
-    } else if (question.type === 'url') {
-      return (
-        <a 
-          href={answer.toString()} 
-          target="_blank" 
-          rel="noopener noreferrer"
+          rel="noopener noreferrer" 
           className="text-blue-600 hover:underline"
         >
           {answer}
         </a>
       );
+    } else if (question?.type === 'instagram') {
+      return (
+        <a 
+          href={`https://instagram.com/${answer}`} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="text-blue-600 hover:underline"
+        >
+          @{answer}
+        </a>
+      );
     }
-
-    return <span>{answer}</span>;
+    
+    // Para respostas simples
+    return answer;
   };
-
-  if (isLoading) {
+  
+  const handlePDFDownload = async () => {
+    try {
+      setDownloadingPDF(true);
+      
+      // Determinar qual usuário estamos visualizando
+      const targetUserId = specificUserId && adminMode ? specificUserId : user?.id;
+      
+      if (!targetUserId) {
+        throw new Error("ID do usuário não encontrado");
+      }
+      
+      logger.info('Iniciando download do PDF do questionário', {
+        tag: 'Quiz',
+        data: { targetUserId, adminMode }
+      });
+      
+      // Obter nome do usuário para o PDF
+      let userName = 'Usuário';
+      
+      if (submission?.user_id) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', submission.user_id)
+          .single();
+        
+        if (!profileError && profile) {
+          userName = profile.full_name || 'Usuário';
+        }
+      }
+      
+      // Gerar e baixar o PDF
+      const success = await downloadQuizPDF(
+        targetUserId,
+        userName,
+        `questionario-mar-${userName.toLowerCase().replace(/\s+/g, '-')}`,
+        adminMode
+      );
+      
+      if (success) {
+        toast({
+          title: "Download iniciado",
+          description: "O PDF com as respostas do questionário está sendo baixado.",
+        });
+      } else {
+        throw new Error("Não foi possível gerar o PDF");
+      }
+    } catch (error: any) {
+      logger.error("Erro ao baixar PDF:", {
+        tag: 'Quiz',
+        data: error
+      });
+      
+      toast({
+        title: "Erro ao gerar PDF",
+        description: error.message || "Não foi possível gerar o PDF com as respostas.",
+        variant: "destructive"
+      });
+    } finally {
+      setDownloadingPDF(false);
+    }
+  };
+  
+  const handleCSVDownload = async () => {
+    try {
+      setDownloadingCSV(true);
+      
+      // Determinar qual usuário estamos visualizando
+      const targetUserId = specificUserId && adminMode ? specificUserId : user?.id;
+      
+      if (!targetUserId) {
+        throw new Error("ID do usuário não encontrado");
+      }
+      
+      // Preparar cabeçalhos do CSV
+      const headers = ['Módulo', 'Pergunta', 'Resposta'];
+      
+      // Converter para linhas de CSV
+      const rows = answers.map(answer => {
+        const question = questions.find(q => q.id === answer.question_id);
+        const module = modules.find(m => m.id === question?.module_id);
+        
+        // Formatar resposta como texto
+        let formattedAnswer = answer.answer || '';
+        try {
+          if (formattedAnswer.startsWith('[') && formattedAnswer.endsWith(']')) {
+            const options = JSON.parse(formattedAnswer);
+            if (Array.isArray(options)) {
+              formattedAnswer = options.join('; ');
+            }
+          }
+        } catch (e) {
+          // Manter o formato original
+        }
+        
+        return [
+          module?.title || 'Desconhecido',
+          answer.question_text,
+          formattedAnswer
+        ];
+      });
+      
+      // Montar conteúdo CSV
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => 
+          // Escapar células com vírgulas ou quebras de linha
+          typeof cell === 'string' && (cell.includes(',') || cell.includes('\n')) 
+            ? `"${cell.replace(/"/g, '""')}"` 
+            : cell
+        ).join(','))
+      ].join('\n');
+      
+      // Criar blob e download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      // Obter nome do usuário para o arquivo
+      let userName = 'usuario';
+      
+      if (submission?.user_id) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', submission.user_id)
+          .single();
+        
+        if (!profileError && profile && profile.full_name) {
+          userName = profile.full_name.toLowerCase().replace(/\s+/g, '-');
+        }
+      }
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `respostas-questionario-${userName}-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Download iniciado",
+        description: "O CSV com as respostas do questionário está sendo baixado.",
+      });
+    } catch (error: any) {
+      logger.error("Erro ao baixar CSV:", {
+        tag: 'Quiz',
+        data: error
+      });
+      
+      toast({
+        title: "Erro ao gerar CSV",
+        description: error.message || "Não foi possível gerar o CSV com as respostas.",
+        variant: "destructive"
+      });
+    } finally {
+      setDownloadingCSV(false);
+    }
+  };
+  
+  if (loading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-64 w-full" />
+      <div className="max-w-4xl mx-auto p-4 space-y-6">
+        <Skeleton className="h-8 w-3/4 mb-4" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-40 w-full" />
       </div>
     );
   }
-
-  return (
-    <div className="space-y-8 pb-8">
-      {modules.length === 0 ? (
+  
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto p-4">
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="text-red-600">Erro ao carregar respostas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>{error}</p>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={fetchQuizData} variant="outline">Tentar novamente</Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+  
+  // Se não há respostas
+  if (answers.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto p-4">
         <Card>
+          <CardHeader>
+            <CardTitle>Questionário não iniciado</CardTitle>
+            <CardDescription>Você ainda não respondeu nenhuma pergunta do questionário.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col items-center justify-center py-10">
+              <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground text-center">
+                Inicie o questionário para ver suas respostas aqui.
+              </p>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={() => navigate('/quiz')}>Ir para o questionário</Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="max-w-4xl mx-auto p-4 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold mb-1">Respostas do Questionário</h1>
+          <p className="text-muted-foreground">
+            {adminMode 
+              ? "Visualizando respostas do usuário como administrador" 
+              : "Revise suas respostas ao questionário MAR"}
+          </p>
+        </div>
+        
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleCSVDownload}
+            disabled={downloadingCSV}
+          >
+            <FileSpreadsheet className={`h-4 w-4 mr-2 ${downloadingCSV ? 'animate-spin' : ''}`} />
+            Exportar CSV
+          </Button>
+          
+          <Button
+            variant="default"
+            onClick={handlePDFDownload}
+            disabled={downloadingPDF}
+          >
+            <FilePdf className={`h-4 w-4 mr-2 ${downloadingPDF ? 'animate-spin' : ''}`} />
+            Baixar PDF
+          </Button>
+        </div>
+      </div>
+      
+      {submission && (
+        <Card className="bg-slate-50">
           <CardContent className="pt-6">
-            <p className="text-center text-gray-500">
-              Não foram encontradas respostas para o questionário.
-            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Status do questionário</p>
+                <div className="flex items-center mt-1">
+                  {submission.is_complete ? (
+                    <>
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="font-medium">Concluído</span>
+                    </>
+                  ) : (
+                    <>
+                      <Circle className="h-5 w-5 text-yellow-500 mr-2" />
+                      <span className="font-medium">Em andamento</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm text-muted-foreground">Progresso</p>
+                <div className="flex items-center mt-1">
+                  <span className="font-medium">
+                    {submission.is_complete 
+                      ? "100% - Todos os módulos completos" 
+                      : `Módulo ${submission.current_module} de 7`}
+                  </span>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm text-muted-foreground">Iniciado em</p>
+                <div className="mt-1">
+                  <span className="font-medium">
+                    {new Date(submission.started_at).toLocaleString('pt-BR')}
+                  </span>
+                </div>
+              </div>
+              
+              {submission.completed_at && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Concluído em</p>
+                  <div className="mt-1">
+                    <span className="font-medium">
+                      {new Date(submission.completed_at).toLocaleString('pt-BR')}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
-      ) : (
-        <Accordion 
-          type="single" 
-          collapsible 
-          value={expandedModule || undefined}
-          onValueChange={(value) => setExpandedModule(value)}
-        >
-          {modules.map((module) => {
-            const moduleQuestions = questions.filter(q => q.module_id === module.id);
-            
-            return (
-              <AccordionItem key={module.id} value={module.id} className="border rounded-lg px-1 mb-4">
-                <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                  <div className="flex items-center justify-between w-full">
-                    <span className="font-medium text-lg">Módulo {module.order_number}: {module.title}</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 pt-2">
-                  <div className="space-y-6">
-                    {moduleQuestions.length === 0 ? (
-                      <p className="text-gray-500 italic">Não há perguntas neste módulo.</p>
-                    ) : (
-                      moduleQuestions.map((question) => (
-                        <div key={question.id} className="space-y-2">
-                          <h4 className="font-medium text-gray-800">{question.text}</h4>
-                          <div className="pl-4 pb-2 pt-1 border-l-2 border-gray-200">
-                            {renderAnswer(question, answers[question.id] || '')}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
       )}
+      
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+        <div className="flex justify-between items-center mb-4">
+          <TabsList>
+            <TabsTrigger value="all">Todos os Módulos</TabsTrigger>
+            {modules.map((module) => (
+              <TabsTrigger key={module.id} value={module.id} className="hidden md:flex">
+                {module.title}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+        
+        <TabsContent value="all">
+          <div className="space-y-8">
+            {modules.map((module) => {
+              const moduleAnswers = getModuleAnswers(module.id);
+              if (moduleAnswers.length === 0) return null;
+              
+              return (
+                <Card key={module.id} className="overflow-hidden">
+                  <CardHeader className="bg-slate-50">
+                    <CardTitle className="text-lg flex items-center">
+                      {module.title}
+                      <Badge 
+                        variant="outline" 
+                        className="ml-2 text-xs font-normal text-slate-600"
+                      >
+                        {moduleAnswers.length} {moduleAnswers.length === 1 ? 'resposta' : 'respostas'}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="space-y-6">
+                      {moduleAnswers.map((answer) => {
+                        const question = questions.find(q => q.id === answer.question_id);
+                        
+                        return (
+                          <div key={answer.question_id} className="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
+                            <p className="font-medium mb-2">{answer.question_text}</p>
+                            <div className="text-slate-700">
+                              {formatAnswer(answer.answer, answer.question_id)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </TabsContent>
+        
+        {modules.map((module) => (
+          <TabsContent key={module.id} value={module.id}>
+            <Card>
+              <CardHeader>
+                <CardTitle>{module.title}</CardTitle>
+                {module.description && (
+                  <CardDescription>{module.description}</CardDescription>
+                )}
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {getModuleAnswers(module.id).map((answer) => (
+                    <div key={answer.question_id} className="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
+                      <p className="font-medium mb-2">{answer.question_text}</p>
+                      <div className="text-slate-700">
+                        {formatAnswer(answer.answer, answer.question_id)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
+      </Tabs>
+      
+      <div className="flex justify-between mt-6">
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/dashboard')}
+        >
+          Voltar para Dashboard
+        </Button>
+        
+        {!submission?.is_complete && (
+          <Button 
+            onClick={() => navigate('/quiz')}
+          >
+            Continuar Questionário
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
