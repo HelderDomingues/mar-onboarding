@@ -249,7 +249,7 @@ const SupabaseConnectionTest = () => {
       case 'loading':
         return <Badge variant="secondary">Testando...</Badge>;
       case 'success':
-        return <Badge variant="success" className="bg-green-500 text-white">Sucesso</Badge>;
+        return <Badge variant="default" className="bg-green-500 text-white">Sucesso</Badge>;
       case 'error':
         return <Badge variant="destructive">Erro</Badge>;
       default:

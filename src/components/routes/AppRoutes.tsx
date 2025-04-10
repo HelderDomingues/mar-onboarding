@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/routes/ProtectedRoute";
@@ -13,6 +14,7 @@ import MemberArea from "@/pages/MemberArea";
 import FAQ from "@/pages/FAQ";
 import NotFound from "@/pages/NotFound";
 import IndexPage from "@/pages/Index";
+import TestConnectionPage from "@/pages/TestConnection";
 
 // Admin pages
 import ImportUsers from "@/pages/admin/ImportUsers";
@@ -42,11 +44,7 @@ const AppRoutes = () => {
         <Route path="settings" element={<Settings />} />
       </Route>
 
-      <Route path="/test-connection" element={
-        <ProtectedRoute>
-          <TestConnectionPage />
-        </ProtectedRoute>
-      } />
+      <Route path="/test-connection" element={<ProtectedRoute component={TestConnectionPage} />} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
