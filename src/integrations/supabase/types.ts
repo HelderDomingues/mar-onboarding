@@ -9,13 +9,201 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
+      quiz_answers: {
+        Row: {
+          answer: string | null
+          created_at: string
+          id: string
+          question_id: string
+          question_text: string
+          updated_at: string
+          user_email: string
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          answer?: string | null
+          created_at?: string
+          id?: string
+          question_id: string
+          question_text: string
+          updated_at?: string
+          user_email: string
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          answer?: string | null
+          created_at?: string
+          id?: string
+          question_id?: string
+          question_text?: string
+          updated_at?: string
+          user_email?: string
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          created_at: string
+          id: string
+          module_number: number
+          module_title: string
+          options: Json | null
+          question_number: number
+          question_text: string
+          question_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module_number: number
+          module_title: string
+          options?: Json | null
+          question_number: number
+          question_text: string
+          question_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module_number?: number
+          module_title?: string
+          options?: Json | null
+          question_number?: number
+          question_text?: string
+          question_type?: string
+        }
+        Relationships: []
+      }
+      quiz_respostas_completas: {
+        Row: {
+          data_submissao: string
+          id: string
+          respostas: Json
+          submission_id: string
+          user_email: string
+          user_id: string
+          user_name: string | null
+          webhook_processed: boolean | null
+        }
+        Insert: {
+          data_submissao?: string
+          id?: string
+          respostas: Json
+          submission_id: string
+          user_email: string
+          user_id: string
+          user_name?: string | null
+          webhook_processed?: boolean | null
+        }
+        Update: {
+          data_submissao?: string
+          id?: string
+          respostas?: Json
+          submission_id?: string
+          user_email?: string
+          user_id?: string
+          user_name?: string | null
+          webhook_processed?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_respostas_completas_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: true
+            referencedRelation: "quiz_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_submissions: {
+        Row: {
+          completed_at: string | null
+          current_module: number
+          id: string
+          is_complete: boolean
+          started_at: string
+          user_email: string
+          user_id: string
+          user_name: string | null
+          webhook_processed: boolean | null
+        }
+        Insert: {
+          completed_at?: string | null
+          current_module?: number
+          id?: string
+          is_complete?: boolean
+          started_at?: string
+          user_email: string
+          user_id: string
+          user_name?: string | null
+          webhook_processed?: boolean | null
+        }
+        Update: {
+          completed_at?: string | null
+          current_module?: number
+          id?: string
+          is_complete?: boolean
+          started_at?: string
+          user_email?: string
+          user_id?: string
+          user_name?: string | null
+          webhook_processed?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      complete_quiz: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
+      gerar_respostas_json: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
