@@ -1,75 +1,51 @@
 
-# Plano de Ação - Sistema MAR da Crie Valor
+# Sistema MAR - Crie Valor Consultoria - Tarefas e Implementações
 
-## Análise do Código Existente e Planejamento
+## Tarefas Concluídas
 
-### Estrutura do Banco de Dados Implementada
-- [x] Criação da tabela `profiles` para perfis de usuários
-- [x] Criação da tabela `quiz_questions` para armazenar perguntas do questionário
-- [x] Criação da tabela `quiz_answers` para armazenar respostas dos usuários
-- [x] Criação da tabela `quiz_submissions` para controlar progresso e submissões
-- [x] Criação da tabela `quiz_respostas_completas` para formatação para webhook
-- [x] Implementação de funções e triggers para automação do processamento
-- [x] Configuração de políticas de Row Level Security (RLS) para segurança dos dados
+### 1. Configuração da Infraestrutura
+- [x] Configuração do projeto Supabase com as chaves corretas
+- [x] Implementação da autenticação e autorização
+- [x] Configuração das tabelas necessárias para o sistema de questionário
 
-### Próximos Passos
-
-1. **Testes de Conexão e Funcionalidades**
-   - [x] Criar componente para testar conexão com Supabase
-   - [x] Testar políticas de segurança e acesso às tabelas
-   - [x] Verificar funcionamento de funções e triggers
-   - [x] Testar conexão com webhook
-
-2. **Implementação do Webhook para Make.com**
-   - [x] Criar edge function para processar submissões completas
-   - [x] Implementar lógica para enviar dados em formato compatível com Make.com
-   - [x] Adicionar marcação de submissões processadas
-
-3. **Populando Banco de Dados com Questionário**
-   - [x] Criar script para inserir os dados do questionário
-   - [x] Inserir as 40 perguntas do questionário MAR com seus respectivos módulos
-   - [x] Configurar os tipos de perguntas e opções para múltipla escolha
-
-4. **Implementação da Interface do Usuário**
-   - [x] Ajustar componentes existentes para utilizar o novo modelo de dados
-   - [x] Implementar formulário de questionário com navegação entre módulos
-   - [x] Criar página de revisão final de respostas
-   - [x] Implementar sistema de progresso e conclusão do questionário
-
-5. **Interface de Administração**
-   - [x] Criar página para visualização de todas as respostas
-   - [x] Implementar exportação de respostas em formato CSV
-   - [x] Adicionar funcionalidade de revisão individual por usuário
-   - [x] Implementar controles para disparar webhook manualmente
-
-6. **Autenticação e Autorização**
-   - [x] Ajustar lógica de autenticação para utilizar Supabase
-   - [x] Implementar verificação de perfil de administrador
-   - [x] Configurar rotas protegidas baseadas em autenticação
-
-7. **Testes e Otimização**
-   - [x] Testar fluxo completo do questionário
-   - [x] Verificar envio de dados para webhook do Make.com
-   - [x] Otimizar consultas ao banco de dados
-   - [ ] Verificar e corrigir possíveis erros
-
-## Progresso Atual
-
-- [x] Configuração inicial do banco de dados Supabase
+### 2. Implementações de Backend
+- [x] Configuração do banco de dados para armazenar respostas do questionário
+- [x] Criação de funções RPC para operações específicas como `is_admin` e `complete_quiz`
+- [x] Adição de coluna `email` na tabela `user_roles`
 - [x] Implementação do webhook para integração com Make.com
-- [x] Criação de componente de teste para validar a configuração
-- [x] População do banco com as perguntas do questionário
-- [x] Ajuste dos componentes de UI para o novo modelo de dados
-- [x] Implementação da interface administrativa para visualização de respostas
-- [x] Adição de recursos de exportação em CSV e PDF
-- [x] Implementação de controles para disparar webhook manualmente
+- [x] Atualização do Edge Function `quiz-webhook` para enviar dados corretos para o Make.com
 
-## Lições Aprendidas e Boas Práticas
+### 3. Implementações de Frontend
+- [x] Desenvolvimento da interface do questionário
+- [x] Implementação da visualização de respostas
+- [x] Exportação de respostas em formato PDF
+- [x] Implementação da exportação de respostas em formato CSV
 
-- Manter o esquema do banco de dados simples e direto
-- Implementar triggers e funções para automação do processamento
-- Testar cada componente antes de avançar para o próximo
-- Utilizar Row Level Security (RLS) para garantir a segurança dos dados
-- Documentar cada passo e decisão tomada
-- Utilizar componentes modulares para facilitar a manutenção
-- Implementar logging detalhado para facilitar a depuração
+### 4. Correções e Otimizações
+- [x] Correção de tipo no arquivo pdfGenerator.ts (substituição de `includeTitle` por verificação de formato)
+- [x] Correção de tipos em QuizViewAnswers.tsx
+- [x] Melhoria no suporte à função de administrador
+- [x] Ajustes nos formatos de exportação PDF e CSV
+
+## Tarefas em Andamento
+- [ ] Monitoramento do webhook para garantir entrega consistente de dados
+- [ ] Otimização de desempenho do sistema
+
+## Próximos Passos
+- [ ] Implementar sistema de estatísticas para administradores
+- [ ] Desenvolver funcionalidades adicionais de relatórios
+- [ ] Ampliar recursos de exportação de dados
+
+## Notas Técnicas
+
+### Configuração do Supabase
+- **URL do Projeto**: https://btzvozqajqknqfoymxpg.supabase.co
+- **Chave Anônima**: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0enZvenFhanFrbnFmb3lteHBnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxNjYwNjEsImV4cCI6MjA1OTc0MjA2MX0.QdD7bEZBPvVNBhHqgAGtFaZOxJrdosFTElxRUCIrnL8
+- **Chave de Serviço**: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0enZvenFhanFrbnFmb3lteHBnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NDE2NjA2MSwiZXhwIjoyMDU5NzQyMDYxfQ.3Dv3h4JIfB5LZ37KIwwqw18AxtqElf17-a21kwXsryE
+
+### Webhook Make.com
+- **Token**: wpbbjokh8cexvd1hql9i7ae6uyf32bzh
+- **URL**: https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh
+
+### Administrador Principal
+- **Email**: helder@crievalor.com.br

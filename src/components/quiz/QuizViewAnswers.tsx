@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { processQuizAnswersToSimplified } from "@/utils/supabaseUtils";
-import { generateQuizPDF, downloadQuizPDF } from "@/utils/pdfGenerator";
+import { downloadQuizPDF, downloadQuizCSV } from "@/utils/pdfGenerator";
 import { logger } from "@/utils/logger";
 
 export function QuizViewAnswers() {
@@ -53,7 +54,7 @@ export function QuizViewAnswers() {
   }, [user, toast]);
   
   const handleDownloadPDF = async () => {
-    if (!user || !answers || answers.length === 0) return;
+    if (!user || !user.id) return;
     
     try {
       setDownloading(true);
@@ -84,7 +85,7 @@ export function QuizViewAnswers() {
   };
   
   const handleDownloadCSV = async () => {
-    if (!user || !answers || answers.length === 0) return;
+    if (!user || !user.id) return;
     
     try {
       setDownloading(true);
@@ -93,7 +94,7 @@ export function QuizViewAnswers() {
         data: { userId: user.id }
       });
       
-      await downloadQuizPDF(user.id, user.email || 'usuário', 'questionario-csv');
+      await downloadQuizCSV(user.id, user.email || 'usuário');
       
       logger.info('CSV de respostas gerado e baixado com sucesso', { 
         tag: 'Quiz' 

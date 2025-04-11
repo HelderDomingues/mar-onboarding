@@ -121,18 +121,20 @@ serve(async (req) => {
     const webhookPayload = {
       submission_id: submissionId,
       user_id: submission.user_id,
-      email: submission.email || (profile ? profile.email : null),
-      nome: profile ? profile.full_name : null,
+      email: submission.user_email || submission.email || (profile ? profile.email : null),
+      nome: submission.user_name || (profile ? profile.full_name : null),
       empresa: profile ? profile.company_name : null,
       completed_at: submission.completed_at,
-      respostas: respostas || null
+      respostas: respostas ? respostas.respostas : null
     };
     
-    console.log("Enviando dados para webhook externo");
+    console.log("Enviando dados para webhook externo (Make.com)");
     
-    // URL do webhook (use o token configurado nas variáveis de ambiente)
-    const webhookToken = Deno.env.get("MAKE_WEBHOOK_TOKEN") || "wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
+    // URL do webhook do Make.com
+    const webhookToken = "wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
     const webhookUrl = `https://hook.eu2.make.com/${webhookToken}`;
+    
+    console.log(`Endpoint do webhook: ${webhookUrl}`);
     
     // Enviar dados para o webhook externo
     const makeResponse = await fetch(webhookUrl, {
@@ -142,6 +144,8 @@ serve(async (req) => {
       },
       body: JSON.stringify(webhookPayload)
     });
+    
+    console.log(`Status da resposta do Make.com: ${makeResponse.status}`);
     
     if (!makeResponse.ok) {
       const errorText = await makeResponse.text();
@@ -181,7 +185,7 @@ serve(async (req) => {
     
     return new Response(
       JSON.stringify({
-        message: "Dados enviados com sucesso",
+        message: "Dados enviados com sucesso para o Make.com",
         submission_id: submissionId,
         status: "success"
       }),

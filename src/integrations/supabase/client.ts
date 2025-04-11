@@ -2,9 +2,10 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 
+// Chaves de acesso ao Supabase atualizadas
 const SUPABASE_URL = "https://btzvozqajqknqfoymxpg.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0enZvenFhanFrbnFmb3lteHBnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxNjYwNjEsImV4cCI6MjA1OTc0MjA2MX0.QdD7bEZBPvVNBhHqgAGtFaZOxJrdosFTElxRUCIrnL8";
-const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0enZvenFhanFrbnFmb3lteHBnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NDE2NjA2MSwiZXhwIjoyMDU5NzQyMDYxfQ.zUJln3t3HzcJEa2fJwaVSUQyIwPXJ7LLm9hcfR6aNhk";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0enZvenFhanFrbnFmb3lteHBnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxNjYwNjEsImV4cCI6MjA1OTc0MjA2MSwiZXhwIjoyMDU5NzQyMDYxfQ.QdD7bEZBPvVNBhHqgAGtFaZOxJrdosFTElxRUCIrnL8";
+const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0enZvenFhanFrbnFmb3lteHBnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NDE2NjA2MSwiZXhwIjoyMDU5NzQyMDYxfQ.3Dv3h4JIfB5LZ37KIwwqw18AxtqElf17-a21kwXsryE";
 
 // Cliente Supabase padrão com a chave anônima
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
@@ -78,6 +79,54 @@ export const isUserAdmin = async (userId: string | undefined): Promise<boolean> 
     return !!data;
   } catch (error) {
     console.error("Erro ao verificar status de admin:", error);
+    return false;
+  }
+};
+
+// Função para atualizar ou criar papel de admin para um usuário
+export const setUserAsAdmin = async (userId: string, userEmail: string): Promise<boolean> => {
+  if (!userId) return false;
+  
+  try {
+    // Verificar se o usuário já é admin
+    const { data: existingRole, error: roleError } = await supabase
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .maybeSingle();
+      
+    if (roleError) {
+      console.error("Erro ao verificar papel atual:", roleError);
+      return false;
+    }
+    
+    if (existingRole) {
+      // Atualizar o email se o usuário já for admin
+      const { error: updateError } = await supabase
+        .from('user_roles')
+        .update({ email: userEmail })
+        .eq('id', existingRole.id);
+        
+      if (updateError) {
+        console.error("Erro ao atualizar email de admin:", updateError);
+        return false;
+      }
+    } else {
+      // Criar novo papel de admin
+      const { error: insertError } = await supabase
+        .from('user_roles')
+        .insert({ user_id: userId, role: 'admin', email: userEmail });
+        
+      if (insertError) {
+        console.error("Erro ao criar papel de admin:", insertError);
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Erro ao configurar usuário como admin:", error);
     return false;
   }
 };

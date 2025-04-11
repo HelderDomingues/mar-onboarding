@@ -1,3 +1,4 @@
+
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
@@ -55,7 +56,7 @@ export const generateQuizPDF = async (
   try {
     logger.info('Iniciando geração de PDF para questionário', {
       tag: 'PDF',
-      data: { userId, userName, adminMode }
+      data: { userId, userName, adminMode, format }
     });
     
     // Buscar as respostas do usuário
@@ -319,24 +320,66 @@ export const downloadQuizCSV = async (
   adminMode: boolean = false
 ): Promise<boolean> => {
   try {
-    // Implementar futuramente a geração real de CSV
-    // Por enquanto, usamos o PDF como fallback
-    const doc = await generateQuizPDF(userId, userName, 'csv', adminMode);
+    // Buscar as respostas do usuário
+    const { data: answers, error: answersError } = await supabase
+      .from('quiz_answers')
+      .select('*')
+      .eq('user_id', userId);
     
-    if (!doc) {
-      throw new Error('Não foi possível gerar o CSV');
+    if (answersError || !answers || answers.length === 0) {
+      throw new Error('Nenhuma resposta encontrada');
     }
     
-    // Nome do arquivo
-    const csvFilename = filename || `questionario-mar-csv-${new Date().toISOString().split('T')[0]}`;
+    // Preparar o conteúdo CSV
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Pergunta,Resposta\n";
     
-    // Fazer download (temporariamente como PDF)
-    doc.save(`${csvFilename}.pdf`);
+    // Adicionar as respostas ao CSV
+    answers.forEach(answer => {
+      let formattedAnswer = answer.answer || 'Sem resposta';
+      try {
+        if (formattedAnswer.startsWith('[') && formattedAnswer.endsWith(']')) {
+          const parsed = JSON.parse(formattedAnswer);
+          if (Array.isArray(parsed)) {
+            formattedAnswer = parsed.join(', ');
+          }
+        }
+      } catch (e) {
+        // Manter formato original
+      }
+      
+      // Formatar para CSV: escapar aspas, adicionar aspas ao redor do texto
+      const formatCSV = (text: string) => {
+        return `"${text.replace(/"/g, '""')}"`;
+      };
+      
+      csvContent += `${formatCSV(answer.question_text)},${formatCSV(formattedAnswer)}\n`;
+    });
+    
+    // Codificar para URI
+    const encodedUri = encodeURI(csvContent);
+    
+    // Criar link temporário para download
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${filename || 'questionario-mar-csv'}.csv`);
+    document.body.appendChild(link);
+    
+    // Clicar no link para iniciar download
+    link.click();
+    
+    // Remover o link
+    document.body.removeChild(link);
+    
+    logger.info('CSV gerado com sucesso', {
+      tag: 'CSV',
+      data: { userId }
+    });
     
     return true;
   } catch (error: any) {
-    logger.error('Erro ao fazer download do CSV', {
-      tag: 'PDF',
+    logger.error('Erro ao gerar CSV', {
+      tag: 'CSV',
       data: { userId, error }
     });
     return false;
