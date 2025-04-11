@@ -32,9 +32,9 @@ export function Login() {
           description: "Bem-vindo à área de membros!",
         });
         
-        // Redirecionar para o dashboard após login bem-sucedido
-        logger.info('Redirecionando para dashboard após login', { tag: 'Login' });
-        navigate("/dashboard");
+        // Redirecionamento direto e imediato para o dashboard
+        logger.info('Login bem-sucedido, redirecionando para dashboard', { tag: 'Login' });
+        navigate("/dashboard", { replace: true });
       } else {
         toast({
           variant: "destructive",

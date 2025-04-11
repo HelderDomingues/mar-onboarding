@@ -29,55 +29,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  useEffect(() => {
-    // IMPORTANTE: Primeiro configura o listener para mudanças de autenticação
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        logger.info(`Evento de autenticação detectado: ${event}`, { 
-          tag: 'Auth', 
-          data: { event, hasSession: !!session }
+  // Função para verificar status de administrador
+  const checkAdminStatus = async (userId: string) => {
+    if (!userId) return false;
+    
+    try {
+      const { data, error } = await supabase.rpc('is_admin');
+      
+      if (error) {
+        logger.error('Erro ao verificar papel de administrador:', {
+          tag: 'Auth',
+          data: { error, userId }
         });
-        
-        const currentUser = session?.user || null;
-        setUser(currentUser);
-        
-        // Verificar se é admin apenas se o usuário estiver autenticado
-        if (currentUser) {
-          // Utilizar a função is_admin do Supabase para verificar o papel de admin
-          try {
-            const { data, error } = await supabase.rpc('is_admin');
-            
-            if (error) {
-              logger.error('Erro ao verificar papel de administrador:', {
-                tag: 'Auth',
-                data: error
-              });
-              setIsAdmin(false);
-              return;
-            }
-            
-            setIsAdmin(!!data);
-            logger.info('Status de admin atualizado', {
-              tag: 'Auth',
-              data: { isAdmin: !!data }
-            });
-          } catch (error) {
-            logger.error('Erro ao verificar papel de administrador:', {
-              tag: 'Auth',
-              data: error
-            });
+        return false;
+      }
+      
+      logger.info('Status de admin verificado', {
+        tag: 'Auth',
+        data: { isAdmin: !!data, userId }
+      });
+      
+      return !!data;
+    } catch (error) {
+      logger.error('Exceção ao verificar papel de administrador:', {
+        tag: 'Auth',
+        data: { error, userId }
+      });
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    // Configurar o listener de autenticação para detectar mudanças de estado
+    const setupAuthListener = () => {
+      const { data: authListener } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          logger.info(`Evento de autenticação detectado: ${event}`, { 
+            tag: 'Auth', 
+            data: { event, hasSession: !!session }
+          });
+          
+          const currentUser = session?.user || null;
+          setUser(currentUser);
+          
+          // Verificar status de admin apenas se o usuário estiver autenticado
+          if (currentUser) {
+            // Usar setTimeout para evitar problemas de recursão com Supabase
+            setTimeout(async () => {
+              const isUserAdmin = await checkAdminStatus(currentUser.id);
+              setIsAdmin(isUserAdmin);
+            }, 0);
+          } else {
             setIsAdmin(false);
           }
-        } else {
-          setIsAdmin(false);
+          
+          setIsLoading(false);
         }
-        
-        setIsLoading(false);
-      }
-    );
-
-    // DEPOIS verifica a sessão atual
-    const checkSession = async () => {
+      );
+      
+      return authListener;
+    };
+    
+    // Verificar a sessão atual
+    const checkCurrentSession = async () => {
       try {
         logger.info('Verificando sessão atual', { tag: 'Auth' });
         const { data, error } = await supabase.auth.getSession();
@@ -97,31 +111,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(currentUser);
         
         if (currentUser) {
-          try {
-            const { data: roleData, error: roleError } = await supabase.rpc('is_admin');
-              
-            if (roleError) {
-              logger.error('Erro ao verificar papel de administrador:', {
-                tag: 'Auth',
-                data: roleError
-              });
-              setIsAdmin(false);
-            } else {
-              setIsAdmin(!!roleData);
-              logger.info('Status de admin verificado', {
-                tag: 'Auth',
-                data: { isAdmin: !!roleData }
-              });
-            }
-          } catch (error) {
-            logger.error('Erro ao verificar papel de administrador:', {
-              tag: 'Auth',
-              data: error
-            });
-            setIsAdmin(false);
-          }
+          const isUserAdmin = await checkAdminStatus(currentUser.id);
+          setIsAdmin(isUserAdmin);
         } else {
-          logger.info('Nenhum usuário na sessão atual', { tag: 'Auth' });
+          setIsAdmin(false);
         }
         
         setIsLoading(false);
@@ -136,8 +129,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    checkSession();
+    // Primeiro configurar o listener, depois verificar a sessão atual
+    const authListener = setupAuthListener();
+    checkCurrentSession();
 
+    // Cleanup ao desmontar
     return () => {
       logger.info('Removendo listener de autenticação', { tag: 'Auth' });
       if (authListener && authListener.subscription) {
@@ -175,6 +171,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         data: { email, userId: data.user?.id }
       });
       
+      // Atualizar o estado de admin imediatamente após login bem-sucedido
+      if (data.user) {
+        const isUserAdmin = await checkAdminStatus(data.user.id);
+        setIsAdmin(isUserAdmin);
+      }
+      
       return {
         success: true,
         message: "Login realizado com sucesso",
@@ -206,7 +208,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       logger.info('Logout realizado com sucesso', { tag: 'Auth' });
-      // Não precisamos chamar setUser(null) aqui porque o listener de autenticação já fará isso
+      setUser(null);
+      setIsAdmin(false);
     } catch (error) {
       logger.error("Erro ao fazer logout:", {
         tag: 'Auth',

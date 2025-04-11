@@ -19,13 +19,13 @@ const Index = () => {
       logger.info('Usuário autenticado, redirecionando para dashboard', { 
         tag: 'Navigation' 
       });
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate]);
 
   // Se já estiver autenticado, redirecionar para o dashboard
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" />;
+    return <Navigate to="/dashboard" replace />;
   }
   
   return <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-blue-50">
