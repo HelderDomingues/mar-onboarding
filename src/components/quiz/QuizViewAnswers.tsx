@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Download, File , FileSpreadsheet, CheckCircle, Circle } from "lucide-react";
+import { FileText, Download, File, FileSpreadsheet, CheckCircle, Circle } from "lucide-react";
 import { logger } from "@/utils/logger";
 
 interface Answer {
@@ -46,7 +45,6 @@ export function QuizViewAnswers() {
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [downloadingCSV, setDownloadingCSV] = useState(false);
   
-  // Verificar se estamos no modo administrador e com ID específico
   const queryParams = new URLSearchParams(location.search);
   const adminMode = queryParams.get('admin') === 'true' && isAdmin;
   const specificUserId = queryParams.get('id');
@@ -69,7 +67,6 @@ export function QuizViewAnswers() {
     try {
       setLoading(true);
       
-      // Determinar qual usuário estamos visualizando
       const targetUserId = specificUserId && adminMode ? specificUserId : user?.id;
       
       if (!targetUserId) {
@@ -81,7 +78,6 @@ export function QuizViewAnswers() {
         data: { targetUserId, adminMode, specificUserId }
       });
       
-      // Buscar módulos e perguntas
       const { data: modulesData, error: modulesError } = await supabase
         .from('quiz_modules')
         .select('*')
@@ -96,7 +92,6 @@ export function QuizViewAnswers() {
       
       if (questionsError) throw questionsError;
       
-      // Buscar respostas simplificadas e submissão
       const result = await processQuizAnswersToSimplified(targetUserId);
       
       if (!result) {
@@ -139,11 +134,9 @@ export function QuizViewAnswers() {
   const formatAnswer = (answer: string | null, questionId: string): React.ReactNode => {
     if (!answer) return <span className="text-muted-foreground italic">Sem resposta</span>;
     
-    // Verificar o tipo da pergunta
     const question = questions.find(q => q.id === questionId);
     
     try {
-      // Se for múltipla escolha (array de respostas)
       if (answer.startsWith('[') && answer.endsWith(']')) {
         const options = JSON.parse(answer);
         if (Array.isArray(options)) {
@@ -157,10 +150,8 @@ export function QuizViewAnswers() {
         }
       }
     } catch (e) {
-      // Se não for possível parsear, mostrar como texto simples
     }
     
-    // Se for uma URL ou Instagram
     if (question?.type === 'url' && !answer.includes('://')) {
       return (
         <a 
@@ -185,7 +176,6 @@ export function QuizViewAnswers() {
       );
     }
     
-    // Para respostas simples
     return answer;
   };
   
@@ -193,7 +183,6 @@ export function QuizViewAnswers() {
     try {
       setDownloadingPDF(true);
       
-      // Determinar qual usuário estamos visualizando
       const targetUserId = specificUserId && adminMode ? specificUserId : user?.id;
       
       if (!targetUserId) {
@@ -205,7 +194,6 @@ export function QuizViewAnswers() {
         data: { targetUserId, adminMode }
       });
       
-      // Obter nome do usuário para o PDF
       let userName = 'Usuário';
       
       if (submission?.user_id) {
@@ -220,7 +208,6 @@ export function QuizViewAnswers() {
         }
       }
       
-      // Gerar e baixar o PDF
       const success = await downloadQuizPDF(
         targetUserId,
         userName,
@@ -256,22 +243,18 @@ export function QuizViewAnswers() {
     try {
       setDownloadingCSV(true);
       
-      // Determinar qual usuário estamos visualizando
       const targetUserId = specificUserId && adminMode ? specificUserId : user?.id;
       
       if (!targetUserId) {
         throw new Error("ID do usuário não encontrado");
       }
       
-      // Preparar cabeçalhos do CSV
       const headers = ['Módulo', 'Pergunta', 'Resposta'];
       
-      // Converter para linhas de CSV
       const rows = answers.map(answer => {
         const question = questions.find(q => q.id === answer.question_id);
         const module = modules.find(m => m.id === question?.module_id);
         
-        // Formatar resposta como texto
         let formattedAnswer = answer.answer || '';
         try {
           if (formattedAnswer.startsWith('[') && formattedAnswer.endsWith(']')) {
@@ -281,7 +264,6 @@ export function QuizViewAnswers() {
             }
           }
         } catch (e) {
-          // Manter o formato original
         }
         
         return [
@@ -291,23 +273,19 @@ export function QuizViewAnswers() {
         ];
       });
       
-      // Montar conteúdo CSV
       const csvContent = [
         headers.join(','),
         ...rows.map(row => row.map(cell => 
-          // Escapar células com vírgulas ou quebras de linha
           typeof cell === 'string' && (cell.includes(',') || cell.includes('\n')) 
             ? `"${cell.replace(/"/g, '""')}"` 
             : cell
         ).join(','))
       ].join('\n');
       
-      // Criar blob e download
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       
-      // Obter nome do usuário para o arquivo
       let userName = 'usuario';
       
       if (submission?.user_id) {
@@ -380,7 +358,6 @@ export function QuizViewAnswers() {
     );
   }
   
-  // Se não há respostas
   if (answers.length === 0) {
     return (
       <div className="max-w-4xl mx-auto p-4">
@@ -432,7 +409,7 @@ export function QuizViewAnswers() {
             onClick={handlePDFDownload}
             disabled={downloadingPDF}
           >
-            <FilePdf className={`h-4 w-4 mr-2 ${downloadingPDF ? 'animate-spin' : ''}`} />
+            <File className={`h-4 w-4 mr-2 ${downloadingPDF ? 'animate-spin' : ''}`} />
             Baixar PDF
           </Button>
         </div>

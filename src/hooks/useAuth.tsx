@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
@@ -31,7 +30,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // IMPORTANTE: Primeiro configura o listener para mudanças de autenticação
-    // Isso garante que não percamos eventos durante a inicialização
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         logger.info(`Evento de autenticação detectado: ${event}`, { 
@@ -44,18 +42,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Verificar se é admin apenas se o usuário estiver autenticado
         if (currentUser) {
-          // Aqui usamos setTimeout para evitar bloqueio e potenciais recursões
-          // Isso faz com que a verificação de admin aconteça em um ciclo separado
+          // Utilizar a função is_admin do Supabase para verificar o papel de admin
           setTimeout(async () => {
             try {
-              const { data: roleData, error } = await supabase
-                .from('user_roles')
-                .select('role')
-                .eq('user_id', currentUser.id)
-                .eq('role', 'admin');
-                
+              const { data, error } = await supabase.rpc('is_admin');
+              
               if (error) {
-                logger.error('Erro ao verificar papel do usuário:', {
+                logger.error('Erro ao verificar papel de administrador:', {
                   tag: 'Auth',
                   data: error
                 });
@@ -63,13 +56,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return;
               }
               
-              setIsAdmin(roleData && roleData.length > 0);
+              setIsAdmin(!!data);
               logger.info('Status de admin atualizado', {
                 tag: 'Auth',
-                data: { isAdmin: roleData && roleData.length > 0 }
+                data: { isAdmin: !!data }
               });
             } catch (error) {
-              logger.error('Erro ao verificar papel do usuário:', {
+              logger.error('Erro ao verificar papel de administrador:', {
                 tag: 'Auth',
                 data: error
               });
@@ -106,27 +99,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (currentUser) {
           try {
-            const { data: roleData, error: roleError } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', currentUser.id)
-              .eq('role', 'admin');
+            const { data: roleData, error: roleError } = await supabase.rpc('is_admin');
               
             if (roleError) {
-              logger.error('Erro ao verificar papel do usuário:', {
+              logger.error('Erro ao verificar papel de administrador:', {
                 tag: 'Auth',
                 data: roleError
               });
               setIsAdmin(false);
             } else {
-              setIsAdmin(roleData && roleData.length > 0);
+              setIsAdmin(!!roleData);
               logger.info('Status de admin verificado', {
                 tag: 'Auth',
-                data: { isAdmin: roleData && roleData.length > 0 }
+                data: { isAdmin: !!roleData }
               });
             }
           } catch (error) {
-            logger.error('Erro ao verificar papel do usuário:', {
+            logger.error('Erro ao verificar papel de administrador:', {
               tag: 'Auth',
               data: error
             });
