@@ -77,6 +77,54 @@ export type Database = {
           },
         ]
       }
+      quiz_modules: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          order_number: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_number: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_number?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      quiz_options: {
+        Row: {
+          created_at: string
+          id: string
+          order_number: number
+          question_id: string
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_number: number
+          question_id: string
+          text: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_number?: number
+          question_id?: string
+          text?: string
+        }
+        Relationships: []
+      }
       quiz_questions: {
         Row: {
           created_at: string
@@ -184,6 +232,27 @@ export type Database = {
           user_id?: string
           user_name?: string | null
           webhook_processed?: boolean | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
         }
         Relationships: []
       }
