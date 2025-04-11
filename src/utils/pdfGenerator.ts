@@ -1,4 +1,3 @@
-
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
@@ -186,7 +185,7 @@ export const generateQuizPDF = async (
       }
       
       // Título do módulo
-      if (includeTitle) {
+      if (format === 'pdf') {
         doc.setFontSize(14);
         doc.setTextColor(0, 0, 0);
         doc.text(`${module.order_number}. ${module.title}`, 20, yPos);
