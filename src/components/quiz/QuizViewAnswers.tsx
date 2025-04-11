@@ -63,7 +63,8 @@ export function QuizViewAnswers() {
         data: { userId: user.id }
       });
       
-      await generateQuizPDF(answers, user.email || 'usuário', 'pdf');
+      // Corrigido: Passando user.id em vez de answers (que é um array)
+      await generateQuizPDF(user.id, user.email || 'usuário', 'pdf');
       
       logger.info('PDF de respostas gerado e baixado com sucesso', { 
         tag: 'Quiz' 
@@ -94,7 +95,8 @@ export function QuizViewAnswers() {
         data: { userId: user.id }
       });
       
-      await generateQuizPDF(answers, user.email || 'usuário', 'csv');
+      // Corrigido: Passando user.id em vez de answers (que é um array)
+      await generateQuizPDF(user.id, user.email || 'usuário', 'csv');
       
       logger.info('CSV de respostas gerado e baixado com sucesso', { 
         tag: 'Quiz' 
@@ -173,7 +175,7 @@ export function QuizViewAnswers() {
             </div>
             
             {submission?.is_complete && (
-              <Badge variant="success" className="bg-green-100 text-green-800 hover:bg-green-200">
+              <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200">
                 Completado
               </Badge>
             )}
