@@ -1,14 +1,33 @@
+
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Login } from "@/components/auth/Login";
+import { useEffect } from "react";
+import { logger } from "@/utils/logger";
+
 const Index = () => {
   const {
-    isAuthenticated
+    isAuthenticated,
+    isLoading
   } = useAuth();
+  const navigate = useNavigate();
+  
+  // Efeito para redirecionar o usuário após autenticação
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      logger.info('Usuário autenticado, redirecionando para dashboard', { 
+        tag: 'Navigation' 
+      });
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  // Se já estiver autenticado, redirecionar para o dashboard
   if (isAuthenticated) {
     return <Navigate to="/dashboard" />;
   }
+  
   return <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-blue-50">
       <header className="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
         <img src="/lovable-uploads/e109ec41-0f89-456d-8081-f73393ed4fd5.png" alt="Crie Valor" className="h-7 object-scale-down" />

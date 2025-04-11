@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
@@ -31,7 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // IMPORTANTE: Primeiro configura o listener para mudanças de autenticação
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         logger.info(`Evento de autenticação detectado: ${event}`, { 
           tag: 'Auth', 
           data: { event, hasSession: !!session }
@@ -43,32 +44,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Verificar se é admin apenas se o usuário estiver autenticado
         if (currentUser) {
           // Utilizar a função is_admin do Supabase para verificar o papel de admin
-          setTimeout(async () => {
-            try {
-              const { data, error } = await supabase.rpc('is_admin');
-              
-              if (error) {
-                logger.error('Erro ao verificar papel de administrador:', {
-                  tag: 'Auth',
-                  data: error
-                });
-                setIsAdmin(false);
-                return;
-              }
-              
-              setIsAdmin(!!data);
-              logger.info('Status de admin atualizado', {
-                tag: 'Auth',
-                data: { isAdmin: !!data }
-              });
-            } catch (error) {
+          try {
+            const { data, error } = await supabase.rpc('is_admin');
+            
+            if (error) {
               logger.error('Erro ao verificar papel de administrador:', {
                 tag: 'Auth',
                 data: error
               });
               setIsAdmin(false);
+              return;
             }
-          }, 0);
+            
+            setIsAdmin(!!data);
+            logger.info('Status de admin atualizado', {
+              tag: 'Auth',
+              data: { isAdmin: !!data }
+            });
+          } catch (error) {
+            logger.error('Erro ao verificar papel de administrador:', {
+              tag: 'Auth',
+              data: error
+            });
+            setIsAdmin(false);
+          }
         } else {
           setIsAdmin(false);
         }

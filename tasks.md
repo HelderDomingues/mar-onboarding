@@ -14,18 +14,21 @@
 - [x] Adição de coluna `email` na tabela `user_roles`
 - [x] Implementação do webhook para integração com Make.com
 - [x] Atualização do Edge Function `quiz-webhook` para enviar dados corretos para o Make.com
+- [x] Configuração de triggers para automação de dados de usuário
 
 ### 3. Implementações de Frontend
 - [x] Desenvolvimento da interface do questionário
 - [x] Implementação da visualização de respostas
 - [x] Exportação de respostas em formato PDF
 - [x] Implementação da exportação de respostas em formato CSV
+- [x] Correção do redirecionamento após login
 
 ### 4. Correções e Otimizações
 - [x] Correção de tipo no arquivo pdfGenerator.ts (substituição de `includeTitle` por verificação de formato)
 - [x] Correção de tipos em QuizViewAnswers.tsx
 - [x] Melhoria no suporte à função de administrador
 - [x] Ajustes nos formatos de exportação PDF e CSV
+- [x] Correção da chave API do Supabase
 
 ## Tarefas em Andamento
 - [ ] Monitoramento do webhook para garantir entrega consistente de dados
@@ -49,3 +52,7 @@
 
 ### Administrador Principal
 - **Email**: helder@crievalor.com.br
+
+### Triggers Configurados
+- **on_quiz_completed**: Registra as respostas completas quando o questionário é finalizado
+- **webhookMake_Quiz_Respostas_Completas**: Envia os dados para o webhook do Make.com

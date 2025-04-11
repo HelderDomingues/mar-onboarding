@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { logger } from "@/utils/logger";
 import { Eye, EyeOff } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export function Login() {
   const [email, setEmail] = useState("");
@@ -15,6 +16,7 @@ export function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,11 +24,24 @@ export function Login() {
     
     try {
       logger.info('Tentativa de login iniciada', { tag: 'Login', data: { email } });
-      await login(email, password);
-      toast({
-        title: "Login bem-sucedido",
-        description: "Bem-vindo à área de membros!",
-      });
+      const result = await login(email, password);
+      
+      if (result.success) {
+        toast({
+          title: "Login bem-sucedido",
+          description: "Bem-vindo à área de membros!",
+        });
+        
+        // Redirecionar para o dashboard após login bem-sucedido
+        logger.info('Redirecionando para dashboard após login', { tag: 'Login' });
+        navigate("/dashboard");
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Falha no login",
+          description: result.message || "Verifique suas credenciais e tente novamente.",
+        });
+      }
     } catch (error) {
       logger.error('Falha no login', { tag: 'Login', data: error });
       toast({
