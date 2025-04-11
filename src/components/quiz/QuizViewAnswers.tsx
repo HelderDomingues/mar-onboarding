@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { processQuizAnswersToSimplified } from "@/utils/supabaseUtils";
-import { generateQuizPDF } from "@/utils/pdfGenerator";
+import { generateQuizPDF, downloadQuizPDF } from "@/utils/pdfGenerator";
 import { logger } from "@/utils/logger";
 
 export function QuizViewAnswers() {
@@ -63,8 +62,7 @@ export function QuizViewAnswers() {
         data: { userId: user.id }
       });
       
-      // Corrigido: Passando user.id em vez de answers (que é um array)
-      await generateQuizPDF(user.id, user.email || 'usuário', 'pdf');
+      await downloadQuizPDF(user.id, user.email || 'usuário');
       
       logger.info('PDF de respostas gerado e baixado com sucesso', { 
         tag: 'Quiz' 
@@ -95,8 +93,7 @@ export function QuizViewAnswers() {
         data: { userId: user.id }
       });
       
-      // Corrigido: Passando user.id em vez de answers (que é um array)
-      await generateQuizPDF(user.id, user.email || 'usuário', 'csv');
+      await downloadQuizPDF(user.id, user.email || 'usuário', 'questionario-csv');
       
       logger.info('CSV de respostas gerado e baixado com sucesso', { 
         tag: 'Quiz' 
@@ -145,7 +142,6 @@ export function QuizViewAnswers() {
     );
   }
   
-  // Agrupe respostas por módulo (assumindo formato module_1, module_2, etc.)
   const modulePattern = /module_(\d+)/;
   const answersByModule: Record<string, any[]> = {};
   

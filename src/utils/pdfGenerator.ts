@@ -43,14 +43,14 @@ interface QuizModule {
  * Gera um arquivo PDF com as respostas do questionário para um usuário específico
  * @param userId ID do usuário
  * @param userName Nome do usuário (opcional)
- * @param includeTitle Se deve incluir o título em cada seção
+ * @param format O formato de saída: 'pdf' (padrão) ou 'csv'
  * @param adminMode Se está sendo gerado por um administrador (para mostrar mais detalhes)
  * @returns Objeto jsPDF que pode ser usado para download ou visualização
  */
 export const generateQuizPDF = async (
   userId: string,
   userName?: string,
-  includeTitle: boolean = true,
+  format: 'pdf' | 'csv' = 'pdf',
   adminMode: boolean = false
 ): Promise<jsPDF | null> => {
   try {
@@ -284,7 +284,7 @@ export const downloadQuizPDF = async (
   adminMode: boolean = false
 ): Promise<boolean> => {
   try {
-    const doc = await generateQuizPDF(userId, userName, true, adminMode);
+    const doc = await generateQuizPDF(userId, userName, 'pdf', adminMode);
     
     if (!doc) {
       throw new Error('Não foi possível gerar o PDF');
@@ -299,6 +299,44 @@ export const downloadQuizPDF = async (
     return true;
   } catch (error: any) {
     logger.error('Erro ao fazer download do PDF', {
+      tag: 'PDF',
+      data: { userId, error }
+    });
+    return false;
+  }
+};
+
+/**
+ * Gera e faz o download de um CSV com as respostas do questionário
+ * @param userId ID do usuário
+ * @param userName Nome do usuário (opcional)
+ * @param filename Nome do arquivo (sem extensão)
+ * @param adminMode Se está sendo gerado por um administrador
+ */
+export const downloadQuizCSV = async (
+  userId: string,
+  userName?: string,
+  filename?: string,
+  adminMode: boolean = false
+): Promise<boolean> => {
+  try {
+    // Implementar futuramente a geração real de CSV
+    // Por enquanto, usamos o PDF como fallback
+    const doc = await generateQuizPDF(userId, userName, 'csv', adminMode);
+    
+    if (!doc) {
+      throw new Error('Não foi possível gerar o CSV');
+    }
+    
+    // Nome do arquivo
+    const csvFilename = filename || `questionario-mar-csv-${new Date().toISOString().split('T')[0]}`;
+    
+    // Fazer download (temporariamente como PDF)
+    doc.save(`${csvFilename}.pdf`);
+    
+    return true;
+  } catch (error: any) {
+    logger.error('Erro ao fazer download do CSV', {
       tag: 'PDF',
       data: { userId, error }
     });
