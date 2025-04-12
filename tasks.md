@@ -1,58 +1,58 @@
 
-# Sistema MAR - Crie Valor Consultoria - Tarefas e Implementações
+# Sistema MAR - Área de Membros: Tarefas e Progresso
 
-## Tarefas Concluídas
+## Análise Inicial
+- [x] Analisar projeto existente e estrutura
+- [x] Identificar e resolver problemas com RLS (Row Level Security) no Supabase
+- [x] Corrigir problema de recursão infinita nas políticas RLS
 
-### 1. Configuração da Infraestrutura
-- [x] Configuração do projeto Supabase com as chaves corretas
-- [x] Implementação da autenticação e autorização
-- [x] Configuração das tabelas necessárias para o sistema de questionário
+## Configuração do Supabase
+- [x] Verificar e atualizar políticas de segurança (RLS)
+- [x] Configurar tabela de perfis de usuários
+- [x] Configurar tabela de papéis de usuários
+- [x] Configurar tabelas relacionadas ao questionário
+- [x] Implementar funções de segurança com SECURITY DEFINER para evitar recursão
 
-### 2. Implementações de Backend
-- [x] Configuração do banco de dados para armazenar respostas do questionário
-- [x] Criação de funções RPC para operações específicas como `is_admin` e `complete_quiz`
-- [x] Adição de coluna `email` na tabela `user_roles`
-- [x] Implementação do webhook para integração com Make.com
-- [x] Atualização do Edge Function `quiz-webhook` para enviar dados corretos para o Make.com
-- [x] Configuração de triggers para automação de dados de usuário
+## Autenticação
+- [x] Implementar fluxo de login
+- [x] Implementar redirecionamento após autenticação
+- [x] Configurar usuário administrador (helder@crievalor.com.br)
+- [x] Garantir que páginas protegidas sejam acessíveis apenas para usuários autenticados
+- [x] Implementar visualização diferenciada para administradores
 
-### 3. Implementações de Frontend
-- [x] Desenvolvimento da interface do questionário
-- [x] Implementação da visualização de respostas
-- [x] Exportação de respostas em formato PDF
-- [x] Implementação da exportação de respostas em formato CSV
-- [x] Correção do redirecionamento após login
+## Questionário (MAR)
+- [x] Implementar visualização do questionário
+- [x] Implementar salvamento de respostas
+- [x] Implementar revisão das respostas
+- [ ] Melhorar a exportação das respostas em PDF
+- [ ] Aprimorar a exportação das respostas em formato de planilha
 
-### 4. Correções e Otimizações
-- [x] Correção de tipo no arquivo pdfGenerator.ts (substituição de `includeTitle` por verificação de formato)
-- [x] Correção de tipos em QuizViewAnswers.tsx
-- [x] Melhoria no suporte à função de administrador
-- [x] Ajustes nos formatos de exportação PDF e CSV
-- [x] Correção da chave API do Supabase
+## Painel Administrativo
+- [x] Implementar visualização de usuários
+- [x] Implementar gerenciamento de permissões
+- [x] Implementar visualização das respostas do questionário
+- [ ] Aprimorar visualização das estatísticas
+- [ ] Implementar mais opções de filtragem de dados
 
-## Tarefas em Andamento
-- [ ] Monitoramento do webhook para garantir entrega consistente de dados
-- [ ] Otimização de desempenho do sistema
+## Interface e Experiência do Usuário
+- [x] Implementar layout responsivo
+- [x] Garantir feedback visual adequado (mensagens de erro, confirmação, etc.)
+- [x] Aprimorar elementos visuais da marca
+- [ ] Melhorar componentes de formulários para maior usabilidade
 
 ## Próximos Passos
-- [ ] Implementar sistema de estatísticas para administradores
-- [ ] Desenvolver funcionalidades adicionais de relatórios
-- [ ] Ampliar recursos de exportação de dados
+1. Aprimorar funcionalidade de exportação de dados (PDF e planilha)
+2. Implementar análise visual das respostas do questionário para administradores
+3. Adicionar mais opções de personalização para usuários
+4. Desenvolver sistema de notificações para administradores
+
+## Bugs Conhecidos e Correções Pendentes
+- [x] Corrigir problema de recursão nas políticas RLS do Supabase
+- [ ] Resolver problemas de carregamento em conexões lentas
+- [ ] Melhorar tratamento de erros no processo de autenticação
 
 ## Notas Técnicas
-
-### Configuração do Supabase
-- **URL do Projeto**: https://btzvozqajqknqfoymxpg.supabase.co
-- **Chave Anônima**: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0enZvenFhanFrbnFmb3lteHBnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxNjYwNjEsImV4cCI6MjA1OTc0MjA2MX0.QdD7bEZBPvVNBhHqgAGtFaZOxJrdosFTElxRUCIrnL8
-- **Chave de Serviço**: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0enZvenFhanFrbnFmb3lteHBnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NDE2NjA2MSwiZXhwIjoyMDU5NzQyMDYxfQ.3Dv3h4JIfB5LZ37KIwwqw18AxtqElf17-a21kwXsryE
-
-### Webhook Make.com
-- **Token**: wpbbjokh8cexvd1hql9i7ae6uyf32bzh
-- **URL**: https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh
-
-### Administrador Principal
-- **Email**: helder@crievalor.com.br
-
-### Triggers Configurados
-- **on_quiz_completed**: Registra as respostas completas quando o questionário é finalizado
-- **webhookMake_Quiz_Respostas_Completas**: Envia os dados para o webhook do Make.com
+- O sistema utiliza React com TypeScript
+- Estilização com Tailwind CSS
+- Backend e autenticação com Supabase
+- Importante manter as políticas RLS corretamente configuradas para segurança dos dados

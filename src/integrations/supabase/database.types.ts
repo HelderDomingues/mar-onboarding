@@ -45,18 +45,21 @@ export interface Database {
           user_id: string
           role: string
           created_at: string
+          email: string | null
         }
         Insert: {
           id?: string
           user_id: string
           role: string
           created_at?: string
+          email?: string | null
         }
         Update: {
           id?: string
           user_id?: string
           role?: string
           created_at?: string
+          email?: string | null
         }
       }
       quiz_modules: {
@@ -142,25 +145,34 @@ export interface Database {
           id: string
           user_id: string
           question_id: string
+          question_text: string
           answer: string | null
           created_at: string
           updated_at: string | null
+          user_email: string
+          user_name: string | null
         }
         Insert: {
           id?: string
           user_id: string
           question_id: string
+          question_text: string
           answer?: string | null
           created_at?: string
           updated_at?: string | null
+          user_email: string
+          user_name?: string | null
         }
         Update: {
           id?: string
           user_id?: string
           question_id?: string
+          question_text?: string
           answer?: string | null
           created_at?: string
           updated_at?: string | null
+          user_email?: string
+          user_name?: string | null
         }
       }
       quiz_submissions: {
@@ -168,147 +180,66 @@ export interface Database {
           id: string
           user_id: string
           current_module: number
-          completed: boolean
+          is_complete: boolean
           started_at: string
           completed_at: string | null
-          contact_preference: string | null
-          contact_consent: boolean | null
+          user_email: string
+          user_name: string | null
+          webhook_processed: boolean | null
         }
         Insert: {
           id?: string
           user_id: string
           current_module?: number
-          completed?: boolean
+          is_complete?: boolean
           started_at?: string
           completed_at?: string | null
-          contact_preference?: string | null
-          contact_consent?: boolean | null
+          user_email: string
+          user_name?: string | null
+          webhook_processed?: boolean | null
         }
         Update: {
           id?: string
           user_id?: string
           current_module?: number
-          completed?: boolean
+          is_complete?: boolean
           started_at?: string
           completed_at?: string | null
-          contact_preference?: string | null
-          contact_consent?: boolean | null
+          user_email?: string
+          user_name?: string | null
+          webhook_processed?: boolean | null
         }
       }
-      materials: {
+      quiz_respostas_completas: {
         Row: {
           id: string
-          title: string
-          description: string | null
-          category: string | null
-          file_url: string
-          plan_level: string
-          type: string
-          created_at: string
-          updated_at: string | null
+          user_id: string
+          submission_id: string
+          respostas: Json
+          data_submissao: string
+          user_email: string
+          user_name: string | null
+          webhook_processed: boolean | null
         }
         Insert: {
           id?: string
-          title: string
-          description?: string | null
-          category?: string | null
-          file_url: string
-          plan_level: string
-          type: string
-          created_at?: string
-          updated_at?: string | null
+          user_id: string
+          submission_id: string
+          respostas: Json
+          data_submissao?: string
+          user_email: string
+          user_name?: string | null
+          webhook_processed?: boolean | null
         }
         Update: {
           id?: string
-          title?: string
-          description?: string | null
-          category?: string | null
-          file_url?: string
-          plan_level?: string
-          type?: string
-          created_at?: string
-          updated_at?: string | null
-        }
-      }
-      material_views: {
-        Row: {
-          id: string
-          material_id: string
-          user_id: string
-          access_count: number
-          last_accessed: string
-        }
-        Insert: {
-          id?: string
-          material_id: string
-          user_id: string
-          access_count?: number
-          last_accessed?: string
-        }
-        Update: {
-          id?: string
-          material_id?: string
           user_id?: string
-          access_count?: number
-          last_accessed?: string
-        }
-      }
-      onboarding_videos: {
-        Row: {
-          id: string
-          title: string
-          content: string | null
-          video_url: string
-          is_active: boolean
-          created_at: string
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          title: string
-          content?: string | null
-          video_url: string
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          title?: string
-          content?: string | null
-          video_url?: string
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string | null
-        }
-      }
-      faq_entries: {
-        Row: {
-          id: string
-          question: string
-          answer: string
-          category: string | null
-          is_active: boolean
-          order_number: number
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          question: string
-          answer: string
-          category?: string | null
-          is_active?: boolean
-          order_number?: number
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          question?: string
-          answer?: string
-          category?: string | null
-          is_active?: boolean
-          order_number?: number
-          created_at?: string
+          submission_id?: string
+          respostas?: Json
+          data_submissao?: string
+          user_email?: string
+          user_name?: string | null
+          webhook_processed?: boolean | null
         }
       }
     }
@@ -321,6 +252,22 @@ export interface Database {
           user_id: string
         }
         Returns: boolean
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      get_user_role: {
+        Args: {
+          user_id: string
+        }
+        Returns: string
+      }
+      gerar_respostas_json: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: Json
       }
     }
     Enums: {
