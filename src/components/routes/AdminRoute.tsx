@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { logger } from "@/utils/logger";
+import { addLogEntry } from "@/utils/projectLog";
 
 /**
  * Componente de rota para páginas administrativas
@@ -12,11 +13,17 @@ const AdminRoute = () => {
   const { user, isAuthenticated, isAdmin, isLoading } = useAuth();
 
   useEffect(() => {
-    if (user && isAuthenticated && !isLoading) {
+    if (!isLoading) {
       // Registrar tentativa de acesso à área administrativa
+      addLogEntry('admin', 'Verificação de acesso administrativo', {
+        userId: user?.id || 'não autenticado',
+        isAdmin: isAdmin || false,
+        isAuthenticated: isAuthenticated || false
+      }, user?.id);
+      
       logger.info('Verificação de acesso administrativo', {
         tag: 'Admin',
-        userId: user.id,
+        userId: user?.id || 'não autenticado',
         isAdmin: isAdmin || false
       });
     }
@@ -32,7 +39,8 @@ const AdminRoute = () => {
     logger.warn('Tentativa de acesso à área administrativa sem autenticação', {
       tag: 'Admin'
     });
-    return <Navigate to="/login" replace />;
+    addLogEntry('admin', 'Tentativa de acesso à área administrativa sem autenticação');
+    return <Navigate to="/" replace />;
   }
 
   // Se não for administrador, redirecionar para o dashboard
@@ -41,10 +49,12 @@ const AdminRoute = () => {
       tag: 'Admin',
       userId: user?.id
     });
+    addLogEntry('admin', 'Tentativa de acesso à área administrativa por usuário sem permissão', {}, user?.id);
     return <Navigate to="/dashboard" replace />;
   }
 
   // Se for administrador, permitir acesso
+  addLogEntry('admin', 'Acesso administrativo concedido', {}, user?.id);
   return <Outlet />;
 };
 

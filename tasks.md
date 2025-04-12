@@ -12,6 +12,7 @@
 - [x] Configurar tabela de papéis de usuários
 - [x] Configurar tabelas relacionadas ao questionário
 - [x] Implementar funções de segurança com SECURITY DEFINER para evitar recursão
+- [x] Corrigir inconsistência de emails nas tabelas de usuários
 
 ## Autenticação
 - [x] Implementar fluxo de login
@@ -19,6 +20,7 @@
 - [x] Configurar usuário administrador (helder@crievalor.com.br)
 - [x] Garantir que páginas protegidas sejam acessíveis apenas para usuários autenticados
 - [x] Implementar visualização diferenciada para administradores
+- [x] Resolver problemas de recursão no hook useAuth
 
 ## Questionário (MAR)
 - [x] Implementar visualização do questionário
@@ -47,22 +49,31 @@
 - [x] Implementar exportação de logs
 - [ ] Melhorar a análise de erros com base nos logs
 
-## Próximos Passos
-1. Aprimorar funcionalidade de exportação de dados (PDF e planilha)
-2. Implementar análise visual das respostas do questionário para administradores
-3. Adicionar mais opções de personalização para usuários
-4. Desenvolver sistema de notificações para administradores
-5. Manter o arquivo de log atualizado com todas as interações do projeto
-
-## Bugs Conhecidos e Correções Pendentes
+## Correções de Problemas Críticos
 - [x] Corrigir problema de recursão nas políticas RLS do Supabase
-- [ ] Resolver problemas de carregamento em conexões lentas
-- [ ] Melhorar tratamento de erros no processo de autenticação
-- [ ] Resolver o erro 406 relacionado às políticas RLS do Supabase
+- [x] Resolver inconsistência de emails entre tabelas de usuários
+- [x] Garantir que o administrador principal esteja corretamente configurado
+- [x] Refatorar funções SECURITY DEFINER para evitar recursão
+- [x] Melhorar atrasos de timeout para evitar condições de corrida
+
+## Próximos Passos
+1. Testar e validar as correções implementadas
+2. Aprimorar funcionalidade de exportação de dados (PDF e planilha)
+3. Implementar análise visual das respostas do questionário para administradores
+4. Adicionar mais opções de personalização para usuários
+5. Desenvolver sistema de notificações para administradores
+6. Manter o arquivo de log atualizado com todas as interações do projeto
+
+## Bugs Corrigidos
+- [x] Erro 406 relacionado à recursão infinita nas políticas RLS
+- [x] Inconsistência de emails entre as tabelas de usuários
+- [x] Problema com o administrador não aparecendo corretamente
+- [x] Condições de corrida em verificações de autenticação
 
 ## Notas Técnicas
 - O sistema utiliza React com TypeScript
 - Estilização com Tailwind CSS
 - Backend e autenticação com Supabase
-- Importante manter as políticas RLS corretamente configuradas para segurança dos dados
+- As funções SECURITY DEFINER foram implementadas para evitar problemas de recursão RLS
+- Timeouts estratégicos foram adicionados para evitar condições de corrida na autenticação
 - O arquivo project-log.md contém o histórico completo do projeto e deve ser consultado para entender o contexto e evolução do sistema

@@ -1,15 +1,14 @@
-
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 import { logger } from '@/utils/logger';
 import { addLogEntry } from '@/utils/projectLog';
 
-// Chaves de acesso ao Supabase atualizadas
+// Chaves de acesso ao Supabase
 const SUPABASE_URL = "https://btzvozqajqknqfoymxpg.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0enZvenFhanFrbnFmb3lteHBnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxNjYwNjEsImV4cCI6MjA1OTc0MjA2MX0.QdD7bEZBPvVNBhHqgAGtFaZOxJrdosFTElxRUCIrnL8";
 const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0enZvenFhanFrbnFmb3lteHBnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NDE2NjA2MSwiZXhwIjoyMDU5NzQyMDYxfQ.3Dv3h4JIfB5LZ37KIwwqw18AxtqElf17-a21kwXsryE";
 
-// Cliente Supabase padrão com a chave anônima
+// Cliente Supabase padrão com configurações explícitas para evitar problemas de sessão
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     autoRefreshToken: true,
@@ -26,14 +25,16 @@ export const supabaseAdmin = createClient<Database>(SUPABASE_URL, SUPABASE_SERVI
   }
 });
 
-// Função para obter emails dos usuários (requer privilégios de admin)
+// Função para obter emails dos usuários usando cliente admin
 export const getUserEmails = async () => {
   try {
     addLogEntry('database', 'Buscando emails de usuários');
+    
+    // Usar o cliente admin para acessar diretamente auth.users
     const { data, error } = await supabaseAdmin.auth.admin.listUsers();
     
     if (error) {
-      console.error("Erro ao buscar usuários:", error);
+      logger.error("Erro ao buscar usuários:", error);
       addLogEntry('error', 'Erro ao buscar usuários', { error });
       return null;
     }
@@ -47,13 +48,13 @@ export const getUserEmails = async () => {
     addLogEntry('database', 'Emails de usuários obtidos com sucesso', { count: userData.length });
     return userData;
   } catch (error) {
-    console.error("Erro ao buscar emails dos usuários:", error);
+    logger.error("Erro ao buscar emails dos usuários:", error);
     addLogEntry('error', 'Erro ao buscar emails dos usuários', { error });
     return null;
   }
 };
 
-// Função para assegurar que o email do usuário esteja presente na tabela user_roles
+// Função para garantir que o email do usuário esteja presente na tabela user_roles
 export const ensureUserEmailInRoles = async (userId: string, userEmail: string, isAdmin: boolean = false) => {
   if (!userId || !userEmail) {
     addLogEntry('error', 'Tentativa de registrar email sem ID ou email válido', { userId, userEmail });
@@ -66,12 +67,12 @@ export const ensureUserEmailInRoles = async (userId: string, userEmail: string, 
     // Verificar se o usuário já tem um papel registrado
     const { data: existingRole, error: roleError } = await supabase
       .from('user_roles')
-      .select('id, role, email')
+      .select('*')
       .eq('user_id', userId)
       .maybeSingle();
       
     if (roleError) {
-      console.error("Erro ao verificar papel do usuário:", roleError);
+      logger.error("Erro ao verificar papel do usuário:", roleError);
       addLogEntry('error', 'Erro ao verificar papel do usuário', { roleError, userId });
       return false;
     }
@@ -88,10 +89,10 @@ export const ensureUserEmailInRoles = async (userId: string, userEmail: string, 
       const { error: updateError } = await supabase
         .from('user_roles')
         .update({ email: userEmail })
-        .eq('id', existingRole.id);
+        .eq('user_id', userId);
         
       if (updateError) {
-        console.error("Erro ao atualizar email do usuário:", updateError);
+        logger.error("Erro ao atualizar email do usuário:", updateError);
         addLogEntry('error', 'Erro ao atualizar email do usuário', { updateError, userId });
         return false;
       }
@@ -107,7 +108,7 @@ export const ensureUserEmailInRoles = async (userId: string, userEmail: string, 
       .insert({ user_id: userId, role, email: userEmail });
       
     if (insertError) {
-      console.error("Erro ao criar papel para usuário:", insertError);
+      logger.error("Erro ao criar papel para usuário:", insertError);
       addLogEntry('error', 'Erro ao criar papel para usuário', { insertError, userId });
       return false;
     }
@@ -115,51 +116,27 @@ export const ensureUserEmailInRoles = async (userId: string, userEmail: string, 
     addLogEntry('database', 'Papel de usuário criado com sucesso', { userId, userEmail, role });
     return true;
   } catch (error) {
-    console.error("Erro ao processar email do usuário:", error);
+    logger.error("Erro ao processar email do usuário:", error);
     addLogEntry('error', 'Erro ao processar email do usuário', { error, userId });
     return false;
   }
 };
 
-// Função para enviar respostas para o webhook
-export const enviarRespostasParaWebhook = async (submissionId: string) => {
-  try {
-    addLogEntry('database', 'Enviando respostas para webhook', { submissionId });
-    
-    const { data, error } = await supabase.functions.invoke('quiz-webhook', {
-      body: { submissionId }
-    });
-    
-    if (error) {
-      console.error("Erro ao invocar webhook:", error);
-      addLogEntry('error', 'Erro ao invocar webhook', { error, submissionId });
-      return { success: false, error };
-    }
-    
-    addLogEntry('database', 'Respostas enviadas com sucesso para webhook', { submissionId });
-    return { success: true, data };
-  } catch (error) {
-    console.error("Erro ao enviar respostas para webhook:", error);
-    addLogEntry('error', 'Erro ao enviar respostas para webhook', { error, submissionId });
-    return { success: false, error };
-  }
-};
-
-// Função para verificar se o usuário é admin
+// Função para verificar se o usuário é admin - reescrita para evitar recursão
 export const isUserAdmin = async (userId: string | undefined): Promise<boolean> => {
   if (!userId) return false;
   
   try {
     addLogEntry('auth', 'Verificando se o usuário é admin', { userId });
     
-    // Usar setTimeout para evitar problemas de recursão
+    // Usar execução diferida para evitar recursão
     return new Promise((resolve) => {
       setTimeout(async () => {
         try {
           const { data, error } = await supabase.rpc('is_admin');
           
           if (error) {
-            console.error("Erro ao verificar se o usuário é admin:", error);
+            logger.error("Erro ao verificar se o usuário é admin:", error);
             addLogEntry('error', 'Erro ao verificar se o usuário é admin', { error, userId });
             resolve(false);
             return;
@@ -168,14 +145,14 @@ export const isUserAdmin = async (userId: string | undefined): Promise<boolean> 
           addLogEntry('auth', 'Verificação de admin concluída', { isAdmin: !!data, userId });
           resolve(!!data);
         } catch (error) {
-          console.error("Erro ao verificar status de admin:", error);
+          logger.error("Erro ao verificar status de admin:", error);
           addLogEntry('error', 'Erro ao verificar status de admin', { error, userId });
           resolve(false);
         }
-      }, 0);
+      }, 50); // Atraso ligeiramente maior para garantir que o contexto de autenticação esteja estabelecido
     });
   } catch (error) {
-    console.error("Erro ao verificar status de admin:", error);
+    logger.error("Erro ao verificar status de admin:", error);
     addLogEntry('error', 'Erro ao verificar status de admin', { error, userId });
     return false;
   }
@@ -189,7 +166,7 @@ export const setUserAsAdmin = async (userId: string, userEmail: string): Promise
     addLogEntry('database', 'Configurando usuário como admin', { userId, userEmail });
     return await ensureUserEmailInRoles(userId, userEmail, true);
   } catch (error) {
-    console.error("Erro ao configurar usuário como admin:", error);
+    logger.error("Erro ao configurar usuário como admin:", error);
     addLogEntry('error', 'Erro ao configurar usuário como admin', { error, userId });
     return false;
   }
@@ -205,7 +182,7 @@ export const setupMainAdmin = async (): Promise<boolean> => {
     const { data: users, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
     
     if (usersError) {
-      console.error("Erro ao buscar usuários:", usersError);
+      logger.error("Erro ao buscar usuários:", usersError);
       addLogEntry('error', 'Erro ao buscar usuários para configurar admin principal', { error: usersError });
       return false;
     }
@@ -213,7 +190,7 @@ export const setupMainAdmin = async (): Promise<boolean> => {
     const adminUser = users.users.find(user => user.email === adminEmail);
     
     if (!adminUser) {
-      console.error("Administrador principal não encontrado:", adminEmail);
+      logger.error("Administrador principal não encontrado:", adminEmail);
       addLogEntry('error', 'Administrador principal não encontrado', { email: adminEmail });
       return false;
     }
@@ -227,7 +204,7 @@ export const setupMainAdmin = async (): Promise<boolean> => {
     
     return success;
   } catch (error) {
-    console.error("Erro ao configurar administrador principal:", error);
+    logger.error("Erro ao configurar administrador principal:", error);
     addLogEntry('error', 'Erro ao configurar administrador principal', { error });
     return false;
   }

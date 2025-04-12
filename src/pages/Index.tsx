@@ -21,7 +21,7 @@ const Index = () => {
       isAuthenticated: isAuthenticated,
       isLoading: isLoading
     });
-  }, []);
+  }, [isAuthenticated, isLoading]);
   
   // Efeito para redirecionar o usuário após autenticação
   useEffect(() => {
@@ -32,10 +32,8 @@ const Index = () => {
       
       addLogEntry('auth', 'Usuário autenticado, redirecionando para dashboard', {}, user?.id);
       
-      // Usar setTimeout para garantir que o redirecionamento ocorra após o ciclo de renderização
-      setTimeout(() => {
-        navigate('/dashboard', { replace: true });
-      }, 0);
+      // Redirecionamento direto para o dashboard
+      navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate, user]);
 
@@ -45,7 +43,8 @@ const Index = () => {
     return <Navigate to="/dashboard" replace />;
   }
   
-  return <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-blue-50">
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-blue-50">
       <header className="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
         <img src="/lovable-uploads/e109ec41-0f89-456d-8081-f73393ed4fd5.png" alt="Crie Valor" className="h-7 object-scale-down" />
       </header>
@@ -73,6 +72,8 @@ const Index = () => {
       <footer className="bg-white py-6 border-t text-center text-sm text-muted-foreground">
         <p>© {new Date().getFullYear()} Crie Valor Consultoria. Todos os direitos reservados.</p>
       </footer>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;

@@ -27,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<any>(null);
+  const [session, setSession] = useState<any>(null); // Armazenar sessão completa
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -37,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       addLogEntry('auth', 'Verificando status de administrador', { userId }, userId);
       
-      // Importante: Usar setTimeout para evitar problemas de recursão com Supabase
+      // Usar a função RPC is_admin com o contexto de autenticação atual
       return new Promise<boolean>((resolve) => {
         setTimeout(async () => {
           try {
@@ -68,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             addLogEntry('error', 'Exceção ao verificar papel de administrador', { error }, userId);
             resolve(false);
           }
-        }, 0);
+        }, 50);
       });
     } catch (error) {
       logger.error('Exceção ao verificar papel de administrador:', {
@@ -85,43 +86,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const setupAuthListener = () => {
       addLogEntry('auth', 'Configurando listener de autenticação');
       
+      // Primeiro definir o listener de eventos de autenticação
       const { data: authListener } = supabase.auth.onAuthStateChange(
-        async (event, session) => {
+        async (event, newSession) => {
           logger.info(`Evento de autenticação detectado: ${event}`, { 
             tag: 'Auth', 
-            data: { event, hasSession: !!session }
+            data: { event, hasSession: !!newSession }
           });
           
           addLogEntry('auth', `Evento de autenticação detectado: ${event}`, { 
-            hasSession: !!session 
-          }, session?.user?.id);
+            hasSession: !!newSession 
+          }, newSession?.user?.id);
           
-          const currentUser = session?.user || null;
+          // Atualizar sessão e usuário
+          setSession(newSession);
+          const currentUser = newSession?.user || null;
           setUser(currentUser);
           
           // Verificar status de admin apenas se o usuário estiver autenticado
           if (currentUser) {
-            // Usar setTimeout para evitar problemas de recursão com Supabase
+            // Usar um timeout para evitar problemas de recursão
             setTimeout(async () => {
               const isUserAdmin = await checkAdminStatus(currentUser.id);
               setIsAdmin(isUserAdmin);
-            }, 0);
+              setIsLoading(false);
+            }, 100);
           } else {
             setIsAdmin(false);
+            setIsLoading(false);
           }
-          
-          setIsLoading(false);
         }
       );
       
       return authListener;
     };
     
-    // Verificar a sessão atual
+    // Função para verificar a sessão atual
     const checkCurrentSession = async () => {
       try {
         addLogEntry('auth', 'Verificando sessão atual');
         logger.info('Verificando sessão atual', { tag: 'Auth' });
+        
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -131,26 +136,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
           addLogEntry('error', 'Erro ao verificar sessão', { error });
           setUser(null);
+          setSession(null);
           setIsAdmin(false);
           setIsLoading(false);
           return;
         }
         
+        setSession(data.session);
         const currentUser = data.session?.user || null;
         setUser(currentUser);
         
         if (currentUser) {
           addLogEntry('auth', 'Usuário encontrado na sessão atual', {}, currentUser.id);
-          // Importante: usar setTimeout aqui para evitar recursão
+          // Verificar status admin depois de ter o usuário
           setTimeout(async () => {
             const isUserAdmin = await checkAdminStatus(currentUser.id);
             setIsAdmin(isUserAdmin);
-          }, 0);
+            setIsLoading(false);
+          }, 100);
         } else {
           setIsAdmin(false);
+          setIsLoading(false);
         }
-        
-        setIsLoading(false);
       } catch (error) {
         logger.error("Erro ao inicializar autenticação:", {
           tag: 'Auth',
@@ -158,6 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         addLogEntry('error', 'Erro ao inicializar autenticação', { error });
         setUser(null);
+        setSession(null);
         setIsAdmin(false);
         setIsLoading(false);
       }
@@ -166,10 +174,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Primeiro configurar o listener, depois verificar a sessão atual
     const authListener = setupAuthListener();
     
-    // Importante: usar setTimeout para evitar problemas de timing
+    // Usar um pequeno atraso para garantir que o listener esteja ativo
     setTimeout(() => {
       checkCurrentSession();
-    }, 0);
+    }, 50);
 
     // Cleanup ao desmontar
     return () => {
@@ -216,13 +224,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       addLogEntry('auth', 'Login realizado com sucesso', { email }, data.user?.id);
       
-      // Atualizar o estado de admin imediatamente após login bem-sucedido
+      // Atualizar o estado de admin após login bem-sucedido
       if (data.user) {
-        // Usar setTimeout para evitar problemas de recursão
+        // Usar timeout para evitar recursão
         setTimeout(async () => {
           const isUserAdmin = await checkAdminStatus(data.user.id);
           setIsAdmin(isUserAdmin);
-        }, 0);
+        }, 100);
       }
       
       return {
@@ -264,6 +272,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addLogEntry('auth', 'Logout realizado com sucesso', {}, user?.id);
       
       setUser(null);
+      setSession(null);
       setIsAdmin(false);
     } catch (error) {
       logger.error("Erro ao fazer logout:", {
