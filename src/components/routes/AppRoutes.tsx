@@ -15,6 +15,7 @@ import FAQ from "@/pages/FAQ";
 import NotFound from "@/pages/NotFound";
 import IndexPage from "@/pages/Index";
 import TestConnectionPage from "@/pages/TestConnection";
+import SystemLog from "@/pages/SystemLog";
 
 // Admin pages
 import ImportUsers from "@/pages/admin/ImportUsers";
@@ -44,6 +45,7 @@ const AppRoutes = () => {
         <Route path="users/import" element={<ImportUsers />} />
         <Route path="quiz-responses" element={<QuizResponses />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="logs" element={<SystemLog />} />
       </Route>
 
       <Route path="/test-connection" element={<ProtectedRoute component={TestConnectionPage} />} />

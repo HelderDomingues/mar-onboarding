@@ -1,223 +1,94 @@
 
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarTrigger
-} from "@/components/ui/sidebar";
-import {
-  LayoutDashboard,
-  Users,
-  Settings,
-  LogOut,
-  FileClock,
-  FileCheck,
-  User
-} from "lucide-react";
+import { Sidebar, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-
-interface UserProfile {
-  full_name?: string;
-  avatar_url?: string;
-}
+import { LogOut, Users, Settings, FileText, Home, Clipboard, LineChart, History } from "lucide-react";
 
 export function AdminSidebar() {
+  const { logout } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const { user, logout } = useAuth();
   
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (user?.id) {
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('full_name, avatar_url')
-            .eq('id', user.id)
-            .single();
-            
-          if (!error && data) {
-            setProfile(data);
-          }
-        } catch (error) {
-          console.error('Erro ao buscar perfil:', error);
-        }
-      }
-    };
-    
-    fetchProfile();
-  }, [user]);
-  
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate("/");
-    } catch (error) {
-      console.error("Erro ao fazer logout:", error);
-    }
+  const isActive = (path: string) => {
+    return location.pathname.startsWith(path);
   };
   
-  const userInitials = profile?.full_name 
-    ? profile.full_name.split(' ').slice(0, 2).map(name => name[0]).join('').toUpperCase()
-    : user?.email 
-      ? user.email.substring(0, 2).toUpperCase() 
-      : "AD";
-      
-  const isActive = (path: string) => {
-    return location.pathname === path;
+  const handleLogout = async () => {
+    await logout();
   };
   
   return (
-    <Sidebar className="hidden md:flex">
-      <SidebarHeader className="border-b">
-        <div className="flex items-center p-4">
-          <img
-            src="https://static.wixstatic.com/media/783feb_0e0fffdb3f3e4eafa422021dcea535d4~mv2.png"
-            className="h-8 mr-3"
-            alt="MAR - Mapa para Alto Rendimento"
-          />
-          <div className="bg-blue-600 text-white px-3 py-1 text-xs font-medium rounded-md">
-            Admin
-          </div>
-        </div>
+    <Sidebar className="border-r bg-white">
+      <SidebarHeader className="h-16 flex items-center px-6 border-b">
+        <Link to="/dashboard">
+          <img src="/lovable-uploads/e109ec41-0f89-456d-8081-f73393ed4fd5.png" alt="Crie Valor" className="h-7" />
+        </Link>
       </SidebarHeader>
-      
-      <SidebarContent>
-        <div className="w-full flex pt-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative w-full justify-start rounded-none px-4 h-auto py-2">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8">
-                    {profile?.avatar_url ? (
-                      <AvatarImage src={profile.avatar_url} alt="Avatar" />
-                    ) : null}
-                    <AvatarFallback className="bg-primary-700 text-white font-medium">
-                      {userInitials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="text-left">
-                    <p className="text-sm font-medium">{profile?.full_name || "Administrador"}</p>
-                    <p className="text-xs text-muted-foreground">{user?.email}</p>
-                  </div>
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/member" className="cursor-pointer">
-                  <User className="h-4 w-4 mr-2" />
-                  <span>Meu Perfil</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/admin/settings" className="cursor-pointer">
-                  <Settings className="h-4 w-4 mr-2" />
-                  <span>Configurações</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={handleLogout}
-                className="text-red-600 cursor-pointer"
-              >
-                <LogOut className="h-4 w-4 mr-2 rotate-180" />
-                <span>Sair</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+      <div className="flex flex-col gap-2 p-4">
+        <h2 className="text-lg font-semibold pb-2">Administração</h2>
         
-        <nav className="mt-6">
-          <div className="px-3 py-2">
-            <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight">
-              Administração
-            </h2>
-            <div className="space-y-1">
-              <Button
-                variant={isActive("/dashboard") || isActive("/admin") ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => navigate('/dashboard')}
-              >
-                <LayoutDashboard className="h-4 w-4 mr-2" />
-                Dashboard
-              </Button>
-              
-              <Button
-                variant={isActive("/admin/users") ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => navigate('/admin/users')}
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Usuários
-              </Button>
-              
-              <Button
-                variant={isActive("/admin/settings") ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => navigate('/admin/settings')}
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Configurações
-              </Button>
-            </div>
-          </div>
-          
-          <div className="px-3 py-2">
-            <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight">
-              Páginas Especiais
-            </h2>
-            <div className="space-y-1">
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => navigate('/quiz/review')}
-              >
-                <FileClock className="h-4 w-4 mr-2" />
-                Página de Revisão
-              </Button>
-              
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => navigate('/quiz/success')}
-              >
-                <FileCheck className="h-4 w-4 mr-2" />
-                Página de Sucesso
-              </Button>
-              
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => navigate('/member')}
-              >
-                <User className="h-4 w-4 mr-2" />
-                Página de Membro
-              </Button>
-            </div>
-          </div>
-        </nav>
-      </SidebarContent>
-      
-      <SidebarFooter className="border-t">
-        <div className="p-3">
-          <SidebarTrigger className="mb-1 w-full text-slate-900">
-            <LogOut className="h-4 w-4 mr-2 rotate-180" />
-            Ocultar Menu
-          </SidebarTrigger>
-          <p className="text-xs text-center text-muted-foreground">v1.0.0</p>
-        </div>
-      </SidebarFooter>
+        <Link to="/dashboard">
+          <Button 
+            variant={isActive("/dashboard") ? "default" : "ghost"} 
+            className="w-full justify-start gap-2"
+          >
+            <Home className="h-4 w-4" />
+            Dashboard
+          </Button>
+        </Link>
+        
+        <Link to="/admin/users">
+          <Button 
+            variant={isActive("/admin/users") ? "default" : "ghost"} 
+            className="w-full justify-start gap-2"
+          >
+            <Users className="h-4 w-4" />
+            Usuários
+          </Button>
+        </Link>
+        
+        <Link to="/admin/quiz-responses">
+          <Button 
+            variant={isActive("/admin/quiz-responses") ? "default" : "ghost"} 
+            className="w-full justify-start gap-2"
+          >
+            <Clipboard className="h-4 w-4" />
+            Respostas
+          </Button>
+        </Link>
+        
+        <Link to="/admin/logs">
+          <Button 
+            variant={isActive("/admin/logs") ? "default" : "ghost"} 
+            className="w-full justify-start gap-2"
+          >
+            <History className="h-4 w-4" />
+            Logs do Sistema
+          </Button>
+        </Link>
+        
+        <Link to="/admin/settings">
+          <Button 
+            variant={isActive("/admin/settings") ? "default" : "ghost"} 
+            className="w-full justify-start gap-2"
+          >
+            <Settings className="h-4 w-4" />
+            Configurações
+          </Button>
+        </Link>
+        
+        <Separator className="my-2" />
+        
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start gap-2 text-red-500 hover:text-red-700 hover:bg-red-50"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4" />
+          Sair
+        </Button>
+      </div>
     </Sidebar>
   );
 }

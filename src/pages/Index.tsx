@@ -5,13 +5,23 @@ import { Button } from "@/components/ui/button";
 import { Login } from "@/components/auth/Login";
 import { useEffect } from "react";
 import { logger } from "@/utils/logger";
+import { addLogEntry } from "@/utils/projectLog";
 
 const Index = () => {
   const {
     isAuthenticated,
+    user,
     isLoading
   } = useAuth();
   const navigate = useNavigate();
+  
+  // Registrar carregamento inicial da página
+  useEffect(() => {
+    addLogEntry('info', 'Página inicial carregada', {
+      isAuthenticated: isAuthenticated,
+      isLoading: isLoading
+    });
+  }, []);
   
   // Efeito para redirecionar o usuário após autenticação
   useEffect(() => {
@@ -19,12 +29,19 @@ const Index = () => {
       logger.info('Usuário autenticado, redirecionando para dashboard', { 
         tag: 'Navigation' 
       });
-      navigate('/dashboard', { replace: true });
+      
+      addLogEntry('auth', 'Usuário autenticado, redirecionando para dashboard', {}, user?.id);
+      
+      // Usar setTimeout para garantir que o redirecionamento ocorra após o ciclo de renderização
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 0);
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, navigate, user]);
 
   // Se já estiver autenticado, redirecionar para o dashboard
-  if (isAuthenticated) {
+  if (isAuthenticated && !isLoading) {
+    addLogEntry('auth', 'Redirecionamento direto para dashboard (já autenticado)', {}, user?.id);
     return <Navigate to="/dashboard" replace />;
   }
   

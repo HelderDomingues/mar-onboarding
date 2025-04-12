@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { logger } from "@/utils/logger";
+import { addLogEntry } from "@/utils/projectLog";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -24,6 +25,8 @@ export function Login() {
     
     try {
       logger.info('Tentativa de login iniciada', { tag: 'Login', data: { email } });
+      addLogEntry('auth', 'Tentativa de login iniciada', { email });
+      
       const result = await login(email, password);
       
       if (result.success) {
@@ -34,6 +37,8 @@ export function Login() {
         
         // Redirecionamento direto e imediato para o dashboard
         logger.info('Login bem-sucedido, redirecionando para dashboard', { tag: 'Login' });
+        addLogEntry('auth', 'Login bem-sucedido, redirecionando para dashboard', { email });
+        
         navigate("/dashboard", { replace: true });
       } else {
         toast({
@@ -41,9 +46,13 @@ export function Login() {
           title: "Falha no login",
           description: result.message || "Verifique suas credenciais e tente novamente.",
         });
+        
+        addLogEntry('error', 'Falha no login', { message: result.message, email });
       }
     } catch (error) {
       logger.error('Falha no login', { tag: 'Login', data: error });
+      addLogEntry('error', 'Exceção durante login', { error, email });
+      
       toast({
         variant: "destructive",
         title: "Falha no login",
