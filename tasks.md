@@ -20,6 +20,11 @@
 - ✅ Refatoração do hook de autenticação para melhorar o fluxo de autenticação
 - ✅ Adição de função de teste de conexão para diagnóstico de problemas
 
+### 15/04/2025 - Correções de Exportação de Componentes
+- ✅ Correção do erro de exportação de componentes nos arquivos ConnectionStatus.tsx e SecurityPolicyTester.tsx
+- ✅ Padronização das exportações utilizando export default para evitar incompatibilidades
+- ✅ Ajuste nas importações em DiagnosticoSistema.tsx
+
 ## Tarefas Pendentes
 
 ### Prioridade Alta
@@ -32,6 +37,7 @@
 - [ ] Refatorar o componente `src/hooks/useAuth.tsx` (muito extenso, 303 linhas)
 - [ ] Refatorar o componente `src/components/admin/ImportUsers.tsx` (muito extenso, 462 linhas)
 - [ ] Refatorar o componente `src/components/SupabaseConnectionTest.tsx` (muito extenso, 329 linhas)
+- [ ] Refatorar o componente `src/components/debug/ConnectionTester.tsx` (muito extenso, 242 linhas)
 
 ### Prioridade Baixa
 - [ ] Documentar todas as funções RPC do Supabase
@@ -45,3 +51,4 @@
 - Foram corrigidos erros de tipagem TypeScript nos componentes de diagnóstico
 - Headers adequados foram adicionados para resolver problemas de erro 406 (Not Acceptable)
 - O hook de autenticação foi refatorado para melhorar a estabilidade
+- Corrigidos problemas de exportação/importação de componentes que causavam erros de runtime

@@ -5,66 +5,62 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertCircle, Play, ShieldCheck } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 /**
  * Componente para testar as políticas de segurança (RLS) das tabelas
  */
-export const SecurityPolicyTester: React.FC = () => {
-  const [selectedTable, setSelectedTable] = useState<string>('profiles');
-  const [operation, setOperation] = useState<'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE'>('SELECT');
+const SecurityPolicyTester: React.FC = () => {
+  const [table, setTable] = useState<string>('profiles');
+  const [operation, setOperation] = useState<string>('select');
+  const [userId, setUserId] = useState<string>('');
   const [result, setResult] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
-  const tables = [
-    'profiles',
-    'quiz_modules',
-    'quiz_questions',
-    'quiz_options',
-    'quiz_answers',
-    'quiz_submissions',
-    'quiz_respostas_completas',
-    'user_roles'
-  ];
+  const tables = ['profiles', 'quiz_questions', 'quiz_submissions', 'materials'];
+  const operations = ['select', 'insert', 'update', 'delete'];
   
-  const testAccess = async () => {
+  const testSecurityPolicy = async () => {
     setIsLoading(true);
-    setError(null);
+    setErrorMessage(null);
     setResult(null);
     
     try {
-      let response;
+      let query = supabase.from(table);
       
       switch (operation) {
-        case 'SELECT':
-          response = await supabase
-            .from(selectedTable)
-            .select('*')
-            .limit(5);
+        case 'select':
+          query = query.select('*');
           break;
-        case 'INSERT':
-          // Apenas simula o insert sem realmente executar
-          response = { data: 'Simulação de INSERT (não executado)', error: null };
+        case 'insert':
+          query = query.insert({ id: userId || 'test-id', name: 'Test User' });
           break;
-        case 'UPDATE':
-          // Apenas simula o update sem realmente executar
-          response = { data: 'Simulação de UPDATE (não executado)', error: null };
+        case 'update':
+          query = query.update({ name: 'Updated User' }).eq('id', userId || 'test-id');
           break;
-        case 'DELETE':
-          // Apenas simula o delete sem realmente executar
-          response = { data: 'Simulação de DELETE (não executado)', error: null };
+        case 'delete':
+          query = query.delete().eq('id', userId || 'test-id');
           break;
+        default:
+          throw new Error('Operação não suportada');
       }
       
-      if (response.error) {
-        throw response.error;
+      if (userId) {
+        query = query.eq('user_id', userId);
       }
       
-      setResult(response.data);
-    } catch (err: any) {
-      console.error('Erro no teste de política:', err);
-      setError(err.message || 'Erro desconhecido ao testar política');
+      const { data, error } = await query;
+      
+      if (error) {
+        throw error;
+      }
+      
+      setResult({ success: true, data });
+    } catch (error: any) {
+      setErrorMessage(error.message || 'Erro desconhecido');
+      setResult({ success: false, error: error.message });
     } finally {
       setIsLoading(false);
     }
@@ -73,99 +69,101 @@ export const SecurityPolicyTester: React.FC = () => {
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-amber-500" />
+        <CardTitle className="text-lg flex items-center justify-between">
           <span>Teste de Políticas de Segurança (RLS)</span>
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="space-y-4 pt-2">
-        <div className="grid grid-cols-2 gap-3">
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium block mb-1.5">Tabela</label>
-            <Select 
-              value={selectedTable} 
-              onValueChange={(value) => setSelectedTable(value)}
-            >
+            <label className="block text-sm font-medium leading-none pb-1">Tabela</label>
+            <Select onValueChange={setTable} defaultValue={table}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione uma tabela" />
               </SelectTrigger>
               <SelectContent>
-                {tables.map((table) => (
-                  <SelectItem key={table} value={table}>
-                    {table}
-                  </SelectItem>
+                {tables.map(table => (
+                  <SelectItem key={table} value={table}>{table}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           
           <div>
-            <label className="text-sm font-medium block mb-1.5">Operaç��o</label>
-            <Select 
-              value={operation} 
-              onValueChange={(value) => setOperation(value as any)}
-            >
+            <label className="block text-sm font-medium leading-none pb-1">Operação</label>
+            <Select onValueChange={setOperation} defaultValue={operation}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione uma operação" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="SELECT">SELECT (Leitura)</SelectItem>
-                <SelectItem value="INSERT">INSERT (Inserção)</SelectItem>
-                <SelectItem value="UPDATE">UPDATE (Atualização)</SelectItem>
-                <SelectItem value="DELETE">DELETE (Remoção)</SelectItem>
+                {operations.map(operation => (
+                  <SelectItem key={operation} value={operation}>{operation}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
         </div>
         
-        {operation !== 'SELECT' && (
-          <Alert variant="default" className="mt-2 bg-amber-50 text-amber-800 border-amber-200">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Por segurança, operações de escrita são apenas simuladas.
-            </AlertDescription>
-          </Alert>
-        )}
+        <div>
+          <label className="block text-sm font-medium leading-none pb-1">User ID (opcional)</label>
+          <Textarea 
+            placeholder="ID do usuário para testar a política (se aplicável)"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+          />
+        </div>
         
-        <Button 
-          onClick={testAccess} 
-          disabled={isLoading} 
-          className="w-full flex items-center gap-2"
-        >
-          <Play className="h-4 w-4" />
-          <span>Testar Acesso</span>
-          {isLoading && <span className="ml-2 animate-spin">⏳</span>}
-        </Button>
-        
-        {error && (
-          <Alert variant="destructive" className="mt-2">
+        {errorMessage && (
+          <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <span className="font-medium">Erro:</span> {error}
-            </AlertDescription>
+            <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>
         )}
         
         {result && (
-          <div className="mt-3">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="rounded-md border p-4 bg-muted">
+            <h4 className="text-sm font-medium">Resultado:</h4>
+            {result.success ? (
               <Badge variant="outline" className="bg-green-50 text-green-700">
                 Sucesso
               </Badge>
-              <span className="text-sm text-muted-foreground">
-                {Array.isArray(result) ? `${result.length} registros encontrados` : 'Operação simulada'}
-              </span>
-            </div>
-            <div className="bg-slate-50 p-3 rounded-md border overflow-auto max-h-48">
-              <pre className="text-xs">{JSON.stringify(result, null, 2)}</pre>
-            </div>
+            ) : (
+              <Badge variant="outline" className="bg-red-50 text-red-700">
+                Falha
+              </Badge>
+            )}
+            
+            {result.data && (
+              <div className="mt-2 text-xs">
+                <pre>{JSON.stringify(result.data, null, 2)}</pre>
+              </div>
+            )}
+            
+            {result.error && (
+              <div className="mt-2 text-xs text-red-600">
+                Erro: {result.error}
+              </div>
+            )}
           </div>
         )}
       </CardContent>
       
-      <CardFooter className="pt-2 border-t flex justify-between items-center text-xs text-muted-foreground">
-        <span>As permissões testadas são baseadas no usuário atual</span>
+      <CardFooter>
+        <Button 
+          onClick={testSecurityPolicy} 
+          disabled={isLoading}
+          className="w-full"
+        >
+          {isLoading ? (
+            <>
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+              Testando...
+            </>
+          ) : (
+            'Testar Política de Segurança'
+          )}
+        </Button>
       </CardFooter>
     </Card>
   );
