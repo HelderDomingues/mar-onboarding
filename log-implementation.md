@@ -12,8 +12,52 @@
 
 ## Novos Registros de Implementação
 
-### 14/04/2025 - Análise do Questionário MAR e Plano de Reestruturação
+### 15/04/2025 - Preparação para Reestruturação do Questionário MAR
 **Status:** Em andamento
+
+#### Descrição
+- Concluída análise completa do documento de referência do questionário MAR
+- Mapeados todos os 9 módulos do questionário com seus respectivos tipos de perguntas
+- Criado plano detalhado de reestruturação em fases
+- Preparação do ambiente para modificações no banco de dados
+
+#### Detalhes Técnicos
+- Estrutura do questionário MAR conforme especificação:
+  - Início: Informações Pessoais (dados básicos do respondente)
+  - Módulo 1: Perfil Comportamental (6 perguntas de múltipla escolha)
+  - Módulo 2: Perfil da Empresa e Mercado (14 perguntas variadas)
+  - Módulo 3: Propósito, Valores e Visão (3 perguntas abertas)
+  - Módulo 4: Perfil dos Clientes (9 perguntas variadas)
+  - Módulo 5: Concorrentes (6 perguntas sobre concorrentes)
+  - Módulo 6: Marketing e Vendas (4 perguntas complexas)
+  - Módulo 8: Objetivos e Desafios (6 perguntas estratégicas)
+  - Módulo 9: Recursos Necessários e Observações Finais (2 perguntas)
+- Tipos de perguntas que precisam ser suportados:
+  - Texto curto (text)
+  - Texto longo (textarea)
+  - Múltipla escolha (radio)
+  - Seleção múltipla (checkbox)
+  - Lista suspensa (select)
+  - Número (number)
+  - Email (email)
+  - URL (url)
+  - Instagram (com prefixo especial)
+
+#### Plano de Ação
+1. Limpar/apagar dados existentes nas tabelas para evitar inconsistências
+2. Adaptar o esquema do banco de dados para comportar a nova estrutura
+3. Popular as tabelas com os módulos e perguntas corretas
+4. Ajustar as interfaces para suportar os novos tipos de perguntas
+5. Implementar sistema de log detalhado para rastrear o uso do questionário
+
+#### Impacto
+- Alinhamento do sistema com a especificação oficial do questionário MAR
+- Melhoria na experiência do usuário com questionário completo
+- Coleta de dados mais precisa e relevante para o diagnóstico MAR
+- Necessidade de possível migração de dados existentes (se houver)
+
+### 14/04/2025 - Análise do Questionário MAR e Plano de Reestruturação
+**Status:** Concluído
 
 #### Descrição
 - Identificado problema: estrutura atual do questionário não está alinhada com a especificação oficial
@@ -156,8 +200,12 @@
 - [x] Otimização de chamadas à API Supabase
 - [x] Implementação de mecanismos robustos de feedback visual
 - [x] Restauração de acesso ao questionário
-- [ ] Reestruturação completa do questionário MAR conforme especificação oficial
+- [x] Análise completa do questionário MAR conforme especificação oficial
+- [x] Planejamento da reestruturação completa do questionário
+- [ ] Implementação das modificações no banco de dados
+- [ ] População das tabelas com a nova estrutura de questionário
+- [ ] Adaptação da interface para suportar a nova estrutura
 - [ ] Implementação de sistema de log detalhado para questionário
+- [ ] Implementação de funcionalidades administrativas para análise de respostas
 
-O sistema foi significativamente estabilizado, com remoção de bugs críticos e otimização dos componentes principais. O acesso ao questionário foi restaurado e o fluxo de navegação corrigido. Correções de tipagem garantem que o código seja mais robusto e menos propenso a erros durante o desenvolvimento. Agora o foco está na reestruturação completa do questionário MAR para alinhá-lo com a especificação oficial.
-
+O sistema foi significativamente estabilizado, com remoção de bugs críticos e otimização dos componentes principais. O acesso ao questionário foi restaurado e o fluxo de navegação corrigido. Correções de tipagem garantem que o código seja mais robusto e menos propenso a erros durante o desenvolvimento. Agora o foco está na reestruturação completa do questionário MAR para alinhá-lo com a especificação oficial, conforme plano detalhado.

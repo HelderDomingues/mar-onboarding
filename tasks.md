@@ -1,37 +1,77 @@
 
 # Tasks do Projeto MAR - Crie Valor Consultoria
 
-## Novas Tarefas Prioritárias - Reestruturação do Questionário MAR
+## Plano de Reestruturação do Questionário MAR - Abril 2025
 
-### 15/04/2025 - Restruturação do Questionário MAR
-- [ ] Analisar estrutura completa do questionário conforme documento de referência
-- [ ] Limpar dados existentes nas tabelas de questionário
-- [ ] Adaptar esquema do banco de dados para suportar a nova estrutura:
-  - [ ] Atualizar `quiz_modules` para 9 módulos completos
-  - [ ] Ajustar `quiz_questions` para todos os tipos de perguntas necessários
-  - [ ] Modificar `quiz_options` para comportar opções complexas
-  - [ ] Garantir compatibilidade dos tipos de perguntas com a especificação
-- [ ] Popular tabelas com dados corretos:
-  - [ ] Criar 9 módulos
-  - [ ] Inserir todas as perguntas com seus respectivos tipos
-  - [ ] Configurar opções para perguntas de múltipla escolha
-- [ ] Implementar sistema de logging detalhado para o questionário
-- [ ] Atualizar interface para suportar todos os tipos de perguntas
-- [ ] Testar a funcionalidade completa do questionário
+### Etapa 1: Preparação e Análise - 14/04/2025
+- [x] Analisar documento de referência do questionário MAR
+- [x] Mapear todos os 9 módulos e suas perguntas
+- [x] Identificar tipos de perguntas necessários
+- [x] Verificar compatibilidade da estrutura atual do banco de dados
+- [x] Atualizar tasks.md com plano detalhado
+- [x] Atualizar log-implementation.md com registro das mudanças
 
-### 16/04/2025 - Implementação do Sistema de Log Aprimorado
-- [ ] Desenvolver sistema de log com acompanhamento detalhado das ações do usuário
-- [ ] Implementar rastreamento de:
-  - [ ] Autenticação (login/logout)
-  - [ ] Navegação entre páginas
-  - [ ] Acesso a funcionalidades do sistema
-  - [ ] Erros e exceções com detalhes contextuais
-  - [ ] Ações administrativas
-  - [ ] Progresso do questionário
-- [ ] Criar interface administrativa para visualização dos logs
-- [ ] Implementar exportação de logs em diferentes formatos
+### Etapa 2: Reestruturação do Banco de Dados - 15/04/2025
+- [ ] Limpar dados existentes nas tabelas de questionário (backup se necessário)
+- [ ] Modificar estrutura da tabela `quiz_modules` para comportar 9 módulos
+- [ ] Adaptar estrutura da tabela `quiz_questions` para novos tipos de pergunta
+- [ ] Criar/atualizar tabela `quiz_sections` para organizar perguntas por seção
+- [ ] Atualizar tabela `quiz_options` para suportar opções complexas de múltipla escolha
+- [ ] Implementar mecanismo de controle de progresso por módulo
+- [ ] Atualizar políticas RLS para novas estruturas
+- [ ] Testar integridade referencial após mudanças
+
+### Etapa 3: População do Banco com Questionário MAR - 16/04/2025
+- [ ] Inserir 9 módulos do questionário MAR
+- [ ] Criar todas as perguntas com tipos corretos (text, radio, checkbox, etc.)
+- [ ] Configurar opções de resposta para perguntas de múltipla escolha
+- [ ] Adicionar validações específicas por tipo de pergunta
+- [ ] Adicionar textos de ajuda (hints) onde necessário
+- [ ] Testar a integridade dos dados inseridos
+
+### Etapa 4: Atualização de Componentes e Interface - 17/04/2025
+- [ ] Adaptar componente QuestionCard para suportar novos tipos de pergunta
+- [ ] Atualizar componente QuizContent para navegação entre 9 módulos
+- [ ] Adaptar componente QuizProgress para refletir nova estrutura
+- [ ] Criar visualização específica para cada tipo de pergunta
+- [ ] Implementar validação de entrada por tipo de pergunta
+- [ ] Testar fluxo completo do questionário
+
+### Etapa 5: Sistema de Logging Aprimorado - 18/04/2025
+- [ ] Expandir sistema de log para rastrear ações no questionário
+- [ ] Implementar métricas de tempo por módulo e pergunta
+- [ ] Adicionar registro de erros de validação
+- [ ] Criar visualização administrativa de logs
+- [ ] Adicionar exportação de logs para análise
+
+### Etapa 6: Funcionalidades Administrativas - 19/04/2025
+- [ ] Implementar exportação de respostas em PDF
+- [ ] Implementar exportação de respostas em formato de planilha
+- [ ] Criar dashboard administrativo para análise de respostas
+- [ ] Desenvolver métricas e visualizações de dados coletados
+- [ ] Testar funcionalidades administrativas
+
+### Etapa 7: Testes e Ajustes Finais - 20/04/2025
+- [ ] Realizar testes de todos os tipos de pergunta
+- [ ] Validar navegação entre módulos
+- [ ] Verificar armazenamento correto de respostas
+- [ ] Testar exportação de dados
+- [ ] Validar permissões e níveis de acesso
+- [ ] Corrigir bugs e problemas identificados
 
 ## Histórico de Implementações
+
+### 15/04/2025 - Preparação para Reestruturação do Questionário MAR
+- ✅ Análise completa do documento de referência do questionário MAR
+- ✅ Mapeamento dos 9 módulos e tipos de perguntas necessários
+- ✅ Atualização dos arquivos de log e documentação
+- ✅ Planejamento detalhado da reestruturação do questionário
+- ✅ Preparação do ambiente para modificações no banco de dados
+
+### 14/04/2025 - Análise do Questionário MAR e Plano de Reestruturação
+- ✅ Identificado problema: estrutura atual do questionário não está alinhada com a especificação oficial
+- ✅ Especificação completa do questionário MAR obtida do documento de referência
+- ✅ Necessária reestruturação completa das tabelas e dados do questionário
 
 ### 14/04/2025 - Correção de Erros de Tipagem no QuizConfigurationPanel
 - ✅ Corrigido erro de tipagem no componente QuizConfigurationPanel.tsx
@@ -59,45 +99,6 @@
 - ✅ Adição de indicadores de carregamento no componente ProtectedRoute
 - ✅ Correção do fluxo de autenticação para prevenir congelamento da aplicação
 
-### 17/04/2025 - Implementação de Padrão Singleton para Cliente Supabase
-- ✅ Implementação de padrão singleton para evitar múltiplas instâncias de GoTrueClient
-- ✅ Refatoração do cliente Supabase para usar funções de fábrica que retornam instâncias únicas
-- ✅ Correção de aviso no DevTools sobre múltiplas instâncias de GoTrueClient
-- ✅ Melhoria na estabilidade do processo de autenticação
-
-### 16/04/2025 - Correção de Acesso a Propriedade Protegida supabaseKey
-- ✅ Correção do erro de acesso à propriedade protegida 'supabaseKey' no SecurityPolicyTester
-- ✅ Exportação da constante SUPABASE_ANON_KEY para uso direto nos componentes
-- ✅ Padronização do uso de chaves de API em componentes de diagnóstico
-
-### 15/04/2025 - Correções de Exportação de Componentes
-- ✅ Correção do erro de exportação de componentes nos arquivos ConnectionStatus.tsx e SecurityPolicyTester.tsx
-- ✅ Padronização das exportações utilizando export default para evitar incompatibilidades
-- ✅ Ajuste nas importações em DiagnosticoSistema.tsx
-
-### 15/04/2025 - Correções de API Key e Tipos TypeScript
-- ✅ Correção de erros de tipagem no componente SecurityPolicyTester
-- ✅ Remoção de acesso à propriedade protegida 'rest' no cliente Supabase
-- ✅ Adição de headers explícitos em cada requisição para resolver erro "No API key found"
-- ✅ Manutenção da função de diagnóstico para testar conexão com headers explícitos
-
-### 14/04/2025 - Correções de Problemas de Conexão
-- ✅ Correção de problema "No API key found in request" adicionando headers adequados
-- ✅ Resolução de erros 406 (Not Acceptable) nas requisições ao Supabase
-- ✅ Refatoração do hook de autenticação para melhorar o fluxo de autenticação
-- ✅ Adição de função de teste de conexão para diagnóstico de problemas
-
-### 14/04/2025 - Correções e Melhorias
-- ✅ Correção de erros de tipo TypeScript nos componentes de diagnóstico
-- ✅ Substituição de acesso à propriedade protegida supabaseUrl
-- ✅ Correção de tipo de alerta no componente SecurityPolicyTester
-
-### 13/04/2025 - Configuração de Segurança RLS
-- ✅ Implementação de políticas RLS para todas as tabelas do sistema
-- ✅ Correção de funções SECURITY DEFINER para evitar problemas de recursão
-- ✅ Configuração de permissões de admin para o usuário helder@crievalor.com.br
-- ✅ Atualização das chaves do Supabase no arquivo client.ts
-
 ## Tarefas Pendentes
 
 ### Prioridade Alta
@@ -111,7 +112,8 @@
 - [ ] Refatorar o componente `src/components/admin/ImportUsers.tsx` (muito extenso, 462 linhas)
 - [ ] Refatorar o componente `src/components/SupabaseConnectionTest.tsx` (muito extenso, 329 linhas)
 - [ ] Refatorar o componente `src/components/debug/ConnectionTester.tsx` (muito extenso, 242 linhas)
-- [ ] Refatorar o componente `src/components/quiz/QuizConfigurationPanel.tsx` (muito extenso, 229 linhas)
+- [ ] Refatorar o componente `src/components/quiz/QuizConfigurationPanel.tsx` (muito extenso, 382 linhas)
+- [ ] Refatorar o componente `src/components/quiz/QuestionCard.tsx` (muito extenso, 324 linhas)
 - [ ] Refatorar o componente `src/pages/SystemLog.tsx` (muito extenso, 277 linhas)
 - [ ] Refatorar o componente `src/pages/Quiz.tsx` (muito extenso, 504 linhas)
 - [ ] Refatorar o componente `src/hooks/useAuth.tsx` (muito extenso, 270 linhas)
@@ -128,16 +130,3 @@
 - O sistema de log será expandido para monitorar detalhadamente o uso do questionário
 - Todos os usuários agora podem ler, editar e atualizar seus próprios dados
 - Administradores têm acesso completo a todos os dados do sistema
-- As funções RPC foram atualizadas para usar SECURITY DEFINER e evitar problemas de recursão
-- Foram corrigidos erros de tipagem TypeScript nos componentes de diagnóstico
-- Headers adequados foram adicionados para resolver problemas de erro 406 (Not Acceptable) e "No API key found"
-- O hook de autenticação foi refatorado para melhorar a estabilidade
-- Corrigidos problemas de exportação/importação de componentes que causavam erros de runtime
-- Resolvidos erros de acesso à propriedade protegida 'rest' no cliente Supabase
-- Corrigido erro de acesso à propriedade protegida 'supabaseKey' no componente SecurityPolicyTester
-- Implementado padrão singleton para evitar múltiplas instâncias de GoTrueClient
-- Corrigido problema de loop infinito/congelamento durante o processo de autenticação
-- Corrigido erro com componentes SelectItem que não possuíam valores válidos
-- Restaurado acesso ao questionário e corrigido fluxo de navegação
-- Corrigidos erros de tipagem em QuizConfigurationPanel e adicionada interface QuizSection
-
