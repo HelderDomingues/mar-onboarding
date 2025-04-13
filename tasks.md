@@ -9,6 +9,11 @@
 - ✅ Configuração de permissões de admin para o usuário helder@crievalor.com.br
 - ✅ Atualização das chaves do Supabase no arquivo client.ts
 
+### 14/04/2025 - Correções e Melhorias
+- ✅ Correção de erros de tipo TypeScript nos componentes de diagnóstico
+- ✅ Substituição de acesso à propriedade protegida supabaseUrl
+- ✅ Correção de tipo de alerta no componente SecurityPolicyTester
+
 ## Tarefas Pendentes
 
 ### Prioridade Alta
@@ -18,7 +23,7 @@
 - [ ] Implementar componente para exportação de respostas do questionário em formato de planilha
 
 ### Prioridade Média
-- [ ] Refatorar o componente `src/pages/admin/Users.tsx` (muito extenso, 343 linhas)
+- [ ] Refatorar o componente `src/hooks/useAuth.tsx` (muito extenso, 303 linhas)
 - [ ] Refatorar o componente `src/components/admin/ImportUsers.tsx` (muito extenso, 462 linhas)
 - [ ] Refatorar o componente `src/components/SupabaseConnectionTest.tsx` (muito extenso, 329 linhas)
 
@@ -31,3 +36,4 @@
 - Todos os usuários agora podem ler, editar e atualizar seus próprios dados
 - Administradores têm acesso completo a todos os dados do sistema
 - As funções RPC foram atualizadas para usar SECURITY DEFINER e evitar problemas de recursão
+- Foram corrigidos erros de tipagem TypeScript nos componentes de diagnóstico

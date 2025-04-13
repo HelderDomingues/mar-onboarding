@@ -121,7 +121,7 @@ const SecurityPolicyTester = () => {
         </div>
         
         {operation !== 'SELECT' && (
-          <Alert variant="warning" className="mt-2 bg-amber-50 text-amber-800 border-amber-200">
+          <Alert variant="default" className="mt-2 bg-amber-50 text-amber-800 border-amber-200">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               Por segurança, operações de escrita são apenas simuladas.

@@ -106,7 +106,9 @@ const DiagnosticoSistema = () => {
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="font-medium">URL do Supabase:</div>
-                    <div className="truncate">{supabase.supabaseUrl}</div>
+                    <div className="truncate">
+                      {'https://btzvozqajqknqfoymxpg.supabase.co'}
+                    </div>
                     
                     <div className="font-medium">Ambiente:</div>
                     <div>{process.env.NODE_ENV}</div>

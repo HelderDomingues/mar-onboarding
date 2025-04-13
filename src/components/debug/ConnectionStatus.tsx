@@ -94,7 +94,9 @@ const ConnectionStatus = () => {
       <CardContent className="space-y-3 pt-0">
         <div className="text-sm grid grid-cols-2 gap-2">
           <div className="font-medium">URL do Supabase:</div>
-          <div className="truncate">{supabase.supabaseUrl}</div>
+          <div className="truncate">
+            {'https://btzvozqajqknqfoymxpg.supabase.co'}
+          </div>
           
           <div className="font-medium">Status da Sessão:</div>
           <div>
