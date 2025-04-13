@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +10,7 @@ import { AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
  * Componente de diagnóstico para verificar o status da conexão com o Supabase
  * e as permissões de acesso do usuário atual.
  */
-const ConnectionStatus = () => {
+export const ConnectionStatus: React.FC = () => {
   const [status, setStatus] = useState<'checking' | 'success' | 'error'>('checking');
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [userId, setUserId] = useState<string | null>(null);

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +10,7 @@ import { AlertCircle, Play, ShieldCheck } from 'lucide-react';
 /**
  * Componente para testar as políticas de segurança (RLS) das tabelas
  */
-const SecurityPolicyTester = () => {
+export const SecurityPolicyTester: React.FC = () => {
   const [selectedTable, setSelectedTable] = useState<string>('profiles');
   const [operation, setOperation] = useState<'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE'>('SELECT');
   const [result, setResult] = useState<any>(null);
@@ -102,7 +101,7 @@ const SecurityPolicyTester = () => {
           </div>
           
           <div>
-            <label className="text-sm font-medium block mb-1.5">Operação</label>
+            <label className="text-sm font-medium block mb-1.5">Operaç��o</label>
             <Select 
               value={operation} 
               onValueChange={(value) => setOperation(value as any)}

@@ -11,8 +11,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ConnectionStatus } from '@/components/debug/ConnectionStatus';
-import { SecurityPolicyTester } from '@/components/debug/SecurityPolicyTester';
+import ConnectionStatus from '@/components/debug/ConnectionStatus';
+import SecurityPolicyTester from '@/components/debug/SecurityPolicyTester';
 import ConnectionTester from '@/components/debug/ConnectionTester';
 import { testSupabaseConnection } from '@/utils/supabaseUtils';
 
