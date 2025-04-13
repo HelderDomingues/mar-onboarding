@@ -31,6 +31,11 @@
 - ✅ Adição de headers explícitos em cada requisição para resolver erro "No API key found"
 - ✅ Manutenção da função de diagnóstico para testar conexão com headers explícitos
 
+### 16/04/2025 - Correção de Acesso a Propriedade Protegida supabaseKey
+- ✅ Correção do erro de acesso à propriedade protegida 'supabaseKey' no SecurityPolicyTester
+- ✅ Exportação da constante SUPABASE_ANON_KEY para uso direto nos componentes
+- ✅ Padronização do uso de chaves de API em componentes de diagnóstico
+
 ## Tarefas Pendentes
 
 ### Prioridade Alta
@@ -59,3 +64,5 @@
 - O hook de autenticação foi refatorado para melhorar a estabilidade
 - Corrigidos problemas de exportação/importação de componentes que causavam erros de runtime
 - Resolvidos erros de acesso à propriedade protegida 'rest' no cliente Supabase
+- Corrigido erro de acesso à propriedade protegida 'supabaseKey' no componente SecurityPolicyTester
+

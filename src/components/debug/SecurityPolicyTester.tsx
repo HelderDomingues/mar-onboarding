@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
+// Importando a chave anônima do arquivo onde está definida
+import { SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
+
 /**
  * Componente para testar as políticas de segurança (RLS) das tabelas
  */
@@ -34,7 +37,7 @@ const SecurityPolicyTester: React.FC = () => {
       // Adicionar headers explícitos em cada requisição para garantir que a API key seja enviada
       const options = {
         headers: {
-          'apikey': supabase.supabaseKey,
+          'apikey': SUPABASE_ANON_KEY,
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
