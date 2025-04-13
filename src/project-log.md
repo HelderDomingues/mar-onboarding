@@ -1,6 +1,35 @@
+
 # Log do Sistema MAR - Crie Valor Consultoria
 
 ## Histórico do Projeto
+
+### Capítulo 8: Implementação Completa do Questionário MAR
+**Data: Abril de 2025**
+
+O questionário MAR foi completamente reestruturado seguindo a especificação oficial:
+
+1. **Estrutura implementada**:
+   - 9 módulos completos conforme documentação oficial
+   - Sistema de seções para organizar perguntas dentro dos módulos
+   - Suporte a múltiplos tipos de pergunta, incluindo tipos especiais
+   - Campos para validação, placeholders, prefixos e textos de ajuda
+
+2. **Implementação no banco de dados**:
+   - Modificadas tabelas `quiz_modules`, `quiz_questions` e `quiz_options`
+   - Criada nova tabela `quiz_sections` para organização hierárquica
+   - Adicionado suporte para armazenamento de opções em formato JSON
+   - Implementadas políticas RLS para controle de acesso
+
+3. **Detalhes do questionário**:
+   - Módulo 1: Informações Pessoais (dados básicos do respondente)
+   - Módulo 2: Perfil Comportamental (perguntas de múltipla escolha)
+   - Módulo 3: Perfil da Empresa e Mercado (informações sobre empresa e mercado)
+   - Módulo 4: Propósito, Valores e Visão (elementos fundamentais do negócio)
+   - Módulo 5: Perfil dos Clientes (caracterização do público-alvo)
+   - Módulo 6: Concorrentes (análise de concorrentes)
+   - Módulo 7: Marketing e Vendas (estratégias de marketing)
+   - Módulo 8: Objetivos e Desafios (metas e obstáculos)
+   - Módulo 9: Recursos Necessários e Observações Finais (recursos e conclusão)
 
 ### Capítulo 7: Restruturação do Questionário MAR
 **Data: Abril de 2025**
@@ -137,8 +166,38 @@ Durante esta fase, estabelecemos os requisitos principais:
 
 ## Problemas Conhecidos e Soluções
 
+### Problema 5: Estrutura do Questionário MAR
+**Descrição**: A estrutura do questionário precisava ser completamente reestruturada para seguir a especificação oficial com 9 módulos.
+
+**Solução**: Implementação completa da nova estrutura no banco de dados:
+```sql
+-- Criar tabela para seções
+CREATE TABLE IF NOT EXISTS public.quiz_sections (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  module_id UUID REFERENCES public.quiz_modules(id),
+  name TEXT NOT NULL,
+  order_number INTEGER NOT NULL,
+  description TEXT
+);
+
+-- Expandir tabela de perguntas
+ALTER TABLE public.quiz_questions 
+ADD COLUMN IF NOT EXISTS category TEXT,
+ADD COLUMN IF NOT EXISTS validation TEXT,
+ADD COLUMN IF NOT EXISTS placeholder TEXT,
+ADD COLUMN IF NOT EXISTS prefix TEXT;
+
+-- Popular com os 9 módulos corretos
+INSERT INTO public.quiz_modules (title, description, order_number)
+VALUES 
+('Informações Pessoais', 'Dados básicos do respondente', 1),
+('Perfil Comportamental', 'Perguntas sobre seu perfil comportamental', 2),
+-- ... outros módulos ...
+('Recursos Necessários e Observações Finais', 'Recursos para crescimento e comentários adicionais', 9);
+```
+
 ### Problema 4: Estrutura do Questionário Incompatível
-**Descrição**: A estrutura atual do questionário não está alinhada com a especificação oficial do MAR, que requer 9 módulos detalhados.
+**Descrição**: A estrutura atual do questionário não estava alinhada com a especificação oficial do MAR, que requer 9 módulos detalhados.
 
 **Solução**: Implementação de uma restruturação completa:
 ```sql
@@ -154,7 +213,7 @@ ADD COLUMN IF NOT EXISTS question_text TEXT,
 ADD COLUMN IF NOT EXISTS question_type TEXT;
 
 -- Inserir novos módulos e questões
--- [Implementação pendente]
+-- [Implementação concluída]
 ```
 
 ### Problema 3: Inconsistência no Registro de Emails
@@ -207,22 +266,24 @@ $$;
 
 ## Plano de Implementação Final
 
-1. **Restruturação do Questionário MAR**:
-   - Adaptar o banco de dados para a nova estrutura
-   - Inserir todos os módulos e perguntas
-   - Ajustar a interface para os novos tipos de pergunta
+1. **Adaptação dos Componentes Frontend para o Questionário MAR**:
+   - Atualizar componentes para renderizar corretamente todos os tipos de pergunta
+   - Implementar validação específica para cada tipo de pergunta
+   - Ajustar fluxo de navegação para os 9 módulos
 
 2. **Sistema de Logs Aprimorado**:
-   - Implementar logging detalhado
+   - Implementar logging detalhado para ações no questionário
+   - Registrar tempo gasto em cada módulo e pergunta
    - Criar interface para visualização e análise dos logs
-   - Permitir exportação dos logs em diferentes formatos
 
-3. **Padronização das Políticas RLS**:
-   - Garantir que todas as políticas sigam o mesmo padrão
-   - Utilizar funções SECURITY DEFINER para evitar recursão
+3. **Funcionalidades Administrativas**:
+   - Implementar exportação de respostas em PDF
+   - Implementar exportação de respostas em formato de planilha
+   - Criar dashboard para análise das respostas
 
-4. **Correção da Tabela user_roles**:
-   - Garantir que o campo de email seja preenchido corretamente
-   - Configurar o administrador principal com email correto
+4. **Testes e Refinamentos Finais**:
+   - Testar todos os tipos de pergunta
+   - Verificar fluxo completo do questionário
+   - Validar exportação e análise de dados
 
 Este log será continuamente atualizado conforme o projeto avança.

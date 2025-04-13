@@ -36,10 +36,18 @@ export type Database = {
       quiz_answers: {
         Row: {
           answer: string | null
+          answered_at: string | null
           created_at: string
           id: string
+          module_id: string | null
+          module_number: number | null
+          module_title: string | null
           question_id: string
           question_text: string
+          question_type: string | null
+          section_id: string | null
+          section_name: string | null
+          time_spent: number | null
           updated_at: string
           user_email: string
           user_id: string
@@ -47,10 +55,18 @@ export type Database = {
         }
         Insert: {
           answer?: string | null
+          answered_at?: string | null
           created_at?: string
           id?: string
+          module_id?: string | null
+          module_number?: number | null
+          module_title?: string | null
           question_id: string
           question_text: string
+          question_type?: string | null
+          section_id?: string | null
+          section_name?: string | null
+          time_spent?: number | null
           updated_at?: string
           user_email: string
           user_id: string
@@ -58,10 +74,18 @@ export type Database = {
         }
         Update: {
           answer?: string | null
+          answered_at?: string | null
           created_at?: string
           id?: string
+          module_id?: string | null
+          module_number?: number | null
+          module_title?: string | null
           question_id?: string
           question_text?: string
+          question_type?: string | null
+          section_id?: string | null
+          section_name?: string | null
+          time_spent?: number | null
           updated_at?: string
           user_email?: string
           user_id?: string
@@ -76,6 +100,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      quiz_answers_backup: {
+        Row: {
+          answer: string | null
+          created_at: string | null
+          id: string | null
+          question_id: string | null
+          question_text: string | null
+          updated_at: string | null
+          user_email: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          answer?: string | null
+          created_at?: string | null
+          id?: string | null
+          question_id?: string | null
+          question_text?: string | null
+          updated_at?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          answer?: string | null
+          created_at?: string | null
+          id?: string | null
+          question_id?: string | null
+          question_text?: string | null
+          updated_at?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
       }
       quiz_modules: {
         Row: {
@@ -98,6 +158,30 @@ export type Database = {
           id?: string
           order_number?: number
           title?: string
+        }
+        Relationships: []
+      }
+      quiz_modules_backup: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string | null
+          order_number: number | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          order_number?: number | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          order_number?: number | null
+          title?: string | null
         }
         Relationships: []
       }
@@ -125,36 +209,141 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_options_backup: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          order_number: number | null
+          question_id: string | null
+          text: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          order_number?: number | null
+          question_id?: string | null
+          text?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          order_number?: number | null
+          question_id?: string | null
+          text?: string | null
+        }
+        Relationships: []
+      }
       quiz_questions: {
         Row: {
+          category: string | null
           created_at: string
+          dependency: Json | null
+          hint: string | null
           id: string
+          max_options: number | null
+          module_id: string | null
           module_number: number
           module_title: string
           options: Json | null
+          options_json: Json | null
+          placeholder: string | null
+          prefix: string | null
           question_number: number
           question_text: string
           question_type: string
+          required: boolean | null
+          section_id: string | null
+          validation: string | null
         }
         Insert: {
+          category?: string | null
           created_at?: string
+          dependency?: Json | null
+          hint?: string | null
           id?: string
+          max_options?: number | null
+          module_id?: string | null
           module_number: number
           module_title: string
           options?: Json | null
+          options_json?: Json | null
+          placeholder?: string | null
+          prefix?: string | null
           question_number: number
           question_text: string
           question_type: string
+          required?: boolean | null
+          section_id?: string | null
+          validation?: string | null
         }
         Update: {
+          category?: string | null
           created_at?: string
+          dependency?: Json | null
+          hint?: string | null
           id?: string
+          max_options?: number | null
+          module_id?: string | null
           module_number?: number
           module_title?: string
           options?: Json | null
+          options_json?: Json | null
+          placeholder?: string | null
+          prefix?: string | null
           question_number?: number
           question_text?: string
           question_type?: string
+          required?: boolean | null
+          section_id?: string | null
+          validation?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions_backup: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          module_number: number | null
+          module_title: string | null
+          options: Json | null
+          question_number: number | null
+          question_text: string | null
+          question_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          module_number?: number | null
+          module_title?: string | null
+          options?: Json | null
+          question_number?: number | null
+          question_text?: string | null
+          question_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          module_number?: number | null
+          module_title?: string | null
+          options?: Json | null
+          question_number?: number | null
+          question_text?: string | null
+          question_type?: string | null
         }
         Relationships: []
       }
@@ -199,13 +388,86 @@ export type Database = {
           },
         ]
       }
+      quiz_respostas_completas_backup: {
+        Row: {
+          data_submissao: string | null
+          id: string | null
+          respostas: Json | null
+          submission_id: string | null
+          user_email: string | null
+          user_id: string | null
+          user_name: string | null
+          webhook_processed: boolean | null
+        }
+        Insert: {
+          data_submissao?: string | null
+          id?: string | null
+          respostas?: Json | null
+          submission_id?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+          webhook_processed?: boolean | null
+        }
+        Update: {
+          data_submissao?: string | null
+          id?: string | null
+          respostas?: Json | null
+          submission_id?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+          webhook_processed?: boolean | null
+        }
+        Relationships: []
+      }
+      quiz_sections: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          module_id: string
+          name: string
+          order_number: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          module_id: string
+          name: string
+          order_number: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          module_id?: string
+          name?: string
+          order_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_sections_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_submissions: {
         Row: {
           completed_at: string | null
           current_module: number
+          device_info: string | null
           id: string
           is_complete: boolean
+          last_active: string | null
+          modules_completed: number[] | null
+          sessions: number | null
           started_at: string
+          total_time_spent: number | null
           user_email: string
           user_id: string
           user_name: string | null
@@ -214,9 +476,14 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           current_module?: number
+          device_info?: string | null
           id?: string
           is_complete?: boolean
+          last_active?: string | null
+          modules_completed?: number[] | null
+          sessions?: number | null
           started_at?: string
+          total_time_spent?: number | null
           user_email: string
           user_id: string
           user_name?: string | null
@@ -225,11 +492,52 @@ export type Database = {
         Update: {
           completed_at?: string | null
           current_module?: number
+          device_info?: string | null
           id?: string
           is_complete?: boolean
+          last_active?: string | null
+          modules_completed?: number[] | null
+          sessions?: number | null
           started_at?: string
+          total_time_spent?: number | null
           user_email?: string
           user_id?: string
+          user_name?: string | null
+          webhook_processed?: boolean | null
+        }
+        Relationships: []
+      }
+      quiz_submissions_backup: {
+        Row: {
+          completed_at: string | null
+          current_module: number | null
+          id: string | null
+          is_complete: boolean | null
+          started_at: string | null
+          user_email: string | null
+          user_id: string | null
+          user_name: string | null
+          webhook_processed: boolean | null
+        }
+        Insert: {
+          completed_at?: string | null
+          current_module?: number | null
+          id?: string | null
+          is_complete?: boolean | null
+          started_at?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+          webhook_processed?: boolean | null
+        }
+        Update: {
+          completed_at?: string | null
+          current_module?: number | null
+          id?: string | null
+          is_complete?: boolean | null
+          started_at?: string | null
+          user_email?: string | null
+          user_id?: string | null
           user_name?: string | null
           webhook_processed?: boolean | null
         }
@@ -278,6 +586,14 @@ export type Database = {
       }
       is_admin: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      update_user_quiz_progress: {
+        Args: {
+          p_user_id: string
+          p_current_module: number
+          p_completed_modules?: number[]
+        }
         Returns: boolean
       }
     }

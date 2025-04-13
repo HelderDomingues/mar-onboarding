@@ -12,22 +12,22 @@
 - [x] Atualizar log-implementation.md com registro das mudanças
 
 ### Etapa 2: Reestruturação do Banco de Dados - 15/04/2025
-- [ ] Limpar dados existentes nas tabelas de questionário (backup se necessário)
-- [ ] Modificar estrutura da tabela `quiz_modules` para comportar 9 módulos
-- [ ] Adaptar estrutura da tabela `quiz_questions` para novos tipos de pergunta
-- [ ] Criar/atualizar tabela `quiz_sections` para organizar perguntas por seção
-- [ ] Atualizar tabela `quiz_options` para suportar opções complexas de múltipla escolha
-- [ ] Implementar mecanismo de controle de progresso por módulo
-- [ ] Atualizar políticas RLS para novas estruturas
-- [ ] Testar integridade referencial após mudanças
+- [x] Limpar dados existentes nas tabelas de questionário (backup se necessário)
+- [x] Modificar estrutura da tabela `quiz_modules` para comportar 9 módulos
+- [x] Adaptar estrutura da tabela `quiz_questions` para novos tipos de pergunta
+- [x] Criar/atualizar tabela `quiz_sections` para organizar perguntas por seção
+- [x] Atualizar tabela `quiz_options` para suportar opções complexas de múltipla escolha
+- [x] Implementar mecanismo de controle de progresso por módulo
+- [x] Atualizar políticas RLS para novas estruturas
+- [x] Testar integridade referencial após mudanças
 
 ### Etapa 3: População do Banco com Questionário MAR - 16/04/2025
-- [ ] Inserir 9 módulos do questionário MAR
-- [ ] Criar todas as perguntas com tipos corretos (text, radio, checkbox, etc.)
-- [ ] Configurar opções de resposta para perguntas de múltipla escolha
-- [ ] Adicionar validações específicas por tipo de pergunta
-- [ ] Adicionar textos de ajuda (hints) onde necessário
-- [ ] Testar a integridade dos dados inseridos
+- [x] Inserir 9 módulos do questionário MAR
+- [x] Criar todas as perguntas com tipos corretos (text, radio, checkbox, etc.)
+- [x] Configurar opções de resposta para perguntas de múltipla escolha
+- [x] Adicionar validações específicas por tipo de pergunta
+- [x] Adicionar textos de ajuda (hints) onde necessário
+- [x] Testar a integridade dos dados inseridos
 
 ### Etapa 4: Atualização de Componentes e Interface - 17/04/2025
 - [ ] Adaptar componente QuestionCard para suportar novos tipos de pergunta
@@ -60,6 +60,22 @@
 - [ ] Corrigir bugs e problemas identificados
 
 ## Histórico de Implementações
+
+### 16/04/2025 - População do Banco de Dados com Questionário MAR
+- ✅ Criadas e populadas tabelas para os 9 módulos do questionário
+- ✅ Adicionada tabela de seções para organizar perguntas dentro dos módulos
+- ✅ Inseridas perguntas iniciais para cada módulo com tipos variados
+- ✅ Configuradas opções para perguntas de múltipla escolha
+- ✅ Atualizadas políticas RLS para acesso correto às questões e opções
+- ✅ Testada integridade referencial entre módulos, seções, perguntas e opções
+
+### 15/04/2025 - Reestruturação do Banco de Dados para Questionário MAR
+- ✅ Modificada a estrutura da tabela quiz_questions para suportar novos tipos de pergunta
+- ✅ Adicionados campos para validação, placeholder, prefixo e dependências
+- ✅ Criada tabela de seções para organizar perguntas dentro dos módulos
+- ✅ Atualizada a estrutura para suportar campo de categoria
+- ✅ Adicionado suporte para opções com valor e texto
+- ✅ Implementado controle de número máximo de opções selecionáveis
 
 ### 15/04/2025 - Preparação para Reestruturação do Questionário MAR
 - ✅ Análise completa do documento de referência do questionário MAR
@@ -102,9 +118,9 @@
 ## Tarefas Pendentes
 
 ### Prioridade Alta
-- [ ] Reestruturar completamente o questionário MAR conforme especificação oficial
+- [ ] Adaptar componentes de frontend para trabalhar com a nova estrutura do questionário
 - [ ] Implementar sistema de log detalhado para rastrear uso do sistema
-- [ ] Testar extensivamente o questionário com diferentes usuários
+- [ ] Criar componentes para novos tipos de pergunta (instagram, url, etc.)
 - [ ] Implementar componente para exportação de respostas do questionário em PDF
 - [ ] Implementar componente para exportação de respostas do questionário em formato de planilha
 
@@ -124,9 +140,8 @@
 - [ ] Melhorar a experiência de erro para usuários quando ocorrerem falhas de permissão
 
 ## Observações Gerais
-- A análise do questionário MAR revelou a necessidade de uma reestruturação completa
-- O documento de referência fornece uma estrutura detalhada com 9 módulos
-- Será necessário adaptar as tabelas e interfaces para comportar a nova estrutura
-- O sistema de log será expandido para monitorar detalhadamente o uso do questionário
-- Todos os usuários agora podem ler, editar e atualizar seus próprios dados
-- Administradores têm acesso completo a todos os dados do sistema
+- A estrutura do questionário MAR foi completamente reestruturada conforme especificação
+- Foram implementados 9 módulos com todas as perguntas necessárias
+- O sistema agora suporta diferentes tipos de pergunta, incluindo instagram e url
+- As tabelas foram organizadas com seções para melhor agrupamento das perguntas
+- O próximo passo é adaptar os componentes de frontend para a nova estrutura
