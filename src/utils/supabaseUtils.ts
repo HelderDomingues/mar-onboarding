@@ -149,7 +149,7 @@ export const getQuizDetails = async (userId: string) => {
 
 // Completa o questionário manualmente para o usuário
 export const completeQuizManually = async (userId: string): Promise<boolean> => {
-  if (!userId) return false;
+  if (!userId || !supabaseAdmin) return false;
   
   try {
     logger.info('Iniciando processo para completar questionário manualmente', {
@@ -181,6 +181,47 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
       data: { userId, error }
     });
     return false;
+  }
+};
+
+// Função para depuração de conexão com API do Supabase
+export const testSupabaseConnection = async () => {
+  try {
+    // Fazer uma chamada simples para o Supabase para testar a conexão
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('count(*)', { count: 'exact', head: true });
+      
+    if (error) {
+      logger.error('Erro ao testar conexão com Supabase:', {
+        tag: 'Supabase',
+        data: { error }
+      });
+      return { 
+        success: false, 
+        error: error.message 
+      };
+    }
+    
+    logger.info('Teste de conexão com Supabase realizado com sucesso', {
+      tag: 'Supabase',
+      data: { result: 'OK' }
+    });
+    
+    return { 
+      success: true, 
+      message: 'Conexão estabelecida com sucesso'
+    };
+  } catch (error: any) {
+    logger.error('Exceção ao testar conexão com Supabase:', {
+      tag: 'Supabase',
+      data: { error }
+    });
+    
+    return { 
+      success: false, 
+      error: error.message || 'Erro desconhecido'
+    };
   }
 };
 

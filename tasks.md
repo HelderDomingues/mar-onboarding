@@ -14,6 +14,12 @@
 - ✅ Substituição de acesso à propriedade protegida supabaseUrl
 - ✅ Correção de tipo de alerta no componente SecurityPolicyTester
 
+### 14/04/2025 - Correções de Problemas de Conexão
+- ✅ Correção de problema "No API key found in request" adicionando headers adequados
+- ✅ Resolução de erros 406 (Not Acceptable) nas requisições ao Supabase
+- ✅ Refatoração do hook de autenticação para melhorar o fluxo de autenticação
+- ✅ Adição de função de teste de conexão para diagnóstico de problemas
+
 ## Tarefas Pendentes
 
 ### Prioridade Alta
@@ -37,3 +43,5 @@
 - Administradores têm acesso completo a todos os dados do sistema
 - As funções RPC foram atualizadas para usar SECURITY DEFINER e evitar problemas de recursão
 - Foram corrigidos erros de tipagem TypeScript nos componentes de diagnóstico
+- Headers adequados foram adicionados para resolver problemas de erro 406 (Not Acceptable)
+- O hook de autenticação foi refatorado para melhorar a estabilidade
