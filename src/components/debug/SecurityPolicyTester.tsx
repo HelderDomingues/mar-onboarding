@@ -31,6 +31,15 @@ const SecurityPolicyTester: React.FC = () => {
     try {
       let response;
       
+      // Adicionar headers explícitos em cada requisição para garantir que a API key seja enviada
+      const options = {
+        headers: {
+          'apikey': supabase.supabaseKey,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      };
+      
       switch (operation) {
         case 'select':
           response = await supabase

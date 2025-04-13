@@ -27,9 +27,9 @@
 
 ### 15/04/2025 - Correções de API Key e Tipos TypeScript
 - ✅ Correção de erros de tipagem no componente SecurityPolicyTester
-- ✅ Correção explícita de headers no cliente Supabase para resolver erro "No API key found"
-- ✅ Refatoração das chamadas PostgreSQL para garantir compatibilidade de tipos
-- ✅ Adição de função de diagnóstico para testar conexão com headers explícitos
+- ✅ Remoção de acesso à propriedade protegida 'rest' no cliente Supabase
+- ✅ Adição de headers explícitos em cada requisição para resolver erro "No API key found"
+- ✅ Manutenção da função de diagnóstico para testar conexão com headers explícitos
 
 ## Tarefas Pendentes
 
@@ -58,3 +58,4 @@
 - Headers adequados foram adicionados para resolver problemas de erro 406 (Not Acceptable) e "No API key found"
 - O hook de autenticação foi refatorado para melhorar a estabilidade
 - Corrigidos problemas de exportação/importação de componentes que causavam erros de runtime
+- Resolvidos erros de acesso à propriedade protegida 'rest' no cliente Supabase

@@ -31,11 +31,8 @@ const supabaseOptions = {
 // Create Supabase client
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, supabaseOptions);
 
-// Adicionar um interceptor para garantir que o header apikey esteja presente em todas as requisições
-supabase.rest.headers = {
-  ...supabase.rest.headers,
-  'apikey': SUPABASE_ANON_KEY
-};
+// Removemos a tentativa de acessar a propriedade protegida rest diretamente
+// Em vez disso, garantimos que os headers estejam configurados na criação do cliente
 
 // Admin client with Service Role Key (use only for administrative operations)
 export const supabaseAdmin = SUPABASE_SERVICE_ROLE_KEY 
