@@ -46,9 +46,17 @@ export const getUserEmails = async () => {
     
     return data;
   } catch (error) {
-    const authError = error as AuthError;
-    logger.error('Exceção ao acessar emails de usuários', authError);
-    addLogEntry('error', 'Exceção ao acessar emails de usuários', JSON.stringify(authError));
+    // Convertemos o erro para um objeto compatível com LogOptions
+    const errorMessage = error instanceof AuthError 
+      ? formatErrorForLog(error) 
+      : JSON.stringify(error);
+    
+    logger.error('Exceção ao acessar emails de usuários', {
+      error: errorMessage,
+      tag: 'Supabase'
+    });
+    
+    addLogEntry('error', 'Exceção ao acessar emails de usuários', errorMessage);
     return null;
   }
 };

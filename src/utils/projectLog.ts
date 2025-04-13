@@ -1,3 +1,4 @@
+
 /**
  * Sistema de Log do Projeto MAR - Crie Valor
  * 
@@ -15,6 +16,7 @@ export interface LogEntry {
   timestamp: string;
   type: LogType;
   message: string;
+  details?: any; // Adicionado campo details para armazenar informações adicionais
   context?: string;
   userId?: string;
 }
