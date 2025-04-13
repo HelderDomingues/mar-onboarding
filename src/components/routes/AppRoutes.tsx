@@ -16,6 +16,7 @@ import NotFound from "@/pages/NotFound";
 import IndexPage from "@/pages/Index";
 import TestConnectionPage from "@/pages/TestConnection";
 import SystemLog from "@/pages/SystemLog";
+import DiagnosticoSistema from "@/pages/DiagnosticoSistema";
 
 // Admin pages
 import ImportUsers from "@/pages/admin/ImportUsers";
@@ -37,6 +38,7 @@ const AppRoutes = () => {
       <Route path="/materials" element={<ProtectedRoute component={Materials} />} />
       <Route path="/member" element={<ProtectedRoute component={MemberArea} />} />
       <Route path="/faq" element={<ProtectedRoute component={FAQ} />} />
+      <Route path="/diagnostico" element={<ProtectedRoute component={DiagnosticoSistema} />} />
 
       {/* Admin routes */}
       <Route path="/admin" element={<AdminRoute />}>
