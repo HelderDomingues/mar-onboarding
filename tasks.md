@@ -1,6 +1,36 @@
 
 # Tasks do Projeto MAR - Crie Valor Consultoria
 
+## Novas Tarefas Prioritárias - Reestruturação do Questionário MAR
+
+### 15/04/2025 - Restruturação do Questionário MAR
+- [ ] Analisar estrutura completa do questionário conforme documento de referência
+- [ ] Limpar dados existentes nas tabelas de questionário
+- [ ] Adaptar esquema do banco de dados para suportar a nova estrutura:
+  - [ ] Atualizar `quiz_modules` para 9 módulos completos
+  - [ ] Ajustar `quiz_questions` para todos os tipos de perguntas necessários
+  - [ ] Modificar `quiz_options` para comportar opções complexas
+  - [ ] Garantir compatibilidade dos tipos de perguntas com a especificação
+- [ ] Popular tabelas com dados corretos:
+  - [ ] Criar 9 módulos
+  - [ ] Inserir todas as perguntas com seus respectivos tipos
+  - [ ] Configurar opções para perguntas de múltipla escolha
+- [ ] Implementar sistema de logging detalhado para o questionário
+- [ ] Atualizar interface para suportar todos os tipos de perguntas
+- [ ] Testar a funcionalidade completa do questionário
+
+### 16/04/2025 - Implementação do Sistema de Log Aprimorado
+- [ ] Desenvolver sistema de log com acompanhamento detalhado das ações do usuário
+- [ ] Implementar rastreamento de:
+  - [ ] Autenticação (login/logout)
+  - [ ] Navegação entre páginas
+  - [ ] Acesso a funcionalidades do sistema
+  - [ ] Erros e exceções com detalhes contextuais
+  - [ ] Ações administrativas
+  - [ ] Progresso do questionário
+- [ ] Criar interface administrativa para visualização dos logs
+- [ ] Implementar exportação de logs em diferentes formatos
+
 ## Histórico de Implementações
 
 ### 14/04/2025 - Correção de Erros de Tipagem no QuizConfigurationPanel
@@ -71,6 +101,8 @@
 ## Tarefas Pendentes
 
 ### Prioridade Alta
+- [ ] Reestruturar completamente o questionário MAR conforme especificação oficial
+- [ ] Implementar sistema de log detalhado para rastrear uso do sistema
 - [ ] Testar extensivamente o questionário com diferentes usuários
 - [ ] Implementar componente para exportação de respostas do questionário em PDF
 - [ ] Implementar componente para exportação de respostas do questionário em formato de planilha
@@ -90,6 +122,10 @@
 - [ ] Melhorar a experiência de erro para usuários quando ocorrerem falhas de permissão
 
 ## Observações Gerais
+- A análise do questionário MAR revelou a necessidade de uma reestruturação completa
+- O documento de referência fornece uma estrutura detalhada com 9 módulos
+- Será necessário adaptar as tabelas e interfaces para comportar a nova estrutura
+- O sistema de log será expandido para monitorar detalhadamente o uso do questionário
 - Todos os usuários agora podem ler, editar e atualizar seus próprios dados
 - Administradores têm acesso completo a todos os dados do sistema
 - As funções RPC foram atualizadas para usar SECURITY DEFINER e evitar problemas de recursão
@@ -104,3 +140,4 @@
 - Corrigido erro com componentes SelectItem que não possuíam valores válidos
 - Restaurado acesso ao questionário e corrigido fluxo de navegação
 - Corrigidos erros de tipagem em QuizConfigurationPanel e adicionada interface QuizSection
+

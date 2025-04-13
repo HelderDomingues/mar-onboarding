@@ -12,6 +12,35 @@
 
 ## Novos Registros de Implementação
 
+### 14/04/2025 - Análise do Questionário MAR e Plano de Reestruturação
+**Status:** Em andamento
+
+#### Descrição
+- Identificado problema: estrutura atual do questionário não está alinhada com a especificação oficial
+- Especificação completa do questionário MAR obtida do documento de referência
+- Necessária reestruturação completa das tabelas e dados do questionário
+
+#### Detalhes Técnicos
+- Problema: Tabelas de questionário existem mas com estrutura incompatível com a especificação oficial
+- Necessidade de revisar e adaptar:
+  - Tabela `quiz_modules` para suportar 9 módulos completos
+  - Tabela `quiz_questions` para comportar todos os tipos de pergunta necessários
+  - Tipos de pergunta que precisam ser suportados: texto, múltipla escolha, caixas de seleção, seleção única, etc.
+  - Formato das opções de resposta para cada tipo de pergunta
+
+#### Plano de Ação
+1. Limpar/apagar dados existentes nas tabelas para evitar inconsistências
+2. Adaptar a estrutura das tabelas para comportar a nova especificação
+3. Popular as tabelas com os módulos e perguntas corretas
+4. Ajustar as interfaces para suportar os novos tipos de perguntas
+5. Implementar sistema de log detalhado para rastrear o uso do questionário
+
+#### Impacto
+- Alinhamento do sistema com a especificação oficial do questionário MAR
+- Melhoria na experiência do usuário com questionário completo
+- Coleta de dados mais precisa e relevante para o diagnóstico MAR
+- Necessidade de possível migração de dados existentes (se houver)
+
 ### 14/04/2025 - Correção de Erros de Tipagem no QuizConfigurationPanel
 **Status:** Concluído
 
@@ -127,5 +156,8 @@
 - [x] Otimização de chamadas à API Supabase
 - [x] Implementação de mecanismos robustos de feedback visual
 - [x] Restauração de acesso ao questionário
+- [ ] Reestruturação completa do questionário MAR conforme especificação oficial
+- [ ] Implementação de sistema de log detalhado para questionário
 
-O sistema foi significativamente estabilizado, com remoção de bugs críticos e otimização dos componentes principais. O acesso ao questionário foi restaurado e o fluxo de navegação corrigido. Correções de tipagem garantem que o código seja mais robusto e menos propenso a erros durante o desenvolvimento.
+O sistema foi significativamente estabilizado, com remoção de bugs críticos e otimização dos componentes principais. O acesso ao questionário foi restaurado e o fluxo de navegação corrigido. Correções de tipagem garantem que o código seja mais robusto e menos propenso a erros durante o desenvolvimento. Agora o foco está na reestruturação completa do questionário MAR para alinhá-lo com a especificação oficial.
+
