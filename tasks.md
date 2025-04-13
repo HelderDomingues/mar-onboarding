@@ -49,6 +49,11 @@
 - ✅ Adição de indicadores de carregamento no componente ProtectedRoute
 - ✅ Correção do fluxo de autenticação para prevenir congelamento da aplicação
 
+### 13/04/2025 - Correção de Erro no Select.Item
+- ✅ Correção de erro "A <Select.Item /> must have a value prop that is not an empty string"
+- ✅ Verificação e garantia de que todos os componentes SelectItem tenham valores válidos e não vazios
+- ✅ Adição de valores de fallback para itens sem valor definido em QuizConfigurationPanel.tsx e SystemLog.tsx
+
 ## Tarefas Pendentes
 
 ### Prioridade Alta
@@ -61,6 +66,8 @@
 - [ ] Refatorar o componente `src/components/admin/ImportUsers.tsx` (muito extenso, 462 linhas)
 - [ ] Refatorar o componente `src/components/SupabaseConnectionTest.tsx` (muito extenso, 329 linhas)
 - [ ] Refatorar o componente `src/components/debug/ConnectionTester.tsx` (muito extenso, 242 linhas)
+- [ ] Refatorar o componente `src/components/quiz/QuizConfigurationPanel.tsx` (muito extenso, 229 linhas)
+- [ ] Refatorar o componente `src/pages/SystemLog.tsx` (muito extenso, 277 linhas)
 
 ### Prioridade Baixa
 - [ ] Documentar todas as funções RPC do Supabase
@@ -79,3 +86,4 @@
 - Corrigido erro de acesso à propriedade protegida 'supabaseKey' no componente SecurityPolicyTester
 - Implementado padrão singleton para evitar múltiplas instâncias de GoTrueClient
 - Corrigido problema de loop infinito/congelamento durante o processo de autenticação
+- Corrigido erro com componentes SelectItem que não possuíam valores válidos
