@@ -6,15 +6,25 @@ export interface QuizModule {
   order_number: number;
 }
 
+export interface QuizSection {
+  id: string;
+  module_id: string;
+  name: string;
+  order_number: number;
+}
+
 export interface QuizQuestion {
   id: string;
   module_id: string;
+  section_id?: string;
   text: string;
   type: 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select' | 'url' | 'instagram';
   required: boolean;
   order_number: number;
   hint: string | null;
   options?: QuizOption[];
+  question_number?: number;
+  question_text?: string;
 }
 
 export interface QuizOption {

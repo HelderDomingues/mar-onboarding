@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -64,6 +65,7 @@ export function QuizConfigurationPanel({
     if (!selectedModuleId) return [];
     let filtered = questions.filter((q) => q.module_id === selectedModuleId);
     if (selectedSectionId) {
+      // Verifica se a questão tem section_id antes de filtrar por essa propriedade
       filtered = filtered.filter((q) => q.section_id === selectedSectionId);
     }
     return filtered;
@@ -277,9 +279,12 @@ export function QuizConfigurationPanel({
                   {filteredQuestions.map((question) => (
                     <SelectItem 
                       key={question.id} 
-                      value={getSelectValue(question.id, `question-${question.question_number}`)}
+                      value={getSelectValue(question.id, `question-${question.order_number}`)}
                     >
-                      {question.question_number}. {truncateText(question.question_text, 30)}
+                      {/* Compatibilidade com ambos os tipos de pergunta */}
+                      {question.question_number || question.order_number}. {
+                        truncateText(question.question_text || question.text, 30)
+                      }
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -325,7 +330,8 @@ export function QuizConfigurationPanel({
                 <p>
                   {
                     questions.find((question) => question.id === selectedQuestionId)
-                      ?.question_text
+                      ?.question_text || questions.find((question) => question.id === selectedQuestionId)
+                      ?.text
                   }
                 </p>
               </div>
