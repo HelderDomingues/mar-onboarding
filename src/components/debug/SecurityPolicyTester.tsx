@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,30 +29,47 @@ const SecurityPolicyTester: React.FC = () => {
     setResult(null);
     
     try {
-      let query = supabase.from(table);
+      let response;
       
       switch (operation) {
         case 'select':
-          query = query.select('*');
+          response = await supabase
+            .from(table)
+            .select('*')
+            .limit(10);
           break;
         case 'insert':
-          query = query.insert({ id: userId || 'test-id', name: 'Test User' });
+          response = await supabase
+            .from(table)
+            .insert([{ id: userId || 'test-id', name: 'Test User' }])
+            .select();
           break;
         case 'update':
-          query = query.update({ name: 'Updated User' }).eq('id', userId || 'test-id');
+          response = await supabase
+            .from(table)
+            .update({ name: 'Updated User' })
+            .eq('id', userId || 'test-id')
+            .select();
           break;
         case 'delete':
-          query = query.delete().eq('id', userId || 'test-id');
+          response = await supabase
+            .from(table)
+            .delete()
+            .eq('id', userId || 'test-id')
+            .select();
           break;
         default:
           throw new Error('Operação não suportada');
       }
       
-      if (userId) {
-        query = query.eq('user_id', userId);
+      if (userId && operation === 'select') {
+        response = await supabase
+          .from(table)
+          .select('*')
+          .eq('user_id', userId);
       }
       
-      const { data, error } = await query;
+      const { data, error } = response;
       
       if (error) {
         throw error;

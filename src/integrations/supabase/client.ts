@@ -1,4 +1,3 @@
-
 import { createClient, PostgrestError, AuthError } from '@supabase/supabase-js';
 import { logger } from '@/utils/logger';
 import { addLogEntry, LogOptions } from '@/utils/projectLog';
@@ -13,7 +12,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error('Supabase URL or Anon Key is missing. Please check your Supabase configuration.');
 }
 
-// Create options com headers corretos para evitar erros 406
+// Criar opções de configuração com headers explícitos
 const supabaseOptions = {
   auth: {
     autoRefreshToken: true,
@@ -23,7 +22,8 @@ const supabaseOptions = {
   global: {
     headers: {
       'Content-Type': 'application/json',
-      'Accept': 'application/json'
+      'Accept': 'application/json',
+      'apikey': SUPABASE_ANON_KEY
     }
   }
 };
@@ -31,9 +31,24 @@ const supabaseOptions = {
 // Create Supabase client
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, supabaseOptions);
 
+// Adicionar um interceptor para garantir que o header apikey esteja presente em todas as requisições
+supabase.rest.headers = {
+  ...supabase.rest.headers,
+  'apikey': SUPABASE_ANON_KEY
+};
+
 // Admin client with Service Role Key (use only for administrative operations)
 export const supabaseAdmin = SUPABASE_SERVICE_ROLE_KEY 
-  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, supabaseOptions) 
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      ...supabaseOptions,
+      global: {
+        ...supabaseOptions.global,
+        headers: {
+          ...supabaseOptions.global.headers,
+          'apikey': SUPABASE_SERVICE_ROLE_KEY
+        }
+      }
+    }) 
   : null;
 
 // Função para obter emails de usuários (requer Service Role)
@@ -210,5 +225,34 @@ export const enviarRespostasParaAPI = async (userId: string, respostas: any) => 
     });
     addLogEntry('error', 'Exceção ao enviar respostas para API externa', JSON.stringify(error));
     return false;
+  }
+};
+
+// Vamos adicionar uma função de diagnóstico para testar a conexão com o Supabase
+export const testApiKeyHeader = async () => {
+  try {
+    // Tentar uma requisição simples com headers explícitos
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?limit=1`, {
+      method: 'GET',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+    
+    const data = await response.json();
+    
+    return {
+      status: response.status,
+      ok: response.ok,
+      headers: Object.fromEntries(response.headers.entries()),
+      data
+    };
+  } catch (error: any) {
+    return {
+      error: error.message,
+      details: error
+    };
   }
 };
