@@ -21,6 +21,9 @@ export function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isLoading) return; // Evitar múltiplos cliques
+    
     setIsLoading(true);
     
     try {
@@ -35,11 +38,12 @@ export function Login() {
           description: "Bem-vindo à área de membros!",
         });
         
-        // Redirecionamento direto e imediato para o dashboard
-        logger.info('Login bem-sucedido, redirecionando para dashboard', { tag: 'Login' });
-        addLogEntry('auth', 'Login bem-sucedido, redirecionando para dashboard', { email });
-        
-        navigate("/dashboard", { replace: true });
+        // Usar um timeout para garantir que a navegação ocorra após o processamento do estado de autenticação
+        setTimeout(() => {
+          logger.info('Login bem-sucedido, redirecionando para dashboard', { tag: 'Login' });
+          addLogEntry('auth', 'Login bem-sucedido, redirecionando para dashboard', { email });
+          navigate("/dashboard", { replace: true });
+        }, 100);
       } else {
         toast({
           variant: "destructive",
@@ -48,6 +52,7 @@ export function Login() {
         });
         
         addLogEntry('error', 'Falha no login', { message: result.message, email });
+        setIsLoading(false);
       }
     } catch (error) {
       logger.error('Falha no login', { tag: 'Login', data: error });
@@ -58,7 +63,7 @@ export function Login() {
         title: "Falha no login",
         description: "Por favor, verifique suas credenciais e tente novamente.",
       });
-    } finally {
+      
       setIsLoading(false);
     }
   };
@@ -85,6 +90,7 @@ export function Login() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full"
+              disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
@@ -103,11 +109,13 @@ export function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full pr-10"
+                disabled={isLoading}
               />
               <button 
                 type="button"
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
                 onClick={togglePasswordVisibility}
+                disabled={isLoading}
               >
                 {showPassword ? 
                   <EyeOff className="h-5 w-5 text-gray-400" /> : 

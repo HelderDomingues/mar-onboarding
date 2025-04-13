@@ -42,6 +42,13 @@
 - ✅ Correção de aviso no DevTools sobre múltiplas instâncias de GoTrueClient
 - ✅ Melhoria na estabilidade do processo de autenticação
 
+### 13/04/2025 - Correção de Loop Infinito e Congelamento na Autenticação
+- ✅ Refatoração completa do hook useAuth.tsx para evitar chamadas recursivas e loops
+- ✅ Uso de setTimeout para operações assíncronas dentro do callback onAuthStateChange
+- ✅ Melhoria no componente Login para evitar múltiplas submissões e garantir o redirecionamento
+- ✅ Adição de indicadores de carregamento no componente ProtectedRoute
+- ✅ Correção do fluxo de autenticação para prevenir congelamento da aplicação
+
 ## Tarefas Pendentes
 
 ### Prioridade Alta
@@ -51,7 +58,6 @@
 - [ ] Implementar componente para exportação de respostas do questionário em formato de planilha
 
 ### Prioridade Média
-- [ ] Refatorar o componente `src/hooks/useAuth.tsx` (muito extenso, 303 linhas)
 - [ ] Refatorar o componente `src/components/admin/ImportUsers.tsx` (muito extenso, 462 linhas)
 - [ ] Refatorar o componente `src/components/SupabaseConnectionTest.tsx` (muito extenso, 329 linhas)
 - [ ] Refatorar o componente `src/components/debug/ConnectionTester.tsx` (muito extenso, 242 linhas)
@@ -72,3 +78,4 @@
 - Resolvidos erros de acesso à propriedade protegida 'rest' no cliente Supabase
 - Corrigido erro de acesso à propriedade protegida 'supabaseKey' no componente SecurityPolicyTester
 - Implementado padrão singleton para evitar múltiplas instâncias de GoTrueClient
+- Corrigido problema de loop infinito/congelamento durante o processo de autenticação
