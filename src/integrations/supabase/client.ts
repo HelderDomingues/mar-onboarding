@@ -1,3 +1,4 @@
+
 import { createClient, PostgrestError, AuthError } from '@supabase/supabase-js';
 import { logger } from '@/utils/logger';
 import { addLogEntry, LogOptions } from '@/utils/projectLog';
@@ -12,7 +13,12 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error('Supabase URL or Anon Key is missing. Please check your Supabase configuration.');
 }
 
-// Criar opções de configuração com headers explícitos
+// Implementação de padrão singleton para o cliente Supabase
+// Isso evita criar múltiplas instâncias de GoTrueClient
+let supabaseInstance = null;
+let supabaseAdminInstance = null;
+
+// Opções de configuração com headers explícitos
 const supabaseOptions = {
   auth: {
     autoRefreshToken: true,
@@ -28,12 +34,22 @@ const supabaseOptions = {
   }
 };
 
-// Create Supabase client
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, supabaseOptions);
+// Função para criar/obter a instância do cliente Supabase
+const getSupabaseClient = () => {
+  if (!supabaseInstance) {
+    logger.info('Criando nova instância do cliente Supabase');
+    addLogEntry('info', 'Criando nova instância do cliente Supabase');
+    supabaseInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, supabaseOptions);
+  }
+  return supabaseInstance;
+};
 
-// Admin client with Service Role Key (use only for administrative operations)
-export const supabaseAdmin = SUPABASE_SERVICE_ROLE_KEY 
-  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+// Função para criar/obter a instância admin do cliente Supabase
+const getSupabaseAdminClient = () => {
+  if (!supabaseAdminInstance && SUPABASE_SERVICE_ROLE_KEY) {
+    logger.info('Criando nova instância do cliente Supabase Admin');
+    addLogEntry('info', 'Criando nova instância do cliente Supabase Admin');
+    supabaseAdminInstance = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       ...supabaseOptions,
       global: {
         ...supabaseOptions.global,
@@ -42,8 +58,31 @@ export const supabaseAdmin = SUPABASE_SERVICE_ROLE_KEY
           'apikey': SUPABASE_SERVICE_ROLE_KEY
         }
       }
-    }) 
-  : null;
+    });
+  }
+  return supabaseAdminInstance;
+};
+
+// Exporta o cliente Supabase como singleton
+export const supabase = getSupabaseClient();
+
+// Exporta o cliente Supabase Admin como singleton (se disponível)
+export const supabaseAdmin = SUPABASE_SERVICE_ROLE_KEY ? getSupabaseAdminClient() : null;
+
+// Função para formatar erro para log
+export const formatErrorForLog = (error: PostgrestError | Error | AuthError | null): string => {
+  if (!error) return '';
+  
+  if ('code' in error && 'message' in error) {
+    return `${error.code}: ${error.message}`;
+  }
+  
+  if ('message' in error) {
+    return error.message;
+  }
+  
+  return JSON.stringify(error);
+};
 
 // Função para obter emails de usuários (requer Service Role)
 export const getUserEmails = async () => {
@@ -69,7 +108,6 @@ export const getUserEmails = async () => {
     
     return data;
   } catch (error) {
-    // Convertemos o erro para um objeto compatível com LogOptions
     const errorMessage = error instanceof AuthError 
       ? formatErrorForLog(error) 
       : JSON.stringify(error);
@@ -82,21 +120,6 @@ export const getUserEmails = async () => {
     addLogEntry('error', 'Exceção ao acessar emails de usuários', errorMessage);
     return null;
   }
-};
-
-// Função helper para formatar erro para log
-export const formatErrorForLog = (error: PostgrestError | Error | AuthError | null): string => {
-  if (!error) return '';
-  
-  if ('code' in error && 'message' in error) {
-    return `${error.code}: ${error.message}`;
-  }
-  
-  if ('message' in error) {
-    return error.message;
-  }
-  
-  return JSON.stringify(error);
 };
 
 // Função para inicializar webhooks
@@ -222,7 +245,7 @@ export const enviarRespostasParaAPI = async (userId: string, respostas: any) => 
   }
 };
 
-// Vamos adicionar uma função de diagnóstico para testar a conexão com o Supabase
+// Função de diagnóstico para testar a conexão com o Supabase
 export const testApiKeyHeader = async () => {
   try {
     // Tentar uma requisição simples com headers explícitos

@@ -36,6 +36,12 @@
 - ✅ Exportação da constante SUPABASE_ANON_KEY para uso direto nos componentes
 - ✅ Padronização do uso de chaves de API em componentes de diagnóstico
 
+### 17/04/2025 - Implementação de Padrão Singleton para Cliente Supabase
+- ✅ Implementação de padrão singleton para evitar múltiplas instâncias de GoTrueClient
+- ✅ Refatoração do cliente Supabase para usar funções de fábrica que retornam instâncias únicas
+- ✅ Correção de aviso no DevTools sobre múltiplas instâncias de GoTrueClient
+- ✅ Melhoria na estabilidade do processo de autenticação
+
 ## Tarefas Pendentes
 
 ### Prioridade Alta
@@ -65,4 +71,4 @@
 - Corrigidos problemas de exportação/importação de componentes que causavam erros de runtime
 - Resolvidos erros de acesso à propriedade protegida 'rest' no cliente Supabase
 - Corrigido erro de acesso à propriedade protegida 'supabaseKey' no componente SecurityPolicyTester
-
+- Implementado padrão singleton para evitar múltiplas instâncias de GoTrueClient
