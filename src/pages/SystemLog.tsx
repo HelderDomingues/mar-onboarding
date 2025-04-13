@@ -1,275 +1,257 @@
-
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { 
-  getAllLogs, getLogsByType, getLogsByUser, 
-  exportLogsToFile, LogEntry 
-} from "@/utils/projectLog";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { LogEntry, getAllLogs, getLogsByType, getLogsByUser, clearLogs, exportLogsToFile } from "@/utils/projectLog";
+import { Ban, Download, Loader2, RefreshCw, Trash } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { Download, Filter, RefreshCw, Search } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const SystemLog = () => {
-  const { isAuthenticated, user, isAdmin } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
-  const [filterType, setFilterType] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isExporting, setIsExporting] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [limit, setLimit] = useState<number>(50);
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  const loadLogs = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      let loadedLogs = getAllLogs();
+
+      if (typeFilter !== "all") {
+        loadedLogs = getLogsByType(typeFilter as LogEntry['type']);
+      }
+
+      if (dateFilter) {
+        loadedLogs = loadedLogs.filter(log => log.timestamp.startsWith(dateFilter));
+      }
+
+      if (searchTerm) {
+        const lowerSearchTerm = searchTerm.toLowerCase();
+        loadedLogs = loadedLogs.filter(log =>
+          log.message.toLowerCase().includes(lowerSearchTerm) ||
+          (log.details && JSON.stringify(log.details).toLowerCase().includes(lowerSearchTerm)) ||
+          (log.userId && log.userId.toLowerCase().includes(lowerSearchTerm)) ||
+          (log.context && log.context.toLowerCase().includes(lowerSearchTerm))
+        );
+      }
+
+      setLogs(loadedLogs.slice(0, limit));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [typeFilter, dateFilter, searchTerm, limit]);
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-      if (isAdmin) {
-        refreshLogs();
-      } else {
-        navigate("/dashboard");
-      }
-    } else if (!isAuthenticated) {
-      navigate("/");
-    }
-  }, [isAuthenticated, user, isAdmin, navigate]);
+    loadLogs();
+  }, [loadLogs]);
 
-  const refreshLogs = () => {
-    const allLogs = getAllLogs();
-    setLogs(allLogs);
-    applyFilters(allLogs, filterType, searchQuery);
-  };
-
-  const applyFilters = (logsList: LogEntry[], type: string, query: string) => {
-    let filtered = logsList;
-    
-    // Filtrar por tipo
-    if (type !== "all") {
-      filtered = type === "user" && user?.id 
-        ? getLogsByUser(user.id)
-        : getLogsByType(type as LogEntry["type"]);
-    }
-    
-    // Filtrar por busca
-    if (query) {
-      const lowerQuery = query.toLowerCase();
-      filtered = filtered.filter(log => 
-        log.message.toLowerCase().includes(lowerQuery) || 
-        (log.context && log.context.toLowerCase().includes(lowerQuery)) ||
-        (log.userId && log.userId.includes(lowerQuery))
-      );
-    }
-    
-    setFilteredLogs(filtered);
-  };
-
-  const handleFilterTypeChange = (value: string) => {
-    setFilterType(value);
-    applyFilters(logs, value, searchQuery);
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    applyFilters(logs, filterType, query);
+  const handleClearLogs = () => {
+    clearLogs();
+    setLogs([]);
+    toast({
+      title: "Logs limpos",
+      description: "Todos os logs foram removidos do sistema.",
+    });
   };
 
   const handleExportLogs = async () => {
-    if (!user?.id) return;
-    
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Usuário não autenticado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsExporting(true);
     try {
       const success = await exportLogsToFile(user.id);
       if (success) {
         toast({
-          title: "Logs exportados com sucesso",
-          description: "O arquivo foi baixado para o seu computador.",
+          title: "Logs exportados",
+          description: "Os logs foram exportados com sucesso para um arquivo JSON.",
         });
       } else {
         toast({
-          title: "Falha ao exportar logs",
-          description: "Não foi possível exportar os logs do sistema.",
+          title: "Erro ao exportar",
+          description: "Não foi possível exportar os logs.",
           variant: "destructive",
         });
       }
-    } catch (error) {
-      toast({
-        title: "Erro ao exportar logs",
-        description: "Ocorreu um erro durante a exportação dos logs.",
-        variant: "destructive",
-      });
     } finally {
       setIsExporting(false);
     }
   };
 
-  // Função para formatar a data ISO para uma exibição mais amigável
-  const formatDate = (isoString: string) => {
-    try {
-      const date = new Date(isoString);
-      return date.toLocaleString('pt-BR', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-    } catch (e) {
-      return isoString;
-    }
-  };
-
-  // Função para determinar a cor do badge com base no tipo de log
-  const getLogTypeColor = (type: LogEntry["type"]) => {
-    switch (type) {
-      case "error":
-        return "bg-red-100 text-red-800";
-      case "warning":
-        return "bg-yellow-100 text-yellow-800";
-      case "info":
-        return "bg-blue-100 text-blue-800";
-      case "build":
-        return "bg-purple-100 text-purple-800";
-      case "auth":
-        return "bg-green-100 text-green-800";
-      case "database":
-        return "bg-indigo-100 text-indigo-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  // Garante que os valores de SelectItem nunca sejam vazios
+  const getSelectValue = (value: string | undefined, fallback: string): string => {
+    return value || fallback;
   };
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen">
-        <AdminSidebar />
-        <SidebarInset className="p-6 bg-gray-50">
-          <div className="container max-w-7xl mx-auto">
-            <div className="flex flex-col gap-2 mb-6">
-              <h1 className="text-2xl font-bold">Log do Sistema</h1>
-              <p className="text-muted-foreground">
-                Registro de eventos e ações realizadas no sistema.
-              </p>
-            </div>
-            
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-              <div className="flex gap-2">
-                <Button 
-                  onClick={refreshLogs}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  <span>Atualizar</span>
-                </Button>
-                
-                <Button 
-                  onClick={handleExportLogs}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                  disabled={isExporting}
-                >
-                  <Download className="h-4 w-4" />
-                  <span>{isExporting ? "Exportando..." : "Exportar Logs"}</span>
-                </Button>
-              </div>
-              
-              <div className="flex gap-2 flex-grow max-w-md">
-                <Select value={filterType} onValueChange={handleFilterTypeChange}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Filtrar por" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="error">Erros</SelectItem>
-                    <SelectItem value="warning">Avisos</SelectItem>
-                    <SelectItem value="info">Info</SelectItem>
-                    <SelectItem value="build">Build</SelectItem>
-                    <SelectItem value="auth">Autenticação</SelectItem>
-                    <SelectItem value="database">Banco de Dados</SelectItem>
-                    <SelectItem value="user">Usuário Atual</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <div className="relative flex-grow">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    className="pl-9 w-full" 
-                    placeholder="Buscar nos logs..."
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <Card className="shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle>Entradas de Log</CardTitle>
-                <CardDescription>
-                  {filteredLogs.length} entradas encontradas
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="rounded-md overflow-auto max-h-[70vh]">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-48">Timestamp</TableHead>
-                        <TableHead className="w-24">Tipo</TableHead>
-                        <TableHead>Mensagem</TableHead>
-                        <TableHead className="w-32">Usuário</TableHead>
-                        <TableHead className="w-40">Contexto</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredLogs.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
-                            Nenhuma entrada de log encontrada
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        filteredLogs.map((log, index) => (
-                          <TableRow key={index} className="hover:bg-muted/50">
-                            <TableCell className="font-mono text-xs">
-                              {formatDate(log.timestamp)}
-                            </TableCell>
-                            <TableCell>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLogTypeColor(log.type)}`}>
-                                {log.type}
-                              </span>
-                            </TableCell>
-                            <TableCell className="max-w-md truncate" title={log.message}>
-                              {log.message}
-                            </TableCell>
-                            <TableCell className="truncate" title={log.userId}>
-                              {log.userId ? log.userId.substring(0, 8) + "..." : "-"}
-                            </TableCell>
-                            <TableCell className="truncate" title={log.context}>
-                              {log.context || "-"}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between border-t py-4 px-6 text-muted-foreground text-sm">
-                <p>Logs em memória: {logs.length}</p>
-                <p>Atualizado em: {new Date().toLocaleTimeString('pt-BR')}</p>
-              </CardFooter>
-            </Card>
-          </div>
-        </SidebarInset>
+    <div className="container mx-auto p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Log do Sistema</h1>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={loadLogs}
+            disabled={isLoading}
+            className="flex items-center"
+          >
+            {isLoading ? (
+              <span className="flex items-center">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Carregando...
+              </span>
+            ) : (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Atualizar
+              </>
+            )}
+          </Button>
+          <Button
+            onClick={handleExportLogs}
+            disabled={logs.length === 0 || isExporting}
+            className="flex items-center"
+          >
+            {isExporting ? (
+              <span className="flex items-center">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Exportando...
+              </span>
+            ) : (
+              <>
+                <Download className="mr-2 h-4 w-4" />
+                Exportar
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleClearLogs}
+            disabled={logs.length === 0}
+            className="flex items-center"
+          >
+            <Trash className="mr-2 h-4 w-4" />
+            Limpar
+          </Button>
+        </div>
       </div>
-    </SidebarProvider>
+
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <Label htmlFor="type-filter">Filtrar por tipo</Label>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Todos os tipos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os tipos</SelectItem>
+              <SelectItem value={getSelectValue("error", "error-fallback")}>Erro</SelectItem>
+              <SelectItem value={getSelectValue("warning", "warning-fallback")}>Alerta</SelectItem>
+              <SelectItem value={getSelectValue("info", "info-fallback")}>Informação</SelectItem>
+              <SelectItem value={getSelectValue("auth", "auth-fallback")}>Autenticação</SelectItem>
+              <SelectItem value={getSelectValue("database", "database-fallback")}>Banco de dados</SelectItem>
+              <SelectItem value={getSelectValue("navigation", "navigation-fallback")}>Navegação</SelectItem>
+              <SelectItem value={getSelectValue("quiz", "quiz-fallback")}>Questionário</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="date-filter">Filtrar por data</Label>
+          <Input
+            type="date"
+            id="date-filter"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="search-filter">Buscar</Label>
+          <Input
+            type="text"
+            id="search-filter"
+            placeholder="Buscar nos logs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="limit-filter">Limite de registros</Label>
+          <Select value={limit.toString()} onValueChange={(value) => setLimit(Number(value))}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Limite de registros" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={getSelectValue("50", "50-fallback")}>50 registros</SelectItem>
+              <SelectItem value={getSelectValue("100", "100-fallback")}>100 registros</SelectItem>
+              <SelectItem value={getSelectValue("200", "200-fallback")}>200 registros</SelectItem>
+              <SelectItem value={getSelectValue("500", "500-fallback")}>500 registros</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {logs.length === 0 ? (
+        <div className="text-center py-10">
+          <Ban className="h-10 w-10 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500">Nenhum registro de log encontrado</p>
+          <Button onClick={loadLogs} className="mt-4">
+            Carregar logs
+          </Button>
+        </div>
+      ) : (
+        <Table>
+          <TableCaption>Registros de log do sistema.</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[150px]">Timestamp</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Mensagem</TableHead>
+              <TableHead>Detalhes</TableHead>
+              <TableHead>Usuário</TableHead>
+              <TableHead>Contexto</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {logs.map((log) => (
+              <TableRow key={log.timestamp}>
+                <TableCell className="font-medium">{log.timestamp}</TableCell>
+                <TableCell>{log.type}</TableCell>
+                <TableCell>{log.message}</TableCell>
+                <TableCell>
+                  {log.details ? JSON.stringify(log.details, null, 2) : "N/A"}
+                </TableCell>
+                <TableCell>{log.userId || "N/A"}</TableCell>
+                <TableCell>{log.context || "N/A"}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </div>
   );
 };
 

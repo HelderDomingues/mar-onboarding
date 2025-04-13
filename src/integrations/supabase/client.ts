@@ -18,12 +18,13 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 let supabaseInstance = null;
 let supabaseAdminInstance = null;
 
-// Opções de configuração com headers explícitos
+// Opções de configuração com headers explícitos e configurações otimizadas
 const supabaseOptions = {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    storage: typeof localStorage !== 'undefined' ? localStorage : undefined,
   },
   global: {
     headers: {
@@ -31,7 +32,12 @@ const supabaseOptions = {
       'Accept': 'application/json',
       'apikey': SUPABASE_ANON_KEY
     }
-  }
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
 };
 
 // Função para criar/obter a instância do cliente Supabase
@@ -270,6 +276,40 @@ export const testApiKeyHeader = async () => {
     return {
       error: error.message,
       details: error
+    };
+  }
+};
+
+// Função para verificar a conexão com o Supabase
+export const checkSupabaseConnection = async () => {
+  try {
+    addLogEntry('info', 'Testando conexão com Supabase');
+    
+    // Teste simples que não depende de autenticação
+    const { data, error } = await supabase
+      .from('quiz_modules')
+      .select('count')
+      .limit(1)
+      .single();
+    
+    if (error) {
+      addLogEntry('error', 'Falha ao testar conexão com Supabase', { error: JSON.stringify(error) });
+      return {
+        connected: false,
+        error: error.message
+      };
+    }
+    
+    addLogEntry('info', 'Conexão com Supabase bem-sucedida');
+    return {
+      connected: true,
+      data
+    };
+  } catch (error: any) {
+    addLogEntry('error', 'Exceção ao testar conexão com Supabase', { error: error.message });
+    return {
+      connected: false,
+      error: error.message
     };
   }
 };

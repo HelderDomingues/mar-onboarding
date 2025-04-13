@@ -28,6 +28,9 @@ export interface LogOptions {
   [key: string]: any;
 }
 
+// Tamanho máximo do log em memória para evitar vazamentos de memória
+const MAX_LOG_SIZE = 500;
+
 // Armazenamento local dos logs (em memória)
 const inMemoryLogs: LogEntry[] = [];
 
@@ -50,7 +53,10 @@ export const addLogEntry = (
     context
   };
   
-  // Adiciona ao log em memória
+  // Adiciona ao log em memória (limitando o tamanho)
+  if (inMemoryLogs.length >= MAX_LOG_SIZE) {
+    inMemoryLogs.shift(); // Remove o item mais antigo
+  }
   inMemoryLogs.push(entry);
   
   // Também usa o sistema de logger existente
@@ -69,14 +75,15 @@ export const addLogEntry = (
   }
   
   // Se estiver em ambiente de desenvolvimento, também salvar em localStorage
-  if (process.env.NODE_ENV !== 'production') {
-    try {
+  try {
+    if (typeof window !== 'undefined') {
       const existingLogs = JSON.parse(localStorage.getItem('mar_system_logs') || '[]');
       existingLogs.push(entry);
-      localStorage.setItem('mar_system_logs', JSON.stringify(existingLogs.slice(-500))); // Mantém os últimos 500 logs
-    } catch (e) {
-      console.error('Erro ao salvar logs no localStorage:', e);
+      // Limitar tamanho do localStorage para evitar estouro de quota
+      localStorage.setItem('mar_system_logs', JSON.stringify(existingLogs.slice(-MAX_LOG_SIZE)));
     }
+  } catch (e) {
+    console.error('Erro ao salvar logs no localStorage:', e);
   }
 };
 
@@ -106,7 +113,7 @@ export const getLogsByUser = (userId: string): LogEntry[] => {
  */
 export const clearLogs = (): void => {
   inMemoryLogs.length = 0;
-  if (process.env.NODE_ENV !== 'production') {
+  if (typeof window !== 'undefined') {
     localStorage.removeItem('mar_system_logs');
   }
 };
@@ -148,12 +155,13 @@ export const exportLogsToFile = async (userId: string): Promise<boolean> => {
 };
 
 // Inicialização: carrega logs do localStorage se disponível
-if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+if (typeof window !== 'undefined') {
   try {
     const savedLogs = localStorage.getItem('mar_system_logs');
     if (savedLogs) {
       const parsedLogs = JSON.parse(savedLogs);
-      parsedLogs.forEach((log: LogEntry) => inMemoryLogs.push(log));
+      // Limitar o número de logs carregados para evitar sobrecarga de memória
+      parsedLogs.slice(-MAX_LOG_SIZE).forEach((log: LogEntry) => inMemoryLogs.push(log));
     }
   } catch (e) {
     console.error('Erro ao carregar logs do localStorage:', e);
@@ -163,5 +171,5 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
 // Registra inicialização do sistema de logs
 addLogEntry('info', 'Sistema de logs inicializado', { 
   timestamp: new Date().toISOString(),
-  environment: process.env.NODE_ENV 
+  environment: typeof window !== 'undefined' ? window.location.hostname : 'unknown'
 });

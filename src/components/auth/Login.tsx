@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,8 +16,17 @@ export function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Redirecionar se já estiver autenticado
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      logger.info('Usuário já autenticado, redirecionando para dashboard', { tag: 'Login' });
+      addLogEntry('auth', 'Usuário já autenticado, redirecionando para dashboard');
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,12 +47,13 @@ export function Login() {
           description: "Bem-vindo à área de membros!",
         });
         
-        // Usar um timeout para garantir que a navegação ocorra após o processamento do estado de autenticação
+        logger.info('Login bem-sucedido, redirecionando para dashboard', { tag: 'Login' });
+        addLogEntry('auth', 'Login bem-sucedido, redirecionando para dashboard', { email });
+        
+        // Usar timeout para garantir que o estado de autenticação foi atualizado
         setTimeout(() => {
-          logger.info('Login bem-sucedido, redirecionando para dashboard', { tag: 'Login' });
-          addLogEntry('auth', 'Login bem-sucedido, redirecionando para dashboard', { email });
           navigate("/dashboard", { replace: true });
-        }, 100);
+        }, 200);
       } else {
         toast({
           variant: "destructive",
@@ -72,6 +82,23 @@ export function Login() {
     setShowPassword(!showPassword);
   };
 
+  // Se estiver no processo de autenticação, mostrar indicador de carregamento
+  if (authLoading) {
+    return (
+      <Card className="w-full max-w-md animate-fade-in">
+        <CardContent className="flex flex-col items-center justify-center py-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+          <p className="text-slate-600">Verificando sessão...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Se já estiver autenticado, não mostrar formulário de login
+  if (isAuthenticated) {
+    return null;
+  }
+
   return (
     <Card className="w-full max-w-md animate-fade-in">
       <CardHeader>
@@ -91,6 +118,7 @@ export function Login() {
               required
               className="w-full"
               disabled={isLoading}
+              autoComplete="email"
             />
           </div>
           <div className="space-y-2">
@@ -110,6 +138,7 @@ export function Login() {
                 required
                 className="w-full pr-10"
                 disabled={isLoading}
+                autoComplete="current-password"
               />
               <button 
                 type="button"
@@ -130,7 +159,12 @@ export function Login() {
             className="w-full bg-quiz hover:bg-quiz-dark"
             disabled={isLoading}
           >
-            {isLoading ? "Entrando..." : "Entrar"}
+            {isLoading ? (
+              <span className="flex items-center">
+                <span className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-b-0 border-white mr-2"></span>
+                Entrando...
+              </span>
+            ) : "Entrar"}
           </Button>
           <p className="text-sm text-center text-muted-foreground">
             Não tem uma conta? <a href="https://crievalor.com.br/contato" className="text-quiz hover:underline">Entre em contato</a>

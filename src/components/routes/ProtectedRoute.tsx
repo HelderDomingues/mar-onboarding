@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { addLogEntry } from "@/utils/projectLog";
@@ -11,28 +11,43 @@ interface ProtectedRouteProps {
 export const ProtectedRoute = ({ component: Component }: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const navigate = useNavigate();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   
   useEffect(() => {
-    // Apenas registrar tentativa após o carregamento
+    // Aguardar o carregamento da autenticação
     if (!isLoading) {
+      // Registrar tentativa apenas após o carregamento
       addLogEntry('auth', 'Tentativa de acesso à rota protegida', { 
         isAuthenticated,
-        userId: user?.id || 'não autenticado'
+        userId: user?.id || 'não autenticado',
+        path: window.location.pathname
       }, user?.id);
       
       // Apenas redirecionar se não estiver autenticado e não estiver carregando
       if (!isAuthenticated) {
-        addLogEntry('auth', 'Redirecionando usuário não autenticado para página inicial', {}, user?.id);
-        navigate("/", { replace: true });
+        addLogEntry('auth', 'Redirecionando usuário não autenticado para página inicial', {
+          path: window.location.pathname
+        }, user?.id);
+        
+        // Usar timeout para evitar problemas de navegação durante renderização
+        setTimeout(() => {
+          navigate("/", { replace: true });
+        }, 50);
       }
+      
+      // Marcar verificação como concluída após atualizações de estado
+      setTimeout(() => {
+        setIsCheckingAuth(false);
+      }, 100);
     }
   }, [isAuthenticated, isLoading, navigate, user]);
   
   // Mostrar tela de carregamento durante a verificação
-  if (isLoading) {
+  if (isLoading || isCheckingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+        <p className="text-slate-600">Verificando autenticação...</p>
       </div>
     );
   }
