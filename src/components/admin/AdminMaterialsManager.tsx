@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,7 +36,7 @@ import {
   FileText, 
   Video, 
   Music, 
-  Presentation, // Corrigido: FilePresentation -> Presentation 
+  Presentation, 
   AlertTriangle 
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -51,14 +50,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { logger } from "@/utils/logger";
 
 export function AdminMaterialsManager() {
-  // Estado para materiais e formulário
   const [materials, setMaterials] = useState<Material[]>([]);
   const [onboardingContent, setOnboardingContent] = useState<OnboardingContent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("documents");
   const { toast } = useToast();
   
-  // Estados para novo material
   const [newMaterial, setNewMaterial] = useState<{
     title: string;
     description: string;
@@ -84,17 +81,18 @@ export function AdminMaterialsManager() {
     is_active: true
   });
   
-  // Estados para edição
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [editingOnboarding, setEditingOnboarding] = useState<OnboardingContent | null>(null);
   
-  // Carrega os materiais do Supabase
+  const getSelectItemValue = (value: string | undefined): string => {
+    return value || "valor_padrao";
+  };
+  
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
         
-        // Carregar materiais
         const { data: materialsData, error: materialsError } = await supabase
           .from("materials")
           .select("*")
@@ -104,16 +102,14 @@ export function AdminMaterialsManager() {
           throw materialsError;
         }
         
-        // Certifique-se de que todos os materiais tenham um tipo válido
         const typedMaterials = materialsData.map(material => ({
           ...material,
-          type: material.type || "document" // Garante que todos os materiais tenham um tipo
+          type: material.type || "document"
         })) as Material[];
         
         setMaterials(typedMaterials);
         
         try {
-          // Carregar conteúdo de onboarding
           const { data: onboardingData, error: onboardingError } = await supabase
             .from("onboarding_content")
             .select("*")
@@ -130,7 +126,6 @@ export function AdminMaterialsManager() {
           }
         } catch (onboardingError) {
           console.error("Erro ao carregar onboarding:", onboardingError);
-          // Não queremos que falha no onboarding impeça o carregamento dos materiais
         }
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
@@ -147,7 +142,6 @@ export function AdminMaterialsManager() {
     loadData();
   }, [toast]);
   
-  // Função para adicionar novo material
   const handleAddMaterial = async () => {
     try {
       const { title, description, category, file_url, plan_level, type } = newMaterial;
@@ -177,12 +171,11 @@ export function AdminMaterialsManager() {
       
       const newMaterialWithDefaults = {
         ...data[0],
-        type: data[0].type || "document" // Garante que o tipo esteja presente
+        type: data[0].type || "document"
       } as Material;
       
       setMaterials([newMaterialWithDefaults, ...materials]);
       
-      // Resetar formulário
       setNewMaterial({
         title: "",
         description: "",
@@ -207,7 +200,6 @@ export function AdminMaterialsManager() {
     }
   };
   
-  // Função para atualizar material
   const handleUpdateMaterial = async () => {
     if (!editingMaterial) return;
     
@@ -238,7 +230,6 @@ export function AdminMaterialsManager() {
         
       if (error) throw error;
       
-      // Atualizar a lista local
       setMaterials(materials.map(m => m.id === id ? editingMaterial : m));
       setEditingMaterial(null);
       
@@ -256,7 +247,6 @@ export function AdminMaterialsManager() {
     }
   };
   
-  // Função para excluir material
   const handleDeleteMaterial = async (id: string) => {
     try {
       const { error } = await supabase
@@ -266,7 +256,6 @@ export function AdminMaterialsManager() {
         
       if (error) throw error;
       
-      // Remover da lista local
       setMaterials(materials.filter(m => m.id !== id));
       
       toast({
@@ -283,7 +272,6 @@ export function AdminMaterialsManager() {
     }
   };
   
-  // Funções para o conteúdo de onboarding
   const handleSaveOnboarding = async () => {
     try {
       const { title, content, video_url, is_active } = newOnboarding;
@@ -313,7 +301,6 @@ export function AdminMaterialsManager() {
         if (data && data[0]) {
           setOnboardingContent(data[0] as OnboardingContent);
           
-          // Resetar formulário
           setNewOnboarding({
             title: "",
             content: "",
@@ -327,7 +314,6 @@ export function AdminMaterialsManager() {
           });
         }
       } catch (error: any) {
-        // Se a tabela não existir ou outra condição
         console.error("Erro específico ao salvar onboarding:", error);
         throw error;
       }
@@ -391,7 +377,6 @@ export function AdminMaterialsManager() {
     }
   };
   
-  // Filtrar materiais por tipo
   const filteredMaterials = materials.filter(m => {
     switch (activeTab) {
       case "documents":
@@ -407,7 +392,6 @@ export function AdminMaterialsManager() {
     }
   });
 
-  // Ícones para os tipos de materiais
   const getTypeIcon = (type: Material["type"]) => {
     switch (type) {
       case "document":
@@ -844,7 +828,6 @@ export function AdminMaterialsManager() {
         </CardContent>
       </Card>
       
-      {/* Dialog para editar conteúdo de onboarding */}
       <Dialog open={!!editingOnboarding} onOpenChange={(open) => !open && setEditingOnboarding(null)}>
         <DialogContent>
           <DialogHeader>

@@ -100,7 +100,7 @@ export function QuizContent({
                           </SelectTrigger>
                           <SelectContent>
                             {allModules?.map((module, index) => (
-                              <SelectItem key={module?.id || index} value={index.toString()}>
+                              <SelectItem key={module?.id || `module-${index}`} value={index.toString()}>
                                 Módulo {index + 1}: {module?.title || "Sem título"}
                               </SelectItem>
                             ))}
@@ -122,7 +122,7 @@ export function QuizContent({
                           </SelectTrigger>
                           <SelectContent>
                             {moduleQuestions.map((question, index) => (
-                              <SelectItem key={question?.id || index} value={index.toString()}>
+                              <SelectItem key={question?.id || `question-${index}`} value={index.toString()}>
                                 Questão {index + 1}
                               </SelectItem>
                             ))}
@@ -274,7 +274,7 @@ export function QuizContent({
                         </SelectTrigger>
                         <SelectContent>
                           {allModules?.map((module, index) => (
-                            <SelectItem key={module?.id || index} value={index.toString()}>
+                            <SelectItem key={module?.id || `module-${index}`} value={index.toString()}>
                               Módulo {index + 1}: {module?.title || "Sem título"}
                             </SelectItem>
                           ))}
@@ -296,7 +296,7 @@ export function QuizContent({
                         </SelectTrigger>
                         <SelectContent>
                           {moduleQuestions.map((question, index) => (
-                            <SelectItem key={question?.id || index} value={index.toString()}>
+                            <SelectItem key={question?.id || `question-${index}`} value={index.toString()}>
                               Questão {index + 1}
                             </SelectItem>
                           ))}

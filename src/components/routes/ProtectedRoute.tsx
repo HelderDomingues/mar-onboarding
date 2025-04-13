@@ -15,7 +15,7 @@ export const ProtectedRoute = ({ component: Component }: ProtectedRouteProps) =>
   useEffect(() => {
     // Registrar tentativa de acesso à rota protegida
     if (!isLoading) {
-      addLogEntry('navigation', 'Tentativa de acesso à rota protegida', { 
+      addLogEntry('auth', 'Tentativa de acesso à rota protegida', { 
         isAuthenticated,
         userId: user?.id || 'não autenticado'
       }, user?.id);
@@ -23,7 +23,7 @@ export const ProtectedRoute = ({ component: Component }: ProtectedRouteProps) =>
     
     // Apenas redirecionar se não estiver autenticado e não estiver carregando
     if (!isAuthenticated && !isLoading) {
-      addLogEntry('navigation', 'Redirecionando usuário não autenticado para página inicial', {}, user?.id);
+      addLogEntry('auth', 'Redirecionando usuário não autenticado para página inicial', {}, user?.id);
       navigate("/");
     }
   }, [isAuthenticated, isLoading, navigate, user]);

@@ -1,371 +1,192 @@
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from './database.types';
+
+import { createClient, PostgrestError, AuthError } from '@supabase/supabase-js';
 import { logger } from '@/utils/logger';
-import { addLogEntry } from '@/utils/projectLog';
+import { addLogEntry, LogOptions } from '@/utils/projectLog';
 
-// Chaves de acesso ao Supabase
-const SUPABASE_URL = "https://btzvozqajqknqfoymxpg.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0enZvenFhanFrbnFmb3lteHBnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxNjYwNjEsImV4cCI6MjA1OTc0MjA2MX0.QdD7bEZBPvVNBhHqgAGtFaZOxJrdosFTElxRUCIrnL8";
-const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0enZvenFhanFrbnFmb3lteHBnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NDE2NjA2MSwiZXhwIjoyMDU5NzQyMDYxfQ.3Dv3h4JIfB5LZ37KIwwqw18AxtqElf17-a21kwXsryE";
+// URL e chave pública do projeto Supabase
+// Esta chave é segura para usar no frontend
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const SUPABASE_SERVICE_ROLE_KEY = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || '';
 
-// Cliente Supabase padrão com configurações explícitas para evitar problemas de sessão
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    storage: localStorage
-  }
-});
+// Validar se as variáveis de ambiente estão definidas
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('Variáveis de ambiente do Supabase não estão configuradas corretamente. Verifique seu arquivo .env');
+}
 
-// Cliente Supabase com a chave de serviço para operações administrativas
-export const supabaseAdmin = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
+// Criar cliente Supabase
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Função para obter emails dos usuários usando cliente admin
+// Cliente administrativo com Service Role Key (usar apenas para operações administrativas)
+export const supabaseAdmin = SUPABASE_SERVICE_ROLE_KEY 
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) 
+  : null;
+
+// Função para obter emails de usuários (requer Service Role)
 export const getUserEmails = async () => {
   try {
-    addLogEntry('database', 'Buscando emails de usuários');
-    
-    // Usar o cliente admin para acessar diretamente auth.users
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (error) {
-      logger.error("Erro ao buscar usuários:", error);
-      addLogEntry('error', 'Erro ao buscar usuários', { error });
+    if (!supabaseAdmin) {
+      logger.warn('Service Role Key não configurada para acesso administrativo', {
+        tag: 'Supabase'
+      });
+      addLogEntry('warning', 'Service Role Key não configurada para acesso administrativo');
       return null;
     }
     
-    // Retorna um array com id e email de cada usuário
-    const userData = data.users.map(user => ({
-      user_id: user.id,
-      email: user.email
-    }));
+    const { data, error } = await supabaseAdmin.from('auth_users_view').select('user_id, email');
     
-    addLogEntry('database', 'Emails de usuários obtidos com sucesso', { count: userData.length });
-    return userData;
+    if (error) {
+      logger.error('Erro ao recuperar emails de usuários', {
+        tag: 'Supabase', 
+        error
+      });
+      addLogEntry('error', 'Erro ao recuperar emails de usuários', JSON.stringify(error));
+      return null;
+    }
+    
+    return data;
   } catch (error) {
-    logger.error("Erro ao buscar emails dos usuários:", error);
-    addLogEntry('error', 'Erro ao buscar emails dos usuários', { error });
+    const authError = error as AuthError;
+    logger.error('Exceção ao acessar emails de usuários', authError);
+    addLogEntry('error', 'Exceção ao acessar emails de usuários', JSON.stringify(authError));
     return null;
   }
 };
 
-// Função para garantir que o email do usuário esteja presente na tabela user_roles
-export const ensureUserEmailInRoles = async (userId: string, userEmail: string, isAdmin: boolean = false) => {
-  if (!userId || !userEmail) {
-    addLogEntry('error', 'Tentativa de registrar email sem ID ou email válido', { userId, userEmail });
-    return false;
+// Função helper para formatar erro para log
+export const formatErrorForLog = (error: PostgrestError | Error | AuthError | null): string => {
+  if (!error) return '';
+  
+  if ('code' in error && 'message' in error) {
+    return `${error.code}: ${error.message}`;
   }
   
+  if ('message' in error) {
+    return error.message;
+  }
+  
+  return JSON.stringify(error);
+};
+
+// Função para inicializar webhooks
+export const initializeWebhooks = async () => {
   try {
-    addLogEntry('database', 'Verificando email do usuário em user_roles', { userId, userEmail });
+    const { data, error } = await supabase.functions.invoke('init-webhooks', {
+      body: { action: 'initialize' }
+    });
     
-    // Verificar se o usuário já tem um papel registrado
-    const { data: existingRole, error: roleError } = await supabase
-      .from('user_roles')
+    if (error) {
+      logger.error('Erro ao inicializar webhooks', {
+        tag: 'Webhook',
+        error
+      });
+      addLogEntry('error', 'Erro ao inicializar webhooks', JSON.stringify(error));
+      return false;
+    }
+    
+    logger.info('Webhooks inicializados com sucesso', {
+      tag: 'Webhook'
+    });
+    addLogEntry('info', 'Webhooks inicializados com sucesso');
+    return true;
+  } catch (error) {
+    logger.error('Exceção ao inicializar webhooks', {
+      tag: 'Webhook',
+      error
+    });
+    addLogEntry('error', 'Exceção ao inicializar webhooks', JSON.stringify(error));
+    return false;
+  }
+};
+
+// Função para criar chave de API
+export const createApiKey = async (userId: string, description: string) => {
+  try {
+    const { data, error } = await supabase.functions.invoke('create-api-key', {
+      body: { userId, description }
+    });
+    
+    if (error) {
+      logger.error('Erro ao criar chave de API', {
+        tag: 'API',
+        error
+      });
+      addLogEntry('error', 'Erro ao criar chave de API', JSON.stringify(error));
+      return null;
+    }
+    
+    return data?.key || null;
+  } catch (error) {
+    logger.error('Exceção ao criar chave de API', {
+      tag: 'API',
+      error
+    });
+    addLogEntry('error', 'Exceção ao criar chave de API', JSON.stringify(error));
+    return null;
+  }
+};
+
+// Função para obter perfil do usuário por ID
+export const getUserProfileById = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
       .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-      
-    if (roleError) {
-      logger.error("Erro ao verificar papel do usuário:", roleError);
-      addLogEntry('error', 'Erro ao verificar papel do usuário', { roleError, userId });
-      return false;
-    }
-    
-    // Se já existe um registro, atualizar o email se necessário
-    if (existingRole) {
-      // Se o email já está correto, não precisamos fazer nada
-      if (existingRole.email === userEmail) {
-        addLogEntry('info', 'Email do usuário já está atualizado', { userId, userEmail });
-        return true;
-      }
-      
-      // Se não, atualizar o email
-      const { error: updateError } = await supabase
-        .from('user_roles')
-        .update({ email: userEmail })
-        .eq('user_id', userId);
-        
-      if (updateError) {
-        logger.error("Erro ao atualizar email do usuário:", updateError);
-        addLogEntry('error', 'Erro ao atualizar email do usuário', { updateError, userId });
-        return false;
-      }
-      
-      addLogEntry('database', 'Email do usuário atualizado com sucesso', { userId, userEmail });
-      return true;
-    }
-    
-    // Se não existe, criar um novo registro
-    const role = isAdmin ? 'admin' : 'user';
-    const { error: insertError } = await supabase
-      .from('user_roles')
-      .insert({ user_id: userId, role, email: userEmail });
-      
-    if (insertError) {
-      logger.error("Erro ao criar papel para usuário:", insertError);
-      addLogEntry('error', 'Erro ao criar papel para usuário', { insertError, userId });
-      return false;
-    }
-    
-    addLogEntry('database', 'Papel de usuário criado com sucesso', { userId, userEmail, role });
-    return true;
-  } catch (error) {
-    logger.error("Erro ao processar email do usuário:", error);
-    addLogEntry('error', 'Erro ao processar email do usuário', { error, userId });
-    return false;
-  }
-};
-
-// Função para verificar se o usuário é admin - reescrita para evitar recursão
-export const isUserAdmin = async (userId: string | undefined): Promise<boolean> => {
-  if (!userId) return false;
-  
-  try {
-    addLogEntry('auth', 'Verificando se o usuário é admin', { userId });
-    
-    // Usar execução diferida para evitar recursão
-    return new Promise((resolve) => {
-      setTimeout(async () => {
-        try {
-          const { data, error } = await supabase.rpc('is_admin');
-          
-          if (error) {
-            logger.error("Erro ao verificar se o usuário é admin:", error);
-            addLogEntry('error', 'Erro ao verificar se o usuário é admin', { error, userId });
-            resolve(false);
-            return;
-          }
-          
-          addLogEntry('auth', 'Verificação de admin concluída', { isAdmin: !!data, userId });
-          resolve(!!data);
-        } catch (error) {
-          logger.error("Erro ao verificar status de admin:", error);
-          addLogEntry('error', 'Erro ao verificar status de admin', { error, userId });
-          resolve(false);
-        }
-      }, 50); // Atraso ligeiramente maior para garantir que o contexto de autenticação esteja estabelecido
-    });
-  } catch (error) {
-    logger.error("Erro ao verificar status de admin:", error);
-    addLogEntry('error', 'Erro ao verificar status de admin', { error, userId });
-    return false;
-  }
-};
-
-// Função para atualizar ou criar papel de admin para um usuário
-export const setUserAsAdmin = async (userId: string, userEmail: string): Promise<boolean> => {
-  if (!userId) return false;
-  
-  try {
-    addLogEntry('database', 'Configurando usuário como admin', { userId, userEmail });
-    return await ensureUserEmailInRoles(userId, userEmail, true);
-  } catch (error) {
-    logger.error("Erro ao configurar usuário como admin:", error);
-    addLogEntry('error', 'Erro ao configurar usuário como admin', { error, userId });
-    return false;
-  }
-};
-
-// Função específica para configurar o administrador principal
-export const setupMainAdmin = async (): Promise<boolean> => {
-  try {
-    const adminEmail = "helder@crievalor.com.br";
-    addLogEntry('database', 'Configurando administrador principal', { email: adminEmail });
-    
-    // Buscar o usuário pelo email
-    const { data: users, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (usersError) {
-      logger.error("Erro ao buscar usuários:", usersError);
-      addLogEntry('error', 'Erro ao buscar usuários para configurar admin principal', { error: usersError });
-      return false;
-    }
-    
-    const adminUser = users.users.find(user => user.email === adminEmail);
-    
-    if (!adminUser) {
-      logger.error("Administrador principal não encontrado:", adminEmail);
-      addLogEntry('error', 'Administrador principal não encontrado', { email: adminEmail });
-      return false;
-    }
-    
-    // Configurar como admin
-    const success = await setUserAsAdmin(adminUser.id, adminEmail);
-    
-    if (success) {
-      addLogEntry('database', 'Administrador principal configurado com sucesso', { userId: adminUser.id, email: adminEmail });
-    }
-    
-    return success;
-  } catch (error) {
-    logger.error("Erro ao configurar administrador principal:", error);
-    addLogEntry('error', 'Erro ao configurar administrador principal', { error });
-    return false;
-  }
-};
-
-// Função para completar o questionário e enviar ao webhook
-export const completarQuestionario = async (userId: string): Promise<boolean> => {
-  if (!userId) return false;
-  
-  try {
-    addLogEntry('database', 'Completando questionário', { userId });
-    
-    // Primeiro, completa o questionário usando a função RPC
-    const { data: completeResult, error: completeError } = await supabase.rpc('complete_quiz', {
-      user_id: userId
-    });
-    
-    if (completeError) {
-      console.error("Erro ao completar o questionário:", completeError);
-      addLogEntry('error', 'Erro ao completar o questionário', { error: completeError, userId });
-      return false;
-    }
-    
-    // Busca o ID da submissão
-    const { data: submission, error: submissionError } = await supabase
-      .from('quiz_submissions')
-      .select('id')
-      .eq('user_id', userId)
+      .eq('id', userId)
       .single();
-    
-    if (submissionError || !submission) {
-      console.error("Erro ao buscar a submissão:", submissionError);
-      addLogEntry('error', 'Erro ao buscar a submissão', { error: submissionError, userId });
-      return false;
-    }
-    
-    // Enviar para o webhook
-    const webhookResult = await enviarRespostasParaWebhook(submission.id);
-    
-    if (webhookResult.success) {
-      addLogEntry('database', 'Questionário completado e enviado com sucesso', { userId, submissionId: submission.id });
-    }
-    
-    return webhookResult.success;
-  } catch (error) {
-    console.error("Erro ao completar e enviar questionário:", error);
-    addLogEntry('error', 'Erro ao completar e enviar questionário', { error, userId });
-    return false;
-  }
-};
-
-// Função para salvar uma resposta do questionário
-export const salvarRespostaQuestionario = async (
-  userId: string,
-  questionId: string,
-  questionText: string,
-  answer: string,
-  userEmail: string,
-  userName: string
-): Promise<boolean> => {
-  if (!userId || !questionId) return false;
-  
-  try {
-    addLogEntry('database', 'Salvando resposta do questionário', { userId, questionId });
-    
-    const { error } = await supabase
-      .from('quiz_answers')
-      .upsert({
-        user_id: userId,
-        question_id: questionId,
-        question_text: questionText,
-        answer,
-        user_email: userEmail,
-        user_name: userName,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id,question_id'
-      });
-    
+      
     if (error) {
-      console.error("Erro ao salvar resposta:", error);
-      addLogEntry('error', 'Erro ao salvar resposta do questionário', { error, userId, questionId });
-      return false;
+      logger.error('Erro ao obter perfil de usuário', {
+        tag: 'Perfil',
+        userId,
+        error
+      });
+      addLogEntry('error', `Erro ao obter perfil do usuário ${userId}`, JSON.stringify(error));
+      return null;
     }
     
-    addLogEntry('database', 'Resposta do questionário salva com sucesso', { userId, questionId });
-    return true;
+    return data;
   } catch (error) {
-    console.error("Erro ao salvar resposta do questionário:", error);
-    addLogEntry('error', 'Erro ao salvar resposta do questionário', { error, userId, questionId });
-    return false;
+    logger.error('Exceção ao obter perfil de usuário', {
+      tag: 'Perfil',
+      userId,
+      error
+    });
+    addLogEntry('error', `Exceção ao obter perfil do usuário ${userId}`, JSON.stringify(error));
+    return null;
   }
 };
 
-// Função para atualizar progresso do questionário
-export const atualizarProgressoQuestionario = async (
-  userId: string,
-  currentModule: number,
-  isComplete: boolean = false,
-  userEmail: string,
-  userName: string
-): Promise<boolean> => {
-  if (!userId) return false;
-  
+// Função para enviar respostas do questionário para a API externa
+export const enviarRespostasParaAPI = async (userId: string, respostas: any) => {
   try {
-    addLogEntry('database', 'Atualizando progresso do questionário', { 
-      userId, 
-      currentModule, 
-      isComplete 
+    const { data, error } = await supabase.functions.invoke('enviar-respostas', {
+      body: { userId, respostas }
     });
     
-    const updateData: any = {
-      user_id: userId,
-      current_module: currentModule,
-      user_email: userEmail,
-      user_name: userName
-    };
-    
-    if (isComplete) {
-      updateData.is_complete = true;
-      updateData.completed_at = new Date().toISOString();
-    }
-    
-    const { error } = await supabase
-      .from('quiz_submissions')
-      .upsert(updateData, {
-        onConflict: 'user_id'
-      });
-    
     if (error) {
-      console.error("Erro ao atualizar progresso:", error);
-      addLogEntry('error', 'Erro ao atualizar progresso do questionário', { error, userId });
+      logger.error('Erro ao enviar respostas para API externa', {
+        tag: 'API',
+        userId,
+        error
+      });
+      addLogEntry('error', 'Erro ao enviar respostas para API externa', JSON.stringify(error));
       return false;
     }
     
-    addLogEntry('database', 'Progresso do questionário atualizado com sucesso', { 
-      userId, 
-      currentModule, 
-      isComplete 
+    logger.info('Respostas enviadas com sucesso para API externa', {
+      tag: 'API',
+      userId
     });
-    
+    addLogEntry('info', 'Respostas enviadas com sucesso para API externa', undefined, userId);
     return true;
   } catch (error) {
-    console.error("Erro ao atualizar progresso do questionário:", error);
-    addLogEntry('error', 'Erro ao atualizar progresso do questionário', { error, userId });
+    logger.error('Exceção ao enviar respostas para API externa', {
+      tag: 'API',
+      userId,
+      error
+    });
+    addLogEntry('error', 'Exceção ao enviar respostas para API externa', JSON.stringify(error));
     return false;
   }
 };
-
-// Inicializar o sistema de logs para o cliente Supabase
-addLogEntry('info', 'Cliente Supabase inicializado', {
-  url: SUPABASE_URL.substring(0, 15) + '...',
-  mode: process.env.NODE_ENV
-});
-
-// Configurar o administrador principal automaticamente
-setTimeout(async () => {
-  try {
-    await setupMainAdmin();
-  } catch (error) {
-    console.error("Erro ao configurar administrador principal:", error);
-    addLogEntry('error', 'Erro ao configurar administrador principal durante inicialização', { error });
-  }
-}, 1000);

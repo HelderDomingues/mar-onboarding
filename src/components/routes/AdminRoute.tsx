@@ -15,7 +15,7 @@ const AdminRoute = () => {
   useEffect(() => {
     if (!isLoading) {
       // Registrar tentativa de acesso à área administrativa
-      addLogEntry('admin', 'Verificação de acesso administrativo', {
+      addLogEntry('auth', 'Verificação de acesso administrativo', {
         userId: user?.id || 'não autenticado',
         isAdmin: isAdmin || false,
         isAuthenticated: isAuthenticated || false
@@ -39,7 +39,7 @@ const AdminRoute = () => {
     logger.warn('Tentativa de acesso à área administrativa sem autenticação', {
       tag: 'Admin'
     });
-    addLogEntry('admin', 'Tentativa de acesso à área administrativa sem autenticação');
+    addLogEntry('auth', 'Tentativa de acesso à área administrativa sem autenticação');
     return <Navigate to="/" replace />;
   }
 
@@ -49,12 +49,12 @@ const AdminRoute = () => {
       tag: 'Admin',
       userId: user?.id
     });
-    addLogEntry('admin', 'Tentativa de acesso à área administrativa por usuário sem permissão', {}, user?.id);
+    addLogEntry('auth', 'Tentativa de acesso à área administrativa por usuário sem permissão', {}, user?.id);
     return <Navigate to="/dashboard" replace />;
   }
 
   // Se for administrador, permitir acesso
-  addLogEntry('admin', 'Acesso administrativo concedido', {}, user?.id);
+  addLogEntry('auth', 'Acesso administrativo concedido', {}, user?.id);
   return <Outlet />;
 };
 

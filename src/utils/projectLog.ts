@@ -1,4 +1,3 @@
-
 /**
  * Sistema de Log do Projeto MAR - Crie Valor
  * 
@@ -10,13 +9,21 @@ import { logger } from './logger';
 import { supabase } from '@/integrations/supabase/client';
 
 // Interface para os logs
+export type LogType = 'error' | 'warning' | 'info' | 'build' | 'auth' | 'database' | 'admin' | 'navigation' | 'quiz';
+
 export interface LogEntry {
   timestamp: string;
-  type: 'error' | 'warning' | 'info' | 'build' | 'auth' | 'database';
+  type: LogType;
   message: string;
-  details?: any;
-  userId?: string;
   context?: string;
+  userId?: string;
+}
+
+export interface LogOptions {
+  status?: string;
+  message?: string;
+  code?: string;
+  [key: string]: any;
 }
 
 // Armazenamento local dos logs (em memória)

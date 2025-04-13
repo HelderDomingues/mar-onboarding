@@ -95,8 +95,9 @@ export function QuizConfigurationPanel({
                             </SelectTrigger>
                             <SelectContent>
                               {modules.map((module, index) => (
-                                <SelectItem key={module.id} value={module.id}>
-                                  Módulo {index + 1}: {module.title}
+                                // Garantir que module.id existe e não está vazio
+                                <SelectItem key={module.id || `module-${index}`} value={module.id || `module-${index}`}>
+                                  Módulo {index + 1}: {module.title || "Sem título"}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -116,8 +117,9 @@ export function QuizConfigurationPanel({
                               </SelectTrigger>
                               <SelectContent>
                                 {filteredQuestions.map((question, index) => (
-                                  <SelectItem key={question.id} value={question.id}>
-                                    Questão {index + 1}: {question.text.substring(0, 30)}...
+                                  // Garantir que question.id existe e não está vazio
+                                  <SelectItem key={question.id || `question-${index}`} value={question.id || `question-${index}`}>
+                                    Questão {index + 1}: {question.text ? question.text.substring(0, 30) + "..." : "Sem texto"}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
