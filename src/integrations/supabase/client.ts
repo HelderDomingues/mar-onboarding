@@ -1,23 +1,21 @@
-
 import { createClient, PostgrestError, AuthError } from '@supabase/supabase-js';
 import { logger } from '@/utils/logger';
 import { addLogEntry, LogOptions } from '@/utils/projectLog';
 
-// URL e chave pública do projeto Supabase
-// Esta chave é segura para usar no frontend
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const SUPABASE_SERVICE_ROLE_KEY = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || '';
+// Project-specific Supabase URL and keys
+const SUPABASE_URL = 'https://btzvozqajqknqfoymxpg.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0enZvenFhanFrbnFmb3lteHBnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxNjYwNjEsImV4cCI6MjA1OTc0MjA2MX0.QdD7bEZBPvVNBhHqgAGtFaZOxJrdosFTElxRUCIrnL8';
+const SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0enZvenFhanFrbnFmb3lteHBnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NDE2NjA2MSwiZXhwIjoyMDU5NzQyMDYxfQ.mZaY-sWwmHmtCQm16nMhF0bGnF8uVkPMSexEFbL5kpY';
 
-// Validar se as variáveis de ambiente estão definidas
+// Validate URL and keys
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('Variáveis de ambiente do Supabase não estão configuradas corretamente. Verifique seu arquivo .env');
+  console.error('Supabase URL or Anon Key is missing. Please check your Supabase configuration.');
 }
 
-// Criar cliente Supabase
+// Create Supabase client
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Cliente administrativo com Service Role Key (usar apenas para operações administrativas)
+// Admin client with Service Role Key (use only for administrative operations)
 export const supabaseAdmin = SUPABASE_SERVICE_ROLE_KEY 
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) 
   : null;
