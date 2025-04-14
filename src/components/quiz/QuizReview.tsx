@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -236,7 +235,6 @@ export function QuizReview({
           const { data, error } = await supabaseAdmin.rpc('complete_quiz', { user_id: userId });
           
           if (error) {
-            // Registra o erro para diagnóstico
             logger.error('Erro ao completar questionário via RPC:', {
               tag: 'Quiz',
               data: { 
@@ -248,7 +246,6 @@ export function QuizReview({
               }
             });
             
-            // Prepara o detalhe do erro para exibição
             setErrorDetails({
               origem: 'RPC complete_quiz (Admin)',
               mensagem: error.message,
@@ -268,7 +265,6 @@ export function QuizReview({
           await onComplete();
           return;
         } catch (rpcError: any) {
-          // Se falhar o RPC, tentamos o método alternativo
           logger.warn('Falha no método RPC, tentando atualização direta...', {
             tag: 'Quiz',
             data: { 
@@ -276,8 +272,6 @@ export function QuizReview({
               error: rpcError?.message || 'Erro desconhecido no RPC' 
             }
           });
-          
-          // Não lançamos o erro aqui, apenas seguimos para o método alternativo
         }
       }
       
@@ -290,8 +284,7 @@ export function QuizReview({
         
         const { error } = await supabase.from('quiz_submissions').update({
           completed: true,
-          completed_at: new Date().toISOString(),
-          contact_consent: true
+          completed_at: new Date().toISOString()
         }).eq('user_id', userId);
         
         if (error) {
@@ -306,7 +299,6 @@ export function QuizReview({
             }
           });
           
-          // Adiciona detalhes do erro ao estado
           setErrorDetails({
             origem: 'Atualização direta quiz_submissions',
             mensagem: error.message,
@@ -325,13 +317,11 @@ export function QuizReview({
         
         await onComplete();
       } catch (directError: any) {
-        // Se também falhar a atualização direta, agora lançamos o erro
         throw directError;
       }
     } catch (error: any) {
       logger.error("Erro na finalização:", error);
       
-      // Preparar mensagem de erro detalhada
       let detailedError = "Não foi possível finalizar o questionário.";
       
       if (error.message) {
@@ -354,7 +344,6 @@ export function QuizReview({
         variant: "destructive"
       });
       
-      // Se não temos detalhes detalhados do erro, mas temos o erro bruto
       if (!errorDetails && error) {
         setErrorDetails({
           origem: 'Erro geral',
