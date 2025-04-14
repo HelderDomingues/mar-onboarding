@@ -1,13 +1,7 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Clock, BookOpen, BarChart, ChevronRight, Users as UsersIcon, 
-  FileCheck, FileBarChart, LineChart, PieChart, ArrowUpRight, 
-  ArrowDown, TrendingUp, Layers, Search, Filter, User, Settings, 
-  LayoutDashboard
-} from "lucide-react";
+import { Clock, BookOpen, BarChart, ChevronRight, Users as UsersIcon, FileCheck, FileBarChart, LineChart, PieChart, ArrowUpRight, ArrowDown, TrendingUp, Layers, Search, Filter, User, Settings, LayoutDashboard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { QuizSubmission } from "@/types/quiz";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,39 +11,35 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { addLogEntry } from "@/utils/projectLog";
-
 interface AdminDashboardProps {
   submission?: QuizSubmission | null;
   isAdmin: boolean;
 }
-
 export function AdminDashboard({
   submission,
   isAdmin
 }: AdminDashboardProps) {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  
+  const {
+    toast
+  } = useToast();
   const [stats, setStats] = useState({
     totalUsers: '...',
     completedSubmissions: '...',
     inProgressSubmissions: '...',
     completionRate: '...'
   });
-  
   const [chartData, setChartData] = useState<any[]>([]);
   const [lineChartData, setLineChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
   useEffect(() => {
     // Se não for admin, não fazemos as consultas
     if (!isAdmin) return;
-    
     const fetchStats = async () => {
       try {
         setIsLoading(true);
         addLogEntry('info', 'Carregando estatísticas do dashboard administrativo');
-        
+
         // Buscar contagem de usuários
         const {
           count: usersCount,
@@ -76,7 +66,6 @@ export function AdminDashboard({
           count: 'exact',
           head: true
         }).eq('completed', false);
-        
         if (!usersError && !completedError && !inProgressError) {
           const usersTotal = usersCount || 0;
           const completed = completedCount || 0;
@@ -122,7 +111,6 @@ export function AdminDashboard({
           addLogEntry('error', 'Erro ao buscar estatísticas do dashboard', {
             error: errorMessage?.message
           });
-          
           toast({
             title: "Erro ao carregar estatísticas",
             description: "Não foi possível carregar as estatísticas do dashboard.",
@@ -134,7 +122,6 @@ export function AdminDashboard({
         addLogEntry('error', 'Erro ao buscar estatísticas do dashboard', {
           error: error.message
         });
-        
         toast({
           title: "Erro ao carregar estatísticas",
           description: "Ocorreu um erro inesperado ao carregar os dados.",
@@ -144,12 +131,9 @@ export function AdminDashboard({
         setIsLoading(false);
       }
     };
-    
     fetchStats();
   }, [isAdmin, toast]);
-
-  return (
-    <div className="space-y-6 w-full font-sans">
+  return <div className="space-y-6 w-full font-sans">
       {/* Cabeçalho da página */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -168,12 +152,7 @@ export function AdminDashboard({
             <Filter className="h-4 w-4 mr-1" />
             Filtros
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => navigate("/profile")} 
-            className="flex items-center gap-1"
-          >
+          <Button variant="outline" size="sm" onClick={() => navigate("/profile")} className="flex items-center gap-1">
             <User className="h-4 w-4" />
             <span className="hidden md:inline">Perfil</span>
           </Button>
@@ -212,12 +191,7 @@ export function AdminDashboard({
                   </div>
                 </div>
                 <div className="mt-4 text-xs flex justify-between">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-xs p-0 h-auto text-muted-foreground hover:text-primary" 
-                    onClick={() => navigate('/admin/users')}
-                  >
+                  <Button variant="ghost" size="sm" className="text-xs p-0 h-auto text-muted-foreground hover:text-primary" onClick={() => navigate('/admin/users')}>
                     Ver detalhes <ChevronRight className="ml-1 h-3 w-3" />
                   </Button>
                 </div>
@@ -242,12 +216,7 @@ export function AdminDashboard({
                   </div>
                 </div>
                 <div className="mt-4 text-xs flex justify-between">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-xs p-0 h-auto text-muted-foreground hover:text-primary" 
-                    onClick={() => navigate('/admin/reports')}
-                  >
+                  <Button variant="ghost" size="sm" className="text-xs p-0 h-auto text-muted-foreground hover:text-primary" onClick={() => navigate('/admin/reports')}>
                     Ver relatórios <ChevronRight className="ml-1 h-3 w-3" />
                   </Button>
                 </div>
@@ -272,12 +241,7 @@ export function AdminDashboard({
                   </div>
                 </div>
                 <div className="mt-4 text-xs flex justify-between">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-xs p-0 h-auto text-muted-foreground hover:text-primary"
-                    onClick={() => navigate('/admin/metrics')}
-                  >
+                  <Button variant="ghost" size="sm" className="text-xs p-0 h-auto text-muted-foreground hover:text-primary" onClick={() => navigate('/admin/metrics')}>
                     Ver métricas <ChevronRight className="ml-1 h-3 w-3" />
                   </Button>
                 </div>
@@ -302,12 +266,7 @@ export function AdminDashboard({
                   </div>
                 </div>
                 <div className="mt-4 text-xs flex justify-between">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-xs p-0 h-auto text-muted-foreground hover:text-primary"
-                    onClick={() => navigate('/admin/metrics')}
-                  >
+                  <Button variant="ghost" size="sm" className="text-xs p-0 h-auto text-muted-foreground hover:text-primary" onClick={() => navigate('/admin/metrics')}>
                     Análise completa <ChevronRight className="ml-1 h-3 w-3" />
                   </Button>
                 </div>
@@ -317,11 +276,7 @@ export function AdminDashboard({
           
           {/* Botões de ação rápida */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-            <Button 
-              onClick={() => navigate("/admin/users")} 
-              variant="outline" 
-              className="justify-start text-left h-auto py-3"
-            >
+            <Button onClick={() => navigate("/admin/users")} variant="outline" className="justify-start text-left h-auto py-3">
               <div className="rounded-full p-2 bg-blue-100 text-blue-600 mr-3">
                 <UsersIcon className="h-5 w-5" />
               </div>
@@ -333,11 +288,7 @@ export function AdminDashboard({
               </div>
             </Button>
             
-            <Button 
-              onClick={() => navigate("/admin/reports")} 
-              variant="outline" 
-              className="justify-start text-left h-auto py-3"
-            >
+            <Button onClick={() => navigate("/admin/reports")} variant="outline" className="justify-start text-left h-auto py-3">
               <div className="rounded-full p-2 bg-green-100 text-green-600 mr-3">
                 <FileBarChart className="h-5 w-5" />
               </div>
@@ -349,11 +300,7 @@ export function AdminDashboard({
               </div>
             </Button>
             
-            <Button 
-              onClick={() => navigate("/admin/quiz-editor")} 
-              variant="outline" 
-              className="justify-start text-left h-auto py-3"
-            >
+            <Button onClick={() => navigate("/admin/quiz-editor")} variant="outline" className="justify-start text-left h-auto py-3">
               <div className="rounded-full p-2 bg-purple-100 text-purple-600 mr-3">
                 <Layers className="h-5 w-5" />
               </div>
@@ -400,19 +347,11 @@ export function AdminDashboard({
               Visualize relatórios de desempenho e análises das respostas dos usuários.
             </p>
             <div className="flex gap-2">
-              <Button 
-                variant="default" 
-                className="flex-1 justify-between" 
-                onClick={() => navigate("/admin/reports")}
-              >
+              <Button variant="default" onClick={() => navigate("/admin/reports")} className="flex-1 justify-between text-slate-50">
                 Ver Relatórios
                 <ChevronRight className="h-4 w-4" />
               </Button>
-              <Button 
-                variant="outline" 
-                className="flex-1 justify-between" 
-                onClick={() => navigate("/admin/metrics")}
-              >
+              <Button variant="outline" className="flex-1 justify-between" onClick={() => navigate("/admin/metrics")}>
                 Ver Métricas
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -510,6 +449,5 @@ export function AdminDashboard({
           </div>
         </CardFooter>
       </Card>
-    </div>
-  )
+    </div>;
 }
