@@ -39,6 +39,25 @@ interface QuizModule {
   order_number: number;
 }
 
+// Função auxiliar para formatar respostas JSON
+const formatJsonAnswer = (answer) => {
+  if (!answer) return "Sem resposta";
+  
+  try {
+    // Verifica se é uma resposta em formato JSON (array)
+    if (answer.startsWith('[') && answer.endsWith(']')) {
+      const parsed = JSON.parse(answer);
+      if (Array.isArray(parsed)) {
+        return parsed.join(', ');
+      }
+    }
+    return answer;
+  } catch (e) {
+    // Se não conseguir fazer o parse, retorna a resposta original
+    return answer;
+  }
+};
+
 /**
  * Gera um arquivo PDF com as respostas do questionário para um usuário específico
  * @param userId ID do usuário
@@ -120,6 +139,12 @@ export const generateQuizPDF = async (
       unit: 'mm',
       format: 'a4'
     });
+    
+    // Garantir que o jsPDF-autotable esteja carregado
+    // @ts-ignore - Importação dinâmica para garantir que o autotable esteja disponível
+    if (typeof window !== 'undefined' && !doc.autoTable) {
+      await import('jspdf-autotable');
+    }
     
     // Configurar fonte e tamanho
     doc.setFont('helvetica');
@@ -206,19 +231,7 @@ export const generateQuizPDF = async (
         if (!question) return;
         
         // Formatar resposta para melhor visualização
-        let formattedAnswer = answer.answer || 'Sem resposta';
-        
-        try {
-          // Verificar se é uma resposta em formato JSON (array)
-          if (formattedAnswer.startsWith('[') && formattedAnswer.endsWith(']')) {
-            const parsed = JSON.parse(formattedAnswer);
-            if (Array.isArray(parsed)) {
-              formattedAnswer = parsed.join(', ');
-            }
-          }
-        } catch (e) {
-          // Manter o formato original se não for possível parsear
-        }
+        let formattedAnswer = formatJsonAnswer(answer.answer);
         
         // Adicionar à tabela
         tableBody.push([
@@ -228,7 +241,7 @@ export const generateQuizPDF = async (
       });
       
       // Adicionar tabela se houver conteúdo
-      if (tableBody.length > 0) {
+      if (tableBody.length > 0 && doc.autoTable) {
         doc.autoTable({
           startY: yPos,
           head: [['Pergunta', 'Resposta']],
@@ -336,17 +349,7 @@ export const downloadQuizCSV = async (
     
     // Adicionar as respostas ao CSV
     answers.forEach(answer => {
-      let formattedAnswer = answer.answer || 'Sem resposta';
-      try {
-        if (formattedAnswer.startsWith('[') && formattedAnswer.endsWith(']')) {
-          const parsed = JSON.parse(formattedAnswer);
-          if (Array.isArray(parsed)) {
-            formattedAnswer = parsed.join(', ');
-          }
-        }
-      } catch (e) {
-        // Manter formato original
-      }
+      let formattedAnswer = formatJsonAnswer(answer.answer);
       
       // Formatar para CSV: escapar aspas, adicionar aspas ao redor do texto
       const formatCSV = (text: string) => {
@@ -380,7 +383,7 @@ export const downloadQuizCSV = async (
   } catch (error: any) {
     logger.error('Erro ao gerar CSV', {
       tag: 'CSV',
-      data: { userId, error }
+      data: { error }
     });
     return false;
   }

@@ -18,6 +18,25 @@ import { processQuizAnswersToSimplified } from "@/utils/supabaseUtils";
 import { downloadQuizPDF, downloadQuizCSV } from "@/utils/pdfGenerator";
 import { logger } from "@/utils/logger";
 
+// Função auxiliar para formatar respostas JSON
+const formatJsonAnswer = (answer) => {
+  if (!answer) return "Sem resposta";
+  
+  try {
+    // Verifica se é uma resposta em formato JSON (array)
+    if (answer.startsWith('[') && answer.endsWith(']')) {
+      const parsed = JSON.parse(answer);
+      if (Array.isArray(parsed)) {
+        return parsed.join(', ');
+      }
+    }
+    return answer;
+  } catch (e) {
+    // Se não conseguir fazer o parse, retorna a resposta original
+    return answer;
+  }
+};
+
 export function QuizViewAnswers() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -195,7 +214,7 @@ export function QuizViewAnswers() {
                         </h4>
                         <p className="text-sm mb-2">{answer.question_text}</p>
                         <div className="bg-blue-50 p-3 rounded text-sm">
-                          {answer.answer}
+                          {formatJsonAnswer(answer.answer)}
                         </div>
                       </div>
                     ))}

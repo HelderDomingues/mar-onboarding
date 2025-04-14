@@ -20,6 +20,7 @@ Este projeto consiste em uma área de membros privada e exclusiva para o Sistema
 - [x] Otimização do carregamento inicial do questionário
 - [x] Adição de logs detalhados para ajudar na depuração de problemas
 - [x] Implementação de método alternativo para conclusão do questionário
+- [x] Correção da exibição de respostas com múltiplas opções (formato JSON)
 
 ### Interface e Experiência do Usuário
 - [x] Simplificação do painel de configuração do questionário
@@ -27,17 +28,18 @@ Este projeto consiste em uma área de membros privada e exclusiva para o Sistema
 - [x] Tratamento de erros e feedback ao usuário
 - [x] Simplificação do fluxo de navegação entre perguntas
 - [x] Correção do erro 406 na finalização do questionário
+- [x] Implementação correta da geração de PDF com jspdf-autotable
 
 ## Tarefas Pendentes
 
 ### Funcionalidades Administrativas
 - [ ] Implementação completa do dashboard administrativo
-- [ ] Funcionalidade para exportar respostas como PDF
-- [ ] Funcionalidade para exportar respostas como planilha (CSV)
+- [x] Funcionalidade para exportar respostas como PDF
+- [x] Funcionalidade para exportar respostas como planilha (CSV)
 - [ ] Interface para análise de respostas por administradores
 
 ### Integrações
-- [ ] Implementação do webhook para envio de respostas completas
+- [ ] Verificação e configuração do webhook para envio de respostas completas
 - [ ] Integração com sistemas externos para notificações
 
 ### Testes e Qualidade
@@ -52,10 +54,14 @@ Este projeto consiste em uma área de membros privada e exclusiva para o Sistema
 4. Erro nas políticas RLS - Adicionado políticas às tabelas de backup
 5. Colunas obsoletas no banco de dados - Removidas colunas options e dependency
 6. Erro 406 na finalização do questionário - Simplificação da função `complete_quiz`
+7. Exibição incorreta de respostas com múltiplas opções - Implementada formatação de JSON
+8. Erro ao gerar PDF - Corrigida implementação do jspdf-autotable
 
 ## Plano para a Próxima Iteração
 1. Concluir a implementação do painel administrativo
-2. Implementar a exportação de respostas (PDF e CSV)
-3. Refinar a experiência do usuário durante o preenchimento do questionário
-4. Adicionar mais logs e telemetria para monitoramento de uso
-5. Implementar validações adicionais para as respostas do questionário
+2. Implementar a funcionalidade de análise de respostas para administradores
+3. Verificar e configurar o webhook do Supabase
+4. Integrar com sistemas externos conforme necessário
+5. Refinar a experiência do usuário durante o preenchimento do questionário
+6. Adicionar mais logs e telemetria para monitoramento de uso
+7. Implementar validações adicionais para as respostas do questionário
