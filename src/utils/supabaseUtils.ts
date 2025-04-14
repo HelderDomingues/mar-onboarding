@@ -1,4 +1,3 @@
-
 import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/database.types';
 import type { QuizSubmission } from '@/types/quiz';
@@ -120,75 +119,6 @@ export const processQuizAnswersToSimplified = async (userId: string) => {
   }
 };
 
-// Envia dados do questionário para um webhook externo
-export const sendQuizDataToWebhook = async (userId: string, submissionId: string) => {
-  try {
-    logger.info("Enviando dados para webhook...", {
-      tag: 'Quiz',
-      data: { userId, submissionId }
-    });
-    
-    const { data, error } = await supabase.functions.invoke('quiz-webhook', {
-      body: { submissionId }
-    });
-    
-    if (error) {
-      logger.error("Erro ao invocar função de webhook:", {
-        tag: 'Quiz',
-        data: { userId, submissionId, error }
-      });
-      return false;
-    }
-    
-    logger.info("Dados enviados com sucesso para webhook", {
-      tag: 'Quiz',
-      data: { userId, submissionId, response: data }
-    });
-    
-    return true;
-  } catch (error) {
-    logger.error("Erro ao enviar dados para webhook:", {
-      tag: 'Quiz',
-      data: { userId, submissionId, error }
-    });
-    return false;
-  }
-};
-
-// Obter detalhes simplificados do questionário
-export const getQuizDetails = async (userId: string) => {
-  if (!userId) return null;
-  
-  try {
-    const { data, error } = await supabase
-      .from('quiz_submissions')
-      .select(`
-        *,
-        user:user_id (
-          email
-        )
-      `)
-      .eq('user_id', userId)
-      .maybeSingle();
-      
-    if (error) {
-      logger.error("Erro ao buscar detalhes do questionário:", {
-        tag: 'Quiz',
-        data: { userId, error }
-      });
-      return null;
-    }
-    
-    return data;
-  } catch (error) {
-    logger.error("Erro ao buscar detalhes do questionário:", {
-      tag: 'Quiz',
-      data: { userId, error }
-    });
-    return null;
-  }
-};
-
 // Retorno detalhado para a função completeQuizManually
 interface CompleteQuizResult {
   success: boolean;
@@ -207,7 +137,6 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
     });
     
     // Método alternativo via update direto - usando diretamente como primeira opção
-    // pois o RPC parece estar falhando
     try {
       logger.info('Tentando completar questionário via atualização direta', {
         tag: 'Quiz',
@@ -267,7 +196,9 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
             userId, 
             error: JSON.stringify(updateResult.error),
             errorMessage: updateResult.error.message,
-            errorDetails: updateResult.error.details 
+            errorDetails: updateResult.error.details,
+            errorCode: updateResult.error.code,
+            errorHint: updateResult.error.hint
           }
         });
         
@@ -292,7 +223,14 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
     } catch (directError: any) {
       logger.error("Erro ao completar questionário com método direto:", {
         tag: 'Quiz',
-        data: { userId, error: directError }
+        data: { 
+          userId, 
+          error: directError,
+          errorMessage: directError.message || 'Erro desconhecido',
+          errorDetails: directError.details || null,
+          errorCode: directError.code || null,
+          errorHint: directError.hint || null
+        }
       });
       
       // Tenta o método RPC como fallback

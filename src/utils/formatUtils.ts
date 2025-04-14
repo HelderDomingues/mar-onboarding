@@ -81,3 +81,72 @@ const formatObjectAnswer = (obj: Record<string, any>): string => {
   
   return values || JSON.stringify(obj);
 };
+
+/**
+ * Converte resposta para formato de array quando necessário (usado para edição em QuizReview)
+ * @param answer Resposta do questionário que pode ser array, string ou string JSON
+ * @returns Array de strings normalizado
+ */
+export const normalizeAnswerToArray = (answer: string | string[] | undefined): string[] => {
+  if (!answer) return [];
+  
+  // Se já for um array, manter como está
+  if (Array.isArray(answer)) {
+    return answer;
+  }
+  
+  // Se for string, verificar se é JSON
+  if (typeof answer === 'string') {
+    try {
+      // Verificar se parece ser um array em formato JSON
+      if (answer.startsWith('[') && answer.endsWith(']')) {
+        const parsed = JSON.parse(answer);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      }
+      
+      // Se não for JSON array válido, pode ser uma string com valores separados por vírgula
+      if (answer.includes(',') && !answer.includes('{') && !answer.includes('"')) {
+        return answer.split(',').map(item => item.trim());
+      }
+      
+      // Se for apenas uma única resposta, retornar como array unitário
+      return [answer];
+    } catch (e) {
+      // Se o parse falhar, não era um JSON válido
+      return [answer];
+    }
+  }
+  
+  return [];
+};
+
+/**
+ * Prepara resposta para envio ao servidor, formatando corretamente para múltiplas escolhas
+ * @param answer Resposta a ser formatada (string ou array)
+ * @param isMultipleChoice Se é uma pergunta de múltipla escolha
+ * @returns Valor formatado para armazenamento
+ */
+export const prepareAnswerForStorage = (answer: string | string[], isMultipleChoice: boolean): string => {
+  if (!answer) return '';
+  
+  // Se for array e múltipla escolha, converter para string JSON
+  if (Array.isArray(answer) && isMultipleChoice) {
+    return JSON.stringify(answer);
+  }
+  
+  // Se não for múltipla escolha mas for array com um único elemento, retornar o elemento
+  if (Array.isArray(answer) && answer.length === 1 && !isMultipleChoice) {
+    return answer[0];
+  }
+  
+  // Se for array mesmo não sendo múltipla escolha, converter para string JSON
+  // (isso pode acontecer em casos onde o usuário inseriu dados de forma não padrão)
+  if (Array.isArray(answer) && !isMultipleChoice) {
+    return JSON.stringify(answer);
+  }
+  
+  // Se for string, manter como está
+  return typeof answer === 'string' ? answer : JSON.stringify(answer);
+};

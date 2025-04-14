@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { completeQuizManually } from "@/utils/supabaseUtils";
 import { logger } from "@/utils/logger";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { formatJsonAnswer, normalizeAnswerToArray, prepareAnswerForStorage } from "@/utils/formatUtils";
 
 interface QuizReviewProps {
   modules: QuizModule[];
@@ -72,25 +73,6 @@ export function QuizReview({
     questions: questions.filter(q => q.module_id === module.id)
   }));
 
-  const formatAnswerValue = (value: string | string[] | undefined) => {
-    if (!value) return "Sem resposta";
-    if (Array.isArray(value)) {
-      return value.join(", ");
-    }
-    if (typeof value === "string") {
-      try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) {
-          return parsed.join(", ");
-        }
-        return String(parsed);
-      } catch (e) {
-        return value;
-      }
-    }
-    return String(value);
-  };
-
   const handleTermsChange = (checked: boolean) => {
     setAgreedToTerms(checked);
   };
@@ -111,31 +93,53 @@ export function QuizReview({
       if (!userId) {
         throw new Error("Usuário não autenticado");
       }
+      
       const currentQuestion = questions.find(q => q.id === questionId);
       if (!currentQuestion) {
         throw new Error("Pergunta não encontrada");
       }
-      const answerValue = typeof answer === 'object' ? JSON.stringify(answer) : answer;
+      
+      const isMultipleChoice = ['checkbox', 'radio'].includes(currentQuestion.type || '');
+      
+      const answerValue = prepareAnswerForStorage(answer, isMultipleChoice);
+      
       const {
         error
       } = await supabase.from('quiz_answers').upsert({
         user_id: userId,
         question_id: questionId,
         answer: answerValue,
-        question_text: currentQuestion.question_text || currentQuestion.text
+        question_text: currentQuestion.question_text || currentQuestion.text,
+        module_id: currentQuestion.module_id
       }, {
         onConflict: 'user_id,question_id'
       });
+      
       if (error) throw error;
+      
+      logger.info('Resposta atualizada com sucesso na revisão', {
+        tag: 'Quiz',
+        data: { questionId, userId }
+      });
+      
       toast({
         title: "Resposta atualizada",
         description: "Sua resposta foi atualizada com sucesso."
       });
-    } catch (error) {
-      console.error("Erro ao salvar resposta:", error);
+    } catch (error: any) {
+      logger.error("Erro ao salvar resposta:", {
+        tag: 'Quiz',
+        data: { 
+          questionId, 
+          error: error.message || JSON.stringify(error),
+          errorDetails: error.details || null,
+          errorCode: error.code
+        }
+      });
+      
       toast({
         title: "Erro ao atualizar resposta",
-        description: "Não foi possível salvar sua resposta. Por favor, tente novamente.",
+        description: `Não foi possível salvar sua resposta: ${error.message || 'Erro desconhecido'}`,
         variant: "destructive"
       });
     }
@@ -157,21 +161,8 @@ export function QuizReview({
   };
 
   const handleCheckboxChange = (questionId: string, option: string, checked: boolean) => {
-    let currentAnswers: string[] = [];
-    if (Array.isArray(editedAnswers[questionId])) {
-      currentAnswers = [...(editedAnswers[questionId] as string[])];
-    } else if (typeof editedAnswers[questionId] === 'string') {
-      try {
-        const parsed = JSON.parse(editedAnswers[questionId] as string);
-        if (Array.isArray(parsed)) {
-          currentAnswers = [...parsed];
-        } else {
-          currentAnswers = [editedAnswers[questionId] as string];
-        }
-      } catch (e) {
-        currentAnswers = [editedAnswers[questionId] as string];
-      }
-    }
+    const currentAnswers = normalizeAnswerToArray(editedAnswers[questionId]);
+    
     let newAnswers: string[];
     if (checked) {
       if (!currentAnswers.includes(option)) {
@@ -182,6 +173,7 @@ export function QuizReview({
     } else {
       newAnswers = currentAnswers.filter(item => item !== option);
     }
+    
     setEditedAnswers(prev => ({
       ...prev,
       [questionId]: newAnswers
@@ -237,7 +229,17 @@ export function QuizReview({
       
       await onComplete();
     } catch (error: any) {
-      logger.error("Erro na finalização:", error);
+      logger.error("Erro na finalização:", {
+        tag: 'Quiz',
+        data: { 
+          error, 
+          errorMessage: error.message || 'Erro desconhecido',
+          errorDetails: error.details || null,
+          errorCode: error.code || null,
+          errorHint: error.hint || null,
+          fullError: JSON.stringify(error)
+        }
+      });
       
       let detailedError = "Não foi possível finalizar o questionário.";
       
@@ -255,20 +257,20 @@ export function QuizReview({
       
       setSubmissionError(detailedError);
       
+      setErrorDetails({
+        origem: typeof error.direct === 'object' && error.direct ? 'Erro no método direto' : 
+               (typeof error.rpc === 'object' && error.rpc ? 'Erro no método RPC' : 'Erro geral'),
+        mensagem: error.message || (error.direct?.message || error.rpc?.message) || 'Erro desconhecido',
+        código: error.code || (error.direct?.code || error.rpc?.code),
+        dica: error.hint || (error.direct?.hint || error.rpc?.hint),
+        detalhes: error.details || (error.direct?.details || error.rpc?.details) || JSON.stringify(error)
+      });
+      
       toast({
         title: "Erro ao finalizar questionário",
         description: detailedError,
         variant: "destructive"
       });
-      
-      if (!errorDetails && error) {
-        setErrorDetails({
-          origem: 'Erro geral',
-          mensagem: error.message || 'Erro desconhecido',
-          detalhes: JSON.stringify(error),
-          objeto: error
-        });
-      }
       
       setConfirmed(false);
     } finally {
@@ -279,54 +281,75 @@ export function QuizReview({
   const renderEditField = (question: QuizQuestion) => {
     const questionId = question.id;
     const answer = editedAnswers[questionId];
-    switch (question.type) {
+    const questionType = question.type || question.question_type || 'text';
+    
+    switch (questionType) {
       case 'text':
       case 'email':
       case 'number':
       case 'url':
       case 'instagram':
-        return <Input value={typeof answer === 'string' ? answer : ''} onChange={e => handleInputChange(questionId, e.target.value)} className="w-full text-slate-900" placeholder="Digite sua resposta aqui" type={question.type === 'number' ? 'number' : 'text'} />;
+        return <Input 
+          value={typeof answer === 'string' ? answer : ''} 
+          onChange={e => handleInputChange(questionId, e.target.value)} 
+          className="w-full text-slate-900" 
+          placeholder="Digite sua resposta aqui" 
+          type={questionType === 'number' ? 'number' : 'text'} 
+        />;
+        
       case 'textarea':
-        return <Textarea value={typeof answer === 'string' ? answer : ''} onChange={e => handleInputChange(questionId, e.target.value)} className="w-full text-slate-900" placeholder="Digite sua resposta aqui" />;
+        return <Textarea 
+          value={typeof answer === 'string' ? answer : ''} 
+          onChange={e => handleInputChange(questionId, e.target.value)} 
+          className="w-full text-slate-900" 
+          placeholder="Digite sua resposta aqui" 
+        />;
+        
       case 'checkbox':
       case 'radio':
         const questionOptions = question.options || [];
-        let options: string[] = [];
-        let optionTexts: Record<string, string> = {};
+        const options: string[] = [];
+        const optionTexts: Record<string, string> = {};
+        
         questionOptions.forEach(opt => {
           if (typeof opt === 'string') {
             options.push(opt);
             optionTexts[opt] = opt;
           } else {
-            options.push(getOptionValue(opt));
-            optionTexts[getOptionValue(opt)] = getOptionText(opt);
+            const optVal = getOptionValue(opt);
+            const optText = getOptionText(opt);
+            options.push(optVal);
+            optionTexts[optVal] = optText;
           }
         });
-        let selectedOptions: string[] = [];
-        if (Array.isArray(answer)) {
-          selectedOptions = answer;
-        } else if (typeof answer === 'string') {
-          try {
-            const parsed = JSON.parse(answer);
-            if (Array.isArray(parsed)) {
-              selectedOptions = parsed;
-            } else {
-              selectedOptions = [answer];
-            }
-          } catch (e) {
-            selectedOptions = [answer];
-          }
-        }
+        
+        const selectedOptions = normalizeAnswerToArray(answer);
+        
         return <div className="space-y-2">
-          {options.map(option => <div key={option} className="flex items-center space-x-2">
-              <Checkbox id={`${questionId}-${option}`} checked={selectedOptions.includes(option)} onCheckedChange={checked => handleCheckboxChange(questionId, option, checked === true)} />
-              <label htmlFor={`${questionId}-${option}`} className="text-sm font-medium leading-none cursor-pointer text-slate-800">
+          {options.map(option => (
+            <div key={option} className="flex items-center space-x-2">
+              <Checkbox 
+                id={`${questionId}-${option}`} 
+                checked={selectedOptions.includes(option) || selectedOptions.includes(optionTexts[option])} 
+                onCheckedChange={checked => handleCheckboxChange(questionId, option, checked === true)} 
+              />
+              <label 
+                htmlFor={`${questionId}-${option}`} 
+                className="text-sm font-medium leading-none cursor-pointer text-slate-800"
+              >
                 {optionTexts[option] || option}
               </label>
-            </div>)}
+            </div>
+          ))}
         </div>;
+        
       default:
-        return <Input value={typeof answer === 'string' ? answer : ''} onChange={e => handleInputChange(questionId, e.target.value)} className="w-full text-slate-900" placeholder="Digite sua resposta aqui" />;
+        return <Input 
+          value={typeof answer === 'string' ? answer : ''} 
+          onChange={e => handleInputChange(questionId, e.target.value)} 
+          className="w-full text-slate-900" 
+          placeholder="Digite sua resposta aqui" 
+        />;
     }
   };
 
@@ -346,7 +369,8 @@ export function QuizReview({
               </p>
               
               <div className="space-y-8">
-                {questionsByModule.map((moduleData, moduleIndex) => <div key={moduleData.module.id} className="border border-[hsl(var(--quiz-border))] rounded-lg p-4">
+                {questionsByModule.map((moduleData, moduleIndex) => (
+                  <div key={moduleData.module.id} className="border border-[hsl(var(--quiz-border))] rounded-lg p-4">
                     <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-[hsl(var(--quiz-text))]">
                       <Badge variant="outline" className="quiz-module-badge">
                         Módulo {moduleIndex + 1}
@@ -356,15 +380,20 @@ export function QuizReview({
                     
                     <div className="space-y-4">
                       {moduleData.questions.map((question, questionIndex) => {
-                  const questionId = question.id;
-                  const isEditing = editingQuestionId === questionId;
-                  const answer = editedAnswers[questionId];
-                  return <div key={questionId} className="border-t border-[hsl(var(--quiz-border))] pt-3">
+                        const questionId = question.id;
+                        const isEditing = editingQuestionId === questionId;
+                        const answer = editedAnswers[questionId];
+                        
+                        return (
+                          <div key={questionId} className="border-t border-[hsl(var(--quiz-border))] pt-3">
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
-                                <p className="font-medium text-[hsl(var(--quiz-text))]">{question.text}</p>
+                                <p className="font-medium text-[hsl(var(--quiz-text))]">
+                                  {question.text || question.question_text}
+                                </p>
                                 
-                                {isEditing ? <div className="mt-2 space-y-3">
+                                {isEditing ? (
+                                  <div className="mt-2 space-y-3">
                                     {renderEditField(question)}
                                     
                                     <div className="flex gap-2 justify-end mt-3">
@@ -375,19 +404,31 @@ export function QuizReview({
                                         Salvar
                                       </Button>
                                     </div>
-                                  </div> : <p className="text-[hsl(var(--quiz-text))] opacity-80 mt-1 break-words">
-                                    {formatAnswerValue(answer)}
-                                  </p>}
+                                  </div>
+                                ) : (
+                                  <p className="text-[hsl(var(--quiz-text))] opacity-80 mt-1 break-words">
+                                    {formatJsonAnswer(answer)}
+                                  </p>
+                                )}
                               </div>
                               
-                              {!isEditing && <Button variant="outline" size="sm" onClick={() => handleEditClick(questionId)} className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-slate-800">
+                              {!isEditing && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => handleEditClick(questionId)} 
+                                  className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-slate-800"
+                                >
                                   <Edit className="h-4 w-4 mr-1" /> Editar
-                                </Button>}
+                                </Button>
+                              )}
                             </div>
-                          </div>;
-                })}
+                          </div>
+                        );
+                      })}
                     </div>
-                  </div>)}
+                  </div>
+                ))}
               </div>
               
               <div className="mt-8 p-4 border border-[hsl(var(--quiz-border))] rounded-lg bg-slate-800">
@@ -404,7 +445,7 @@ export function QuizReview({
                 <div className="p-3 bg-slate-700 rounded border border-slate-600 text-sm mb-4">
                   <p className="text-[hsl(var(--quiz-text))]">
                     Declaro que as informações fornecidas neste questionário são verdadeiras e
-                    condizem com a realidade atual da minha empresa/negcio.
+                    condizem com a realidade atual da minha empresa/negócio.
                     Compreendo que estas informações serão utilizadas pela Crie Valor para análise
                     e diagnóstico, e que a precisão destas informações é fundamental para o sucesso do trabalho.
                   </p>

@@ -294,35 +294,50 @@ export const formatQuizAnswers = (answers: Record<string, any>): Record<string, 
   for (const key in answers) {
     const answer = answers[key];
     
+    if (answer === null || answer === undefined) {
+      formatted[key] = '';
+      continue;
+    }
+    
+    // Já é um array
+    if (Array.isArray(answer)) {
+      formatted[key] = answer;
+      continue;
+    }
+    
+    // É uma string que pode conter JSON
     if (typeof answer === 'string') {
       try {
-        // Verificar se a string parece ser um array JSON
+        // Verificar se parece ser um array codificado como JSON
         if (answer.startsWith('[') && answer.endsWith(']')) {
-          // Tentar parsear string que pode ser array JSON
-          const parsed = JSON.parse(answer);
-          if (Array.isArray(parsed)) {
-            // Converter cada elemento para string caso não seja
-            formatted[key] = parsed.map(item => typeof item === 'string' ? item : String(item));
-          } else {
-            formatted[key] = answer;
+          try {
+            const parsed = JSON.parse(answer);
+            if (Array.isArray(parsed)) {
+              formatted[key] = parsed.map(item => 
+                typeof item === 'string' ? item : String(item)
+              );
+              continue;
+            }
+          } catch (e) {
+            // Não é um JSON válido, tratar como string normal
           }
-        } else if (answer.includes(',') && !answer.includes('{') && !answer.includes('"')) {
-          // Se for uma string CSV simples e não um JSON complexo
-          formatted[key] = answer.split(',').map(item => item.trim());
-        } else {
-          // Se não for um JSON válido, manter como string
-          formatted[key] = answer;
         }
+        
+        // Pode ser uma string CSV simples
+        if (answer.includes(',') && !answer.includes('{') && !answer.includes('"')) {
+          formatted[key] = answer.split(',').map(item => item.trim());
+          continue;
+        }
+        
+        // Caso contrário, manter como string normal
+        formatted[key] = answer;
       } catch (e) {
-        // Se não for um JSON válido, manter como string
+        // Se qualquer processamento falhar, use a string original
         formatted[key] = answer;
       }
-    } else if (Array.isArray(answer)) {
-      formatted[key] = answer;
-    } else if (answer !== null && answer !== undefined) {
-      formatted[key] = String(answer);
     } else {
-      formatted[key] = '';
+      // Para qualquer outro tipo, converter para string
+      formatted[key] = String(answer);
     }
   }
   

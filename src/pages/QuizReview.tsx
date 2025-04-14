@@ -11,6 +11,7 @@ import { completeQuizManually } from "@/utils/supabaseUtils";
 import { logger } from "@/utils/logger";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { formatQuizAnswers } from "@/utils/quizDataUtils";
 
 const QuizReviewPage = () => {
   const { isAuthenticated, user, isAdmin } = useAuth();
@@ -86,16 +87,27 @@ const QuizReviewPage = () => {
       if (answersData && answersData.length > 0) {
         answersData.forEach(ans => {
           if (ans.answer !== null && ans.answer !== undefined) {
-            const questionType = questionsWithOptions.find(q => q.id === ans.question_id)?.type;
+            const questionType = questionsWithOptions.find(q => q.id === ans.question_id)?.type || 
+                              questionsWithOptions.find(q => q.id === ans.question_id)?.question_type;
             
-            if (questionType === 'checkbox') {
-              try {
-                const parsed = JSON.parse(ans.answer);
-                processedAnswers[ans.question_id] = Array.isArray(parsed) ? parsed : [ans.answer];
-              } catch (e) {
+            try {
+              if (questionType === 'checkbox' || (ans.answer.startsWith('[') && ans.answer.endsWith(']'))) {
+                try {
+                  const parsed = JSON.parse(ans.answer);
+                  processedAnswers[ans.question_id] = Array.isArray(parsed) ? parsed : [ans.answer];
+                } catch (e) {
+                  // Se falhar o parse, pode ser que seja uma resposta em string simples
+                  if (ans.answer.includes(',') && !ans.answer.includes('{') && !ans.answer.includes('"')) {
+                    processedAnswers[ans.question_id] = ans.answer.split(',').map(item => item.trim());
+                  } else {
+                    processedAnswers[ans.question_id] = ans.answer;
+                  }
+                }
+              } else {
                 processedAnswers[ans.question_id] = ans.answer;
               }
-            } else {
+            } catch (e) {
+              // Em caso de erro no processamento, usar a resposta original
               processedAnswers[ans.question_id] = ans.answer;
             }
           } else {
@@ -113,9 +125,12 @@ const QuizReviewPage = () => {
         }
       });
       
+      // Usar formatQuizAnswers para garantir formato consistente
+      const formattedAnswers = formatQuizAnswers(processedAnswers);
+      
       setModules(modulesData as unknown as QuizModule[]);
       setQuestions(questionsWithOptions);
-      setAnswers(processedAnswers);
+      setAnswers(formattedAnswers);
       setError(null);
     } catch (error: any) {
       logger.error("Erro ao buscar dados do questionário:", {
@@ -168,7 +183,12 @@ const QuizReviewPage = () => {
     } catch (error: any) {
       logger.error("Erro ao finalizar questionário:", {
         tag: 'Quiz',
-        data: error
+        data: {
+          error,
+          errorMessage: error.message || 'Erro desconhecido',
+          errorDetails: error.details || null,
+          fullError: JSON.stringify(error)
+        }
       });
       
       setCompletionError(error);
@@ -265,6 +285,8 @@ const QuizReviewPage = () => {
                       : completionError.details
                   }</p>
                 )}
+                {completionError.code && <p><strong>Código:</strong> {completionError.code}</p>}
+                {completionError.hint && <p><strong>Dica:</strong> {completionError.hint}</p>}
                 <pre className="whitespace-pre-wrap mt-2">
                   {JSON.stringify(completionError, null, 2)}
                 </pre>
