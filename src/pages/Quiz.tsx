@@ -9,7 +9,7 @@ import { QuizSuccess } from "@/components/quiz/QuizSuccess";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
-import { loadQuizModules, loadQuizQuestions, loadQuizOptions, mapQuestionsWithOptions } from "@/utils/quizDataUtils";
+import { loadQuizModules, loadQuizQuestions, mapQuestionsWithOptions } from "@/utils/quizDataUtils";
 import { QuizModule, QuizQuestion, QuizAnswer, QuizSubmission } from "@/types/quiz";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -104,12 +104,7 @@ const Quiz = () => {
         throw new Error("Erro ao carregar perguntas do questionário.");
       }
       
-      const optionsData = await loadQuizOptions();
-      if (!optionsData) {
-        throw new Error("Erro ao carregar opções das perguntas.");
-      }
-      
-      const questionsWithOptions = mapQuestionsWithOptions(questionsData, optionsData);
+      const questionsWithOptions = mapQuestionsWithOptions(questionsData);
       setQuestions(questionsWithOptions);
       
       if (moduleParam && modulesData.some(m => m.id === moduleParam)) {

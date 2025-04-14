@@ -59,50 +59,31 @@ export const loadQuizQuestions = async (): Promise<QuizQuestion[] | null> => {
   }
 };
 
-// Função para carregar as opções das perguntas
+// Função modificada para não depender da tabela quiz_options
+// Esta função não é mais necessária e está mantida apenas para compatibilidade temporária
 export const loadQuizOptions = async () => {
-  try {
-    const { data, error } = await supabase
-      .from('quiz_options')
-      .select('*')
-      .order('order_number');
-    
-    if (error) {
-      logger.error('Erro ao carregar opções das perguntas', {
-        tag: 'Quiz',
-        data: { error }
-      });
-      return null;
-    }
-    
-    return data;
-  } catch (error) {
-    logger.error('Exceção ao carregar opções', {
-      tag: 'Quiz',
-      data: { error }
-    });
-    return null;
-  }
+  logger.info('Função loadQuizOptions está obsoleta, use options_json da tabela quiz_questions');
+  return [];
 };
 
-// Função para mapear perguntas com suas opções
-export const mapQuestionsWithOptions = (questions: any[], options: any[]): QuizQuestion[] => {
+// Função atualizada para usar apenas options_json
+export const mapQuestionsWithOptions = (questions: any[]): QuizQuestion[] => {
   return questions.map(question => {
-    const questionOptions = options?.filter(opt => opt.question_id === question.id) || [];
-    
-    // Extrair texto das opções para compatibilidade com o componente QuestionCard
+    // Extrair texto das opções apenas de options_json
     let mappedOptions: string[] = [];
-    if (questionOptions && questionOptions.length > 0) {
-      mappedOptions = questionOptions.map(opt => opt.text);
-    } else if (question.options_json) {
+    
+    if (question.options_json) {
       try {
-        // Tentar extrair opções do campo options_json
-        const parsedOptions = JSON.parse(question.options_json);
-        if (Array.isArray(parsedOptions)) {
-          mappedOptions = parsedOptions;
+        // Se options_json já é um objeto, não precisa parsear
+        const optionsData = typeof question.options_json === 'string' 
+          ? JSON.parse(question.options_json) 
+          : question.options_json;
+          
+        if (Array.isArray(optionsData)) {
+          mappedOptions = optionsData;
         }
       } catch (e) {
-        logger.error('Erro ao parsear options_json', {
+        logger.error('Erro ao processar options_json', {
           tag: 'Quiz',
           data: { questionId: question.id, error: e }
         });
@@ -173,13 +154,32 @@ export const transformQuizData = (questions: any[]): QuizQuestion[] => {
       order_number: question.order_number || question.question_number || 0
     };
 
-    // Processar opções se disponíveis
-    if (question.options) {
+    // Processar opções a partir de options_json
+    if (question.options_json) {
+      try {
+        const optionsData = typeof question.options_json === 'string'
+          ? JSON.parse(question.options_json)
+          : question.options_json;
+          
+        if (Array.isArray(optionsData)) {
+          questionObj.options = optionsData;
+        }
+      } catch (e) {
+        logger.error('Erro ao processar options_json em transformQuizData', {
+          tag: 'Quiz',
+          data: { questionId: question.id, error: e }
+        });
+        questionObj.options = [];
+      }
+    } else if (question.options) {
+      // Fallback temporário para compatibilidade
       questionObj.options = Array.isArray(question.options) 
         ? question.options
         : typeof question.options === 'string' 
           ? JSON.parse(question.options) 
           : [];
+    } else {
+      questionObj.options = [];
     }
 
     return questionObj;
