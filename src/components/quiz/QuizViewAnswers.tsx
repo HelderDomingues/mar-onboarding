@@ -234,7 +234,7 @@ export function QuizViewAnswers() {
                     <div className="space-y-4 my-2">
                       {answersByModule[moduleKey].map((answer, index) => <div key={answer.question_id} className="border-b border-gray-100 pb-4 last:border-none">
                           
-                          <p className="text-sm mb-2 font-semibold">{answer.question_text}</p>
+                          <p className="text-sm mb-2 font-semibold mx-[11px]">{answer.question_text}</p>
                           <div className="bg-blue-50 p-3 rounded text-sm">
                             {formatJsonAnswer(answer.answer)}
                           </div>
