@@ -1,18 +1,7 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  HelpCircle, 
-  CheckCircle, 
-  AlertCircle, 
-  Clock, 
-  BookOpen, 
-  LineChart, 
-  MessageSquare, 
-  Mail, 
-  Phone
-} from "lucide-react";
+import { HelpCircle, CheckCircle, AlertCircle, Clock, BookOpen, LineChart, MessageSquare, Mail, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { QuizSubmission } from "@/types/quiz";
 import { Progress } from "@/components/ui/progress";
@@ -20,18 +9,14 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-
 interface UserDashboardProps {
   submission: QuizSubmission | null;
 }
-
 export function UserDashboard({
   submission
 }: UserDashboardProps) {
   const navigate = useNavigate();
-
   const progress = submission ? submission.completed ? 100 : submission.current_module / 8 * 100 : 0;
-
   const getMainActionButton = () => {
     if (!submission) {
       return {
@@ -61,7 +46,6 @@ export function UserDashboard({
     };
   };
   const mainAction = getMainActionButton();
-
   return <div className="space-y-8 max-w-3xl mx-auto">
       <div className="text-center md:text-left">
         <h1 className="text-3xl font-bold mb-2 text-slate-900">Bem-vindo à sua Área de Membro MAR</h1>
@@ -92,12 +76,7 @@ export function UserDashboard({
             
             <div className="mb-6">
               <AspectRatio ratio={16 / 9} className="bg-slate-100 rounded-lg overflow-hidden mb-4">
-                <iframe 
-                  src="https://www.youtube.com/embed/Lr_L7MAIUnM" 
-                  title="Vídeo de Introdução ao MAR" 
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                  className="w-full h-full object-cover" 
-                />
+                <iframe src="https://www.youtube.com/embed/Lr_L7MAIUnM" title="Vídeo de Introdução ao MAR" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" className="w-full h-full object-cover" />
               </AspectRatio>
               <h4 className="font-medium text-white mt-2">Vídeo de Introdução ao MAR</h4>
               <p className="text-blue-100 text-sm">
@@ -241,7 +220,7 @@ export function UserDashboard({
         </Card>
         
         <Card className="overflow-hidden border-0 shadow-md rounded-xl">
-          <CardHeader className="bg-gradient-to-r from-violet-500 to-purple-600 text-white">
+          <CardHeader className="bg-gradient-to-r from-blue-300 to-purple-600 text-white">
             <CardTitle className="flex items-center gap-2 text-white">
               <HelpCircle className="h-5 w-5" />
               Precisa de Ajuda?
@@ -251,11 +230,7 @@ export function UserDashboard({
             <p className="text-slate-600 mb-4">
               Encontre respostas para as dúvidas mais comuns sobre o programa MAR.
             </p>
-            <Button 
-              variant="outline" 
-              className="w-full border-violet-200 text-violet-700 hover:bg-violet-50 rounded-lg" 
-              onClick={() => navigate("/faq")}
-            >
+            <Button variant="outline" className="w-full border-violet-200 text-violet-700 hover:bg-violet-50 rounded-lg" onClick={() => navigate("/faq")}>
               Ver Perguntas Frequentes
             </Button>
           </CardContent>
