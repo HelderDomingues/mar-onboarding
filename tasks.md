@@ -1,4 +1,3 @@
-
 # Tasks do Projeto MAR - Crie Valor Consultoria
 
 ## Plano de Reestruturação do Questionário MAR - Abril 2025
@@ -134,12 +133,12 @@
 ## Tarefas Pendentes
 
 ### Próxima Tarefa
-- [ ] Atualizar componente QuizContent para navegação entre 9 módulos
-  - Adaptar o componente para trabalhar com a nova estrutura de 9 módulos
-  - Garantir que a navegação entre módulos funcione corretamente
-  - Implementar carregamento adequado das perguntas por módulo
-  - Atualizar a interface para mostrar o módulo atual
-  - Testar a navegação completa do questionário
+- [x] Atualizar componente QuizContent para navegação entre 9 módulos
+  - [x] Adaptar o componente para trabalhar com a nova estrutura de 9 módulos
+  - [x] Garantir que a navegação entre módulos funcione corretamente
+  - [x] Implementar carregamento adequado das perguntas por módulo
+  - [x] Atualizar a interface para mostrar o módulo atual
+  - [ ] Testar a navegação completa do questionário
 
 ### Prioridade Alta
 - [ ] Adaptar componente QuizProgress para refletir nova estrutura
