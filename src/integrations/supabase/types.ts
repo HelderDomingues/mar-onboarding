@@ -246,6 +246,7 @@ export type Database = {
           module_title: string
           options: Json | null
           options_json: Json | null
+          order_number: number
           placeholder: string | null
           prefix: string | null
           question_number: number
@@ -267,6 +268,7 @@ export type Database = {
           module_title: string
           options?: Json | null
           options_json?: Json | null
+          order_number: number
           placeholder?: string | null
           prefix?: string | null
           question_number: number
@@ -288,6 +290,7 @@ export type Database = {
           module_title?: string
           options?: Json | null
           options_json?: Json | null
+          order_number?: number
           placeholder?: string | null
           prefix?: string | null
           question_number?: number

@@ -9,6 +9,7 @@ import { QuizSuccess } from "@/components/quiz/QuizSuccess";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
+import { loadQuizModules, loadQuizQuestions, loadQuizOptions, mapQuestionsWithOptions } from "@/utils/quizDataUtils";
 import { QuizModule, QuizQuestion, QuizAnswer, QuizSubmission } from "@/types/quiz";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -86,172 +87,141 @@ const Quiz = () => {
 
     try {
       setIsLoading(true);
+      logger.info('Iniciando carregamento de dados do questionário', {
+        tag: 'Quiz',
+        data: { userId: user.id }
+      });
       
-      const { data: modulesData, error: modulesError } = await supabase
-        .from('quiz_modules')
-        .select('*')
-        .order('order_number');
-
-      if (modulesError) {
-        throw modulesError;
+      const modulesData = await loadQuizModules();
+      if (!modulesData || modulesData.length === 0) {
+        throw new Error("Nenhum módulo de questionário encontrado.");
       }
-
-      if (modulesData && modulesData.length > 0) {
-        setModules(modulesData as unknown as QuizModule[]);
-
-        const { data: questionsData, error: questionsError } = await supabase
-          .from('quiz_questions')
-          .select('*')
-          .order('order_number');
-
-        if (questionsError) {
-          throw questionsError;
-        }
-
-        if (questionsData) {
-          const { data: optionsData, error: optionsError } = await supabase
-            .from('quiz_options')
-            .select('*')
-            .order('order_number');
-
-          if (optionsError) {
-            throw optionsError;
-          }
-
-          const questionsWithOptions = questionsData.map(question => {
-            const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
-            let questionOptions = options.map(opt => opt.text);
-            
-            const newQuestion = {
-              ...question,
-              options: questionOptions,
-              hint: question.hint || undefined,
-              max_options: question.max_options || undefined,
-              prefix: question.prefix || undefined,
-              validation: question.validation || undefined,
-              placeholder: question.placeholder || undefined,
-              text: question.question_text || question.text
-            };
-            
-            return newQuestion as unknown as QuizQuestion;
-          });
-
-          setQuestions(questionsWithOptions);
-
-          if (moduleParam && modulesData.some(m => m.id === moduleParam)) {
-            const moduleIndex = modulesData.findIndex(m => m.id === moduleParam);
-            if (moduleIndex >= 0) {
-              setCurrentModuleIndex(moduleIndex);
-              const moduleQuestions = questionsWithOptions.filter(q => q.module_id === moduleParam);
-              setModuleQuestions(moduleQuestions);
-              
-              if (questionParam) {
-                const questionIndex = moduleQuestions.findIndex(q => q.id === questionParam);
-                if (questionIndex >= 0) {
-                  setCurrentQuestionIndex(questionIndex);
-                }
-              }
-            }
-          } else if (modulesData.length > 0) {
-            const firstModuleQuestions = questionsWithOptions.filter(
-              q => q.module_id === modulesData[0].id
-            );
-            setModuleQuestions(firstModuleQuestions);
-          }
-        }
-
-        const { data: submissionData, error: submissionError } = await supabase
-          .from('quiz_submissions')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (submissionError && submissionError.code !== "PGRST116") {
-          logger.error('Erro ao buscar submissão do quiz', {
-            tag: 'Quiz',
-            data: submissionError
-          });
-        }
-
-        if (submissionData) {
-          const userSubmission = submissionData as unknown as QuizSubmission;
-          setSubmission(userSubmission);
+      
+      setModules(modulesData);
+      
+      const questionsData = await loadQuizQuestions();
+      if (!questionsData) {
+        throw new Error("Erro ao carregar perguntas do questionário.");
+      }
+      
+      const optionsData = await loadQuizOptions();
+      if (!optionsData) {
+        throw new Error("Erro ao carregar opções das perguntas.");
+      }
+      
+      const questionsWithOptions = mapQuestionsWithOptions(questionsData, optionsData);
+      setQuestions(questionsWithOptions);
+      
+      if (moduleParam && modulesData.some(m => m.id === moduleParam)) {
+        const moduleIndex = modulesData.findIndex(m => m.id === moduleParam);
+        if (moduleIndex >= 0) {
+          setCurrentModuleIndex(moduleIndex);
+          const moduleQuestions = questionsWithOptions.filter(q => q.module_id === moduleParam);
+          setModuleQuestions(moduleQuestions);
           
-          if (userSubmission.completed) {
-            setIsComplete(true);
-            
-            if (!showAdmin && !forceMode && location.pathname === '/quiz' && !location.search) {
-              navigate('/quiz/view-answers');
-              return;
-            }
-          } else if (userSubmission.current_module >= 8 && !showReview) {
-            setShowReview(true);
-          } else if (!moduleParam) {
-            const moduleIndex = Math.max(0, userSubmission.current_module - 1);
-            setCurrentModuleIndex(moduleIndex);
-            
-            if (modulesData[moduleIndex]) {
-              const moduleQuestions = questions.filter(
-                q => q.module_id === modulesData[moduleIndex].id
-              );
-              setModuleQuestions(moduleQuestions);
+          if (questionParam) {
+            const questionIndex = moduleQuestions.findIndex(q => q.id === questionParam);
+            if (questionIndex >= 0) {
+              setCurrentQuestionIndex(questionIndex);
             }
           }
+        }
+      } else if (modulesData.length > 0) {
+        const firstModuleQuestions = questionsWithOptions.filter(
+          q => q.module_id === modulesData[0].id
+        );
+        setModuleQuestions(firstModuleQuestions);
+      }
+      
+      const { data: submissionData, error: submissionError } = await supabase
+        .from('quiz_submissions')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-          const { data: answersData, error: answersError } = await supabase
-            .from('quiz_answers')
-            .select('*')
-            .eq('user_id', user.id);
+      if (submissionError && submissionError.code !== "PGRST116") {
+        logger.error('Erro ao buscar submissão do quiz', {
+          tag: 'Quiz',
+          data: submissionError
+        });
+      }
 
-          if (answersError) {
-            throw answersError;
+      if (submissionData) {
+        const userSubmission = submissionData as unknown as QuizSubmission;
+        setSubmission(userSubmission);
+        
+        if (userSubmission.completed) {
+          setIsComplete(true);
+          
+          if (!showAdmin && !forceMode && location.pathname === '/quiz' && !location.search) {
+            navigate('/quiz/view-answers');
+            return;
           }
-
-          if (answersData) {
-            const loadedAnswers: AnswerMap = {};
-            answersData.forEach(ans => {
-              try {
-                if (ans.answer) {
-                  try {
-                    const parsed = JSON.parse(ans.answer);
-                    loadedAnswers[ans.question_id] = parsed;
-                  } catch (e) {
-                    loadedAnswers[ans.question_id] = ans.answer;
-                  }
-                }
-              } catch (e) {
-                loadedAnswers[ans.question_id] = ans.answer || '';
-              }
-            });
-            setAnswers(loadedAnswers);
-            
-            if (userSubmission.current_module >= 8 && !userSubmission.completed && !showReview) {
-              setShowReview(true);
-            }
-          }
-        } else {
-          const { data: newSubmission, error: createError } = await supabase
-            .from('quiz_submissions')
-            .insert([{
-              user_id: user.id,
-              current_module: 1,
-              started_at: new Date().toISOString()
-            }])
-            .select();
-
-          if (createError) {
-            throw createError;
-          }
-
-          if (newSubmission && newSubmission.length > 0) {
-            setSubmission(newSubmission[0] as unknown as QuizSubmission);
+        } else if (userSubmission.current_module >= 8 && !showReview) {
+          setShowReview(true);
+        } else if (!moduleParam) {
+          const moduleIndex = Math.max(0, userSubmission.current_module - 1);
+          setCurrentModuleIndex(moduleIndex);
+          
+          if (modulesData[moduleIndex]) {
+            const moduleQuestions = questions.filter(
+              q => q.module_id === modulesData[moduleIndex].id
+            );
+            setModuleQuestions(moduleQuestions);
           }
         }
 
-        setLoadError(null);
+        const { data: answersData, error: answersError } = await supabase
+          .from('quiz_answers')
+          .select('*')
+          .eq('user_id', user.id);
+
+        if (answersError) {
+          throw answersError;
+        }
+
+        if (answersData) {
+          const loadedAnswers: AnswerMap = {};
+          answersData.forEach(ans => {
+            try {
+              if (ans.answer) {
+                try {
+                  const parsed = JSON.parse(ans.answer);
+                  loadedAnswers[ans.question_id] = parsed;
+                } catch (e) {
+                  loadedAnswers[ans.question_id] = ans.answer;
+                }
+              }
+            } catch (e) {
+              loadedAnswers[ans.question_id] = ans.answer || '';
+            }
+          });
+          setAnswers(loadedAnswers);
+          
+          if (userSubmission.current_module >= 8 && !userSubmission.completed && !showReview) {
+            setShowReview(true);
+          }
+        }
       } else {
-        setLoadError("Nenhum módulo de questionário encontrado.");
+        const { data: newSubmission, error: createError } = await supabase
+          .from('quiz_submissions')
+          .insert([{
+            user_id: user.id,
+            current_module: 1,
+            started_at: new Date().toISOString()
+          }])
+          .select();
+
+        if (createError) {
+          throw createError;
+        }
+
+        if (newSubmission && newSubmission.length > 0) {
+          setSubmission(newSubmission[0] as unknown as QuizSubmission);
+        }
       }
+
+      setLoadError(null);
     } catch (error: any) {
       logger.error('Erro ao carregar dados do questionário', {
         tag: 'Quiz',
