@@ -2,15 +2,12 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { QuizModule, QuizQuestion } from "@/types/quiz";
 
 interface QuizConfigurationPanelProps {
   isLoading: boolean;
   loadError: string | null;
   onRefresh: () => void;
   isAdmin: boolean;
-  modules: QuizModule[];
-  questions: QuizQuestion[];
 }
 
 export function QuizConfigurationPanel({

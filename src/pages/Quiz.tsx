@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -204,7 +205,8 @@ const Quiz = () => {
           .insert([{
             user_id: user.id,
             current_module: 1,
-            started_at: new Date().toISOString()
+            started_at: new Date().toISOString(),
+            user_email: user.email // Adicionando o email do usuário aqui
           }])
           .select();
 
@@ -251,6 +253,7 @@ const Quiz = () => {
       });
       
       let answerValue = typeof answer === 'string' ? answer : JSON.stringify(answer);
+      const questionInfo = questions.find(q => q.id === questionId);
       
       const {
         error
@@ -258,7 +261,12 @@ const Quiz = () => {
         user_id: user.id,
         question_id: questionId,
         answer: answerValue,
-        question_text: questions.find(q => q.id === questionId)?.question_text || questions.find(q => q.id === questionId)?.text
+        question_text: questionInfo?.question_text || questionInfo?.text || '',
+        user_email: user.email, // Campo obrigatório que estava faltando
+        module_id: questionInfo?.module_id,
+        module_number: questionInfo?.module_number,
+        module_title: questionInfo?.module_title,
+        question_type: questionInfo?.question_type
       }], {
         onConflict: 'user_id,question_id'
       });
@@ -293,7 +301,8 @@ const Quiz = () => {
       const {
         error
       } = await supabase.from('quiz_submissions').update({
-        current_module: moduleNumber
+        current_module: moduleNumber,
+        user_email: user.email // Garantindo que o email seja atualizado se estiver faltando
       }).eq('user_id', user.id);
       if (error) throw error;
       logger.info('Progresso do módulo atualizado', {
@@ -321,7 +330,8 @@ const Quiz = () => {
       const { error } = await supabaseAdmin.from('quiz_submissions').update({
         completed: true,
         completed_at: new Date().toISOString(),
-        contact_consent: true
+        contact_consent: true,
+        user_email: user.email // Garantindo que o email seja incluído
       }).eq('user_id', user.id);
       
       if (error) throw error;
@@ -459,8 +469,6 @@ const Quiz = () => {
                 loadError={loadError}
                 onRefresh={fetchQuizData}
                 isAdmin={showAdmin}
-                modules={modules}
-                questions={questions}
               />
             )}
           </>
