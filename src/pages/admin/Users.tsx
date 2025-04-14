@@ -27,7 +27,13 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, UserPlus, Mail, CheckCircle, XCircle, RefreshCw, Key, Loader2 } from "lucide-react";
+import { Search, UserPlus, Mail, CheckCircle, XCircle, RefreshCw, Key, Loader2, AlertTriangle, Info } from "lucide-react";
+import { 
+  Alert,
+  AlertDescription,
+  AlertTitle
+} from "@/components/ui/alert";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 type UserProfile = {
   id: string;
@@ -37,6 +43,13 @@ type UserProfile = {
   created_at?: string;
   is_admin?: boolean;
   has_submission?: boolean;
+};
+
+type ConfigResult = {
+  success?: boolean;
+  message?: string;
+  detalhes?: string;
+  codigo?: string;
 };
 
 const UsersPage = () => {
@@ -50,7 +63,7 @@ const UsersPage = () => {
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [serviceRoleKey, setServiceRoleKey] = useState("");
   const [showConfigForm, setShowConfigForm] = useState(false);
-  const [configResult, setConfigResult] = useState<{success?: boolean; message?: string} | null>(null);
+  const [configResult, setConfigResult] = useState<ConfigResult | null>(null);
   
   const fetchUsers = async () => {
     if (!user || !isAdmin) return;
@@ -322,18 +335,16 @@ const UsersPage = () => {
               </CardHeader>
               <CardContent className="p-0">
                 {error && (
-                  <div className="p-4 bg-amber-50 border-l-4 border-amber-500 text-amber-700">
-                    <h3 className="font-medium flex items-center gap-2">
-                      <Key className="h-4 w-4" /> 
-                      Atenção
-                    </h3>
-                    <p className="text-sm">{error}</p>
-                    <div className="mt-2">
+                  <Alert variant="warning" className="m-4 bg-amber-50 border-amber-300">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Atenção</AlertTitle>
+                    <AlertDescription className="space-y-2">
+                      <p>{error}</p>
                       <Button variant="outline" size="sm" onClick={setupEmailAccess} className="text-amber-800 hover:bg-amber-100">
                         Configurar acesso aos emails
                       </Button>
-                    </div>
-                  </div>
+                    </AlertDescription>
+                  </Alert>
                 )}
                 
                 {showConfigForm && (
@@ -360,9 +371,37 @@ const UsersPage = () => {
                       </div>
                       
                       {configResult && (
-                        <div className={`p-3 rounded text-sm ${configResult.success ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
-                          {configResult.message}
-                        </div>
+                        <Alert 
+                          variant={configResult.success ? "default" : "destructive"}
+                          className={configResult.success ? "bg-green-50 text-green-800 border-green-200" : "bg-red-50 text-red-800 border-red-200"}
+                        >
+                          {configResult.success ? (
+                            <Info className="h-4 w-4" />
+                          ) : (
+                            <AlertTriangle className="h-4 w-4" />
+                          )}
+                          <AlertTitle>{configResult.success ? "Sucesso" : "Erro"}</AlertTitle>
+                          <AlertDescription className="space-y-2">
+                            <p>{configResult.message}</p>
+                            {configResult.detalhes && (
+                              <Accordion type="single" collapsible className="w-full">
+                                <AccordionItem value="details">
+                                  <AccordionTrigger className="text-sm py-2">
+                                    Ver detalhes técnicos
+                                  </AccordionTrigger>
+                                  <AccordionContent className="text-sm bg-gray-50 p-3 rounded border">
+                                    <div className="space-y-2">
+                                      <p><strong>Detalhes:</strong> {configResult.detalhes}</p>
+                                      {configResult.codigo && (
+                                        <p><strong>Código de erro:</strong> {configResult.codigo}</p>
+                                      )}
+                                    </div>
+                                  </AccordionContent>
+                                </AccordionItem>
+                              </Accordion>
+                            )}
+                          </AlertDescription>
+                        </Alert>
                       )}
                       
                       <div className="flex gap-2 justify-end">

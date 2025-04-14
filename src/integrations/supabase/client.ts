@@ -163,6 +163,75 @@ export const getUserEmails = async () => {
 };
 
 /**
+ * Analisa o código de erro do Supabase e retorna uma mensagem de erro mais detalhada
+ */
+const analisarErroSupabase = (error: PostgrestError): { mensagem: string, detalhes: string, codigoHTTP?: number } => {
+  // Códigos de erro comuns do PostgreSQL/Supabase com mensagens personalizadas
+  const codigosErro = {
+    '42501': {
+      mensagem: 'Permissão negada no banco de dados',
+      detalhes: 'A chave service_role fornecida não tem permissões suficientes para acessar este recurso. Verifique se a chave tem acesso ao schema auth.'
+    },
+    '42P01': {
+      mensagem: 'Tabela ou view não encontrada',
+      detalhes: 'A função está tentando acessar uma tabela que não existe. Pode indicar um problema na estrutura do banco de dados.'
+    },
+    '42883': {
+      mensagem: 'Função não encontrada',
+      detalhes: 'A função RPC que você está tentando chamar não existe no banco de dados. Verifique se a função get_user_emails foi criada corretamente.'
+    },
+    '42702': {
+      mensagem: 'Referência ambígua a coluna',
+      detalhes: 'Existe ambiguidade em uma coluna referenciada na função. Isso geralmente ocorre quando duas tabelas têm colunas com o mesmo nome e não foram especificadas corretamente na consulta SQL.'
+    },
+    '22P02': {
+      mensagem: 'Sintaxe de entrada inválida',
+      detalhes: 'Um dos parâmetros fornecidos tem formato inválido, como um UUID mal-formado.'
+    },
+    '23505': {
+      mensagem: 'Violação de chave única',
+      detalhes: 'Um registro com chave única já existe. Não é possível inserir um duplicado.'
+    },
+    '23503': {
+      mensagem: 'Violação de chave estrangeira',
+      detalhes: 'A operação viola uma restrição de chave estrangeira. O registro referenciado pode não existir.'
+    },
+    '28000': {
+      mensagem: 'Autorização inválida',
+      detalhes: 'A chave service_role fornecida é inválida ou foi rejeitada pelo servidor.'
+    },
+    '3D000': {
+      mensagem: 'Banco de dados não existe',
+      detalhes: 'O banco de dados referenciado não existe.'
+    },
+    '3F000': {
+      mensagem: 'Schema não existe',
+      detalhes: 'O schema referenciado não existe.'
+    },
+    '08006': {
+      mensagem: 'Falha de conexão',
+      detalhes: 'Houve uma falha na conexão com o banco de dados. Verifique se o URL do Supabase está correto.'
+    }
+  };
+
+  const codigoHTTP = error.code?.startsWith('2') || error.code?.startsWith('4') ? 400 : 
+                      error.code?.startsWith('5') ? 500 : 
+                      error.code?.startsWith('08') ? 503 : undefined;
+
+  // Obter mensagem específica para o código de erro ou usar mensagem genérica
+  const infoErro = codigosErro[error.code] || {
+    mensagem: `Erro no banco de dados (${error.code || 'código desconhecido'})`,
+    detalhes: error.message || 'Erro desconhecido no banco de dados'
+  };
+
+  return {
+    mensagem: infoErro.mensagem,
+    detalhes: infoErro.detalhes,
+    codigoHTTP
+  };
+};
+
+/**
  * Verifica e configura o serviço de acesso aos emails
  * Esta função é chamada a partir da interface de configuração
  */
@@ -202,20 +271,19 @@ export const configureEmailAccess = async (serviceRoleKey?: string) => {
             error: formatErrorForLog(connectionError)
           });
           
-          // Se a consulta falhou por erro de permissão, a chave pode estar correta mas não ter permissões suficientes
-          if (connectionError.code === '42501' || connectionError.message.includes('permission')) {
-            addLogEntry('error', 'Chave service_role sem permissões suficientes', { error: formatErrorForLog(connectionError) });
-            return {
-              success: false,
-              message: 'A chave service_role não tem permissões suficientes para acessar os dados necessários'
-            };
-          }
+          // Analisar o erro para fornecer uma mensagem mais detalhada
+          const erroDetalhado = analisarErroSupabase(connectionError);
           
-          // Outros tipos de erro
-          addLogEntry('error', 'Falha na conexão com nova chave service_role', { error: formatErrorForLog(connectionError) });
+          addLogEntry('error', `Erro na consulta de teste: ${erroDetalhado.mensagem}`, { 
+            error: formatErrorForLog(connectionError),
+            detalhes: erroDetalhado.detalhes 
+          });
+          
           return {
             success: false,
-            message: 'Erro ao testar a conexão com a chave service_role fornecida'
+            message: erroDetalhado.mensagem,
+            detalhes: erroDetalhado.detalhes,
+            codigo: connectionError.code
           };
         }
         
@@ -223,22 +291,45 @@ export const configureEmailAccess = async (serviceRoleKey?: string) => {
         const { data, error } = await adminClient.rpc('get_user_emails');
         
         if (error) {
-          // Se a função RPC não existe, sugerimos criar
+          // Analisar o erro para fornecer uma mensagem mais detalhada
+          const erroDetalhado = analisarErroSupabase(error);
+          
+          logger.error(`Erro ao testar função RPC get_user_emails: ${erroDetalhado.mensagem}`, {
+            error: formatErrorForLog(error),
+            detalhes: erroDetalhado.detalhes
+          });
+          
+          addLogEntry('error', `Falha ao acessar emails: ${erroDetalhado.mensagem}`, { 
+            error: formatErrorForLog(error),
+            detalhes: erroDetalhado.detalhes,
+            codigo: error.code 
+          });
+          
+          // Mensagem mais específica se a função RPC não existe
           if (error.code === '42883' || error.message.includes('function') && error.message.includes('does not exist')) {
-            addLogEntry('error', 'Função RPC get_user_emails não encontrada no banco de dados', { error: formatErrorForLog(error) });
             return {
               success: false,
-              message: 'A função get_user_emails não existe no seu banco de dados Supabase. Certifique-se de que a função foi criada corretamente.'
+              message: 'A função get_user_emails não existe no banco de dados',
+              detalhes: 'Verifique se a função RPC foi criada corretamente através do SQL. Esta função deve ter sido criada durante a configuração inicial do projeto.',
+              codigo: error.code
             };
           }
           
-          logger.error('Erro ao testar nova chave service_role:', {
-            error: formatErrorForLog(error)
-          });
-          addLogEntry('error', 'Falha ao configurar acesso aos emails - erro na RPC', { error: formatErrorForLog(error) });
+          // Se for erro de ambiguidade de coluna (comum na função get_user_emails)
+          if (error.code === '42702') {
+            return {
+              success: false,
+              message: 'Erro de ambiguidade em coluna na função get_user_emails',
+              detalhes: 'A função get_user_emails encontrou ambiguidade em uma coluna. Isso geralmente acontece quando há colunas com o mesmo nome em tabelas diferentes. Verifique se as colunas estão corretamente qualificadas com o nome da tabela.',
+              codigo: error.code
+            };
+          }
+          
           return {
             success: false,
-            message: 'Chave service_role inválida ou sem permissões suficientes'
+            message: erroDetalhado.mensagem,
+            detalhes: erroDetalhado.detalhes,
+            codigo: error.code
           };
         }
         
@@ -256,7 +347,8 @@ export const configureEmailAccess = async (serviceRoleKey?: string) => {
         addLogEntry('error', 'Exceção ao testar chave service_role', { error: formatErrorForLog(testError) });
         return {
           success: false,
-          message: 'Erro ao testar a chave service_role fornecida'
+          message: 'Erro ao testar a chave service_role fornecida',
+          detalhes: testError instanceof Error ? testError.message : 'Erro desconhecido'
         };
       }
     } else {
@@ -271,10 +363,19 @@ export const configureEmailAccess = async (serviceRoleKey?: string) => {
       const { data, error } = await supabaseAdmin.rpc('get_user_emails');
       
       if (error) {
-        addLogEntry('error', 'Falha ao verificar acesso aos emails', { error: formatErrorForLog(error) });
+        // Analisar o erro para fornecer uma mensagem mais detalhada
+        const erroDetalhado = analisarErroSupabase(error);
+        
+        addLogEntry('error', `Falha ao verificar acesso aos emails: ${erroDetalhado.mensagem}`, { 
+          error: formatErrorForLog(error),
+          detalhes: erroDetalhado.detalhes 
+        });
+        
         return {
           success: false,
-          message: 'Chave service_role atual é inválida ou sem permissões suficientes'
+          message: erroDetalhado.mensagem,
+          detalhes: erroDetalhado.detalhes,
+          codigo: error.code
         };
       }
       
@@ -291,7 +392,8 @@ export const configureEmailAccess = async (serviceRoleKey?: string) => {
     addLogEntry('error', 'Exceção ao configurar acesso aos emails', { error: formatErrorForLog(error) });
     return {
       success: false,
-      message: 'Erro ao configurar acesso aos emails'
+      message: 'Erro ao configurar acesso aos emails',
+      detalhes: error instanceof Error ? error.message : 'Erro desconhecido'
     };
   }
 };
