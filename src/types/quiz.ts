@@ -42,7 +42,7 @@ export interface QuizQuestion {
   id: string;
   module_id: string;
   text?: string;
-  question_text?: string;
+  question_text?: string; // Garantir que ambos text e question_text estejam disponíveis
   type?: QuestionType;
   question_type?: QuestionType;
   required: boolean;

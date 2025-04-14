@@ -25,6 +25,7 @@ interface QuizQuestion {
   id: string;
   module_id: string;
   text: string;
+  question_text?: string; // Adicionada como opcional para compatibilidade
   type: string;
   required: boolean;
   order_number: number;
@@ -195,6 +196,8 @@ export const generateQuizPDF = async (
       const module = moduleMap.get(question.module_id);
       questionsMap.set(question.id, {
         ...question,
+        // Usando text como fallback para question_text para garantir compatibilidade
+        question_text: question.question_text || question.text,
         module_title: module?.title || 'Sem módulo',
         module_number: module?.order_number || 0
       });
@@ -250,9 +253,10 @@ export const generateQuizPDF = async (
         // Formatar resposta para melhor visualização
         let formattedAnswer = formatJsonAnswer(answer.answer);
         
-        // Adicionar à tabela
+        // Adicionar à tabela - Usar text ou question_text conforme disponível
+        const questionText = answer.question_text || question.text || question.question_text || 'Sem texto';
         tableBody.push([
-          `${question.order_number || '-'}. ${answer.question_text || question.question_text || 'Sem texto'}`,
+          `${question.order_number || '-'}. ${questionText}`,
           formattedAnswer
         ]);
       });
