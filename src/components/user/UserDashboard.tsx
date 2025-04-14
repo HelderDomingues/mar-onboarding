@@ -225,7 +225,7 @@ export function UserDashboard({
           <CardHeader className="bg-gradient-to-r from-blue-700 to-purple-300 text-white">
             <CardTitle className="flex items-center gap-2 text-white">
               <HelpCircle className="h-5 w-5" />
-              Precisa de Ajuda?
+              Tem dúvidas? Veja o FAQ.
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-5 px-6">
