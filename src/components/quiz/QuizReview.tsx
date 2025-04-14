@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, CheckCircle, Edit, ThumbsUp, Calendar, FileCheck, ArrowLeft } from "lucide-react";
+import { ArrowRight, CheckCircle, Edit, ThumbsUp, Calendar, FileCheck, ArrowLeft, AlertCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { completeQuizManually } from "@/utils/supabaseUtils";
 import { logger } from "@/utils/logger";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface QuizReviewProps {
   modules: QuizModule[];
@@ -33,6 +35,7 @@ export function QuizReview({
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<any>(null);
   const [editedAnswers, setEditedAnswers] = useState<Record<string, string | string[]>>({
     ...answers
   });
@@ -190,11 +193,11 @@ export function QuizReview({
     if (isSubmitting) return;
     setIsSubmitting(true);
     setSubmissionError(null);
+    setErrorDetails(null);
     try {
       setConfirmed(true);
     } catch (error) {
       console.error("Erro ao preparar finalização:", error);
-      setConfirmed(false);
       toast({
         title: "Erro ao preparar finalização",
         description: "Ocorreu um erro ao preparar a finalização do questionário. Por favor, tente novamente.",
@@ -209,6 +212,8 @@ export function QuizReview({
     if (isSubmitting) return;
     setIsSubmitting(true);
     setSubmissionError(null);
+    setErrorDetails(null);
+    
     try {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       if (!userId) {
@@ -220,24 +225,69 @@ export function QuizReview({
         userId
       });
       
+      // Tenta usar o cliente de admin primeiro
       if (supabaseAdmin) {
-        const { data, error } = await supabaseAdmin.rpc('complete_quiz', { user_id: userId });
-        
-        if (error) {
-          logger.error('Erro ao completar questionário via RPC:', {
+        try {
+          logger.info('Tentando completar questionário via RPC com supabaseAdmin', {
             tag: 'Quiz',
-            data: { userId, error: JSON.stringify(error) }
+            data: { userId }
           });
-          throw error;
+          
+          const { data, error } = await supabaseAdmin.rpc('complete_quiz', { user_id: userId });
+          
+          if (error) {
+            // Registra o erro para diagnóstico
+            logger.error('Erro ao completar questionário via RPC:', {
+              tag: 'Quiz',
+              data: { 
+                userId, 
+                error: JSON.stringify(error),
+                errorMessage: error.message,
+                errorDetails: error.details,
+                errorHint: error.hint
+              }
+            });
+            
+            // Prepara o detalhe do erro para exibição
+            setErrorDetails({
+              origem: 'RPC complete_quiz (Admin)',
+              mensagem: error.message,
+              detalhes: error.details,
+              dica: error.hint,
+              código: error.code
+            });
+            
+            throw error;
+          }
+          
+          logger.info('Questionário marcado como completo com sucesso via RPC', {
+            tag: 'Quiz',
+            data: { userId, result: data }
+          });
+          
+          await onComplete();
+          return;
+        } catch (rpcError: any) {
+          // Se falhar o RPC, tentamos o método alternativo
+          logger.warn('Falha no método RPC, tentando atualização direta...', {
+            tag: 'Quiz',
+            data: { 
+              userId, 
+              error: rpcError?.message || 'Erro desconhecido no RPC' 
+            }
+          });
+          
+          // Não lançamos o erro aqui, apenas seguimos para o método alternativo
         }
-        
-        logger.info('Questionário marcado como completo com sucesso via RPC', {
+      }
+      
+      // Método alternativo - atualização direta
+      try {
+        logger.info('Tentando completar questionário via atualização direta', {
           tag: 'Quiz',
-          data: { userId, result: data }
+          data: { userId }
         });
         
-        await onComplete();
-      } else {
         const { error } = await supabase.from('quiz_submissions').update({
           completed: true,
           completed_at: new Date().toISOString(),
@@ -247,8 +297,24 @@ export function QuizReview({
         if (error) {
           logger.error('Erro ao completar questionário (método alternativo):', {
             tag: 'Quiz',
-            data: { userId, error: JSON.stringify(error) }
+            data: { 
+              userId, 
+              error: JSON.stringify(error),
+              errorMessage: error.message,
+              errorDetails: error.details,
+              errorHint: error.hint 
+            }
           });
+          
+          // Adiciona detalhes do erro ao estado
+          setErrorDetails({
+            origem: 'Atualização direta quiz_submissions',
+            mensagem: error.message,
+            detalhes: error.details,
+            dica: error.hint,
+            código: error.code
+          });
+          
           throw error;
         }
         
@@ -258,15 +324,46 @@ export function QuizReview({
         });
         
         await onComplete();
+      } catch (directError: any) {
+        // Se também falhar a atualização direta, agora lançamos o erro
+        throw directError;
       }
     } catch (error: any) {
       logger.error("Erro na finalização:", error);
-      setSubmissionError("Não foi possível finalizar o questionário. Por favor, tente novamente.");
+      
+      // Preparar mensagem de erro detalhada
+      let detailedError = "Não foi possível finalizar o questionário.";
+      
+      if (error.message) {
+        detailedError += ` Detalhes do erro: ${error.message}`;
+      }
+      
+      if (error.code) {
+        detailedError += ` (Código: ${error.code})`;
+      }
+      
+      if (error.hint) {
+        detailedError += ` Dica: ${error.hint}`;
+      }
+      
+      setSubmissionError(detailedError);
+      
       toast({
         title: "Erro ao finalizar questionário",
-        description: "Não foi possível finalizar o questionário. Por favor, tente novamente.",
+        description: detailedError,
         variant: "destructive"
       });
+      
+      // Se não temos detalhes detalhados do erro, mas temos o erro bruto
+      if (!errorDetails && error) {
+        setErrorDetails({
+          origem: 'Erro geral',
+          mensagem: error.message || 'Erro desconhecido',
+          detalhes: JSON.stringify(error),
+          objeto: error
+        });
+      }
+      
       setConfirmed(false);
     } finally {
       setIsSubmitting(false);
@@ -441,11 +538,36 @@ export function QuizReview({
               Suas respostas foram validadas com sucesso. Clique abaixo para concluir o questionário.
             </p>
             
-            {submissionError && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded text-sm text-red-200">
-                <p className="font-semibold mb-1">Detalhes do erro:</p>
-                <p>{submissionError}</p>
-                <p className="mt-2 text-xs">Tente novamente ou entre em contato com o suporte.</p>
-              </div>}
+            {submissionError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Erro ao finalizar questionário</AlertTitle>
+                <AlertDescription>
+                  {submissionError}
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {errorDetails && (
+              <div className="mb-4 p-4 bg-red-900/30 border border-red-600/40 rounded-md text-sm text-white">
+                <h4 className="font-semibold text-red-200 mb-2">Detalhes técnicos do erro:</h4>
+                <div className="space-y-2 text-xs font-mono bg-black/30 p-3 rounded overflow-auto max-h-48">
+                  {errorDetails.origem && <p><strong>Origem:</strong> {errorDetails.origem}</p>}
+                  {errorDetails.mensagem && <p><strong>Mensagem:</strong> {errorDetails.mensagem}</p>}
+                  {errorDetails.código && <p><strong>Código:</strong> {errorDetails.código}</p>}
+                  {errorDetails.dica && <p><strong>Dica:</strong> {errorDetails.dica}</p>}
+                  {errorDetails.detalhes && <p><strong>Detalhes:</strong> {errorDetails.detalhes}</p>}
+                  {!errorDetails.mensagem && !errorDetails.origem && (
+                    <pre className="whitespace-pre-wrap">
+                      {JSON.stringify(errorDetails, null, 2)}
+                    </pre>
+                  )}
+                </div>
+                <p className="mt-3 text-xs text-red-200">
+                  Por favor capture uma screenshot desta mensagem e envie para o suporte técnico.
+                </p>
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex justify-center">
             <Button onClick={handleFinalizeQuiz} disabled={isSubmitting} className="quiz-btn">

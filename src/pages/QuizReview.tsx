@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +10,8 @@ import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { useToast } from "@/components/ui/use-toast";
 import { completeQuizManually } from "@/utils/supabaseUtils";
 import { logger } from "@/utils/logger";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const QuizReviewPage = () => {
   const { isAuthenticated, user, isAdmin } = useAuth();
@@ -19,6 +22,7 @@ const QuizReviewPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [completionError, setCompletionError] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -119,10 +123,10 @@ const QuizReviewPage = () => {
         tag: 'Quiz',
         data: error
       });
-      setError("Não foi possível carregar os dados do questionário. Por favor, tente novamente.");
+      setError(`Não foi possível carregar os dados do questionário: ${error.message || 'Erro desconhecido'}`);
       toast({
         title: "Erro",
-        description: "Não foi possível carregar os dados do questionário.",
+        description: `Não foi possível carregar os dados do questionário: ${error.message || 'Erro desconhecido'}`,
         variant: "destructive"
       });
     } finally {
@@ -134,6 +138,7 @@ const QuizReviewPage = () => {
     if (!user || isCompleting) return;
     
     setIsCompleting(true);
+    setCompletionError(null);
     
     try {
       logger.info('Iniciando processo de conclusão do questionário', {
@@ -141,9 +146,9 @@ const QuizReviewPage = () => {
         data: { userId: user.id }
       });
       
-      const success = await completeQuizManually(user.id);
+      const result = await completeQuizManually(user.id);
       
-      if (success) {
+      if (result.success) {
         logger.info('Questionário completado com sucesso', {
           tag: 'Quiz',
           userId: user.id
@@ -156,7 +161,10 @@ const QuizReviewPage = () => {
         
         navigate('/dashboard');
       } else {
-        throw new Error("Não foi possível completar o questionário");
+        throw { 
+          message: "Não foi possível completar o questionário", 
+          details: result.error 
+        };
       }
     } catch (error: any) {
       logger.error("Erro ao finalizar questionário:", {
@@ -164,9 +172,21 @@ const QuizReviewPage = () => {
         data: error
       });
       
+      setCompletionError(error);
+      
+      let errorMessage = "Não foi possível registrar a conclusão do questionário.";
+      
+      if (error.message) {
+        errorMessage += ` Erro: ${error.message}`;
+      }
+      
+      if (error.details) {
+        errorMessage += ` Detalhes: ${typeof error.details === 'object' ? JSON.stringify(error.details) : error.details}`;
+      }
+      
       toast({
         title: "Erro ao finalizar questionário",
-        description: error.message || "Não foi possível registrar a conclusão do questionário. Por favor, tente novamente.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -200,14 +220,75 @@ const QuizReviewPage = () => {
         <DashboardHeader isAdmin={isAdmin} />
         <div className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
-            <h2 className="text-xl font-bold text-red-600 mb-2">Erro ao carregar dados</h2>
-            <p className="text-slate-600 mb-4">{error}</p>
+            <Alert variant="destructive" className="mb-4 mx-auto max-w-2xl">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Erro ao carregar dados</AlertTitle>
+              <AlertDescription>
+                {error}
+              </AlertDescription>
+            </Alert>
+            
             <button 
               onClick={fetchQuizData}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
             >
               Tentar novamente
             </button>
+          </div>
+        </div>
+        <SiteFooter />
+      </div>
+    );
+  }
+
+  if (completionError) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
+        <DashboardHeader isAdmin={isAdmin} />
+        <div className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="max-w-3xl mx-auto">
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Erro ao finalizar questionário</AlertTitle>
+              <AlertDescription>
+                Não foi possível finalizar o questionário devido a um erro.
+              </AlertDescription>
+            </Alert>
+            
+            <div className="p-4 bg-red-900/30 border border-red-600/40 rounded-md text-sm text-white mt-4">
+              <h4 className="font-semibold text-red-200 mb-2">Detalhes técnicos do erro:</h4>
+              <div className="space-y-2 text-xs font-mono bg-black/30 p-3 rounded overflow-auto max-h-64">
+                {completionError.message && <p><strong>Mensagem:</strong> {completionError.message}</p>}
+                {completionError.details && (
+                  <p><strong>Detalhes:</strong> {
+                    typeof completionError.details === 'object' 
+                      ? JSON.stringify(completionError.details, null, 2) 
+                      : completionError.details
+                  }</p>
+                )}
+                <pre className="whitespace-pre-wrap mt-2">
+                  {JSON.stringify(completionError, null, 2)}
+                </pre>
+              </div>
+              <p className="mt-3 text-xs text-red-200">
+                Por favor capture uma screenshot desta mensagem e envie para o suporte técnico.
+              </p>
+            </div>
+            
+            <div className="flex justify-center gap-4 mt-6">
+              <button 
+                onClick={() => setCompletionError(null)}
+                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+              >
+                Voltar para revisão
+              </button>
+              <button 
+                onClick={handleComplete}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              >
+                Tentar novamente
+              </button>
+            </div>
           </div>
         </div>
         <SiteFooter />

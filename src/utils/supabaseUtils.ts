@@ -1,4 +1,3 @@
-
 import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/database.types';
 import type { QuizSubmission } from '@/types/quiz';
@@ -28,7 +27,7 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
       return false;
     }
     
-    // Verificar apenas a coluna 'completed' conforme nova estrutura
+    // Verificar apenas a coluna 'completed'
     const isComplete = data?.completed === true;
     
     logger.info(`Status do questionário: ${isComplete ? 'Completo' : 'Incompleto'}`, {
@@ -160,9 +159,16 @@ export const getQuizDetails = async (userId: string) => {
   }
 };
 
+// Retorno detalhado para a função completeQuizManually
+interface CompleteQuizResult {
+  success: boolean;
+  method?: 'rpc' | 'direct_update';
+  error?: any;
+}
+
 // Completa o questionário manualmente para o usuário
-export const completeQuizManually = async (userId: string): Promise<boolean> => {
-  if (!userId) return false;
+export const completeQuizManually = async (userId: string): Promise<CompleteQuizResult> => {
+  if (!userId) return { success: false, error: 'ID de usuário não fornecido' };
   
   try {
     logger.info('Iniciando processo para completar questionário manualmente', {
@@ -170,43 +176,129 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
       data: { userId }
     });
     
-    // Verificar se o supabaseAdmin está disponível
+    // Tentativa 1: Usar função RPC via supabaseAdmin
     if (supabaseAdmin) {
-      // Usar a função RPC complete_quiz
-      const { data, error } = await supabaseAdmin.rpc('complete_quiz', { user_id: userId });
-      
-      if (error) {
-        logger.error("Erro ao completar questionário via RPC:", {
+      try {
+        logger.info('Tentando completar questionário via RPC', {
           tag: 'Quiz',
-          data: { userId, error: JSON.stringify(error) }
+          data: { userId, method: 'RPC' }
         });
-        return false;
+        
+        const { data, error } = await supabaseAdmin.rpc('complete_quiz', { user_id: userId });
+        
+        if (error) {
+          logger.error("Erro ao completar questionário via RPC:", {
+            tag: 'Quiz',
+            data: { 
+              userId, 
+              error: JSON.stringify(error),
+              errorMessage: error.message,
+              errorDetails: error.details,
+              errorHint: error.hint,
+              errorCode: error.code
+            }
+          });
+          
+          // Não retornar ainda, tente o método alternativo
+          throw {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code,
+            method: 'rpc'
+          };
+        }
+        
+        logger.info('Questionário completado com sucesso via RPC', {
+          tag: 'Quiz',
+          data: { userId, result: data }
+        });
+        
+        return { 
+          success: true, 
+          method: 'rpc' 
+        };
+      } catch (rpcError: any) {
+        // Registra o erro, mas continua para o método alternativo
+        logger.warn('Falha no método RPC, tentando método alternativo', {
+          tag: 'Quiz',
+          data: { 
+            userId, 
+            error: rpcError,
+            message: rpcError.message || 'Erro desconhecido no RPC'
+          }
+        });
+        
+        // Não retornar ainda, tente o método alternativo
+      }
+    }
+    
+    // Tentativa 2: Método alternativo via update direto
+    try {
+      logger.info('Tentando completar questionário via atualização direta', {
+        tag: 'Quiz',
+        data: { userId, method: 'direct_update' }
+      });
+      
+      // Verifica primeiro se o registro existe
+      const { data: existingSubmission, error: checkError } = await supabase
+        .from('quiz_submissions')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      if (checkError) {
+        logger.error("Erro ao verificar existência de submissão:", {
+          tag: 'Quiz',
+          data: { userId, error: checkError }
+        });
+        throw {
+          message: "Erro ao verificar existência de submissão",
+          details: checkError,
+          method: 'direct_update'
+        };
       }
       
-      logger.info('Questionário completado com sucesso via RPC', {
-        tag: 'Quiz',
-        data: { userId, result: data }
-      });
+      let updateResult;
       
-      return data === true;
-    } else {
-      // Método alternativo caso o admin não esteja disponível
-      logger.warn('Cliente admin não disponível, usando método alternativo', {
-        tag: 'Quiz',
-        data: { userId }
-      });
+      if (existingSubmission) {
+        // Atualiza submissão existente
+        updateResult = await supabase
+          .from('quiz_submissions')
+          .update({
+            completed: true,
+            completed_at: new Date().toISOString()
+          })
+          .eq('user_id', userId);
+      } else {
+        // Cria nova submissão
+        updateResult = await supabase
+          .from('quiz_submissions')
+          .insert({
+            user_id: userId,
+            completed: true,
+            completed_at: new Date().toISOString()
+          });
+      }
       
-      const { error } = await supabase.from('quiz_submissions').update({
-        completed: true,
-        completed_at: new Date().toISOString()
-      }).eq('user_id', userId);
-      
-      if (error) {
+      if (updateResult.error) {
         logger.error("Erro ao completar questionário (método alternativo):", {
           tag: 'Quiz',
-          data: { userId, error: JSON.stringify(error) }
+          data: { 
+            userId, 
+            error: JSON.stringify(updateResult.error),
+            errorMessage: updateResult.error.message,
+            errorDetails: updateResult.error.details 
+          }
         });
-        return false;
+        
+        throw {
+          message: updateResult.error.message,
+          details: updateResult.error.details,
+          hint: updateResult.error.hint,
+          code: updateResult.error.code,
+          method: 'direct_update'
+        };
       }
       
       logger.info('Questionário completado com sucesso (método alternativo)', {
@@ -214,14 +306,33 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
         data: { userId }
       });
       
-      return true;
+      return { 
+        success: true, 
+        method: 'direct_update' 
+      };
+    } catch (directError: any) {
+      logger.error("Erro ao completar questionário com método direto:", {
+        tag: 'Quiz',
+        data: { userId, error: directError }
+      });
+      
+      // Ambos os métodos falharam
+      return { 
+        success: false, 
+        method: 'direct_update',
+        error: directError 
+      };
     }
   } catch (error) {
     logger.error("Erro ao completar questionário manualmente:", {
       tag: 'Quiz',
       data: { userId, error }
     });
-    return false;
+    
+    return { 
+      success: false, 
+      error 
+    };
   }
 };
 
