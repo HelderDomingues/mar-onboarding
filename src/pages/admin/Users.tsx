@@ -87,18 +87,8 @@ const UsersPage = () => {
       }
       
       // Usar a nova função RPC atualizada
-      const { data: emailData, error: emailError } = await supabase
-        .rpc('get_users_with_emails');
+      const emailData = await getUserEmails();
         
-      if (emailError) {
-        addLogEntry('error', 'Erro ao buscar emails de usuários via RPC', { 
-          error: emailError.message,
-          code: emailError.code
-        }, user?.id);
-        
-        setError("Não foi possível obter os emails dos usuários. Verifique suas permissões de administrador.");
-      }
-      
       const { data: adminRoles, error: adminRolesError } = await supabase
         .from('user_roles')
         .select('user_id')

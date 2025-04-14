@@ -1,3 +1,4 @@
+
 import { createClient, PostgrestError, AuthError } from '@supabase/supabase-js';
 import { logger } from '@/utils/logger';
 import { addLogEntry, LogOptions } from '@/utils/projectLog';
@@ -131,7 +132,7 @@ export const getUserEmails = async () => {
   try {
     addLogEntry('info', 'Buscando emails de usuários via RPC (nova função)');
     
-    // Usando a nova função RPC para get_users_with_emails
+    // Usando a nova função RPC get_users_with_emails
     const { data, error } = await supabase.rpc('get_users_with_emails');
     
     if (error) {
@@ -177,7 +178,7 @@ const analisarErroSupabase = (error: PostgrestError): { mensagem: string, detalh
     },
     '42883': {
       mensagem: 'Função não encontrada',
-      detalhes: 'A função RPC que você está tentando chamar não existe no banco de dados. Verifique se a função get_user_emails foi criada corretamente.'
+      detalhes: 'A função RPC que você está tentando chamar não existe no banco de dados. Verifique se a função get_users_with_emails foi criada corretamente.'
     },
     '42702': {
       mensagem: 'Referência ambígua a coluna',
@@ -293,7 +294,7 @@ export const configureEmailAccess = async (serviceRoleKey?: string) => {
           // Analisar o erro para fornecer uma mensagem mais detalhada
           const erroDetalhado = analisarErroSupabase(error);
           
-          logger.error(`Erro ao testar função RPC get_user_emails: ${erroDetalhado.mensagem}`, {
+          logger.error(`Erro ao testar função RPC get_users_with_emails: ${erroDetalhado.mensagem}`, {
             error: formatErrorForLog(error),
             detalhes: erroDetalhado.detalhes
           });
@@ -308,18 +309,18 @@ export const configureEmailAccess = async (serviceRoleKey?: string) => {
           if (error.code === '42883' || error.message.includes('function') && error.message.includes('does not exist')) {
             return {
               success: false,
-              message: 'A função get_user_emails não existe no banco de dados',
+              message: 'A função get_users_with_emails não existe no banco de dados',
               detalhes: 'Verifique se a função RPC foi criada corretamente através do SQL. Esta função deve ter sido criada durante a configuração inicial do projeto.',
               codigo: error.code
             };
           }
           
-          // Se for erro de ambiguidade de coluna (comum na função get_user_emails)
+          // Se for erro de ambiguidade de coluna (comum na função get_users_with_emails)
           if (error.code === '42702') {
             return {
               success: false,
-              message: 'Erro de ambiguidade em coluna na função get_user_emails',
-              detalhes: 'A função get_user_emails encontrou ambiguidade em uma coluna. Isso geralmente acontece quando há colunas com o mesmo nome em tabelas diferentes. Verifique se as colunas estão corretamente qualificadas com o nome da tabela.',
+              message: 'Erro de ambiguidade em coluna na função get_users_with_emails',
+              detalhes: 'A função get_users_with_emails encontrou ambiguidade em uma coluna. Isso geralmente acontece quando há colunas com o mesmo nome em tabelas diferentes. Verifique se as colunas estão corretamente qualificadas com o nome da tabela.',
               codigo: error.code
             };
           }
