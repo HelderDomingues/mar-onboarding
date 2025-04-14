@@ -1,4 +1,3 @@
-
 import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/database.types';
 import type { QuizSubmission } from '@/types/quiz';
@@ -547,5 +546,228 @@ export const sendQuizDataToWebhook = async (userId: string, submissionId: string
       data: { userId, submissionId, error }
     });
     return false;
+  }
+};
+
+/**
+ * Obtém as respostas completas de um questionário específico
+ * @param submissionId ID da submissão do questionário
+ * @returns Objeto contendo as respostas completas ou null em caso de erro
+ */
+export const getQuizCompletedAnswers = async (submissionId: string) => {
+  if (!submissionId) {
+    logger.error("ID de submissão não fornecido para buscar respostas completas", {
+      tag: 'Quiz',
+      data: { submissionId }
+    });
+    return null;
+  }
+  
+  try {
+    // Buscar registro de respostas completas
+    const { data, error } = await supabase
+      .from('quiz_respostas_completas')
+      .select('*')
+      .eq('submission_id', submissionId)
+      .maybeSingle();
+      
+    if (error) {
+      logger.error("Erro ao buscar respostas completas:", {
+        tag: 'Quiz',
+        data: { submissionId, error }
+      });
+      return null;
+    }
+    
+    if (!data) {
+      logger.info("Nenhuma resposta completa encontrada para esta submissão", {
+        tag: 'Quiz',
+        data: { submissionId }
+      });
+      return null;
+    }
+    
+    logger.info("Respostas completas obtidas com sucesso", {
+      tag: 'Quiz',
+      data: { submissionId }
+    });
+    
+    return data;
+  } catch (error) {
+    logger.error("Exceção ao buscar respostas completas:", {
+      tag: 'Quiz',
+      data: { submissionId, error }
+    });
+    return null;
+  }
+};
+
+/**
+ * Formata os dados de respostas completas para CSV
+ * @param data Objeto contendo as respostas completas
+ * @returns String no formato CSV ou null em caso de erro
+ */
+export const formatCompletedAnswersToCSV = (data: any): string | null => {
+  if (!data || !data.respostas) {
+    return null;
+  }
+  
+  try {
+    // Extrair as respostas do objeto JSON
+    const respostas = data.respostas;
+    
+    // Cabeçalho do CSV
+    const headers = ['Pergunta', 'Resposta'];
+    
+    // Linhas do CSV
+    const rows = Object.entries(respostas).map(([pergunta, resposta]) => {
+      // Formatar a resposta adequadamente
+      let respostaFormatada = resposta;
+      
+      // Se for um array ou objeto, converter para string
+      if (typeof resposta === 'object') {
+        respostaFormatada = JSON.stringify(resposta);
+      }
+      
+      // Escapar aspas duplas e envolver em aspas se contiver vírgulas
+      const perguntaFormatada = pergunta.includes(',') ? `"${pergunta.replace(/"/g, '""')}"` : pergunta;
+      const respostaString = String(respostaFormatada);
+      const respostaEscapada = respostaString.includes(',') ? `"${respostaString.replace(/"/g, '""')}"` : respostaString;
+      
+      return [perguntaFormatada, respostaEscapada];
+    });
+    
+    // Montar o CSV
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+    
+    return csvContent;
+  } catch (error) {
+    logger.error("Erro ao formatar respostas para CSV:", {
+      tag: 'Quiz',
+      data: { error }
+    });
+    return null;
+  }
+};
+
+/**
+ * Formata os dados de respostas completas para um objeto estruturado para PDF
+ * @param data Objeto contendo as respostas completas
+ * @returns Objeto estruturado para geração de PDF ou null em caso de erro
+ */
+export const formatCompletedAnswersForPDF = (data: any): any | null => {
+  if (!data || !data.respostas) {
+    return null;
+  }
+  
+  try {
+    // Extrair as respostas e informações do usuário
+    const { respostas, user_name, user_email, data_submissao } = data;
+    
+    // Formatar data de submissão
+    const dataFormatada = new Date(data_submissao).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    // Preparar cabeçalho do documento
+    const cabecalho = {
+      usuario: user_name || 'Não informado',
+      email: user_email || 'Não informado',
+      dataSubmissao: dataFormatada
+    };
+    
+    // Transformar respostas em um array para facilitar a renderização
+    const respostasArray = Object.entries(respostas).map(([pergunta, resposta]) => {
+      // Formatar a resposta adequadamente
+      let respostaFormatada = resposta;
+      
+      // Se for um array ou objeto, formatar como string legível
+      if (typeof resposta === 'object' && resposta !== null) {
+        if (Array.isArray(resposta)) {
+          respostaFormatada = resposta.join(', ');
+        } else {
+          respostaFormatada = JSON.stringify(resposta, null, 2);
+        }
+      }
+      
+      return {
+        pergunta,
+        resposta: String(respostaFormatada)
+      };
+    });
+    
+    // Retornar objeto estruturado
+    return {
+      cabecalho,
+      respostas: respostasArray
+    };
+  } catch (error) {
+    logger.error("Erro ao formatar respostas para PDF:", {
+      tag: 'Quiz',
+      data: { error }
+    });
+    return null;
+  }
+};
+
+/**
+ * Busca todas as submissões completas para um administrador visualizar
+ * @returns Array de submissões ou null em caso de erro
+ */
+export const getQuizCompletedSubmissionsForAdmin = async () => {
+  try {
+    // Verificar se o usuário é admin
+    const { data: userRoles, error: rolesError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', supabase.auth.getUser())
+      .in('role', ['admin']);
+      
+    const isAdmin = userRoles && userRoles.length > 0;
+    
+    if (rolesError || !isAdmin) {
+      logger.error("Acesso negado: usuário não é administrador", {
+        tag: 'Admin',
+        data: { error: rolesError }
+      });
+      return null;
+    }
+    
+    // Buscar todas as submissões completas
+    const { data, error } = await supabase
+      .from('quiz_respostas_completas')
+      .select(`
+        id,
+        user_id,
+        user_name,
+        user_email,
+        data_submissao,
+        submission_id,
+        webhook_processed
+      `)
+      .order('data_submissao', { ascending: false });
+      
+    if (error) {
+      logger.error("Erro ao buscar submissões completas:", {
+        tag: 'Admin',
+        data: { error }
+      });
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    logger.error("Exceção ao buscar submissões completas para admin:", {
+      tag: 'Admin',
+      data: { error }
+    });
+    return null;
   }
 };

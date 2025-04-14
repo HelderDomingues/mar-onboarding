@@ -49,7 +49,14 @@ import {
   FileSpreadsheet
 } from "lucide-react";
 import { logger } from "@/utils/logger";
-import { sendQuizDataToWebhook } from "@/utils/supabaseUtils";
+import { 
+  sendQuizDataToWebhook, 
+  getQuizCompletedAnswers, 
+  formatCompletedAnswersToCSV, 
+  formatCompletedAnswersForPDF 
+} from "@/utils/supabaseUtils";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 
 interface QuizSubmission {
   id: string;
@@ -73,6 +80,8 @@ const QuizResponses = () => {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [processingWebhook, setProcessingWebhook] = useState<string | null>(null);
+  const [downloadingPDF, setDownloadingPDF] = useState<string | null>(null);
+  const [downloadingCSV, setDownloadingCSV] = useState<string | null>(null);
   
   useEffect(() => {
     document.title = "Respostas do Questionário | Admin - Crie Valor";
@@ -280,6 +289,133 @@ const QuizResponses = () => {
     }
   };
   
+  const downloadFullAnswersCSV = async (submissionId: string) => {
+    try {
+      setDownloadingCSV(submissionId);
+      
+      const completedAnswers = await getQuizCompletedAnswers(submissionId);
+      
+      if (!completedAnswers) {
+        throw new Error("Não foi possível obter as respostas completas");
+      }
+      
+      const csvContent = formatCompletedAnswersToCSV(completedAnswers);
+      
+      if (!csvContent) {
+        throw new Error("Erro ao formatar respostas para CSV");
+      }
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      
+      const fileName = `respostas-completas-${completedAnswers.user_email.replace('@', '_')}.csv`;
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', fileName);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "CSV exportado com sucesso",
+        description: "As respostas completas foram baixadas em formato CSV.",
+      });
+    } catch (error: any) {
+      logger.error('Erro ao exportar respostas completas para CSV:', {
+        tag: 'Admin',
+        data: { submissionId, error }
+      });
+      
+      toast({
+        title: "Erro na exportação",
+        description: error.message || "Não foi possível exportar as respostas completas para CSV.",
+        variant: "destructive"
+      });
+    } finally {
+      setDownloadingCSV(null);
+    }
+  };
+  
+  const downloadFullAnswersPDF = async (submissionId: string) => {
+    try {
+      setDownloadingPDF(submissionId);
+      
+      const completedAnswers = await getQuizCompletedAnswers(submissionId);
+      
+      if (!completedAnswers) {
+        throw new Error("Não foi possível obter as respostas completas");
+      }
+      
+      const pdfData = formatCompletedAnswersForPDF(completedAnswers);
+      
+      if (!pdfData) {
+        throw new Error("Erro ao formatar respostas para PDF");
+      }
+      
+      const doc = new jsPDF();
+      
+      doc.setFontSize(20);
+      doc.text("Relatório de Respostas MAR - Crie Valor Consultoria", 14, 22);
+      
+      doc.setFontSize(12);
+      doc.text(`Usuário: ${pdfData.cabecalho.usuario}`, 14, 32);
+      doc.text(`Email: ${pdfData.cabecalho.email}`, 14, 40);
+      doc.text(`Data de submissão: ${pdfData.cabecalho.dataSubmissao}`, 14, 48);
+      
+      const tableColumn = ["Pergunta", "Resposta"];
+      const tableRows = pdfData.respostas.map((item: any) => [
+        item.pergunta,
+        item.resposta
+      ]);
+      
+      (doc as any).autoTable({
+        head: [tableColumn],
+        body: tableRows,
+        startY: 55,
+        theme: 'grid',
+        styles: { fontSize: 10, cellPadding: 3 },
+        headStyles: { fillColor: [16, 185, 129] },
+        columnStyles: {
+          0: { cellWidth: 80 },
+          1: { cellWidth: 'auto' }
+        },
+        didDrawPage: (data: any) => {
+          doc.setFontSize(10);
+          doc.text(
+            `Relatório gerado em ${new Date().toLocaleDateString('pt-BR')}`,
+            data.settings.margin.left,
+            doc.internal.pageSize.height - 10
+          );
+        }
+      });
+      
+      const fileName = `respostas-completas-${completedAnswers.user_email.replace('@', '_')}.pdf`;
+      
+      doc.save(fileName);
+      
+      toast({
+        title: "PDF exportado com sucesso",
+        description: "As respostas completas foram baixadas em formato PDF.",
+      });
+    } catch (error: any) {
+      logger.error('Erro ao exportar respostas completas para PDF:', {
+        tag: 'Admin',
+        data: { submissionId, error }
+      });
+      
+      toast({
+        title: "Erro na exportação",
+        description: error.message || "Não foi possível exportar as respostas completas para PDF.",
+        variant: "destructive"
+      });
+    } finally {
+      setDownloadingPDF(null);
+    }
+  };
+  
   const triggerWebhook = async (submissionId: string) => {
     try {
       setProcessingWebhook(submissionId);
@@ -334,6 +470,93 @@ const QuizResponses = () => {
       setSelectedRows([...selectedRows, id]);
     }
   };
+  
+  const renderDropdownMenu = (submission: QuizSubmission) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => viewDetails(submission.id)}>
+          <ExternalLink className="h-4 w-4 mr-2" />
+          Ver detalhes
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => downloadDetailedCSV(submission.id)}>
+          <FileSpreadsheet className="h-4 w-4 mr-2" />
+          Exportar respostas detalhadas
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={() => downloadFullAnswersCSV(submission.id)}
+          disabled={downloadingCSV === submission.id}
+        >
+          <Download className={`h-4 w-4 mr-2 ${downloadingCSV === submission.id ? 'animate-spin' : ''}`} />
+          {downloadingCSV === submission.id ? 'Exportando CSV...' : 'Exportar CSV completo'}
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={() => downloadFullAnswersPDF(submission.id)}
+          disabled={downloadingPDF === submission.id}
+        >
+          <FileText className={`h-4 w-4 mr-2 ${downloadingPDF === submission.id ? 'animate-spin' : ''}`} />
+          {downloadingPDF === submission.id ? 'Gerando PDF...' : 'Exportar PDF completo'}
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={() => triggerWebhook(submission.id)}
+          disabled={processingWebhook === submission.id || !submission.is_complete}
+        >
+          <Send className={`h-4 w-4 mr-2 ${processingWebhook === submission.id ? 'animate-pulse' : ''}`} />
+          {processingWebhook === submission.id ? 'Enviando...' : 'Enviar para webhook'}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+  
+  const renderSubmissionRow = (submission: QuizSubmission) => (
+    <TableRow key={submission.id}>
+      <TableCell>
+        <Checkbox 
+          checked={selectedRows.includes(submission.id)}
+          onCheckedChange={() => toggleSelectRow(submission.id)}
+          aria-label={`Selecionar ${submission.user_email}`}
+        />
+      </TableCell>
+      <TableCell>
+        {submission.user_name || 'Sem nome'}
+      </TableCell>
+      <TableCell>
+        {submission.user_email}
+      </TableCell>
+      <TableCell>
+        {new Date(submission.started_at).toLocaleString('pt-BR')}
+      </TableCell>
+      <TableCell>
+        {submission.is_complete ? (
+          <Badge variant="outline" className="bg-green-100 border-green-300 text-green-800">
+            Completo
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="bg-yellow-100 border-yellow-300 text-yellow-800">
+            Em andamento
+          </Badge>
+        )}
+      </TableCell>
+      <TableCell>
+        {submission.webhook_processed ? (
+          <Badge variant="outline" className="bg-blue-100 border-blue-300 text-blue-800">
+            Processado
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="bg-slate-100 border-slate-300 text-slate-800">
+            Pendente
+          </Badge>
+        )}
+      </TableCell>
+      <TableCell className="text-right">
+        {renderDropdownMenu(submission)}
+      </TableCell>
+    </TableRow>
+  );
   
   const filteredSubmissions = submissions.filter(s => 
     s.user_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -445,74 +668,7 @@ const QuizResponses = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredSubmissions.map((submission) => (
-                      <TableRow key={submission.id}>
-                        <TableCell>
-                          <Checkbox 
-                            checked={selectedRows.includes(submission.id)}
-                            onCheckedChange={() => toggleSelectRow(submission.id)}
-                            aria-label={`Selecionar ${submission.user_email}`}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {submission.user_name || 'Sem nome'}
-                        </TableCell>
-                        <TableCell>
-                          {submission.user_email}
-                        </TableCell>
-                        <TableCell>
-                          {new Date(submission.started_at).toLocaleString('pt-BR')}
-                        </TableCell>
-                        <TableCell>
-                          {submission.is_complete ? (
-                            <Badge variant="outline" className="bg-green-100 border-green-300 text-green-800">
-                              Completo
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-yellow-100 border-yellow-300 text-yellow-800">
-                              Em andamento
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {submission.webhook_processed ? (
-                            <Badge variant="outline" className="bg-blue-100 border-blue-300 text-blue-800">
-                              Processado
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-slate-100 border-slate-300 text-slate-800">
-                              Pendente
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => viewDetails(submission.id)}>
-                                <ExternalLink className="h-4 w-4 mr-2" />
-                                Ver detalhes
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => downloadDetailedCSV(submission.id)}>
-                                <FileSpreadsheet className="h-4 w-4 mr-2" />
-                                Exportar detalhes
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => triggerWebhook(submission.id)}
-                                disabled={processingWebhook === submission.id || !submission.is_complete}
-                              >
-                                <Send className={`h-4 w-4 mr-2 ${processingWebhook === submission.id ? 'animate-pulse' : ''}`} />
-                                {processingWebhook === submission.id ? 'Enviando...' : 'Enviar para webhook'}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    filteredSubmissions.map((submission) => renderSubmissionRow(submission))
                   )}
                 </TableBody>
               </Table>
