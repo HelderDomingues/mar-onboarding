@@ -1,8 +1,8 @@
-
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
+import { formatJsonAnswer } from '@/utils/formatUtils';
 
 // Declaração para o TypeScript reconhecer a extensão autoTable
 declare module 'jspdf' {
@@ -39,33 +39,6 @@ interface QuizModule {
   description: string | null;
   order_number: number;
 }
-
-// Função auxiliar para formatar respostas JSON
-const formatJsonAnswer = (answer) => {
-  if (!answer) return "Sem resposta";
-  
-  try {
-    // Verifica se é uma resposta em formato JSON (array)
-    if (answer.startsWith('[') && answer.endsWith(']')) {
-      const parsed = JSON.parse(answer);
-      if (Array.isArray(parsed)) {
-        // Para cada item no array, verifica se é um objeto ou uma string
-        const formattedItems = parsed.map(item => {
-          if (typeof item === 'object' && item !== null) {
-            // Se for um objeto, retorna o valor texto dele
-            return item.text || item.valor || Object.values(item).join(', ');
-          }
-          return item; // Se for uma string, retorna diretamente
-        });
-        return formattedItems.join(', ');
-      }
-    }
-    return answer;
-  } catch (e) {
-    // Se não conseguir fazer o parse, retorna a resposta original
-    return answer;
-  }
-};
 
 /**
  * Gera um arquivo PDF com as respostas do questionário para um usuário específico
@@ -250,7 +223,7 @@ export const generateQuizPDF = async (
         const question = questionsMap.get(answer.question_id);
         if (!question) return;
         
-        // Formatar resposta para melhor visualização
+        // Formatar resposta para melhor visualização usando a função normalizada
         let formattedAnswer = formatJsonAnswer(answer.answer);
         
         // Adicionar à tabela - Usar text ou question_text conforme disponível
@@ -377,6 +350,7 @@ export const downloadQuizCSV = async (
     
     // Adicionar as respostas ao CSV
     answers.forEach(answer => {
+      // Usar a função normalizada de formatação
       let formattedAnswer = formatJsonAnswer(answer.answer);
       
       // Formatar para CSV: escapar aspas, adicionar aspas ao redor do texto

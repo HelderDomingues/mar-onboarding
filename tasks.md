@@ -17,12 +17,13 @@
 - [x] Melhoria na validação da chave service_role para acesso aos emails
 - [x] Aprimoramento da interface de configuração de acesso aos emails com feedback mais claro
 - [x] Correção da função de completar questionário
+- [x] Correção da formatação de respostas JSON nas visualizações do questionário
+- [x] Normalização do armazenamento de respostas no banco de dados
+- [x] Criação de utilidade separada para formatação de respostas JSON
 
 ## Tarefas em Andamento
 
-- [ ] Correção da formatação de respostas JSON nas visualizações do questionário
 - [ ] Aprimoramento da geração de PDF com perguntas e respostas completas
-- [ ] Normalização do armazenamento de respostas no banco de dados
 
 ## Próximos Passos
 
@@ -39,14 +40,12 @@
 - [ ] Refatorar Quiz.tsx para reduzir tamanho e complexidade
 - [ ] Refatorar QuizViewAnswers.tsx para melhor tratamento das respostas
 - [ ] Refatorar supabaseUtils.ts para melhor organização
-- [ ] Criar utilidade separada para formatação de respostas JSON
-- [ ] Otimizar consultas ao banco de dados para melhor performance
 
 ## Problemas Conhecidos
 
 - [x] ~~Service Role Key não está sendo reconhecida corretamente~~ (Corrigido)
 - [x] ~~Alguns emails de usuários não estão visíveis~~ (Corrigido)
 - [x] ~~Função de completar questionário falha~~ (Corrigido)
-- [ ] Respostas de múltipla escolha são exibidas em formato JSON bruto
+- [x] ~~Respostas de múltipla escolha são exibidas em formato JSON bruto~~ (Corrigido)
 - [ ] PDF gerado mostra apenas nomes dos módulos sem as perguntas e respostas
 - [ ] Função get_user_emails precisa ser criada no banco de dados

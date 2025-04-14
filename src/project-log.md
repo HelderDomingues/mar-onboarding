@@ -1,6 +1,35 @@
+
 # Log do Sistema MAR - Crie Valor Consultoria
 
 ## Histórico do Projeto
+
+### Capítulo 10: Solução para Formatação de Respostas
+**Data: Abril de 2025**
+
+A formatação das respostas JSON foi corrigida e normalizada através das seguintes melhorias:
+
+1. **Diagnóstico do problema**:
+   - Identificamos que as respostas salvas no banco de dados apresentavam formatos inconsistentes
+   - Respostas de múltipla escolha (checkbox) eram salvas como JSON bruto
+   - Inconsistência na exibição de respostas nas várias interfaces (visualização, PDF, CSV)
+
+2. **Solução implementada**:
+   - Criação do utilitário `formatUtils.ts` com funções dedicadas ao processamento de respostas
+   - Normalização das respostas antes de salvar no banco de dados na função `saveAnswer` do `Quiz.tsx`
+   - Unificação da lógica de formatação em todos os pontos de exibição/exportação
+   - Tratamento específico para diferentes tipos de respostas (texto, arrays, objetos)
+
+3. **Benefícios alcançados**:
+   - Exibição consistente das respostas em todos os pontos do sistema
+   - Melhor legibilidade das respostas de múltipla escolha
+   - Manutenção mais simples com lógica de formatação centralizada
+   - Exportação para PDF e CSV com dados formatados corretamente
+
+4. **Verificações realizadas**:
+   - Teste completo dos diferentes tipos de perguntas (texto, checkbox, radio)
+   - Validação da exibição na página "Minhas Respostas"
+   - Confirmação da formatação correta nos relatórios PDF e CSV
+   - Garantia de que a funcionalidade de completar questionário continua funcionando
 
 ### Capítulo 9: Correção de Problemas na Exibição de Respostas
 **Data: Abril de 2025**

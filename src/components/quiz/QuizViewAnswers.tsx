@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,37 +16,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { processQuizAnswersToSimplified } from "@/utils/supabaseUtils";
 import { downloadQuizPDF, downloadQuizCSV } from "@/utils/pdfGenerator";
 import { logger } from "@/utils/logger";
-
-// Função auxiliar para formatar respostas JSON
-const formatJsonAnswer = (answer) => {
-  if (!answer) return "Sem resposta";
-  
-  try {
-    // Verifica se é uma resposta em formato JSON (array)
-    if (answer.startsWith('[') && answer.endsWith(']')) {
-      const parsed = JSON.parse(answer);
-      if (Array.isArray(parsed)) {
-        // Para cada item no array, verifica se é um objeto ou uma string
-        const formattedItems = parsed.map(item => {
-          if (typeof item === 'object' && item !== null) {
-            // Se for um objeto, retorna o valor texto dele
-            return item.text || item.valor || Object.values(item).join(', ');
-          }
-          return item; // Se for uma string, retorna diretamente
-        });
-        return formattedItems.join(', ');
-      }
-    }
-    return answer;
-  } catch (e) {
-    // Se não conseguir fazer o parse, retorna a resposta original
-    logger.error("Erro ao formatar resposta JSON:", {
-      tag: 'Quiz',
-      data: { answer, error: e }
-    });
-    return answer;
-  }
-};
+import { formatJsonAnswer } from "@/utils/formatUtils";
 
 export function QuizViewAnswers() {
   const { user } = useAuth();
@@ -222,7 +191,6 @@ export function QuizViewAnswers() {
   const modulePattern = /module_(\d+)/;
   const answersByModule: Record<string, any[]> = {};
   
-  // Organizar respostas por módulo
   answers.forEach(answer => {
     const moduleNum = answer.module_number;
     if (moduleNum) {
@@ -231,7 +199,6 @@ export function QuizViewAnswers() {
       }
       answersByModule[moduleNum].push(answer);
     } else {
-      // Tenta extrair número do módulo do ID da questão como fallback
       const match = answer.question_id.match(modulePattern);
       if (match) {
         const moduleNum = match[1];

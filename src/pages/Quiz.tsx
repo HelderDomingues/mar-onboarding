@@ -15,6 +15,7 @@ import { QuizModule, QuizQuestion, QuizAnswer, QuizSubmission } from "@/types/qu
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { isQuizComplete } from "@/utils/supabaseUtils";
+import { formatJsonAnswer } from "@/utils/formatUtils";
 
 interface AnswerMap {
   [key: string]: string | string[];
@@ -324,15 +325,30 @@ const Quiz = () => {
         data: { questionId, userId: user.id }
       });
       
-      let answerValue = typeof answer === 'string' ? answer : JSON.stringify(answer);
       const questionInfo = questions.find(q => q.id === questionId);
+      
+      // Normalizar a resposta antes de salvar
+      let normalizedAnswer: string;
+      
+      if (Array.isArray(answer)) {
+        // Para respostas de múltipla escolha (checkbox) ou valores múltiplos
+        // Extrair apenas os textos das opções selecionadas
+        const formattedAnswer = formatJsonAnswer(answer);
+        normalizedAnswer = formattedAnswer;
+      } else if (typeof answer === 'object') {
+        // Este caso nunca deve acontecer com a tipagem atual, mas por segurança
+        normalizedAnswer = JSON.stringify(answer);
+      } else {
+        // Respostas de texto simples
+        normalizedAnswer = answer;
+      }
       
       const {
         error
       } = await supabase.from('quiz_answers').upsert([{
         user_id: user.id,
         question_id: questionId,
-        answer: answerValue,
+        answer: normalizedAnswer,
         question_text: questionInfo?.question_text || questionInfo?.text || '',
         user_email: user.email,
         module_id: questionInfo?.module_id,
