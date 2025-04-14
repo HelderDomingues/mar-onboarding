@@ -1,3 +1,4 @@
+
 import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/database.types';
 import type { QuizSubmission } from '@/types/quiz';
@@ -165,16 +166,22 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
       }
       
       const now = new Date().toISOString();
+      
+      // Obtém o email do usuário da sessão atual
+      const { data: userSession } = await supabase.auth.getUser();
+      const userEmail = userSession?.user?.email;
+      
       let updateResult;
       
       if (existingSubmission) {
-        // Atualiza submissão existente
+        // Atualiza submissão existente sem usar o campo email diretamente
         updateResult = await supabase
           .from('quiz_submissions')
           .update({
             completed: true,
             completed_at: now,
-            last_active: now
+            last_active: now,
+            user_email: userEmail // Adiciona o email do usuário
           })
           .eq('user_id', userId);
       } else {
@@ -183,6 +190,7 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
           .from('quiz_submissions')
           .insert({
             user_id: userId,
+            user_email: userEmail, // Adiciona o email do usuário
             completed: true,
             completed_at: now,
             started_at: now,
@@ -235,53 +243,72 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
         }
       });
       
-      // Tenta o método RPC como fallback
+      // Tenta o método RPC como fallback - ajustado para trabalhar com userEmail
       try {
-        logger.info('Tentando completar questionário via RPC (fallback)', {
+        logger.info('Tentando completar questionário via chamada manual direta (fallback)', {
           tag: 'Quiz',
-          data: { userId, method: 'RPC' }
+          data: { userId, method: 'manual_update' }
         });
         
-        const { data, error } = await supabase.rpc('complete_quiz', { user_id: userId });
+        // Obtém o email do usuário da sessão atual
+        const { data: userSession } = await supabase.auth.getUser();
+        const userEmail = userSession?.user?.email;
         
-        if (error) {
-          logger.error("Erro ao completar questionário via RPC:", {
-            tag: 'Quiz',
-            data: { 
-              userId, 
-              error: JSON.stringify(error),
-              errorMessage: error.message,
-              errorDetails: error.details,
-              errorHint: error.hint,
-              errorCode: error.code
-            }
-          });
+        // Usa transações básicas
+        const now = new Date().toISOString();
+        
+        const { data: existingSubmission } = await supabase
+          .from('quiz_submissions')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
           
-          throw {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code,
-            method: 'rpc'
-          };
+        let manualResult;
+        
+        if (existingSubmission) {
+          manualResult = await supabase
+            .from('quiz_submissions')
+            .update({
+              completed: true,
+              completed_at: now,
+              last_active: now,
+              user_email: userEmail
+            })
+            .eq('id', existingSubmission.id);
+        } else {
+          manualResult = await supabase
+            .from('quiz_submissions')
+            .insert({
+              user_id: userId,
+              user_email: userEmail,
+              completed: true,
+              completed_at: now,
+              started_at: now,
+              last_active: now,
+              current_module: 8
+            });
         }
         
-        logger.info('Questionário completado com sucesso via RPC (fallback)', {
+        if (manualResult.error) {
+          throw manualResult.error;
+        }
+        
+        logger.info('Questionário completado com sucesso via método manual (fallback)', {
           tag: 'Quiz',
-          data: { userId, result: data }
+          data: { userId }
         });
         
         return { 
           success: true, 
-          method: 'rpc' 
+          method: 'manual_update' 
         };
-      } catch (rpcError: any) {
+      } catch (manualError: any) {
         // Ambos os métodos falharam
         return { 
           success: false,
           error: {
             direct: directError,
-            rpc: rpcError
+            manual: manualError
           }
         };
       }
