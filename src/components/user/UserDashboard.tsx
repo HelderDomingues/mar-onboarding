@@ -73,9 +73,13 @@ export function UserDashboard({
             <h3 className="text-2xl font-bold mb-4">Bem-vindo ao programa MAR</h3>
             
             <p className="text-blue-100 mb-6">
-              Parabéns por dar este importante passo para transformar o marketing da sua empresa!
-              O <span className="font-semibold">Mapa para Alto Rendimento</span> é um programa completo 
-              que vai guiar você através de estratégias testadas e comprovadas.
+              Parabéns por dar este importante passo para transformar os resultados da sua empresa! O Mapa para Alto Rendimento é um programa completo que vai guiar você através de estratégias desenvolvidas especialmente para você. Se é o seu primeiro acesso, assista o vídeo de introdução e depois responda o questionário.
+              
+              Caso tenha alguma dúvida, sinta-se à vontade para contatar nossa equipe. Os canais de atendimento estão no final da página. 
+              
+              Também temos uma seção com materiais exclusivos para você. É só acessar a página e fazer o download do material escolhido. 
+              
+              Vamos iniciar sua jornada?
             </p>
             
             <div className="mb-6">
