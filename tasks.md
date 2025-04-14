@@ -31,6 +31,7 @@ Este projeto consiste em uma área de membros privada e exclusiva para o Sistema
 - [x] Simplificação do fluxo de navegação entre perguntas
 - [x] Correção do erro 406 na finalização do questionário
 - [x] Implementação correta da geração de PDF com jspdf-autotable
+- [x] Correção do erro em componentes Select com propriedades value vazias 
 
 ## Tarefas Pendentes
 
@@ -60,6 +61,7 @@ Este projeto consiste em uma área de membros privada e exclusiva para o Sistema
 8. Erro ao gerar PDF - Corrigida implementação do jspdf-autotable
 9. Link incorreto na página de diagnóstico - Corrigido de `/quiz/answers` para `/quiz/view-answers`
 10. Respostas em formato JSON - Melhorada a formatação para exibição legível ao usuário
+11. Erro em componentes Select - Corrigido problema com valores vazios nos itens do Select
 
 ## Plano para a Próxima Iteração
 1. Concluir a implementação do painel administrativo

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -100,11 +101,6 @@ const SystemLog = () => {
     }
   };
 
-  // Garante que os valores de SelectItem nunca sejam vazios
-  const getSelectValue = (value: string | undefined, fallback: string): string => {
-    return value || fallback;
-  };
-
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
@@ -166,13 +162,13 @@ const SystemLog = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os tipos</SelectItem>
-              <SelectItem value={getSelectValue("error", "error-fallback")}>Erro</SelectItem>
-              <SelectItem value={getSelectValue("warning", "warning-fallback")}>Alerta</SelectItem>
-              <SelectItem value={getSelectValue("info", "info-fallback")}>Informação</SelectItem>
-              <SelectItem value={getSelectValue("auth", "auth-fallback")}>Autenticação</SelectItem>
-              <SelectItem value={getSelectValue("database", "database-fallback")}>Banco de dados</SelectItem>
-              <SelectItem value={getSelectValue("navigation", "navigation-fallback")}>Navegação</SelectItem>
-              <SelectItem value={getSelectValue("quiz", "quiz-fallback")}>Questionário</SelectItem>
+              <SelectItem value="error">Erro</SelectItem>
+              <SelectItem value="warning">Alerta</SelectItem>
+              <SelectItem value="info">Informação</SelectItem>
+              <SelectItem value="auth">Autenticação</SelectItem>
+              <SelectItem value="database">Banco de dados</SelectItem>
+              <SelectItem value="navigation">Navegação</SelectItem>
+              <SelectItem value="quiz">Questionário</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -205,10 +201,10 @@ const SystemLog = () => {
               <SelectValue placeholder="Limite de registros" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={getSelectValue("50", "50-fallback")}>50 registros</SelectItem>
-              <SelectItem value={getSelectValue("100", "100-fallback")}>100 registros</SelectItem>
-              <SelectItem value={getSelectValue("200", "200-fallback")}>200 registros</SelectItem>
-              <SelectItem value={getSelectValue("500", "500-fallback")}>500 registros</SelectItem>
+              <SelectItem value="50">50 registros</SelectItem>
+              <SelectItem value="100">100 registros</SelectItem>
+              <SelectItem value="200">200 registros</SelectItem>
+              <SelectItem value="500">500 registros</SelectItem>
             </SelectContent>
           </Select>
         </div>

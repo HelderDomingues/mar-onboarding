@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabaseAdmin } from "@/integrations/supabase/client";
@@ -414,7 +413,7 @@ const QuizResponses = () => {
                     <SelectValue placeholder="Filtrar por status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="todos">Todos</SelectItem>
                     <SelectItem value="complete">Completos</SelectItem>
                     <SelectItem value="incomplete">Incompletos</SelectItem>
                     <SelectItem value="processed">Webhook Processado</SelectItem>
