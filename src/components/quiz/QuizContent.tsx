@@ -141,27 +141,7 @@ export function QuizContent({
     return <QuizProgress currentStep={currentQuestionIndex + 1} totalSteps={totalQuestionsInModule} currentModule={currentModuleIndex + 1} totalModules={totalModules} />;
   };
   const renderModuleNavigation = () => {
-    return <div className="flex justify-between items-center w-full mt-8 max-w-2xl mx-auto quiz-content-navigation">
-        <Button variant="outline" onClick={onPrev} disabled={isFirst} className="flex items-center gap-2 text-white bg-slate-700 hover:bg-slate-800 border-slate-600 shadow-md">
-          <ArrowLeft size={16} />
-          Anterior
-        </Button>
-        
-        <div className="text-center text-sm text-white">
-          <span className="font-medium">
-            Módulo {currentModuleIndex + 1} de {totalModules}
-          </span>
-          <br />
-          <span>
-            Pergunta {currentQuestionIndex + 1} de {moduleQuestions.length}
-          </span>
-        </div>
-        
-        <Button onClick={onNext} disabled={isLast} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white border border-blue-500 shadow-md">
-          Próximo
-          <ArrowRight size={16} />
-        </Button>
-      </div>;
+    return;
   };
   const renderReview = () => {
     return <QuizReview modules={allModules} questions={allQuestions} answers={currentAnswers} onComplete={handleReviewComplete} onEdit={onEditQuestion} />;
