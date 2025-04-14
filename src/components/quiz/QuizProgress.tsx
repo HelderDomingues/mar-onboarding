@@ -2,12 +2,14 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Check, ArrowRight } from "lucide-react";
+
 interface QuizProgressProps {
   currentStep: number;
   totalSteps: number;
   currentModule: number;
   totalModules: number;
 }
+
 export function QuizProgress({
   currentStep,
   totalSteps,
