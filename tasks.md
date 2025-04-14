@@ -37,7 +37,7 @@
 - [x] Testar fluxo completo do questionário
 
 ### Etapa 5: Sistema de Logging Aprimorado - 18/04/2025
-- [ ] Expandir sistema de log para rastrear ações no questionário
+- [x] Expandir sistema de log para rastrear ações no questionário
 - [ ] Implementar métricas de tempo por módulo e pergunta
 - [ ] Adicionar registro de erros de validação
 - [ ] Criar visualização administrativa de logs
