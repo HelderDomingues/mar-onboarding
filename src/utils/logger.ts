@@ -1,4 +1,3 @@
-
 /**
  * Sistema de Logs - MAR Crie Valor
  * 
@@ -29,6 +28,14 @@ interface LogOptions {
   
   // Campo dinâmico para outros dados
   [key: string]: any;
+}
+
+interface TimeMetrics {
+  moduleId?: string;
+  questionId?: string;
+  startTime: number;
+  endTime?: number;
+  duration?: number;
 }
 
 export const LogCategory = {
@@ -185,6 +192,52 @@ export const logger = {
   performance: (message: string, options?: LogOptions) => {
     console.info(`[PERF] ${message}`, formatLogData({ ...options, category: LogCategory.PERFORMANCE }));
     storeLog('performance', message, { ...options, category: LogCategory.PERFORMANCE });
+  },
+
+  // Novo método para iniciar contagem de tempo de módulo
+  startModuleTimer: (moduleId: string): TimeMetrics => {
+    const timeMetric: TimeMetrics = {
+      moduleId,
+      startTime: performance.now()
+    };
+    
+    logger.info(`Iniciando contagem de tempo para módulo: ${moduleId}`, {
+      category: LogCategory.QUIZ,
+      moduleId
+    });
+
+    return timeMetric;
+  },
+
+  // Novo método para finalizar contagem de tempo de módulo
+  endModuleTimer: (timeMetric: TimeMetrics): TimeMetrics => {
+    if (!timeMetric.moduleId) {
+      logger.warn('Tentativa de finalizar timer de módulo sem ID', { 
+        category: LogCategory.QUIZ 
+      });
+      return timeMetric;
+    }
+
+    timeMetric.endTime = performance.now();
+    timeMetric.duration = timeMetric.endTime - timeMetric.startTime;
+
+    logger.info(`Módulo ${timeMetric.moduleId} concluído`, {
+      category: LogCategory.QUIZ,
+      moduleId: timeMetric.moduleId,
+      duration: timeMetric.duration
+    });
+
+    return timeMetric;
+  },
+
+  // Novo método para registrar tempo de resposta de pergunta
+  logQuestionTime: (moduleId: string, questionId: string, duration: number) => {
+    logger.info(`Tempo de resposta da pergunta registrado`, {
+      category: LogCategory.QUIZ,
+      moduleId,
+      questionId,
+      duration
+    });
   }
 };
 

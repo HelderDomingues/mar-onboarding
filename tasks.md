@@ -38,7 +38,7 @@
 
 ### Etapa 5: Sistema de Logging Aprimorado - 18/04/2025
 - [x] Expandir sistema de log para rastrear ações no questionário
-- [ ] Implementar métricas de tempo por módulo e pergunta
+- [x] Implementar métricas de tempo por módulo e pergunta
 - [ ] Adicionar registro de erros de validação
 - [ ] Criar visualização administrativa de logs
 - [ ] Adicionar exportação de logs para análise
@@ -59,6 +59,12 @@
 - [ ] Corrigir bugs e problemas identificados
 
 ## Histórico de Implementações
+
+### 14/04/2025 - Sistema de Log Detalhado para Métricas de Tempo
+- ✅ Adicionados métodos específicos para monitoramento de tempo de módulos
+- ✅ Implementado rastreamento detalhado de duração por módulo e pergunta
+- ✅ Expandido sistema de log com métricas de performance
+- ✅ Garantida integração com sistema de log existente
 
 ### 17/04/2025 - Adaptação do QuestionCard para Novos Tipos de Pergunta
 - ✅ Corrigidos erros de tipagem no componente QuestionCard
