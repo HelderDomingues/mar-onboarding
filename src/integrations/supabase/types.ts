@@ -597,6 +597,7 @@ export type Database = {
           user_id: string
           user_email: string
           user_created_at: string
+          user_name: string
         }[]
       }
       is_admin: {

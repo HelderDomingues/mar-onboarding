@@ -86,7 +86,7 @@ const UsersPage = () => {
         return;
       }
       
-      // Usar a nova função RPC atualizada
+      // Obter emails dos usuários usando a função de utilidade atualizada
       const emailData = await getUserEmails();
         
       const { data: adminRoles, error: adminRolesError } = await supabase
@@ -101,6 +101,7 @@ const UsersPage = () => {
       const adminUserIds = adminRoles?.map(role => role.user_id) || [];
       const submissionUserIds = submissions?.map(sub => sub.user_id) || [];
       
+      // Mapear os emails dos usuários, usando a nova estrutura retornada pela função
       const emailMap = new Map<string, string>();
       if (emailData && Array.isArray(emailData)) {
         emailData.forEach((item: any) => {

@@ -1,4 +1,3 @@
-
 import { createClient, PostgrestError, AuthError } from '@supabase/supabase-js';
 import { logger } from '@/utils/logger';
 import { addLogEntry, LogOptions } from '@/utils/projectLog';
@@ -125,8 +124,8 @@ const isValidSupabaseKey = (key: string): boolean => {
 };
 
 /**
- * Função para obter emails de usuários usando a nova função RPC
- * Esta versão usa a nova função RPC segura get_users_with_emails
+ * Função para obter emails de usuários usando a função RPC
+ * Esta versão usa a função RPC segura get_users_with_emails
  */
 export const getUserEmails = async () => {
   try {
