@@ -129,9 +129,9 @@ const isValidSupabaseKey = (key: string): boolean => {
  */
 export const getUserEmails = async () => {
   try {
-    addLogEntry('info', 'Buscando emails de usuários via RPC (nova função)');
+    addLogEntry('info', 'Buscando emails de usuários via RPC');
     
-    // Usando a nova função RPC get_users_with_emails
+    // Chamada à função RPC get_users_with_emails
     const { data, error } = await supabase.rpc('get_users_with_emails');
     
     if (error) {
