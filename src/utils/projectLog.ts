@@ -10,7 +10,7 @@ import { logger } from './logger';
 import { supabase } from '@/integrations/supabase/client';
 
 // Interface para os logs
-export type LogType = 'error' | 'warning' | 'info' | 'build' | 'auth' | 'database' | 'admin' | 'navigation' | 'quiz';
+export type LogType = 'error' | 'warning' | 'info' | 'build' | 'auth' | 'database' | 'admin' | 'navigation' | 'quiz' | 'validation';
 
 export interface LogEntry {
   timestamp: string;
@@ -70,6 +70,9 @@ export const addLogEntry = (
     case 'database':
       logger.db(message, { ...details, userId, context });
       break;
+    case 'validation':
+      logger.warn(message, { ...details, userId, context, category: 'validation' });
+      break;
     default:
       logger.info(message, { ...details, userId, context });
   }
@@ -106,6 +109,33 @@ export const getLogsByType = (type: LogEntry['type']): LogEntry[] => {
  */
 export const getLogsByUser = (userId: string): LogEntry[] => {
   return inMemoryLogs.filter(log => log.userId === userId);
+};
+
+/**
+ * Nova função para registrar erros de validação
+ */
+export const logValidationError = (
+  fieldName: string, 
+  errorMessage: string, 
+  value: any, 
+  questionId?: string,
+  moduleId?: string,
+  userId?: string
+): void => {
+  addLogEntry(
+    'validation',
+    `Erro de validação no campo: ${fieldName}`,
+    {
+      field: fieldName,
+      error: errorMessage,
+      value,
+      questionId,
+      moduleId,
+      timestamp: new Date().toISOString()
+    },
+    userId,
+    'validation'
+  );
 };
 
 /**

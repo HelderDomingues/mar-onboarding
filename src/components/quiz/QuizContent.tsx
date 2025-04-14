@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { QuestionCard } from "@/components/quiz/QuestionCard";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { QuizProgress } from "@/components/quiz/QuizProgress";
 import { QuizReview } from "@/components/quiz/QuizReview";
 import { ArrowRight, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { logger } from "@/utils/logger";
 
 interface QuizContentProps {
   currentModule: QuizModule;
@@ -48,13 +48,86 @@ export function QuizContent({
   isAdmin
 }: QuizContentProps) {
   const [fadeIn, setFadeIn] = useState(true);
+  const timeMetricRef = useRef<any>(null);
+  const questionStartTimeRef = useRef<number>(0);
+  
+  useEffect(() => {
+    if (currentModule?.id) {
+      if (timeMetricRef.current?.moduleId && timeMetricRef.current.moduleId !== currentModule.id) {
+        const finalMetric = logger.endModuleTimer(timeMetricRef.current);
+        console.log('Tempo total no módulo anterior:', finalMetric.duration);
+      }
+      
+      timeMetricRef.current = logger.startModuleTimer(currentModule.id);
+    }
+    
+    return () => {
+      if (timeMetricRef.current?.moduleId) {
+        logger.endModuleTimer(timeMetricRef.current);
+      }
+    };
+  }, [currentModule?.id]);
+  
+  useEffect(() => {
+    if (moduleQuestions && moduleQuestions.length > 0 && !showReview) {
+      const currentQuestion = moduleQuestions[currentQuestionIndex];
+      if (currentQuestion?.id) {
+        if (questionStartTimeRef.current > 0) {
+          const questionDuration = performance.now() - questionStartTimeRef.current;
+          const previousQuestionIndex = 
+            currentQuestionIndex > 0 ? currentQuestionIndex - 1 : 
+            (currentModuleIndex > 0 ? allQuestions.filter(q => q.module_id === allModules[currentModuleIndex - 1].id).length - 1 : 0);
+          
+          const previousQuestion = 
+            currentQuestionIndex > 0 ? moduleQuestions[previousQuestionIndex] : 
+            (currentModuleIndex > 0 ? 
+              allQuestions.filter(q => q.module_id === allModules[currentModuleIndex - 1].id)[previousQuestionIndex] : 
+              null);
+          
+          if (previousQuestion) {
+            logger.logQuestionTime(
+              previousQuestion.module_id || '',
+              previousQuestion.id,
+              questionDuration
+            );
+          }
+        }
+        
+        questionStartTimeRef.current = performance.now();
+      }
+    }
+  }, [currentQuestionIndex, currentModuleIndex, moduleQuestions, showReview, allQuestions, allModules]);
 
-  // Efeito para animação de fade quando muda de questão ou módulo
   useEffect(() => {
     setFadeIn(false);
     const timer = setTimeout(() => setFadeIn(true), 50);
     return () => clearTimeout(timer);
   }, [currentQuestionIndex, currentModuleIndex]);
+
+  const handleAnswer = (questionId: string, answer: string | string[]) => {
+    if (currentModule?.id && questionStartTimeRef.current > 0) {
+      const questionDuration = performance.now() - questionStartTimeRef.current;
+      logger.logQuestionTime(currentModule.id, questionId, questionDuration);
+      
+      questionStartTimeRef.current = performance.now();
+    }
+    
+    onAnswer(questionId, answer);
+  };
+
+  const handleReviewComplete = () => {
+    if (timeMetricRef.current?.moduleId) {
+      const finalMetric = logger.endModuleTimer(timeMetricRef.current);
+      logger.info(`Questionário completo. Tempo total do último módulo: ${finalMetric.duration}ms`, {
+        category: 'quiz',
+        moduleId: timeMetricRef.current.moduleId,
+        duration: finalMetric.duration,
+        isReview: true
+      });
+    }
+    
+    onReviewComplete();
+  };
 
   const renderQuestion = () => {
     if (!moduleQuestions || moduleQuestions.length === 0) {
@@ -70,10 +143,8 @@ export function QuizContent({
       </div>;
     }
 
-    // Use o ID da pergunta para encontrar a resposta atual
     const currentAnswer = currentAnswers[currentQuestion.id];
 
-    // Mapeamos a pergunta do tipo QuizQuestion para o tipo Question aceito pelo QuestionCard
     const mappedQuestion = {
       id: currentQuestion.id,
       text: currentQuestion.text || currentQuestion.question_text || "",
@@ -91,7 +162,7 @@ export function QuizContent({
       <div className={`transition-opacity duration-300 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
         <QuestionCard
           question={mappedQuestion}
-          onAnswer={onAnswer}
+          onAnswer={handleAnswer}
           onNext={onNext}
           onPrev={onPrev}
           isFirst={currentQuestionIndex === 0 && currentModuleIndex === 0}
@@ -102,7 +173,6 @@ export function QuizContent({
     );
   };
 
-  // Componente para mostrar o progresso entre módulos
   const renderModuleProgress = () => {
     const totalQuestionsInModule = moduleQuestions.length;
     
@@ -116,7 +186,6 @@ export function QuizContent({
     );
   };
 
-  // Componente para mostrar navegação entre módulos
   const renderModuleNavigation = () => {
     return (
       <div className="flex justify-between items-center w-full mt-8 max-w-2xl mx-auto">
@@ -152,14 +221,13 @@ export function QuizContent({
     );
   };
 
-  // Componente para renderizar a revisão final
   const renderReview = () => {
     return (
       <QuizReview
         modules={allModules}
         questions={allQuestions}
         answers={currentAnswers}
-        onComplete={onReviewComplete}
+        onComplete={handleReviewComplete}
         onEdit={onEditQuestion}
       />
     );

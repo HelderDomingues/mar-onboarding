@@ -1,3 +1,4 @@
+
 # Tasks do Projeto MAR - Crie Valor Consultoria
 
 ## Plano de Reestruturação do Questionário MAR - Abril 2025
@@ -59,6 +60,13 @@
 - [ ] Corrigir bugs e problemas identificados
 
 ## Histórico de Implementações
+
+### 14/04/2025 - Integração de Métricas de Tempo no QuizContent
+- ✅ Implementados hooks para rastreamento de tempo em módulos e perguntas
+- ✅ Adicionada lógica para iniciar e finalizar timers automáticos
+- ✅ Implementado registro de duração de tempo em cada módulo
+- ✅ Implementado registro de tempo gasto em cada pergunta
+- ✅ Integrados novos métodos de logging com o componente QuizContent
 
 ### 14/04/2025 - Sistema de Log Detalhado para Métricas de Tempo
 - ✅ Adicionados métodos específicos para monitoramento de tempo de módulos
@@ -139,18 +147,15 @@
 ## Tarefas Pendentes
 
 ### Próxima Tarefa
-- [x] Atualizar componente QuizContent para navegação entre 9 módulos
-  - [x] Adaptar o componente para trabalhar com a nova estrutura de 9 módulos
-  - [x] Garantir que a navegação entre módulos funcione corretamente
-  - [x] Implementar carregamento adequado das perguntas por módulo
-  - [x] Atualizar a interface para mostrar o módulo atual
-  - [x] Testar a navegação completa do questionário
+- [ ] Adicionar registro de erros de validação
+  - [ ] Atualizar o sistema de logs para capturar erros de validação
+  - [ ] Implementar registro de tentativas mal sucedidas de resposta
+  - [ ] Adicionar indicadores visuais para usuários sobre erros de validação
+  - [ ] Criar funções para analisar padrões de erro frequentes
 
 ### Prioridade Alta
-- [x] Adaptar componente QuizProgress para refletir nova estrutura
-- [ ] Criar visualização específica para cada tipo de pergunta
-- [ ] Implementar validação de entrada por tipo de pergunta
-- [ ] Implementar sistema de log detalhado para rastrear uso do sistema
+- [ ] Criar visualização administrativa de logs
+- [ ] Adicionar exportação de logs para análise
 - [ ] Implementar componente para exportação de respostas do questionário em PDF
 - [ ] Implementar componente para exportação de respostas do questionário em formato de planilha
 
@@ -163,6 +168,8 @@
 - [ ] Refatorar o componente `src/pages/SystemLog.tsx` (muito extenso, 277 linhas)
 - [ ] Refatorar o componente `src/pages/Quiz.tsx` (muito extenso, 504 linhas)
 - [ ] Refatorar o componente `src/hooks/useAuth.tsx` (muito extenso, 270 linhas)
+- [ ] Refatorar o componente `src/utils/logger.ts` (muito extenso, 299 linhas)
+- [ ] Refatorar o componente `src/components/quiz/QuizContent.tsx` (muito extenso, 202 linhas)
 
 ### Prioridade Baixa
 - [ ] Documentar todas as funções RPC do Supabase
@@ -175,4 +182,4 @@
 - O sistema agora suporta diferentes tipos de pergunta, incluindo instagram e url
 - As tabelas foram organizadas para suportar todos os tipos de pergunta e opções
 - O componente QuestionCard foi adaptado para suportar os novos tipos de pergunta
-- A próxima fase é atualizar o componente QuizContent para navegação entre os 9 módulos
+- O sistema de log agora rastreia métricas de tempo para módulos e perguntas
