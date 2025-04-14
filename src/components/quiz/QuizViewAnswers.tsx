@@ -208,7 +208,7 @@ export function QuizViewAnswers() {
         <CardHeader className="bg-primary/5">
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-xl font-bold">Suas Respostas</CardTitle>
+              <CardTitle className="text-xl font-bold">Confira Suas Respostas Aqui</CardTitle>
               <CardDescription>
                 Questionário MAR - {submission?.completed_at ? new Date(submission.completed_at).toLocaleDateString('pt-BR') : 'Em andamento'}
               </CardDescription>
