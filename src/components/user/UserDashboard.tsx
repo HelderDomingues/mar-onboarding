@@ -9,9 +9,11 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+
 interface UserDashboardProps {
   submission: QuizSubmission | null;
 }
+
 export function UserDashboard({
   submission
 }: UserDashboardProps) {
@@ -230,7 +232,10 @@ export function UserDashboard({
             <p className="text-slate-600 mb-4">
               Encontre respostas para as dúvidas mais comuns sobre o programa MAR.
             </p>
-            <Button variant="outline" className="w-full border-violet-200 text-violet-700 hover:bg-violet-50 rounded-lg" onClick={() => navigate("/faq")}>
+            <Button 
+              onClick={() => navigate("/faq")} 
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
+            >
               Ver Perguntas Frequentes
             </Button>
           </CardContent>
@@ -239,14 +244,21 @@ export function UserDashboard({
         <Card className="border-0 shadow-md rounded-xl overflow-hidden bg-white">
           <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-6">
             <CardTitle className="flex items-center gap-2 text-white">
-              <MessageSquare className="h-5 w-5" />
+              <HelpCircle className="h-5 w-5" />
               Precisa de ajuda?
             </CardTitle>
             <CardDescription className="text-emerald-100 mt-1">
-              Estamos à disposição para ajudar
+              Consulte as Perguntas Frequentes
             </CardDescription>
           </div>
           <CardContent className="py-8 px-6">
+            <Button 
+              onClick={() => navigate("/faq")} 
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
+            >
+              Ver Perguntas Frequentes
+            </Button>
+            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 transform hover:translate-y-[-2px]">
                 <div className="rounded-full bg-emerald-100 w-12 h-12 flex items-center justify-center mb-4">
