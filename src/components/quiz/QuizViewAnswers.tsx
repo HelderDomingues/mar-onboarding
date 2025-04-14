@@ -247,12 +247,9 @@ export function QuizViewAnswers() {
         </CardContent>
         
         <CardFooter className="flex justify-between border-t p-6 bg-muted/20">
-          <Button variant="outline" onClick={handleDownloadCSV} disabled={downloading}>
-            <Download className="h-4 w-4 mr-2" />
-            Exportar CSV
-          </Button>
           
-          <Button onClick={handleDownloadPDF} disabled={downloading} className="text-slate-50">
+          
+          <Button onClick={handleDownloadPDF} disabled={downloading} className="text-slate-50 bg-red-700 hover:bg-red-600 text-center">
             <File className="h-4 w-4 mr-2" />
             Baixar PDF
           </Button>
