@@ -50,11 +50,14 @@
     --quiz-bg: 220 20% 20%; 
     --quiz-card: 220 20% 25%;
     --quiz-border: 220 25% 35%;
-    --quiz-accent: 210 100% 40%;
-    --quiz-accent-hover: 210 100% 35%;
-    --quiz-progress: 210 100% 40%;
+    --quiz-accent: 210 100% 50%;
+    --quiz-accent-hover: 210 100% 45%;
+    --quiz-progress: 210 100% 50%;
     --quiz-progress-bg: 220 20% 30%;
     --quiz-text: 0 0% 100%;
+    --quiz-button: 210 100% 50%;
+    --quiz-button-hover: 210 100% 45%;
+    --quiz-button-text: 0 0% 100%;
   }
 
   .dark {
@@ -91,10 +94,13 @@
     --quiz-card: 220 20% 20%;
     --quiz-border: 220 25% 35%;
     --quiz-accent: 210 100% 50%;
-    --quiz-accent-hover: 210 100% 40%;
+    --quiz-accent-hover: 210 100% 45%;
     --quiz-progress: 210 100% 50%;
     --quiz-progress-bg: 220 20% 25%;
     --quiz-text: 0 0% 100%;
+    --quiz-button: 210 100% 50%;
+    --quiz-button-hover: 210 100% 45%;
+    --quiz-button-text: 0 0% 100%;
   }
 }
 
@@ -124,7 +130,7 @@
 }
 
 .quiz-btn {
-  @apply bg-[hsl(var(--quiz-accent))] hover:bg-[hsl(var(--quiz-accent-hover))] text-white;
+  @apply bg-[hsl(var(--quiz-button))] hover:bg-[hsl(var(--quiz-button-hover))] text-[hsl(var(--quiz-button-text))];
 }
 
 .quiz-progress-bar {
@@ -136,7 +142,7 @@
 }
 
 .quiz-module-badge {
-  @apply bg-gradient-to-r from-[hsl(var(--quiz-accent))] to-[hsl(var(--quiz-accent-hover))] text-white;
+  @apply bg-gradient-to-r from-blue-600 to-blue-700 text-white border border-blue-500;
 }
 
 .quiz-step-active {
@@ -155,6 +161,27 @@
 /* Ajuste para inputs e elementos de formulário */
 .quiz-card .text-muted-foreground {
   @apply text-white/70;
+}
+
+.quiz-card input[type="text"],
+.quiz-card input[type="email"],
+.quiz-card input[type="number"],
+.quiz-card textarea,
+.quiz-card select {
+  @apply bg-white text-slate-900;
+}
+
+.quiz-card label {
+  @apply text-white;
+}
+
+/* Estilos para os botões do quiz */
+.quiz-nav-button {
+  @apply bg-blue-600 hover:bg-blue-700 text-white border border-blue-500;
+}
+
+.quiz-prev-button {
+  @apply bg-slate-600 hover:bg-slate-700 text-white border border-slate-500;
 }
 
 /* Animações */

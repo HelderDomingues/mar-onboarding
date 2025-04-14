@@ -8,11 +8,12 @@
 - [x] Implemented time tracking for modules and questions
 - [x] Integrated logging into QuizContent component
 
-### 🔄 Quiz Access Testing (Current Task)
+### 🔄 UI Improvements & Quiz Access Testing (Current Task)
 - [x] Corrigir estrutura de banco de dados (coluna order_number)
 - [x] Adicionar funções utilitárias para carregamento de dados
 - [x] Corrigir exibição de opções e campos de resposta
-- [x] Ajustar mapeamento entre perguntas e opções
+- [ ] Corrigir problemas de contraste nos botões de navegação
+- [ ] Revisar e melhorar a experiência de navegação do questionário
 - [ ] Test quiz access as regular user
 - [ ] Verify quiz flow from start to finish
 - [ ] Validate answer saving and progression
@@ -36,4 +37,4 @@
 - Coluna order_number adicionada à tabela quiz_questions
 - Código refatorado para melhorar a manipulação de dados do questionário
 - Correção de problemas com exibição de opções e campos de resposta
-- Próxima fase: Concluir testes como usuário comum
+- Próxima fase: Corrigir problemas de UI e testar o fluxo completo do questionário

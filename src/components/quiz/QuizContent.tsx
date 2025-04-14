@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { QuestionCard } from "@/components/quiz/QuestionCard";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
@@ -131,15 +132,15 @@ export function QuizContent({
 
   const renderQuestion = () => {
     if (!moduleQuestions || moduleQuestions.length === 0) {
-      return <div className="text-center p-6 bg-slate-100 rounded-lg">
-        <p className="text-slate-600">Nenhuma pergunta disponível para este módulo.</p>
+      return <div className="text-center p-6 bg-slate-700 rounded-lg">
+        <p className="text-white">Nenhuma pergunta disponível para este módulo.</p>
       </div>;
     }
 
     const currentQuestion = moduleQuestions[currentQuestionIndex];
     if (!currentQuestion) {
-      return <div className="text-center p-6 bg-slate-100 rounded-lg">
-        <p className="text-slate-600">Pergunta não encontrada.</p>
+      return <div className="text-center p-6 bg-slate-700 rounded-lg">
+        <p className="text-white">Pergunta não encontrada.</p>
       </div>;
     }
 
@@ -193,13 +194,13 @@ export function QuizContent({
           variant="outline" 
           onClick={onPrev} 
           disabled={isFirst}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 text-white bg-slate-600 hover:bg-slate-700 border-slate-500"
         >
           <ArrowLeft size={16} />
           Anterior
         </Button>
         
-        <div className="text-center text-sm text-muted-foreground">
+        <div className="text-center text-sm text-white">
           <span className="font-medium">
             Módulo {currentModuleIndex + 1} de {totalModules}
           </span>
@@ -212,7 +213,7 @@ export function QuizContent({
         <Button 
           onClick={onNext} 
           disabled={isLast}
-          className="flex items-center gap-2 quiz-btn text-white"
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
         >
           Próximo
           <ArrowRight size={16} />
@@ -245,12 +246,12 @@ export function QuizContent({
       {!showReview && (
         <div className="w-full max-w-3xl mb-6">
           <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-2">
-            <h1 className="text-2xl sm:text-3xl font-bold">{currentModule.title}</h1>
-            <Badge variant="outline" className="mt-2 sm:mt-0 quiz-module-badge">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">{currentModule.title}</h1>
+            <Badge variant="outline" className="mt-2 sm:mt-0 bg-blue-600 text-white border-blue-500">
               Módulo {currentModuleIndex + 1}/{totalModules}
             </Badge>
           </div>
-          <p className="text-muted-foreground">{currentModule.description}</p>
+          <p className="text-slate-300">{currentModule.description}</p>
           
           {renderModuleProgress()}
         </div>

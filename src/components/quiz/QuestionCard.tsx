@@ -375,12 +375,12 @@ export function QuestionCard({
   };
 
   const renderQuestion = () => {
-    if (question.type === 'radio' && question.options) {
+    if (question.type === 'radio' && question.options && Array.isArray(question.options)) {
       return (
-        <div>
-          {question.type === 'radio' && <p className="text-sm text-muted-foreground mb-4">
-            Selecione uma opção abaixo
-          </p>}
+        <div className="space-y-4">
+          <p className="text-sm text-slate-300 mb-2">
+            Selecione uma opção abaixo:
+          </p>
           <RadioGroup value={selectedOption} onValueChange={handleRadioChange} className="space-y-3">
             {question.options.map((option, index) => {
               const optionText = getOptionText(option);
@@ -389,7 +389,7 @@ export function QuestionCard({
               return (
                 <div key={index} className="flex items-center space-x-2">
                   <RadioGroupItem value={optionValue} id={`option-${question.id}-${index}`} />
-                  <Label htmlFor={`option-${question.id}-${index}`} className="text-base">
+                  <Label htmlFor={`option-${question.id}-${index}`} className="text-base text-white">
                     {optionText}
                   </Label>
                 </div>
@@ -403,7 +403,7 @@ export function QuestionCard({
               placeholder="Especifique sua resposta..." 
               value={otherValue} 
               onChange={e => setOtherValue(e.target.value)} 
-              className="w-full text-slate-900" 
+              className="w-full text-slate-900 bg-white" 
             />
           </div>}
         </div>
@@ -417,7 +417,7 @@ export function QuestionCard({
           placeholder={getPlaceholder(question)} 
           value={textAnswer} 
           onChange={e => setTextAnswer(e.target.value)} 
-          className="w-full text-slate-900" 
+          className="w-full text-slate-900 bg-white" 
         />
       );
     }
@@ -429,7 +429,7 @@ export function QuestionCard({
           placeholder={getPlaceholder(question)} 
           value={textAnswer} 
           onChange={e => setTextAnswer(e.target.value)} 
-          className="w-full text-slate-900" 
+          className="w-full text-slate-900 bg-white" 
         />
       );
     }
@@ -471,7 +471,7 @@ export function QuestionCard({
           placeholder={getPlaceholder(question)} 
           value={textAnswer} 
           onChange={e => setTextAnswer(e.target.value)} 
-          className="w-full text-slate-900" 
+          className="w-full text-slate-900 bg-white" 
         />
       );
     }
@@ -482,7 +482,7 @@ export function QuestionCard({
           placeholder={getPlaceholder(question)} 
           value={textAnswer} 
           onChange={e => setTextAnswer(e.target.value)} 
-          className="min-h-[120px] text-slate-900" 
+          className="min-h-[120px] text-slate-900 bg-white" 
         />
       );
     }
@@ -490,8 +490,8 @@ export function QuestionCard({
     if (question.type === 'checkbox' && question.options) {
       return (
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground mb-3">
-            Marque quantas opções desejar
+          <p className="text-sm text-slate-300 mb-2">
+            Marque quantas opções desejar:
           </p>
           {question.options.map((option, index) => {
             const optionText = getOptionText(option);
@@ -504,7 +504,7 @@ export function QuestionCard({
                   checked={checkedOptions.includes(optionValue)} 
                   onCheckedChange={() => handleCheckboxChange(option)} 
                 />
-                <label htmlFor={`checkbox-${question.id}-${index}`} className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <label htmlFor={`checkbox-${question.id}-${index}`} className="text-white text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   {optionText}
                 </label>
               </div>
@@ -517,7 +517,7 @@ export function QuestionCard({
               placeholder="Especifique sua resposta..." 
               value={otherValue} 
               onChange={e => setOtherValue(e.target.value)} 
-              className="w-full text-slate-900" 
+              className="w-full text-slate-900 bg-white" 
             />
           </div>}
         </div>
@@ -527,7 +527,7 @@ export function QuestionCard({
     if (question.type === 'select' && question.options) {
       return (
         <select 
-          className="w-full border border-gray-300 rounded-md p-2 text-slate-900" 
+          className="w-full border border-gray-300 rounded-md p-2 text-slate-900 bg-white" 
           value={selectedOption} 
           onChange={e => setSelectedOption(e.target.value)}
         >
@@ -545,15 +545,26 @@ export function QuestionCard({
         </select>
       );
     }
+
+    // Campo padrão se não for nenhum dos tipos específicos
+    return (
+      <Input 
+        type="text" 
+        placeholder="Digite sua resposta aqui..." 
+        value={textAnswer} 
+        onChange={e => setTextAnswer(e.target.value)} 
+        className="w-full text-slate-900 bg-white" 
+      />
+    );
   };
 
   return <Card className="w-full max-w-2xl animate-fade-in quiz-card">
       <CardHeader>
-        <CardTitle className="text-xl flex items-start">
+        <CardTitle className="text-xl flex items-start text-white">
           <span>{question.text}</span>
           {question.required && <span className="text-red-500 ml-1">*</span>}
           {question.hint && <div className="relative ml-2 group">
-              <InfoIcon className="h-5 w-5 text-muted-foreground cursor-help" />
+              <InfoIcon className="h-5 w-5 text-slate-300 cursor-help" />
               <div className="absolute left-0 -bottom-2 transform translate-y-full z-10 hidden group-hover:block bg-black text-white text-xs p-2 rounded w-60">
                 {question.hint}
               </div>
@@ -563,14 +574,27 @@ export function QuestionCard({
       
       <CardContent>
         {renderQuestion()}
+        {validationError && (
+          <div className="mt-2 text-sm text-red-500">
+            {validationError}
+          </div>
+        )}
       </CardContent>
       
       <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={onPrev} disabled={isFirst} className="border-[hsl(var(--quiz-border))] bg-slate-600 hover:bg-slate-500">
+        <Button 
+          variant="outline" 
+          onClick={onPrev} 
+          disabled={isFirst} 
+          className="border-[hsl(var(--quiz-border))] bg-slate-600 hover:bg-slate-500 text-white"
+        >
           Anterior
         </Button>
         
-        <Button onClick={handleNext} className="quiz-btn text-white">
+        <Button 
+          onClick={handleNext} 
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
           {isLast ? "Finalizar" : "Próximo"}
         </Button>
       </CardFooter>
