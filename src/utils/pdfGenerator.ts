@@ -48,7 +48,15 @@ const formatJsonAnswer = (answer) => {
     if (answer.startsWith('[') && answer.endsWith(']')) {
       const parsed = JSON.parse(answer);
       if (Array.isArray(parsed)) {
-        return parsed.join(', ');
+        // Para cada item no array, verifica se é um objeto ou uma string
+        const formattedItems = parsed.map(item => {
+          if (typeof item === 'object' && item !== null) {
+            // Se for um objeto, retorna o valor texto dele
+            return item.text || item.valor || Object.values(item).join(', ');
+          }
+          return item; // Se for uma string, retorna diretamente
+        });
+        return formattedItems.join(', ');
       }
     }
     return answer;
@@ -131,6 +139,9 @@ export const generateQuizPDF = async (
           userName = userProfile.full_name || 'Usuário';
         }
       }
+    } else {
+      // No modo não-admin, usar o email da resposta
+      userEmail = answers.length > 0 && answers[0].user_email ? answers[0].user_email : '';
     }
     
     // Inicializar o PDF
@@ -155,7 +166,7 @@ export const generateQuizPDF = async (
     
     // Adicionar informações do usuário
     doc.setFontSize(12);
-    doc.text(`Usuário: ${userName || 'Não identificado'}`, 20, 30);
+    doc.text(`Usuário: ${userName || userEmail || 'Não identificado'}`, 20, 30);
     
     if (adminMode && userEmail) {
       doc.text(`Email: ${userEmail}`, 20, 36);
@@ -172,13 +183,20 @@ export const generateQuizPDF = async (
     // Organizar respostas por módulo
     const answersMap = new Map<string, QuizAnswer[]>();
     const questionsMap = new Map<string, QuizQuestion>();
+    const moduleMap = new Map<string, QuizModule>();
+    
+    // Mapear módulos para facilitar busca
+    modules.forEach(module => {
+      moduleMap.set(module.id, module);
+    });
     
     // Mapear perguntas para facilitar busca
     questions.forEach(question => {
+      const module = moduleMap.get(question.module_id);
       questionsMap.set(question.id, {
         ...question,
-        module_title: modules.find(m => m.id === question.module_id)?.title || 'Sem módulo',
-        module_number: modules.find(m => m.id === question.module_id)?.order_number || 0
+        module_title: module?.title || 'Sem módulo',
+        module_number: module?.order_number || 0
       });
     });
     
@@ -202,13 +220,6 @@ export const generateQuizPDF = async (
     // Iterar sobre os módulos em ordem
     modules.sort((a, b) => a.order_number - b.order_number).forEach(module => {
       const moduleAnswers = answersMap.get(module.id) || [];
-      if (moduleAnswers.length === 0) return;
-      
-      // Verificar se precisamos de uma nova página
-      if (yPos > 250) {
-        doc.addPage();
-        yPos = 20;
-      }
       
       // Título do módulo
       if (format === 'pdf') {
@@ -216,6 +227,12 @@ export const generateQuizPDF = async (
         doc.setTextColor(0, 0, 0);
         doc.text(`${module.order_number}. ${module.title}`, 20, yPos);
         yPos += 10;
+      }
+      
+      // Verificar se precisamos de uma nova página
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
       }
       
       // Preparar dados para a tabela
@@ -235,7 +252,7 @@ export const generateQuizPDF = async (
         
         // Adicionar à tabela
         tableBody.push([
-          `${question.order_number}. ${question.text}`,
+          `${question.order_number || '-'}. ${answer.question_text || question.question_text || 'Sem texto'}`,
           formattedAnswer
         ]);
       });
@@ -265,6 +282,13 @@ export const generateQuizPDF = async (
         
         // Atualizar a posição Y após a tabela
         yPos = (doc as any).lastAutoTable.finalY + 15;
+      } else if (tableBody.length === 0) {
+        // Se não houver respostas para este módulo, adicionar uma mensagem
+        yPos += 5;
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text("Nenhuma resposta registrada neste módulo.", 20, yPos);
+        yPos += 10;
       }
     });
     
@@ -353,7 +377,7 @@ export const downloadQuizCSV = async (
       
       // Formatar para CSV: escapar aspas, adicionar aspas ao redor do texto
       const formatCSV = (text: string) => {
-        return `"${text.replace(/"/g, '""')}"`;
+        return `"${(text || '').toString().replace(/"/g, '""')}"`;
       };
       
       csvContent += `${formatCSV(answer.question_text)},${formatCSV(formattedAnswer)}\n`;

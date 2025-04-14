@@ -63,12 +63,57 @@ export function QuizViewAnswers() {
       
       try {
         setIsLoading(true);
-        const result = await processQuizAnswersToSimplified(user.id);
         
-        if (result) {
-          setAnswers(result.answers || []);
-          setSubmission(result.submission || null);
+        // Buscar diretamente da tabela quiz_answers
+        const { data: answersData, error: answersError } = await supabase
+          .from('quiz_answers')
+          .select('question_id, question_text, answer, module_id, module_title, module_number')
+          .eq('user_id', user.id);
+        
+        if (answersError) {
+          throw answersError;
         }
+        
+        // Buscar submissão
+        const { data: submissionData, error: submissionError } = await supabase
+          .from('quiz_submissions')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (submissionError) {
+          throw submissionError;
+        }
+        
+        // Processar módulos (necessário para ordenação)
+        const { data: modulesData } = await supabase
+          .from('quiz_modules')
+          .select('id, title, order_number')
+          .order('order_number');
+        
+        // Adicionar títulos de módulos às respostas se necessário
+        const processedAnswers = answersData.map(answer => {
+          if (!answer.module_title || !answer.module_number) {
+            const module = modulesData?.find(m => m.id === answer.module_id);
+            if (module) {
+              answer.module_title = module.title;
+              answer.module_number = module.order_number;
+            }
+          }
+          return answer;
+        });
+        
+        logger.info('Respostas do questionário carregadas', {
+          tag: 'Quiz',
+          data: { 
+            userId: user.id, 
+            answersCount: processedAnswers.length,
+            hasSubmission: !!submissionData
+          }
+        });
+        
+        setAnswers(processedAnswers);
+        setSubmission(submissionData);
       } catch (error) {
         console.error("Erro ao buscar respostas:", error);
         toast({
@@ -177,14 +222,24 @@ export function QuizViewAnswers() {
   const modulePattern = /module_(\d+)/;
   const answersByModule: Record<string, any[]> = {};
   
+  // Organizar respostas por módulo
   answers.forEach(answer => {
-    const match = answer.question_id.match(modulePattern);
-    if (match) {
-      const moduleNum = match[1];
+    const moduleNum = answer.module_number;
+    if (moduleNum) {
       if (!answersByModule[moduleNum]) {
         answersByModule[moduleNum] = [];
       }
       answersByModule[moduleNum].push(answer);
+    } else {
+      // Tenta extrair número do módulo do ID da questão como fallback
+      const match = answer.question_id.match(modulePattern);
+      if (match) {
+        const moduleNum = match[1];
+        if (!answersByModule[moduleNum]) {
+          answersByModule[moduleNum] = [];
+        }
+        answersByModule[moduleNum].push(answer);
+      }
     }
   });
   
@@ -202,7 +257,7 @@ export function QuizViewAnswers() {
               </CardDescription>
             </div>
             
-            {submission?.is_complete && (
+            {submission?.completed && (
               <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200">
                 Completado
               </Badge>
