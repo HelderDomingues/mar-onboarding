@@ -246,7 +246,7 @@ export function QuizViewAnswers() {
           </Accordion>
         </CardContent>
         
-        <CardFooter className="flex justify-between border-t p-6 bg-muted/20">
+        <CardFooter className="flex justify-between border-t p-6 rounded-lg bg-gray-500">
           
           
           <Button onClick={handleDownloadPDF} disabled={downloading} className="text-slate-50 bg-red-700 hover:bg-red-600 text-center">
