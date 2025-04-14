@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,6 @@ import { InstagramField } from "@/components/quiz/question-types/InstagramField"
 import { UrlField } from "@/components/quiz/question-types/UrlField";
 import { LimitedCheckbox } from "@/components/quiz/question-types/LimitedCheckbox";
 import { QuizOption } from "@/types/quiz";
-
 export type QuestionType = 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select' | 'url' | 'instagram' | 'phone';
 export interface Question {
   id: string;
@@ -26,7 +24,6 @@ export interface Question {
   validation?: string;
   placeholder?: string;
 }
-
 interface QuestionCardProps {
   question: Question;
   onAnswer: (questionId: string, answer: string | string[]) => void;
@@ -36,7 +33,6 @@ interface QuestionCardProps {
   isLast: boolean;
   currentAnswer?: string | string[];
 }
-
 export function QuestionCard({
   question,
   onAnswer,
@@ -68,14 +64,11 @@ export function QuestionCard({
     const optionText = getOptionText(option);
     return optionText.toLowerCase().includes(text.toLowerCase());
   };
-
   const getPlaceholder = (question: Question): string => {
     if (question.placeholder) {
       return question.placeholder;
     }
-    
     const text = question.text.toLowerCase();
-    
     if (text.includes('telefone') || text.includes('whatsapp')) {
       return "Insira seu número com DDD, somente números (ex: 11999999999)";
     } else if (text.includes('e-mail')) {
@@ -92,7 +85,6 @@ export function QuestionCard({
       return "Digite sua resposta aqui...";
     }
   };
-
   useEffect(() => {
     setSelectedOption('');
     setTextAnswer('');
@@ -100,15 +92,11 @@ export function QuestionCard({
     setOtherValue('');
     setShowOtherInput(false);
     setValidationError(null);
-    
     if (currentAnswer !== undefined) {
       if (typeof currentAnswer === 'string') {
         setSelectedOption(currentAnswer);
         setTextAnswer(currentAnswer);
-
-        if (question.options && question.options.some(opt => optionContainsText(opt, 'outro')) &&
-            !question.options.some(opt => getOptionText(opt) === currentAnswer) && 
-            currentAnswer !== '') {
+        if (question.options && question.options.some(opt => optionContainsText(opt, 'outro')) && !question.options.some(opt => getOptionText(opt) === currentAnswer) && currentAnswer !== '') {
           setOtherValue(currentAnswer);
           setShowOtherInput(true);
           if (question.type === 'radio') {
@@ -118,7 +106,6 @@ export function QuestionCard({
         }
       } else if (Array.isArray(currentAnswer)) {
         setCheckedOptions(currentAnswer);
-
         if (question.options) {
           const otherOption = question.options.find(opt => optionContainsText(opt, 'outro'));
           if (otherOption && currentAnswer.some(ans => !question.options?.some(opt => getOptionText(opt) === ans))) {
@@ -130,10 +117,8 @@ export function QuestionCard({
       }
     }
   }, [question.id, currentAnswer, question.options]);
-
   const handleCheckboxChange = (option: string | QuizOption) => {
     const optionValue = getOptionValue(option);
-    
     setCheckedOptions(prev => {
       if (prev.includes(optionValue)) {
         return prev.filter(item => item !== optionValue);
@@ -144,15 +129,12 @@ export function QuestionCard({
         return [...prev, optionValue];
       }
     });
-
     if (optionContainsText(option, 'outro')) {
       setShowOtherInput(!checkedOptions.includes(optionValue));
     }
   };
-
   const handleRadioChange = (value: string) => {
     setSelectedOption(value);
-
     if (question.options) {
       const selectedOption = question.options.find(opt => getOptionValue(opt) === value);
       if (selectedOption && optionContainsText(selectedOption, 'outro')) {
@@ -162,18 +144,11 @@ export function QuestionCard({
       }
     }
   };
-
   const validateInput = (): boolean => {
     setValidationError(null);
-    
-    if (!question.required && (
-      textAnswer === '' || 
-      selectedOption === '' || 
-      checkedOptions.length === 0
-    )) {
+    if (!question.required && (textAnswer === '' || selectedOption === '' || checkedOptions.length === 0)) {
       return true;
     }
-    
     if (question.validation) {
       switch (question.validation) {
         case 'email':
@@ -201,14 +176,12 @@ export function QuestionCard({
           break;
       }
     }
-    
     switch (question.type) {
       case 'radio':
         if (selectedOption === '') {
           setValidationError("Selecione uma opção.");
           return false;
         }
-        
         if (question.options) {
           const selected = question.options.find(opt => getOptionValue(opt) === selectedOption);
           if (selected && optionContainsText(selected, 'outro') && showOtherInput && otherValue === '') {
@@ -222,19 +195,13 @@ export function QuestionCard({
           setValidationError("Selecione pelo menos uma opção.");
           return false;
         }
-        
         if (question.options) {
-          const hasOtherSelected = question.options.some(opt => 
-            optionContainsText(opt, 'outro') && 
-            checkedOptions.includes(getOptionValue(opt))
-          );
-          
+          const hasOtherSelected = question.options.some(opt => optionContainsText(opt, 'outro') && checkedOptions.includes(getOptionValue(opt)));
           if (hasOtherSelected && showOtherInput && otherValue === '') {
             setValidationError("Especifique sua resposta no campo 'Outro'.");
             return false;
           }
         }
-        
         if (question.max_options && checkedOptions.length > question.max_options) {
           setValidationError(`Selecione no máximo ${question.max_options} opções.`);
           return false;
@@ -287,15 +254,12 @@ export function QuestionCard({
         }
         break;
     }
-    
     return true;
   };
-
   const handleNext = () => {
     if (!validateInput()) {
       return;
     }
-    
     if (question.type === 'radio') {
       if (question.options) {
         const selected = question.options.find(opt => getOptionValue(opt) === selectedOption);
@@ -309,7 +273,6 @@ export function QuestionCard({
       }
     } else if (question.type === 'checkbox') {
       let answers = [...checkedOptions];
-
       if (question.options) {
         const otherOption = question.options.find(opt => optionContainsText(opt, 'outro'));
         if (otherOption && checkedOptions.includes(getOptionValue(otherOption)) && showOtherInput && otherValue) {
@@ -317,27 +280,22 @@ export function QuestionCard({
           answers.push(otherValue);
         }
       }
-      
       onAnswer(question.id, answers);
     } else if (question.type === 'instagram' || question.type === 'url') {
       let formattedAnswer = textAnswer;
-      
       if (question.type === 'instagram' && question.prefix && !formattedAnswer.startsWith(question.prefix)) {
         formattedAnswer = `${question.prefix}${formattedAnswer}`;
       } else if (question.type === 'url' && !formattedAnswer.startsWith('http')) {
         formattedAnswer = `https://${formattedAnswer}`;
       }
-      
       onAnswer(question.id, formattedAnswer);
     } else {
       onAnswer(question.id, textAnswer);
     }
     onNext();
   };
-
   const isAnswerValid = () => {
     if (!question.required) return true;
-    
     switch (question.type) {
       case 'radio':
         if (question.options) {
@@ -349,19 +307,12 @@ export function QuestionCard({
         return !!selectedOption;
       case 'checkbox':
         if (question.options) {
-          const hasOtherSelected = question.options.some(opt => 
-            optionContainsText(opt, 'outro') && 
-            checkedOptions.includes(getOptionValue(opt))
-          );
-          
+          const hasOtherSelected = question.options.some(opt => optionContainsText(opt, 'outro') && checkedOptions.includes(getOptionValue(opt)));
           if (hasOtherSelected && !otherValue) {
             return false;
           }
         }
-        
-        return checkedOptions.length > 0 && (
-          !question.max_options || checkedOptions.length <= question.max_options
-        );
+        return checkedOptions.length > 0 && (!question.max_options || checkedOptions.length <= question.max_options);
       case 'text':
       case 'textarea':
       case 'email':
@@ -373,191 +324,85 @@ export function QuestionCard({
         return true;
     }
   };
-
   const renderQuestion = () => {
     if (question.type === 'radio' && question.options && Array.isArray(question.options)) {
-      return (
-        <div className="space-y-4">
+      return <div className="space-y-4">
           <p className="text-sm text-slate-300 mb-2">
             Selecione uma opção abaixo:
           </p>
           <RadioGroup value={selectedOption} onValueChange={handleRadioChange} className="space-y-3">
             {question.options.map((option, index) => {
-              const optionText = getOptionText(option);
-              const optionValue = getOptionValue(option);
-              
-              return (
-                <div key={index} className="flex items-center space-x-2">
+            const optionText = getOptionText(option);
+            const optionValue = getOptionValue(option);
+            return <div key={index} className="flex items-center space-x-2">
                   <RadioGroupItem value={optionValue} id={`option-${question.id}-${index}`} />
                   <Label htmlFor={`option-${question.id}-${index}`} className="text-base text-white">
                     {optionText}
                   </Label>
-                </div>
-              );
-            })}
+                </div>;
+          })}
           </RadioGroup>
           
           {showOtherInput && <div className="mt-2 pl-6">
-            <Input 
-              type="text" 
-              placeholder="Especifique sua resposta..." 
-              value={otherValue} 
-              onChange={e => setOtherValue(e.target.value)} 
-              className="w-full text-slate-900 bg-white" 
-            />
+            <Input type="text" placeholder="Especifique sua resposta..." value={otherValue} onChange={e => setOtherValue(e.target.value)} className="w-full text-slate-900 bg-white" />
           </div>}
-        </div>
-      );
+        </div>;
     }
-
     if (question.type === 'text') {
-      return (
-        <Input 
-          type="text" 
-          placeholder={getPlaceholder(question)} 
-          value={textAnswer} 
-          onChange={e => setTextAnswer(e.target.value)} 
-          className="w-full text-slate-900 bg-white" 
-        />
-      );
+      return <Input type="text" placeholder={getPlaceholder(question)} value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full text-slate-900 bg-white mx-0 px-[40px]" />;
     }
-
     if (question.type === 'email') {
-      return (
-        <Input 
-          type="email" 
-          placeholder={getPlaceholder(question)} 
-          value={textAnswer} 
-          onChange={e => setTextAnswer(e.target.value)} 
-          className="w-full text-slate-900 bg-white" 
-        />
-      );
+      return <Input type="email" placeholder={getPlaceholder(question)} value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full text-slate-900 bg-white" />;
     }
-
     if (question.type === 'url') {
-      return (
-        <UrlField
-          id={`url-${question.id}`}
-          value={textAnswer}
-          onChange={setTextAnswer}
-          placeholder={getPlaceholder(question)}
-          hint={question.hint}
-          required={question.required}
-          prefix={question.prefix || 'https://'}
-          error={validationError}
-        />
-      );
+      return <UrlField id={`url-${question.id}`} value={textAnswer} onChange={setTextAnswer} placeholder={getPlaceholder(question)} hint={question.hint} required={question.required} prefix={question.prefix || 'https://'} error={validationError} />;
     }
-
     if (question.type === 'instagram') {
-      return (
-        <InstagramField
-          id={`instagram-${question.id}`}
-          value={textAnswer}
-          onChange={setTextAnswer}
-          placeholder={getPlaceholder(question)}
-          hint={question.hint}
-          required={question.required}
-          prefix={question.prefix || '@'}
-          error={validationError}
-        />
-      );
+      return <InstagramField id={`instagram-${question.id}`} value={textAnswer} onChange={setTextAnswer} placeholder={getPlaceholder(question)} hint={question.hint} required={question.required} prefix={question.prefix || '@'} error={validationError} />;
     }
-
     if (question.type === 'number') {
-      return (
-        <Input 
-          type="number" 
-          placeholder={getPlaceholder(question)} 
-          value={textAnswer} 
-          onChange={e => setTextAnswer(e.target.value)} 
-          className="w-full text-slate-900 bg-white" 
-        />
-      );
+      return <Input type="number" placeholder={getPlaceholder(question)} value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full text-slate-900 bg-white" />;
     }
-
     if (question.type === 'textarea') {
-      return (
-        <Textarea 
-          placeholder={getPlaceholder(question)} 
-          value={textAnswer} 
-          onChange={e => setTextAnswer(e.target.value)} 
-          className="min-h-[120px] text-slate-900 bg-white" 
-        />
-      );
+      return <Textarea placeholder={getPlaceholder(question)} value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="min-h-[120px] text-slate-900 bg-white" />;
     }
-
     if (question.type === 'checkbox' && question.options) {
-      return (
-        <div className="space-y-3">
+      return <div className="space-y-3">
           <p className="text-sm text-slate-300 mb-2">
             Marque quantas opções desejar:
           </p>
           {question.options.map((option, index) => {
-            const optionText = getOptionText(option);
-            const optionValue = getOptionValue(option);
-            
-            return (
-              <div key={index} className="flex items-center space-x-2">
-                <Checkbox 
-                  id={`checkbox-${question.id}-${index}`} 
-                  checked={checkedOptions.includes(optionValue)} 
-                  onCheckedChange={() => handleCheckboxChange(option)} 
-                />
+          const optionText = getOptionText(option);
+          const optionValue = getOptionValue(option);
+          return <div key={index} className="flex items-center space-x-2">
+                <Checkbox id={`checkbox-${question.id}-${index}`} checked={checkedOptions.includes(optionValue)} onCheckedChange={() => handleCheckboxChange(option)} />
                 <label htmlFor={`checkbox-${question.id}-${index}`} className="text-white text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   {optionText}
                 </label>
-              </div>
-            );
-          })}
+              </div>;
+        })}
           
           {showOtherInput && <div className="mt-2 pl-6">
-            <Input 
-              type="text" 
-              placeholder="Especifique sua resposta..." 
-              value={otherValue} 
-              onChange={e => setOtherValue(e.target.value)} 
-              className="w-full text-slate-900 bg-white" 
-            />
+            <Input type="text" placeholder="Especifique sua resposta..." value={otherValue} onChange={e => setOtherValue(e.target.value)} className="w-full text-slate-900 bg-white" />
           </div>}
-        </div>
-      );
+        </div>;
     }
-
     if (question.type === 'select' && question.options) {
-      return (
-        <select 
-          className="w-full border border-gray-300 rounded-md p-2 text-slate-900 bg-white" 
-          value={selectedOption} 
-          onChange={e => setSelectedOption(e.target.value)}
-        >
+      return <select className="w-full border border-gray-300 rounded-md p-2 text-slate-900 bg-white" value={selectedOption} onChange={e => setSelectedOption(e.target.value)}>
           <option value="">Selecione uma opção</option>
           {question.options.map((option, index) => {
-            const optionText = getOptionText(option);
-            const optionValue = getOptionValue(option);
-            
-            return (
-              <option key={index} value={optionValue}>
+          const optionText = getOptionText(option);
+          const optionValue = getOptionValue(option);
+          return <option key={index} value={optionValue}>
                 {optionText}
-              </option>
-            );
-          })}
-        </select>
-      );
+              </option>;
+        })}
+        </select>;
     }
 
     // Campo padrão se não for nenhum dos tipos específicos
-    return (
-      <Input 
-        type="text" 
-        placeholder="Digite sua resposta aqui..." 
-        value={textAnswer} 
-        onChange={e => setTextAnswer(e.target.value)} 
-        className="w-full text-slate-900 bg-white" 
-      />
-    );
+    return <Input type="text" placeholder="Digite sua resposta aqui..." value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full text-slate-900 bg-white" />;
   };
-
   return <Card className="w-full max-w-2xl animate-fade-in quiz-card">
       <CardHeader>
         <CardTitle className="text-xl flex items-start text-white">
@@ -572,29 +417,19 @@ export function QuestionCard({
         </CardTitle>
       </CardHeader>
       
-      <CardContent>
+      <CardContent className="py-0 my-0 px-[30px]">
         {renderQuestion()}
-        {validationError && (
-          <div className="mt-2 text-sm text-red-500">
+        {validationError && <div className="mt-2 text-sm text-red-500">
             {validationError}
-          </div>
-        )}
+          </div>}
       </CardContent>
       
-      <CardFooter className="flex justify-between">
-        <Button 
-          variant="outline" 
-          onClick={onPrev} 
-          disabled={isFirst} 
-          className="border-[hsl(var(--quiz-border))] bg-slate-600 hover:bg-slate-500 text-white"
-        >
+      <CardFooter className="flex justify-between my-[20px]">
+        <Button variant="outline" onClick={onPrev} disabled={isFirst} className="border-[hsl(var(--quiz-border))] bg-slate-600 hover:bg-slate-500 text-white">
           Anterior
         </Button>
         
-        <Button 
-          onClick={handleNext} 
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-        >
+        <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700 text-white">
           {isLast ? "Finalizar" : "Próximo"}
         </Button>
       </CardFooter>

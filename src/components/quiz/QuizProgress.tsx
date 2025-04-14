@@ -2,14 +2,12 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Check, ArrowRight } from "lucide-react";
-
 interface QuizProgressProps {
   currentStep: number;
   totalSteps: number;
   currentModule: number;
   totalModules: number;
 }
-
 export function QuizProgress({
   currentStep,
   totalSteps,
@@ -23,7 +21,7 @@ export function QuizProgress({
   const steps = Array.from({
     length: totalModules
   }, (_, i) => i + 1);
-  return <div className="w-full max-w-2xl mx-auto mb-8 space-y-4">
+  return <div className="w-full max-w-2xl mx-auto mb-8 space-y-4 my-[30px]">
       {/* Indicador de módulo e questão */}
       <div className="flex justify-between mb-2 text-sm">
         <Badge variant="outline" className="quiz-module-badge">
