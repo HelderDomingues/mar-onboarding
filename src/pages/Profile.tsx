@@ -243,7 +243,7 @@ const ProfilePage = () => {
               </div>
             </CardContent>
             <CardFooter className="flex justify-center">
-              <Button onClick={() => navigate('/quiz')}>
+              <Button onClick={() => navigate('/quiz')} className="text-slate-50">
                 {quizStats.completionStatus === "Completo" ? "Rever Questionário" : quizStats.currentModule > 0 ? "Continuar Questionário" : "Iniciar Questionário"}
               </Button>
             </CardFooter>
