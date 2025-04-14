@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { completeQuizManually } from "@/utils/supabaseUtils";
 import { logger } from "@/utils/logger";
-
 interface QuizReviewProps {
   modules: QuizModule[];
   questions: QuizQuestion[];
@@ -21,7 +19,6 @@ interface QuizReviewProps {
   onComplete: () => void;
   onEdit: (moduleIndex: number, questionIndex: number) => void;
 }
-
 export function QuizReview({
   modules,
   questions,
@@ -55,24 +52,20 @@ export function QuizReview({
   const getOptionValue = (option: any): string => {
     return typeof option === 'string' ? option : option.id;
   };
-
   useEffect(() => {
     setEditedAnswers({
       ...answers
     });
   }, [answers]);
-
   const currentDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
   });
-
   const questionsByModule = modules.map(module => ({
     module,
     questions: questions.filter(q => q.module_id === module.id)
   }));
-
   const formatAnswerValue = (value: string | string[] | undefined) => {
     if (!value) return "Sem resposta";
     if (Array.isArray(value)) {
@@ -91,41 +84,40 @@ export function QuizReview({
     }
     return String(value);
   };
-
   const handleTermsChange = (checked: boolean) => {
     setAgreedToTerms(checked);
   };
-
   const handleEditClick = (questionId: string) => {
     setEditingQuestionId(questionId);
   };
-
   const handleSaveEdit = async (questionId: string) => {
     try {
       const answer = editedAnswers[questionId];
-      
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       const userId = session?.user?.id;
-      
       if (!userId) {
         throw new Error("Usuário não autenticado");
       }
-      
       const currentQuestion = questions.find(q => q.id === questionId);
       if (!currentQuestion) {
         throw new Error("Pergunta não encontrada");
       }
-      
       const answerValue = typeof answer === 'object' ? JSON.stringify(answer) : answer;
-      const { error } = await supabase.from('quiz_answers').upsert({
+      const {
+        error
+      } = await supabase.from('quiz_answers').upsert({
         user_id: userId,
         question_id: questionId,
         answer: answerValue,
         question_text: currentQuestion.question_text || currentQuestion.text
-      }, { onConflict: 'user_id,question_id' });
-      
+      }, {
+        onConflict: 'user_id,question_id'
+      });
       if (error) throw error;
-      
       toast({
         title: "Resposta atualizada",
         description: "Sua resposta foi atualizada com sucesso."
@@ -140,21 +132,18 @@ export function QuizReview({
     }
     setEditingQuestionId(null);
   };
-
   const handleCancelEdit = () => {
     setEditingQuestionId(null);
     setEditedAnswers({
       ...answers
     });
   };
-
   const handleInputChange = (questionId: string, value: string | string[]) => {
     setEditedAnswers(prev => ({
       ...prev,
       [questionId]: value
     }));
   };
-
   const handleCheckboxChange = (questionId: string, option: string, checked: boolean) => {
     let currentAnswers: string[] = [];
     if (Array.isArray(editedAnswers[questionId])) {
@@ -186,7 +175,6 @@ export function QuizReview({
       [questionId]: newAnswers
     }));
   };
-
   const handleCompleteQuiz = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -205,60 +193,47 @@ export function QuizReview({
       setIsSubmitting(false);
     }
   };
-
   const handleFinalizeQuiz = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     setSubmissionError(null);
-    
     try {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       if (!userId) {
         throw new Error("Usuário não autenticado");
       }
-      
       logger.info('Iniciando finalização do questionário', {
         tag: 'Quiz',
         userId
       });
-      
-      const { error } = await supabase
-        .from('quiz_submissions')
-        .update({
-          completed: true,
-          completed_at: new Date().toISOString(),
-          contact_consent: true
-        })
-        .eq('user_id', userId);
-      
+      const {
+        error
+      } = await supabase.from('quiz_submissions').update({
+        completed: true,
+        completed_at: new Date().toISOString(),
+        contact_consent: true
+      }).eq('user_id', userId);
       if (error) {
         throw error;
       }
-      
       logger.info("Questionário marcado como completo com sucesso", {
         tag: 'Quiz',
         userId
       });
-      
       await onComplete();
-      
     } catch (error: any) {
       logger.error("Erro na finalização:", error);
-      
       setSubmissionError("Não foi possível finalizar o questionário. Por favor, tente novamente.");
-      
       toast({
         title: "Erro ao finalizar questionário",
         description: "Não foi possível finalizar o questionário. Por favor, tente novamente.",
         variant: "destructive"
       });
-      
       setConfirmed(false);
     } finally {
       setIsSubmitting(false);
     }
   };
-
   const renderEditField = (question: QuizQuestion) => {
     const questionId = question.id;
     const answer = editedAnswers[questionId];
@@ -276,7 +251,6 @@ export function QuizReview({
         const questionOptions = question.options || [];
         let options: string[] = [];
         let optionTexts: Record<string, string> = {};
-        
         questionOptions.forEach(opt => {
           if (typeof opt === 'string') {
             options.push(opt);
@@ -286,7 +260,6 @@ export function QuizReview({
             optionTexts[getOptionValue(opt)] = getOptionText(opt);
           }
         });
-        
         let selectedOptions: string[] = [];
         if (Array.isArray(answer)) {
           selectedOptions = answer;
@@ -314,7 +287,6 @@ export function QuizReview({
         return <Input value={typeof answer === 'string' ? answer : ''} onChange={e => handleInputChange(questionId, e.target.value)} className="w-full text-slate-900" placeholder="Digite sua resposta aqui" />;
     }
   };
-
   return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-6">
       {!confirmed ? <>
           <Card className="quiz-card">
@@ -353,7 +325,7 @@ export function QuizReview({
                                     {renderEditField(question)}
                                     
                                     <div className="flex gap-2 justify-end mt-3">
-                                      <Button variant="outline" size="sm" onClick={handleCancelEdit} className="text-slate-200">
+                                      <Button variant="outline" size="sm" onClick={handleCancelEdit} className="text-zinc-950">
                                         Cancelar
                                       </Button>
                                       <Button size="sm" onClick={() => handleSaveEdit(questionId)}>
