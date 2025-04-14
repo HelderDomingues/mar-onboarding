@@ -1,3 +1,4 @@
+
 import { createClient, PostgrestError, AuthError } from '@supabase/supabase-js';
 import { logger } from '@/utils/logger';
 import { addLogEntry, LogOptions } from '@/utils/projectLog';
@@ -87,6 +88,40 @@ export const formatErrorForLog = (error: PostgrestError | Error | AuthError | nu
   }
   
   return JSON.stringify(error);
+};
+
+/**
+ * Função para obter emails de usuários (requer privilégios admin)
+ * Esta função utiliza o cliente admin para acessar diretamente a tabela auth.users
+ */
+export const getUserEmails = async () => {
+  try {
+    if (!supabaseAdmin) {
+      logger.warn('Tentativa de acessar emails sem cliente admin', {
+        warning: 'Acesso a emails requer privilégios de admin'
+      });
+      return null;
+    }
+    
+    addLogEntry('info', 'Buscando emails de usuários via cliente admin');
+    
+    // Usando RPC para reduzir superfície de ataque (ao invés de consultar diretamente auth.users)
+    const { data, error } = await supabaseAdmin.rpc('get_user_emails');
+    
+    if (error) {
+      logger.error('Erro ao buscar emails de usuários:', {
+        error: formatErrorForLog(error)
+      });
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    logger.error('Exceção ao buscar emails de usuários:', {
+      error: formatErrorForLog(error)
+    });
+    return null;
+  }
 };
 
 // Função para verificar a conexão com o Supabase
