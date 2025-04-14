@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { QuestionCard } from "@/components/quiz/QuestionCard";
-import { QuizModule, QuizQuestion } from "@/types/quiz";
+import { QuizModule, QuizQuestion, Question, QuestionType } from "@/types/quiz";
 import { Button } from "@/components/ui/button";
 import { QuizProgress } from "@/components/quiz/QuizProgress";
 import { QuizReview } from "@/components/quiz/QuizReview";
@@ -146,10 +146,10 @@ export function QuizContent({
 
     const currentAnswer = currentAnswers[currentQuestion.id];
 
-    const mappedQuestion = {
+    const mappedQuestion: Question = {
       id: currentQuestion.id,
       text: currentQuestion.text || currentQuestion.question_text || "",
-      type: currentQuestion.type,
+      type: (currentQuestion.type || currentQuestion.question_type || "text") as QuestionType,
       options: currentQuestion.options,
       required: currentQuestion.required !== undefined ? currentQuestion.required : true,
       hint: currentQuestion.hint,

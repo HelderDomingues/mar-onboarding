@@ -23,6 +23,8 @@ export interface QuizSubmission {
   last_active?: string; // Última atividade no questionário
 }
 
+export type QuestionType = 'text' | 'textarea' | 'radio' | 'checkbox' | 'select' | 'email' | 'url' | 'instagram' | 'phone' | 'number' | string;
+
 export interface QuizModule {
   id: string;
   title: string;
@@ -38,8 +40,8 @@ export interface QuizQuestion {
   module_id: string;
   text?: string;
   question_text?: string;
-  type?: string;
-  question_type?: string;
+  type?: QuestionType;
+  question_type?: QuestionType;
   required: boolean;
   hint?: string;
   order_number: number;
@@ -77,4 +79,17 @@ export interface QuizAnswer {
   module_title?: string;
   question_type?: string;
   user_email?: string;
+}
+
+export interface Question {
+  id: string;
+  text: string;
+  type: QuestionType;
+  options?: (QuizOption | string)[];
+  required: boolean;
+  hint?: string;
+  max_options?: number;
+  prefix?: string;
+  validation?: string;
+  placeholder?: string;
 }
