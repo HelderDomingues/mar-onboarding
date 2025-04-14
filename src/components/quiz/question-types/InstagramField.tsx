@@ -1,8 +1,7 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
+import { PrefixInput } from '@/components/ui/prefix-input';
 
 interface InstagramFieldProps {
   id: string;
@@ -11,79 +10,37 @@ interface InstagramFieldProps {
   placeholder?: string;
   hint?: string;
   required?: boolean;
-  disabled?: boolean;
-  error?: string;
   prefix?: string;
+  error?: string | null;
 }
 
-export function InstagramField({
+export const InstagramField: React.FC<InstagramFieldProps> = ({
   id,
   value,
   onChange,
-  placeholder = 'nome.usuario',
+  placeholder = "Digite seu usuário do Instagram",
   hint,
   required = false,
-  disabled = false,
-  error,
-  prefix = '@'
-}: InstagramFieldProps) {
-  // Remover o @ se o valor começar com ele
-  const [inputValue, setInputValue] = useState(
-    value?.startsWith(prefix) ? value.substring(prefix.length) : value || ''
-  );
-  
-  useEffect(() => {
-    // Atualizar o inputValue quando o value externo mudar
-    const newValue = value?.startsWith(prefix) ? value.substring(prefix.length) : value || '';
-    if (newValue !== inputValue) {
-      setInputValue(newValue);
-    }
-  }, [value, prefix, inputValue]);
-  
+  prefix = "@",
+  error
+}) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    // Remover @ se o usuário digitar
-    const cleanValue = newValue.startsWith('@') ? newValue.substring(1) : newValue;
-    setInputValue(cleanValue);
-    onChange(cleanValue ? `${prefix}${cleanValue}` : '');
+    const inputValue = e.target.value.replace(/^@/, ''); // Remove @ if user types it
+    onChange(inputValue);
   };
-  
+
   return (
-    <div className="space-y-2">
-      <div className="relative">
-        <div
-          className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 pointer-events-none"
-          aria-hidden="true"
-        >
-          {prefix}
-        </div>
-        <Input
-          id={id}
-          value={inputValue}
-          onChange={handleChange}
-          placeholder={placeholder}
-          required={required}
-          disabled={disabled}
-          className={cn(
-            "pl-8",
-            error && "border-red-500 focus-visible:ring-red-500"
-          )}
-          aria-invalid={!!error}
-          aria-describedby={hint ? `${id}-hint` : undefined}
-        />
-      </div>
-      
-      {hint && !error && (
-        <p id={`${id}-hint`} className="text-sm text-muted-foreground">
-          {hint}
-        </p>
-      )}
-      
-      {error && (
-        <p className="text-sm text-red-500">
-          {error}
-        </p>
-      )}
+    <div>
+      <PrefixInput 
+        id={id}
+        prefix={prefix}
+        value={value}
+        onChange={handleChange}
+        placeholder={placeholder}
+        className="w-full text-black bg-white" // Explicitly set text color to black
+      />
+      {hint && <p className="text-sm text-gray-500 mt-1">{hint}</p>}
+      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </div>
   );
-}
+};
