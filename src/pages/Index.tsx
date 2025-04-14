@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,6 @@ import { Login } from "@/components/auth/Login";
 import { useEffect } from "react";
 import { logger } from "@/utils/logger";
 import { addLogEntry } from "@/utils/projectLog";
-
 const Index = () => {
   const {
     isAuthenticated,
@@ -14,7 +12,7 @@ const Index = () => {
     isLoading
   } = useAuth();
   const navigate = useNavigate();
-  
+
   // Registrar carregamento inicial da página
   useEffect(() => {
     addLogEntry('info', 'Página inicial carregada', {
@@ -22,18 +20,19 @@ const Index = () => {
       isLoading: isLoading
     });
   }, [isAuthenticated, isLoading]);
-  
+
   // Efeito para redirecionar o usuário após autenticação
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      logger.info('Usuário autenticado, redirecionando para dashboard', { 
-        tag: 'Navigation' 
+      logger.info('Usuário autenticado, redirecionando para dashboard', {
+        tag: 'Navigation'
       });
-      
       addLogEntry('auth', 'Usuário autenticado, redirecionando para dashboard', {}, user?.id);
-      
+
       // Redirecionamento direto para o dashboard
-      navigate('/dashboard', { replace: true });
+      navigate('/dashboard', {
+        replace: true
+      });
     }
   }, [isAuthenticated, isLoading, navigate, user]);
 
@@ -42,9 +41,7 @@ const Index = () => {
     addLogEntry('auth', 'Redirecionamento direto para dashboard (já autenticado)', {}, user?.id);
     return <Navigate to="/dashboard" replace />;
   }
-  
-  return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-blue-50">
+  return <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-blue-50">
       <header className="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
         <img src="/lovable-uploads/e109ec41-0f89-456d-8081-f73393ed4fd5.png" alt="Crie Valor" className="h-7 object-scale-down" />
       </header>
@@ -55,7 +52,7 @@ const Index = () => {
           <h1 className="text-4xl font-bold text-blue-900">Área Exclusiva de Membros</h1>
           <p className="text-lg text-gray-600">Acesse e comece sua jornada exclusivamente desenvolvida para nossos membros.</p>
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <Button className="bg-quiz hover:bg-quiz-dark" onClick={() => window.open("https://crievalor.com.br/mar", "_blank")}>
+            <Button onClick={() => window.open("https://crievalor.com.br/mar", "_blank")} className="bg-quiz hover:bg-quiz-dark text-slate-50">
               Saiba Mais
             </Button>
             <Button variant="outline" className="border-quiz text-quiz hover:bg-quiz/10" onClick={() => window.open("https://crievalor.com.br/contato", "_blank")}>
@@ -72,8 +69,6 @@ const Index = () => {
       <footer className="bg-white py-6 border-t text-center text-sm text-muted-foreground">
         <p>© {new Date().getFullYear()} Crie Valor Consultoria. Todos os direitos reservados.</p>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
