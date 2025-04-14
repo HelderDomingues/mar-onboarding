@@ -12,6 +12,7 @@ import { processQuizAnswersToSimplified } from "@/utils/supabaseUtils";
 import { downloadQuizPDF, downloadQuizCSV } from "@/utils/pdfGenerator";
 import { logger } from "@/utils/logger";
 import { formatJsonAnswer } from "@/utils/formatUtils";
+
 export function QuizViewAnswers() {
   const {
     user
@@ -24,6 +25,7 @@ export function QuizViewAnswers() {
   const [submission, setSubmission] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
@@ -93,6 +95,7 @@ export function QuizViewAnswers() {
     };
     fetchData();
   }, [user, toast]);
+
   const handleDownloadPDF = async () => {
     if (!user || !user.id) return;
     try {
@@ -123,6 +126,7 @@ export function QuizViewAnswers() {
       setDownloading(false);
     }
   };
+
   const handleDownloadCSV = async () => {
     if (!user || !user.id) return;
     try {
@@ -153,6 +157,7 @@ export function QuizViewAnswers() {
       setDownloading(false);
     }
   };
+
   if (isLoading) {
     return <div className="w-full max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
         <div className="space-y-4">
@@ -164,6 +169,7 @@ export function QuizViewAnswers() {
         </div>
       </div>;
   }
+
   if (!answers || answers.length === 0) {
     return <div className="w-full max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
         <div className="text-center py-10">
@@ -176,7 +182,6 @@ export function QuizViewAnswers() {
       </div>;
   }
 
-  // Agrupar respostas por módulo
   const modulePattern = /module_(\d+)/;
   const answersByModule: Record<string, any[]> = {};
   answers.forEach(answer => {
@@ -198,12 +203,18 @@ export function QuizViewAnswers() {
     }
   });
 
-  // Função auxiliar para buscar título do módulo
   const getModuleTitle = (moduleNumber: string) => {
     const moduleData = modules.find(m => m.order_number === parseInt(moduleNumber));
     return moduleData?.title || '';
   };
-  return <div className="w-full max-w-3xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+
+  return <div className="w-full max-w-3xl mx-auto bg-white rounded-lg shadow-md overflow-hidden relative">
+      <img 
+        src="/lovable-uploads/0950a0e7-23a0-44af-98b0-4aaa8ece4f24.png" 
+        alt="Logo MAR" 
+        className="absolute top-4 right-4 h-10 w-auto object-contain z-10"
+      />
+      
       <Card>
         <CardHeader className="bg-sky-900 rounded-lg">
           <div className="flex justify-between items-start">
