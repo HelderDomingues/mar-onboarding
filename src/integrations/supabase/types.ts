@@ -9,6 +9,107 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      material_accesses: {
+        Row: {
+          accessed_at: string | null
+          id: string
+          material_id: string
+          user_id: string
+        }
+        Insert: {
+          accessed_at?: string | null
+          id?: string
+          material_id: string
+          user_id: string
+        }
+        Update: {
+          accessed_at?: string | null
+          id?: string
+          material_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_accesses_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      materials: {
+        Row: {
+          access_count: number | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          file_url: string
+          id: string
+          plan_level: string | null
+          thumbnail_url: string | null
+          title: string
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_count?: number | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          file_url: string
+          id?: string
+          plan_level?: string | null
+          thumbnail_url?: string | null
+          title: string
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_count?: number | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          file_url?: string
+          id?: string
+          plan_level?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      onboarding_content: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          title: string
+          updated_at: string | null
+          video_url: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          title: string
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

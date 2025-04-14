@@ -26,6 +26,7 @@ import Settings from "@/pages/admin/Settings";
 import Users from "@/pages/admin/Users";
 import QuizResponses from "@/pages/admin/QuizResponses";
 import AdminMaterials from "@/pages/admin/AdminMaterials";
+import Reports from "@/pages/admin/Reports";
 
 const AppRoutes = () => {
   return (
@@ -52,6 +53,7 @@ const AppRoutes = () => {
         <Route path="materials" element={<AdminMaterials />} />
         <Route path="settings" element={<Settings />} />
         <Route path="logs" element={<SystemLog />} />
+        <Route path="reports" element={<Reports />} />
       </Route>
 
       <Route path="/test-connection" element={<ProtectedRoute component={TestConnectionPage} />} />

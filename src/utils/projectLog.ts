@@ -1,3 +1,4 @@
+
 /**
  * Sistema de Log do Projeto MAR - Crie Valor
  * 
@@ -214,4 +215,18 @@ addLogEntry('error', 'Problema persistente na configuração da chave service_ro
 addLogEntry('warning', 'Links quebrados no dashboard administrativo detectados', { 
   detalhes: 'Vários botões e links no dashboard administrativo estão levando a páginas 404',
   planoAcao: 'Revisar todos os links e criar as páginas necessárias'
+});
+
+// Registra a configuração do bucket de storage para materiais
+addLogEntry('info', 'Bucket de storage para materiais configurado', {
+  bucket: 'materials',
+  detalhes: 'Bucket criado com sucesso, políticas de acesso configuradas e tabelas de metadados criadas',
+  dataCriacao: new Date().toISOString()
+});
+
+// Registra a correção dos links no dashboard administrativo
+addLogEntry('info', 'Links no dashboard administrativo corrigidos', {
+  detalhes: 'Corrigidos links para Questionários Completos, Em Progresso, Taxa de Conclusão e Relatórios',
+  paginasCriadas: ['Reports.tsx'],
+  dataCorrecao: new Date().toISOString()
 });
