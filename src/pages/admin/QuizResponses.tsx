@@ -97,7 +97,6 @@ const QuizResponses = () => {
         .select('id, user_id, user_name, user_email, started_at, completed_at, is_complete, webhook_processed')
         .order('started_at', { ascending: false });
       
-      // Aplicar filtro se necessário
       if (statusFilter === 'complete') {
         query = query.eq('is_complete', true);
       } else if (statusFilter === 'incomplete') {
@@ -134,7 +133,6 @@ const QuizResponses = () => {
   
   const downloadCSV = () => {
     try {
-      // Filtrar submissões selecionadas ou usar todas
       const dataToExport = selectedRows.length > 0 
         ? submissions.filter(s => selectedRows.includes(s.id))
         : submissions;
@@ -148,14 +146,12 @@ const QuizResponses = () => {
         return;
       }
       
-      // Preparar cabeçalhos do CSV
       const headers = [
         'ID', 'Usuário', 'Nome', 'Email', 
         'Data de Início', 'Data de Conclusão', 
         'Status', 'Webhook Processado'
       ];
       
-      // Converter dados para linhas CSV
       const rows = dataToExport.map(s => [
         s.id,
         s.user_id,
@@ -167,13 +163,11 @@ const QuizResponses = () => {
         s.webhook_processed ? 'Sim' : 'Não'
       ]);
       
-      // Montar conteúdo CSV
       const csvContent = [
         headers.join(','),
         ...rows.map(row => row.join(','))
       ].join('\n');
       
-      // Criar blob e download
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
@@ -206,7 +200,6 @@ const QuizResponses = () => {
   
   const downloadDetailedCSV = async (submissionId: string) => {
     try {
-      // Buscar detalhes da submissão
       const { data: submission, error: submissionError } = await supabaseAdmin
         .from('quiz_submissions')
         .select('*')
@@ -215,7 +208,6 @@ const QuizResponses = () => {
       
       if (submissionError) throw submissionError;
       
-      // Buscar respostas do usuário
       const { data: answers, error: answersError } = await supabaseAdmin
         .from('quiz_answers')
         .select('*')
@@ -223,25 +215,21 @@ const QuizResponses = () => {
       
       if (answersError) throw answersError;
       
-      // Buscar perguntas
       const { data: questions, error: questionsError } = await supabaseAdmin
         .from('quiz_questions')
         .select('*');
       
       if (questionsError) throw questionsError;
       
-      // Preparar cabeçalhos do CSV
       const headers = [
         'ID da Pergunta', 'Texto da Pergunta', 'Módulo', 'Tipo', 'Resposta'
       ];
       
-      // Mapear perguntas para ajudar na busca
       const questionMap = new Map();
       questions.forEach(q => {
         questionMap.set(q.id, q);
       });
       
-      // Converter dados para linhas CSV
       const rows = answers.map(a => {
         const question = questionMap.get(a.question_id) || {};
         return [
@@ -253,18 +241,15 @@ const QuizResponses = () => {
         ];
       });
       
-      // Montar conteúdo CSV
       const csvContent = [
         headers.join(','),
         ...rows.map(row => row.map(cell => 
-          // Escapar células com vírgulas ou quebras de linha
           typeof cell === 'string' && (cell.includes(',') || cell.includes('\n')) 
             ? `"${cell.replace(/"/g, '""')}"` 
             : cell
         ).join(','))
       ].join('\n');
       
-      // Criar blob e download
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
@@ -310,7 +295,6 @@ const QuizResponses = () => {
           description: "Os dados foram enviados para o Make.com com sucesso.",
         });
         
-        // Atualizar a lista após o processamento
         fetchSubmissions();
       } else {
         throw new Error("Falha ao processar webhook");
@@ -351,7 +335,6 @@ const QuizResponses = () => {
     }
   };
   
-  // Filtragem por termo de busca
   const filteredSubmissions = submissions.filter(s => 
     s.user_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (s.user_name && s.user_name.toLowerCase().includes(searchTerm.toLowerCase()))

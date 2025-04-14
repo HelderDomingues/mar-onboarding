@@ -2,6 +2,7 @@ import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/database.types';
 import type { QuizSubmission } from '@/types/quiz';
 import { logger } from '@/utils/logger';
+import { enviarRespostasParaWebhook } from '@/utils/webhookService';
 
 // Verifica se o questionário está completo para o usuário
 export const isQuizComplete = async (userId: string): Promise<boolean> => {
@@ -382,6 +383,105 @@ export const verificarTabelasBackup = async (): Promise<boolean> => {
     logger.error("Erro ao verificar tabelas de backup:", {
       tag: 'Supabase',
       data: { error }
+    });
+    return false;
+  }
+};
+
+/**
+ * Envia os dados do questionário para um webhook externo
+ * @param userId ID do usuário
+ * @param submissionId ID da submissão do questionário
+ * @returns Promise<boolean> indicando sucesso ou falha
+ */
+export const sendQuizDataToWebhook = async (userId: string, submissionId: string): Promise<boolean> => {
+  if (!userId || !submissionId) {
+    logger.error("Parâmetros inválidos para envio de webhook", {
+      tag: 'Quiz',
+      data: { userId, submissionId }
+    });
+    return false;
+  }
+  
+  try {
+    logger.info("Iniciando processamento de webhook para questionário", {
+      tag: 'Quiz',
+      data: { userId, submissionId }
+    });
+    
+    // Buscar submissão
+    const { data: submission, error: submissionError } = await supabase
+      .from('quiz_submissions')
+      .select('*')
+      .eq('id', submissionId)
+      .maybeSingle();
+      
+    if (submissionError || !submission) {
+      logger.error("Erro ao buscar submissão para webhook:", {
+        tag: 'Quiz',
+        data: { userId, submissionId, error: submissionError }
+      });
+      return false;
+    }
+    
+    // Buscar respostas
+    const { data: answers, error: answersError } = await supabase
+      .from('quiz_answers')
+      .select('*')
+      .eq('user_id', userId);
+      
+    if (answersError) {
+      logger.error("Erro ao buscar respostas para webhook:", {
+        tag: 'Quiz',
+        data: { userId, submissionId, error: answersError }
+      });
+      return false;
+    }
+    
+    // Preparar objeto de respostas completas
+    const respostasCompletas = {
+      submission: submission,
+      answers: answers || [],
+      userId: userId,
+      submissionId: submissionId,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Enviar para o serviço de webhook
+    const success = await enviarRespostasParaWebhook(userId, respostasCompletas);
+    
+    if (success) {
+      // Atualizar o status de processamento do webhook
+      const { error: updateError } = await supabase
+        .from('quiz_submissions')
+        .update({ webhook_processed: true })
+        .eq('id', submissionId);
+        
+      if (updateError) {
+        logger.error("Erro ao atualizar status de processamento do webhook:", {
+          tag: 'Quiz',
+          data: { userId, submissionId, error: updateError }
+        });
+        // Não falhar a operação se apenas o update falhar
+      }
+      
+      logger.info("Webhook processado com sucesso", {
+        tag: 'Quiz',
+        data: { userId, submissionId }
+      });
+      
+      return true;
+    } else {
+      logger.error("Falha ao processar webhook", {
+        tag: 'Quiz',
+        data: { userId, submissionId }
+      });
+      return false;
+    }
+  } catch (error) {
+    logger.error("Exceção ao processar webhook:", {
+      tag: 'Quiz',
+      data: { userId, submissionId, error }
     });
     return false;
   }
