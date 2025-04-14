@@ -23,6 +23,7 @@ Este projeto consiste em uma área de membros privada e exclusiva para o Sistema
 - [x] Correção da exibição de respostas com múltiplas opções (formato JSON)
 - [x] Correção do link na página de diagnóstico para visualização de respostas
 - [x] Melhoria na formatação de respostas de múltipla escolha para exibição legível
+- [x] Correção do erro em componentes Select com propriedades value vazias 
 
 ### Interface e Experiência do Usuário
 - [x] Simplificação do painel de configuração do questionário
@@ -31,7 +32,8 @@ Este projeto consiste em uma área de membros privada e exclusiva para o Sistema
 - [x] Simplificação do fluxo de navegação entre perguntas
 - [x] Correção do erro 406 na finalização do questionário
 - [x] Implementação correta da geração de PDF com jspdf-autotable
-- [x] Correção do erro em componentes Select com propriedades value vazias 
+- [x] Adição de botão para voltar ao dashboard na página de logs do sistema
+- [x] Implementação de interface para configurar acesso aos emails de usuários
 
 ## Tarefas Pendentes
 
@@ -62,6 +64,8 @@ Este projeto consiste em uma área de membros privada e exclusiva para o Sistema
 9. Link incorreto na página de diagnóstico - Corrigido de `/quiz/answers` para `/quiz/view-answers`
 10. Respostas em formato JSON - Melhorada a formatação para exibição legível ao usuário
 11. Erro em componentes Select - Corrigido problema com valores vazios nos itens do Select
+12. Ausência de navegação na página de logs - Adicionados botões para voltar ao dashboard
+13. Problema na configuração do acesso aos emails - Implementada interface para configuração da chave service_role
 
 ## Plano para a Próxima Iteração
 1. Concluir a implementação do painel administrativo

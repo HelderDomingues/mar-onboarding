@@ -14,9 +14,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { LogEntry, getAllLogs, getLogsByType, getLogsByUser, clearLogs, exportLogsToFile } from "@/utils/projectLog";
-import { Ban, Download, Loader2, RefreshCw, Trash } from "lucide-react";
+import { Ban, Download, Loader2, RefreshCw, Trash, Home, ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { Link } from "react-router-dom";
 
 const SystemLog = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -104,7 +105,15 @@ const SystemLog = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Log do Sistema</h1>
+        <div className="flex items-center gap-2">
+          <Link to="/admin/users">
+            <Button variant="outline" size="sm" className="flex items-center gap-1">
+              <ArrowLeft className="h-4 w-4" />
+              <span>Voltar</span>
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold">Log do Sistema</h1>
+        </div>
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -150,6 +159,12 @@ const SystemLog = () => {
             <Trash className="mr-2 h-4 w-4" />
             Limpar
           </Button>
+          <Link to="/dashboard">
+            <Button variant="default" className="flex items-center gap-1">
+              <Home className="h-4 w-4" />
+              <span>Dashboard</span>
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -232,8 +247,8 @@ const SystemLog = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {logs.map((log) => (
-              <TableRow key={log.timestamp}>
+            {logs.map((log, index) => (
+              <TableRow key={`${log.timestamp}-${index}`}>
                 <TableCell className="font-medium">{log.timestamp}</TableCell>
                 <TableCell>{log.type}</TableCell>
                 <TableCell>{log.message}</TableCell>

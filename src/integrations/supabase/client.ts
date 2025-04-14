@@ -1,4 +1,3 @@
-
 import { createClient, PostgrestError, AuthError } from '@supabase/supabase-js';
 import { logger } from '@/utils/logger';
 import { addLogEntry, LogOptions } from '@/utils/projectLog';
@@ -100,6 +99,7 @@ export const getUserEmails = async () => {
       logger.warn('Tentativa de acessar emails sem cliente admin', {
         warning: 'Acesso a emails requer privilégios de admin'
       });
+      addLogEntry('warning', 'Tentativa de acessar emails sem cliente admin configurado');
       return null;
     }
     
@@ -112,6 +112,7 @@ export const getUserEmails = async () => {
       logger.error('Erro ao buscar emails de usuários:', {
         error: formatErrorForLog(error)
       });
+      addLogEntry('error', 'Erro ao buscar emails de usuários via RPC', { error: formatErrorForLog(error) });
       return null;
     }
     
@@ -120,7 +121,88 @@ export const getUserEmails = async () => {
     logger.error('Exceção ao buscar emails de usuários:', {
       error: formatErrorForLog(error)
     });
+    addLogEntry('error', 'Exceção ao buscar emails de usuários', { error: formatErrorForLog(error) });
     return null;
+  }
+};
+
+/**
+ * Verifica e configura o serviço de acesso aos emails
+ * Esta função é chamada a partir da interface de configuração
+ */
+export const configureEmailAccess = async (serviceRoleKey?: string) => {
+  try {
+    // Se uma nova chave foi fornecida, atualiza a instância
+    if (serviceRoleKey) {
+      // Cria uma nova instância com a chave fornecida
+      supabaseAdminInstance = createClient(SUPABASE_URL, serviceRoleKey, {
+        ...supabaseOptions,
+        global: {
+          ...supabaseOptions.global,
+          headers: {
+            ...supabaseOptions.global.headers,
+            'apikey': serviceRoleKey
+          }
+        }
+      });
+      
+      addLogEntry('info', 'Instância admin do Supabase atualizada com nova chave');
+      
+      // Testa a nova instância
+      const { data, error } = await supabaseAdminInstance.rpc('get_user_emails');
+      
+      if (error) {
+        logger.error('Erro ao testar nova chave service_role:', {
+          error: formatErrorForLog(error)
+        });
+        addLogEntry('error', 'Falha ao configurar acesso aos emails - chave inválida', { error: formatErrorForLog(error) });
+        return {
+          success: false,
+          message: 'Chave service_role inválida ou sem permissões suficientes'
+        };
+      }
+      
+      // Se chegou aqui, a configuração foi bem-sucedida
+      addLogEntry('info', 'Acesso aos emails configurado com sucesso');
+      return {
+        success: true,
+        message: 'Acesso aos emails configurado com sucesso',
+        data
+      };
+    } else {
+      // Testa a instância existente, se houver
+      if (!supabaseAdmin) {
+        return {
+          success: false,
+          message: 'Nenhuma chave service_role configurada'
+        };
+      }
+      
+      const { data, error } = await supabaseAdmin.rpc('get_user_emails');
+      
+      if (error) {
+        addLogEntry('error', 'Falha ao verificar acesso aos emails', { error: formatErrorForLog(error) });
+        return {
+          success: false,
+          message: 'Chave service_role atual é inválida ou sem permissões suficientes'
+        };
+      }
+      
+      return {
+        success: true,
+        message: 'Acesso aos emails já está configurado corretamente',
+        data
+      };
+    }
+  } catch (error) {
+    logger.error('Exceção ao configurar acesso aos emails:', {
+      error: formatErrorForLog(error)
+    });
+    addLogEntry('error', 'Exceção ao configurar acesso aos emails', { error: formatErrorForLog(error) });
+    return {
+      success: false,
+      message: 'Erro ao configurar acesso aos emails'
+    };
   }
 };
 

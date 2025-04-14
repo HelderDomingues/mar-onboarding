@@ -44,6 +44,9 @@ const UsersPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isConfiguring, setIsConfiguring] = useState(false);
+  const [serviceRoleKey, setServiceRoleKey] = useState("");
+  const [showConfigForm, setShowConfigForm] = useState(false);
   
   const fetchUsers = async () => {
     if (!user || !isAdmin) return;
@@ -184,10 +187,53 @@ const UsersPage = () => {
   };
   
   const setupEmailAccess = () => {
-    toast({
-      title: "Configurar acesso aos emails",
-      description: "Para acessar emails dos usuários é necessário configurar a chave service_role do Supabase.",
-    });
+    setShowConfigForm(true);
+  };
+  
+  const handleConfigureEmailAccess = async () => {
+    if (!serviceRoleKey.trim()) {
+      toast({
+        title: "Erro",
+        description: "A chave service_role é obrigatória.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsConfiguring(true);
+    try {
+      const { configureEmailAccess } = await import('@/integrations/supabase/client');
+      const result = await configureEmailAccess(serviceRoleKey);
+      
+      if (result.success) {
+        toast({
+          title: "Configuração concluída",
+          description: result.message,
+        });
+        setShowConfigForm(false);
+        fetchUsers(); // Recarregar usuários com os emails agora disponíveis
+      } else {
+        toast({
+          title: "Erro na configuração",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao configurar acesso aos emails:', error);
+      toast({
+        title: "Erro ao configurar acesso",
+        description: "Não foi possível configurar o acesso aos emails dos usuários.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsConfiguring(false);
+    }
+  };
+  
+  const handleCancelConfig = () => {
+    setShowConfigForm(false);
+    setServiceRoleKey("");
   };
   
   if (!isAuthenticated) {
@@ -256,6 +302,47 @@ const UsersPage = () => {
                       <Button variant="outline" size="sm" onClick={setupEmailAccess} className="text-amber-800 hover:bg-amber-100">
                         Configurar acesso aos emails
                       </Button>
+                    </div>
+                  </div>
+                )}
+                
+                {showConfigForm && (
+                  <div className="p-4 bg-blue-50 border-l-4 border-blue-500">
+                    <h3 className="font-medium mb-2">Configurar chave service_role do Supabase</h3>
+                    <p className="text-sm mb-4">
+                      Para acessar os emails dos usuários, insira a chave service_role do seu projeto Supabase.
+                      Esta chave pode ser encontrada no painel do Supabase em Configurações do Projeto &gt; API.
+                    </p>
+                    
+                    <div className="flex flex-col gap-4">
+                      <div>
+                        <Label htmlFor="service-role-key">Chave service_role</Label>
+                        <Input 
+                          id="service-role-key"
+                          value={serviceRoleKey}
+                          onChange={(e) => setServiceRoleKey(e.target.value)}
+                          placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                          className="font-mono text-xs"
+                        />
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <Button variant="outline" onClick={handleCancelConfig} disabled={isConfiguring}>
+                          Cancelar
+                        </Button>
+                        <Button 
+                          onClick={handleConfigureEmailAccess} 
+                          disabled={isConfiguring || !serviceRoleKey.trim()}
+                        >
+                          {isConfiguring ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Configurando...
+                            </>
+                          ) : (
+                            "Salvar configuração"
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}
