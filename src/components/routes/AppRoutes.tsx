@@ -18,6 +18,7 @@ import TestConnectionPage from "@/pages/TestConnection";
 import SystemLog from "@/pages/SystemLog";
 import DiagnosticoSistema from "@/pages/DiagnosticoSistema";
 import QuizTest from "@/pages/QuizTest";
+import Profile from "@/pages/Profile";
 
 // Admin pages
 import ImportUsers from "@/pages/admin/ImportUsers";
@@ -27,6 +28,8 @@ import Users from "@/pages/admin/Users";
 import QuizResponses from "@/pages/admin/QuizResponses";
 import AdminMaterials from "@/pages/admin/AdminMaterials";
 import Reports from "@/pages/admin/Reports";
+import Metrics from "@/pages/admin/Metrics";
+import QuizEditor from "@/pages/admin/QuizEditor";
 
 const AppRoutes = () => {
   return (
@@ -34,6 +37,7 @@ const AppRoutes = () => {
       <Route path="/" element={<IndexPage />} />
 
       <Route path="/dashboard" element={<ProtectedRoute component={Dashboard} />} />
+      <Route path="/profile" element={<ProtectedRoute component={Profile} />} />
       <Route path="/quiz" element={<ProtectedRoute component={Quiz} />} />
       <Route path="/quiz/review" element={<ProtectedRoute component={QuizReview} />} />
       <Route path="/quiz/view-answers" element={<ProtectedRoute component={QuizViewAnswers} />} />
@@ -50,7 +54,9 @@ const AppRoutes = () => {
         <Route path="users/new" element={<NewUser />} />
         <Route path="users/import" element={<ImportUsers />} />
         <Route path="quiz-responses" element={<QuizResponses />} />
+        <Route path="quiz-editor" element={<QuizEditor />} />
         <Route path="materials" element={<AdminMaterials />} />
+        <Route path="metrics" element={<Metrics />} />
         <Route path="settings" element={<Settings />} />
         <Route path="logs" element={<SystemLog />} />
         <Route path="reports" element={<Reports />} />

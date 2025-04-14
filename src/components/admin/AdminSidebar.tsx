@@ -4,7 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Sidebar, SidebarFooter, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
-import { LogOut, Users, Settings, FileText, Home, Clipboard, LineChart, History, FolderPlus, BarChart } from "lucide-react";
+import { 
+  LogOut, 
+  Users, 
+  Settings, 
+  Home, 
+  Clipboard, 
+  LineChart, 
+  History, 
+  FolderPlus, 
+  BarChart,
+  FileEdit,
+  PieChart
+} from "lucide-react";
 
 export function AdminSidebar() {
   const { logout } = useAuth();
@@ -57,10 +69,28 @@ export function AdminSidebar() {
           </SidebarMenuItem>
           
           <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={isActive("/admin/quiz-editor")}>
+              <Link to="/admin/quiz-editor" className="w-full justify-start gap-2">
+                <FileEdit className="h-4 w-4" />
+                <span>Editor do Quiz</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isActive("/admin/reports")}>
               <Link to="/admin/reports" className="w-full justify-start gap-2">
                 <BarChart className="h-4 w-4" />
                 <span>Relatórios</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={isActive("/admin/metrics")}>
+              <Link to="/admin/metrics" className="w-full justify-start gap-2">
+                <PieChart className="h-4 w-4" />
+                <span>Métricas</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
