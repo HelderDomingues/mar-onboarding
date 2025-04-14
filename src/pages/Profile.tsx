@@ -1,16 +1,27 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { addLogEntry } from "@/utils/projectLog";
-import { Loader2, User, Clock, CheckCircle, Cog, Upload, Camera, ArrowLeft } from "lucide-react";
+import { 
+  Loader2, 
+  User, 
+  Clock, 
+  CheckCircle, 
+  Cog, 
+  Upload, 
+  Camera, 
+  ArrowLeft,
+  Settings,
+  TrendingUp,
+  UserCircle
+} from "lucide-react";
 import { useAvatarUpload } from '@/hooks/useAvatarUpload';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
@@ -180,11 +191,10 @@ const ProfilePage = () => {
             <ArrowLeft className="h-4 w-4" />
             Voltar
           </Button>
-          <h1 className="text-2xl font-bold">Meu Perfil</h1>
+          <h1 className="text-2xl font-bold text-primary">Meu Perfil</h1>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Perfil do usuário - Painel lateral */}
           <div className="md:col-span-1">
             <Card className="overflow-hidden">
               <div className="bg-gradient-to-r from-primary-700 to-primary-800 p-4">
@@ -263,13 +273,30 @@ const ProfilePage = () => {
             </Card>
           </div>
           
-          {/* Conteúdo principal */}
           <div className="md:col-span-3">
             <Tabs defaultValue="personal" className="w-full">
-              <TabsList className="mb-6 w-full justify-start">
-                <TabsTrigger value="personal">Dados Pessoais</TabsTrigger>
-                <TabsTrigger value="progress">Progresso</TabsTrigger>
-                <TabsTrigger value="preferences">Preferências</TabsTrigger>
+              <TabsList className="mb-6 w-full justify-start bg-gray-100 p-1 rounded-xl">
+                <TabsTrigger 
+                  value="personal" 
+                  className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary rounded-lg transition-all duration-300"
+                >
+                  <UserCircle className="h-4 w-4" />
+                  Dados Pessoais
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="progress" 
+                  className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary rounded-lg transition-all duration-300"
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  Progresso
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="preferences" 
+                  className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary rounded-lg transition-all duration-300"
+                >
+                  <Settings className="h-4 w-4" />
+                  Preferências
+                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="personal">
