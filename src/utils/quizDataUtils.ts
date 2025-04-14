@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { QuizModule, QuizQuestion } from '@/types/quiz';
+import { QuizModule, QuizQuestion, QuizOption } from '@/types/quiz';
 import { logger } from '@/utils/logger';
 
 /**
@@ -89,8 +89,27 @@ export const loadQuizOptions = async () => {
 export const mapQuestionsWithOptions = (questions: any[], options: any[]): QuizQuestion[] => {
   return questions.map(question => {
     const questionOptions = options?.filter(opt => opt.question_id === question.id) || [];
-    const mappedOptions = questionOptions.map(opt => opt.text);
     
+    // Extrair texto das opções para compatibilidade com o componente QuestionCard
+    let mappedOptions: string[] = [];
+    if (questionOptions && questionOptions.length > 0) {
+      mappedOptions = questionOptions.map(opt => opt.text);
+    } else if (question.options_json) {
+      try {
+        // Tentar extrair opções do campo options_json
+        const parsedOptions = JSON.parse(question.options_json);
+        if (Array.isArray(parsedOptions)) {
+          mappedOptions = parsedOptions;
+        }
+      } catch (e) {
+        logger.error('Erro ao parsear options_json', {
+          tag: 'Quiz',
+          data: { questionId: question.id, error: e }
+        });
+      }
+    }
+    
+    // Criar objeto de pergunta com todas as propriedades necessárias
     return {
       ...question,
       options: mappedOptions,
@@ -139,4 +158,62 @@ export const validateQuizDataConsistency = (modules: QuizModule[], questions: Qu
     });
     return false;
   }
+};
+
+// Função para compatibilidade com diferentes formatos de dados
+export const transformQuizData = (questions: any[]): QuizQuestion[] => {
+  return questions.map(question => {
+    let questionObj: QuizQuestion = {
+      ...question,
+      text: question.question_text || question.text,
+      type: question.question_type || question.type,
+      id: question.id,
+      module_id: question.module_id,
+      required: question.required !== false,
+      order_number: question.order_number || question.question_number || 0
+    };
+
+    // Processar opções se disponíveis
+    if (question.options) {
+      questionObj.options = Array.isArray(question.options) 
+        ? question.options
+        : typeof question.options === 'string' 
+          ? JSON.parse(question.options) 
+          : [];
+    }
+
+    return questionObj;
+  });
+};
+
+// Função para garantir a formatação correta das respostas
+export const formatQuizAnswers = (answers: Record<string, any>): Record<string, string | string[]> => {
+  const formatted: Record<string, string | string[]> = {};
+  
+  for (const key in answers) {
+    const answer = answers[key];
+    
+    if (typeof answer === 'string') {
+      try {
+        // Tentar parsear string que pode ser array JSON
+        const parsed = JSON.parse(answer);
+        if (Array.isArray(parsed)) {
+          formatted[key] = parsed;
+        } else {
+          formatted[key] = answer;
+        }
+      } catch (e) {
+        // Se não for um JSON válido, manter como string
+        formatted[key] = answer;
+      }
+    } else if (Array.isArray(answer)) {
+      formatted[key] = answer;
+    } else if (answer !== null && answer !== undefined) {
+      formatted[key] = String(answer);
+    } else {
+      formatted[key] = '';
+    }
+  }
+  
+  return formatted;
 };

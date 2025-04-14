@@ -471,7 +471,7 @@ export type Database = {
           sessions: number | null
           started_at: string
           total_time_spent: number | null
-          user_email: string
+          user_email: string | null
           user_id: string
           user_name: string | null
           webhook_processed: boolean | null
@@ -487,7 +487,7 @@ export type Database = {
           sessions?: number | null
           started_at?: string
           total_time_spent?: number | null
-          user_email: string
+          user_email?: string | null
           user_id: string
           user_name?: string | null
           webhook_processed?: boolean | null
@@ -503,7 +503,7 @@ export type Database = {
           sessions?: number | null
           started_at?: string
           total_time_spent?: number | null
-          user_email?: string
+          user_email?: string | null
           user_id?: string
           user_name?: string | null
           webhook_processed?: boolean | null
