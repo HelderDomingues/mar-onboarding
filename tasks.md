@@ -21,6 +21,7 @@ Este projeto consiste em uma área de membros privada e exclusiva para o Sistema
 - [x] Adição de logs detalhados para ajudar na depuração de problemas
 - [x] Implementação de método alternativo para conclusão do questionário
 - [x] Correção da exibição de respostas com múltiplas opções (formato JSON)
+- [x] Correção do link na página de diagnóstico para visualização de respostas
 
 ### Interface e Experiência do Usuário
 - [x] Simplificação do painel de configuração do questionário
@@ -56,6 +57,7 @@ Este projeto consiste em uma área de membros privada e exclusiva para o Sistema
 6. Erro 406 na finalização do questionário - Simplificação da função `complete_quiz`
 7. Exibição incorreta de respostas com múltiplas opções - Implementada formatação de JSON
 8. Erro ao gerar PDF - Corrigida implementação do jspdf-autotable
+9. Link incorreto na página de diagnóstico - Corrigido de `/quiz/answers` para `/quiz/view-answers`
 
 ## Plano para a Próxima Iteração
 1. Concluir a implementação do painel administrativo

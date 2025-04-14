@@ -42,7 +42,7 @@ const QuizDiagnostic = () => {
                   Nossa equipe está analisando suas respostas para criar um diagnóstico personalizado.
                 </p>
                 <div className="flex justify-center gap-4">
-                  <Link to="/quiz/answers">
+                  <Link to="/quiz/view-answers">
                     <Button variant="outline" className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
                       Ver questionário
