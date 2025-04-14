@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -162,13 +161,9 @@ const Quiz = () => {
         const userSubmission = submissionData as unknown as QuizSubmission;
         setSubmission(userSubmission);
         
-        if (userSubmission.is_complete) {
-          setIsComplete(true);
-          
-          if (!showAdmin && !forceMode && location.pathname === '/quiz' && !location.search) {
-            navigate('/quiz/view-answers');
-            return;
-          }
+        if (userSubmission.completed && !showAdmin && !forceMode && location.pathname === '/quiz' && !location.search) {
+          navigate('/quiz/view-answers');
+          return;
         } else if (userSubmission.current_module >= 8 && !showReview) {
           setShowReview(true);
         } else if (!moduleParam) {
@@ -213,7 +208,7 @@ const Quiz = () => {
           });
           setAnswers(loadedAnswers);
           
-          if (userSubmission.current_module >= 8 && !userSubmission.is_complete && !showReview) {
+          if (userSubmission.current_module >= 8 && !userSubmission.completed && !showReview) {
             setShowReview(true);
           }
         }
@@ -355,7 +350,7 @@ const Quiz = () => {
       });
       
       const { error } = await supabaseAdmin.from('quiz_submissions').update({
-        is_complete: true,
+        completed: true,
         completed_at: new Date().toISOString(),
         user_email: user.email
       }).eq('user_id', user.id);
