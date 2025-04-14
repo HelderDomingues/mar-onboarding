@@ -1,7 +1,9 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase, supabaseAdmin, getUserEmails, configureEmailAccess, addLogEntry } from "@/integrations/supabase/client";
+import { supabase, supabaseAdmin, getUserEmails, configureEmailAccess } from "@/integrations/supabase/client";
+import { addLogEntry } from "@/utils/projectLog";
 import { useToast } from "@/components/ui/use-toast";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
