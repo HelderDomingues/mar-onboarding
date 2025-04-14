@@ -1,24 +1,7 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Clock, 
-  BookOpen, 
-  BarChart, 
-  ChevronRight,
-  Users as UsersIcon,
-  FileCheck,
-  FileBarChart,
-  LineChart,
-  PieChart,
-  ArrowUpRight,
-  ArrowDown,
-  TrendingUp,
-  Layers,
-  Search,
-  Filter
-} from "lucide-react";
+import { Clock, BookOpen, BarChart, ChevronRight, Users as UsersIcon, FileCheck, FileBarChart, LineChart, PieChart, ArrowUpRight, ArrowDown, TrendingUp, Layers, Search, Filter } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { QuizSubmission } from "@/types/quiz";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,87 +9,94 @@ import { BarChart as ReBarChart, Bar, XAxis, YAxis, Tooltip as ChartTooltip, Leg
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 interface AdminDashboardProps {
   submission?: QuizSubmission | null;
   isAdmin: boolean;
 }
-
-export function AdminDashboard({ submission, isAdmin }: AdminDashboardProps) {
+export function AdminDashboard({
+  submission,
+  isAdmin
+}: AdminDashboardProps) {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalUsers: '...',
     completedSubmissions: '...',
     inProgressSubmissions: '...',
-    completionRate: '...',
+    completionRate: '...'
   });
   const [chartData, setChartData] = useState<any[]>([]);
   const [lineChartData, setLineChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
   useEffect(() => {
     // Se não for admin, não fazemos as consultas
     if (!isAdmin) return;
-    
     const fetchStats = async () => {
       try {
         setIsLoading(true);
         // Buscar contagem de usuários
-        const { count: usersCount, error: usersError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
-          
+        const {
+          count: usersCount,
+          error: usersError
+        } = await supabase.from('profiles').select('*', {
+          count: 'exact',
+          head: true
+        });
+
         // Buscar submissões completas
-        const { count: completedCount, error: completedError } = await supabase
-          .from('quiz_submissions')
-          .select('*', { count: 'exact', head: true })
-          .eq('completed', true);
-          
+        const {
+          count: completedCount,
+          error: completedError
+        } = await supabase.from('quiz_submissions').select('*', {
+          count: 'exact',
+          head: true
+        }).eq('completed', true);
+
         // Buscar submissões em progresso
-        const { count: inProgressCount, error: inProgressError } = await supabase
-          .from('quiz_submissions')
-          .select('*', { count: 'exact', head: true })
-          .eq('completed', false);
-          
+        const {
+          count: inProgressCount,
+          error: inProgressError
+        } = await supabase.from('quiz_submissions').select('*', {
+          count: 'exact',
+          head: true
+        }).eq('completed', false);
         if (!usersError && !completedError && !inProgressError) {
           const usersTotal = usersCount || 0;
           const completed = completedCount || 0;
           const inProgress = inProgressCount || 0;
           const notStarted = usersTotal - (completed + inProgress);
-          
+
           // Calcular taxa de conclusão
-          const completionRate = usersTotal > 0 
-            ? ((completed / usersTotal) * 100).toFixed(1) + '%'
-            : '0%';
-            
+          const completionRate = usersTotal > 0 ? (completed / usersTotal * 100).toFixed(1) + '%' : '0%';
           setStats({
             totalUsers: usersCount?.toString() || '0',
             completedSubmissions: completedCount?.toString() || '0',
             inProgressSubmissions: inProgressCount?.toString() || '0',
-            completionRate: completionRate,
+            completionRate: completionRate
           });
-          
+
           // Dados para o gráfico de barras
-          setChartData([
-            {
-              name: 'Quiz MAR',
-              Completos: completed,
-              'Em Progresso': inProgress,
-              'Não Iniciados': notStarted
-            }
-          ]);
-          
+          setChartData([{
+            name: 'Quiz MAR',
+            Completos: completed,
+            'Em Progresso': inProgress,
+            'Não Iniciados': notStarted
+          }]);
+
           // Dados para o gráfico de linha (dados simulados)
-          const last7Days = Array.from({length: 7}, (_, i) => {
+          const last7Days = Array.from({
+            length: 7
+          }, (_, i) => {
             const date = new Date();
             date.setDate(date.getDate() - (6 - i));
             return {
-              date: date.toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'}),
+              date: date.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit'
+              }),
               'Acessos': Math.floor(Math.random() * 10) + 5,
-              'Submissões': Math.floor(Math.random() * 5) + 1,
+              'Submissões': Math.floor(Math.random() * 5) + 1
             };
           });
-          
           setLineChartData(last7Days);
         }
       } catch (error) {
@@ -115,12 +105,9 @@ export function AdminDashboard({ submission, isAdmin }: AdminDashboardProps) {
         setIsLoading(false);
       }
     };
-    
     fetchStats();
   }, [isAdmin]);
-  
-  return (
-    <div className="space-y-6 w-full font-sans">
+  return <div className="space-y-6 w-full font-sans">
       {/* Cabeçalho da página */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -133,11 +120,7 @@ export function AdminDashboard({ submission, isAdmin }: AdminDashboardProps) {
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input 
-              type="search"
-              placeholder="Pesquisar..." 
-              className="pl-9 w-full md:w-[200px] h-9"
-            />
+            <Input type="search" placeholder="Pesquisar..." className="pl-9 w-full md:w-[200px] h-9" />
           </div>
           <Button variant="outline" size="sm">
             <Filter className="h-4 w-4 mr-1" />
@@ -262,10 +245,7 @@ export function AdminDashboard({ submission, isAdmin }: AdminDashboardProps) {
             <p className="text-sm text-muted-foreground">
               Acesse o questionário MAR em modo administrador para editar questões e módulos.
             </p>
-            <Button 
-              onClick={() => navigate("/quiz?admin=true")}
-              className="w-full justify-between"
-            >
+            <Button onClick={() => navigate("/quiz?admin=true")} className="w-full justify-between text-slate-50">
               Acessar Questionário
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -283,11 +263,7 @@ export function AdminDashboard({ submission, isAdmin }: AdminDashboardProps) {
             <p className="text-sm text-muted-foreground">
               Visualize relatórios de desempenho e análises das respostas dos usuários.
             </p>
-            <Button 
-              variant="outline" 
-              className="w-full justify-between"
-              onClick={() => navigate("/admin/reports")}
-            >
+            <Button variant="outline" className="w-full justify-between" onClick={() => navigate("/admin/reports")}>
               Ver Relatórios
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -315,21 +291,15 @@ export function AdminDashboard({ submission, isAdmin }: AdminDashboardProps) {
             
             <TabsContent value="status">
               <div className="h-64 w-full">
-                {isLoading ? (
-                  <div className="h-full flex items-center justify-center">
+                {isLoading ? <div className="h-full flex items-center justify-center">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ReBarChart
-                      data={chartData}
-                      margin={{
-                        top: 20,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                      }}
-                    >
+                  </div> : <ResponsiveContainer width="100%" height="100%">
+                    <ReBarChart data={chartData} margin={{
+                  top: 20,
+                  right: 30,
+                  left: 20,
+                  bottom: 5
+                }}>
                       <XAxis dataKey="name" />
                       <YAxis />
                       <ChartTooltip />
@@ -338,36 +308,29 @@ export function AdminDashboard({ submission, isAdmin }: AdminDashboardProps) {
                       <Bar dataKey="Em Progresso" fill="#f97316" radius={[4, 4, 0, 0]} />
                       <Bar dataKey="Não Iniciados" fill="#6b7280" radius={[4, 4, 0, 0]} />
                     </ReBarChart>
-                  </ResponsiveContainer>
-                )}
+                  </ResponsiveContainer>}
               </div>
             </TabsContent>
             
             <TabsContent value="activity">
               <div className="h-64 w-full">
-                {isLoading ? (
-                  <div className="h-full flex items-center justify-center">
+                {isLoading ? <div className="h-full flex items-center justify-center">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={lineChartData}
-                      margin={{
-                        top: 10,
-                        right: 30,
-                        left: 0,
-                        bottom: 0,
-                      }}
-                    >
+                  </div> : <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={lineChartData} margin={{
+                  top: 10,
+                  right: 30,
+                  left: 0,
+                  bottom: 0
+                }}>
                       <defs>
                         <linearGradient id="colorAccess" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#1e88e5" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#1e88e5" stopOpacity={0.1}/>
+                          <stop offset="5%" stopColor="#1e88e5" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#1e88e5" stopOpacity={0.1} />
                         </linearGradient>
                         <linearGradient id="colorSubmissions" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.1}/>
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.1} />
                         </linearGradient>
                       </defs>
                       <XAxis dataKey="date" />
@@ -376,8 +339,7 @@ export function AdminDashboard({ submission, isAdmin }: AdminDashboardProps) {
                       <Area type="monotone" dataKey="Acessos" stroke="#1e88e5" fillOpacity={1} fill="url(#colorAccess)" />
                       <Area type="monotone" dataKey="Submissões" stroke="#10b981" fillOpacity={1} fill="url(#colorSubmissions)" />
                     </AreaChart>
-                  </ResponsiveContainer>
-                )}
+                  </ResponsiveContainer>}
               </div>
             </TabsContent>
           </Tabs>
@@ -392,6 +354,5 @@ export function AdminDashboard({ submission, isAdmin }: AdminDashboardProps) {
           </Button>
         </CardFooter>
       </Card>
-    </div>
-  );
+    </div>;
 }
