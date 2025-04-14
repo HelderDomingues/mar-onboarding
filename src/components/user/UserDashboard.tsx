@@ -245,10 +245,10 @@ export function UserDashboard({
           <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-6">
             <CardTitle className="flex items-center gap-2 text-white">
               <HelpCircle className="h-5 w-5" />
-              Tem dúvidas? Veja o FAQ
+              Precisa de Ajuda?
             </CardTitle>
             <CardDescription className="text-emerald-100 mt-1">
-              Consulte as Perguntas Frequentes
+              Fale com a gente
             </CardDescription>
           </div>
           <CardContent className="py-8 px-6">
