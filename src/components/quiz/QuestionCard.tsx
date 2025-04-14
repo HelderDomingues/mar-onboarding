@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -11,7 +11,9 @@ import { InstagramField } from "@/components/quiz/question-types/InstagramField"
 import { UrlField } from "@/components/quiz/question-types/UrlField";
 import { LimitedCheckbox } from "@/components/quiz/question-types/LimitedCheckbox";
 import { QuizOption } from "@/types/quiz";
+
 export type QuestionType = 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select' | 'url' | 'instagram' | 'phone';
+
 export interface Question {
   id: string;
   text: string;
@@ -24,6 +26,7 @@ export interface Question {
   validation?: string;
   placeholder?: string;
 }
+
 interface QuestionCardProps {
   question: Question;
   onAnswer: (questionId: string, answer: string | string[]) => void;
@@ -33,6 +36,7 @@ interface QuestionCardProps {
   isLast: boolean;
   currentAnswer?: string | string[];
 }
+
 export function QuestionCard({
   question,
   onAnswer,
@@ -49,21 +53,19 @@ export function QuestionCard({
   const [showOtherInput, setShowOtherInput] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Helper para obter o texto de uma opção, independente do tipo
   const getOptionText = (option: string | QuizOption): string => {
     return typeof option === 'string' ? option : option.text;
   };
 
-  // Helper para obter o valor/id de uma opção, independente do tipo
   const getOptionValue = (option: string | QuizOption): string => {
     return typeof option === 'string' ? option : option.id;
   };
 
-  // Helper para verificar se uma opção contém um texto específico
   const optionContainsText = (option: string | QuizOption, text: string): boolean => {
     const optionText = getOptionText(option);
     return optionText.toLowerCase().includes(text.toLowerCase());
   };
+
   const getPlaceholder = (question: Question): string => {
     if (question.placeholder) {
       return question.placeholder;
@@ -85,6 +87,7 @@ export function QuestionCard({
       return "Digite sua resposta aqui...";
     }
   };
+
   useEffect(() => {
     setSelectedOption('');
     setTextAnswer('');
@@ -117,6 +120,7 @@ export function QuestionCard({
       }
     }
   }, [question.id, currentAnswer, question.options]);
+
   const handleCheckboxChange = (option: string | QuizOption) => {
     const optionValue = getOptionValue(option);
     setCheckedOptions(prev => {
@@ -133,6 +137,7 @@ export function QuestionCard({
       setShowOtherInput(!checkedOptions.includes(optionValue));
     }
   };
+
   const handleRadioChange = (value: string) => {
     setSelectedOption(value);
     if (question.options) {
@@ -144,6 +149,7 @@ export function QuestionCard({
       }
     }
   };
+
   const validateInput = (): boolean => {
     setValidationError(null);
     if (!question.required && (textAnswer === '' || selectedOption === '' || checkedOptions.length === 0)) {
@@ -256,6 +262,7 @@ export function QuestionCard({
     }
     return true;
   };
+
   const handleNext = () => {
     if (!validateInput()) {
       return;
@@ -294,6 +301,7 @@ export function QuestionCard({
     }
     onNext();
   };
+
   const isAnswerValid = () => {
     if (!question.required) return true;
     switch (question.type) {
@@ -324,6 +332,7 @@ export function QuestionCard({
         return true;
     }
   };
+
   const renderQuestion = () => {
     if (question.type === 'radio' && question.options && Array.isArray(question.options)) {
       return <div className="space-y-4">
@@ -400,10 +409,10 @@ export function QuestionCard({
         </select>;
     }
 
-    // Campo padrão se não for nenhum dos tipos específicos
     return <Input type="text" placeholder="Digite sua resposta aqui..." value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full text-slate-900 bg-white" />;
   };
-  return <Card className="w-full max-w-2xl animate-fade-in quiz-card">
+
+  return <Card className="w-[800px] max-w-[90vw] mx-auto animate-fade-in quiz-card">
       <CardHeader>
         <CardTitle className="text-xl flex items-start text-white">
           <span>{question.text}</span>
