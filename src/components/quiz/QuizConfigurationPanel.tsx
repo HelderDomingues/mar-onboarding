@@ -17,13 +17,11 @@ export function QuizConfigurationPanel({
   isLoading,
   loadError,
   onRefresh,
-  isAdmin,
-  modules,
-  questions
+  isAdmin
 }: QuizConfigurationPanelProps) {
-  // Remove os seletores de módulo e pergunta, mantendo o carregamento e tratamento de erros
+  // Componente simplificado: apenas mostra o carregamento ou erro
   return (
-    <div className="w-full max-w-3xl mx-auto flex flex-col items-center justify-center space-y-6 p-6 bg-slate-800 rounded-lg">
+    <div className="w-full max-w-3xl mx-auto flex flex-col items-center justify-center p-6 bg-slate-800 rounded-lg">
       {isLoading ? (
         <div className="flex items-center justify-center space-x-2">
           <Loader2 className="h-8 w-8 animate-spin text-white" />
@@ -43,8 +41,8 @@ export function QuizConfigurationPanel({
       ) : null}
 
       {isAdmin && (
-        <div className="w-full text-center">
-          <p className="text-yellow-400 mb-4">
+        <div className="w-full text-center mt-4">
+          <p className="text-yellow-400">
             Modo Administrador: Questionário está pronto para ser iniciado.
           </p>
         </div>

@@ -107,6 +107,12 @@ const Quiz = () => {
       const questionsWithOptions = mapQuestionsWithOptions(questionsData);
       setQuestions(questionsWithOptions);
       
+      const firstModule = modulesData[0];
+      const firstModuleQuestions = questionsWithOptions.filter(q => q.module_id === firstModule.id);
+      setCurrentModuleIndex(0);
+      setModuleQuestions(firstModuleQuestions);
+      setCurrentQuestionIndex(0);
+      
       if (moduleParam && modulesData.some(m => m.id === moduleParam)) {
         const moduleIndex = modulesData.findIndex(m => m.id === moduleParam);
         if (moduleIndex >= 0) {
@@ -121,11 +127,6 @@ const Quiz = () => {
             }
           }
         }
-      } else if (modulesData.length > 0) {
-        const firstModuleQuestions = questionsWithOptions.filter(
-          q => q.module_id === modulesData[0].id
-        );
-        setModuleQuestions(firstModuleQuestions);
       }
       
       const { data: submissionData, error: submissionError } = await supabase
