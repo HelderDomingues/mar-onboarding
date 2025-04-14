@@ -46,7 +46,7 @@ export function QuizProgress({
       </div>
       
       {/* Módulos como passos */}
-      <div className="flex justify-between items-center pt-4">
+      <div className="flex justify-between items-center pt-4 my-[30px]">
         {steps.map(step => <div key={step} className="flex items-center">
             <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all ${step < currentModule ? "bg-[hsl(var(--quiz-accent))] text-white" : step === currentModule ? "bg-[hsl(var(--quiz-accent-hover))] text-white ring-4 ring-[hsl(var(--quiz-accent))]/20" : "bg-[hsl(var(--quiz-progress-bg))] text-muted-foreground"}`}>
               {step < currentModule ? <Check size={16} /> : step}
