@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
@@ -8,23 +7,25 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { logger } from "@/utils/logger";
-
 const MemberArea = () => {
-  const { user, isAuthenticated, isAdmin } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    isAdmin
+  } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-
   useEffect(() => {
     document.title = "Área do Membro | MAR - Crie Valor";
-    
     if (!isAuthenticated) {
       navigate('/');
       return;
     }
-    
     setIsLoading(false);
-    
+
     // Registrar acesso à área do membro
     if (user) {
       logger.info('Acesso à área do membro', {
@@ -33,13 +34,10 @@ const MemberArea = () => {
       });
     }
   }, [isAuthenticated, navigate, user]);
-
   if (isLoading) {
     return <div>Carregando...</div>;
   }
-
-  return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
+  return <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
       <DashboardHeader isAdmin={isAdmin} />
       <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-2xl font-bold text-slate-800 mb-6">Área do Membro</h1>
@@ -51,10 +49,7 @@ const MemberArea = () => {
               <p className="text-slate-600 mb-4">
                 Este é seu espaço para acesso a conteúdos e recursos exclusivos do método MAR.
               </p>
-              <Button 
-                className="w-full" 
-                onClick={() => navigate('/materials')}
-              >
+              <Button onClick={() => navigate('/materials')} className="w-full text-slate-50">
                 Acessar Materiais
               </Button>
             </CardContent>
@@ -66,10 +61,7 @@ const MemberArea = () => {
               <p className="text-slate-600 mb-4">
                 Acesse os resultados do seu diagnóstico e compreenda melhor a situação atual da sua empresa.
               </p>
-              <Button 
-                className="w-full" 
-                onClick={() => navigate('/quiz/diagnostic')}
-              >
+              <Button onClick={() => navigate('/quiz/diagnostic')} className="w-full text-slate-50">
                 Ver Diagnóstico
               </Button>
             </CardContent>
@@ -81,10 +73,7 @@ const MemberArea = () => {
               <p className="text-slate-600 mb-4">
                 Veja as perguntas frequentes ou entre em contato com nossa equipe.
               </p>
-              <Button 
-                className="w-full" 
-                onClick={() => navigate('/faq')}
-              >
+              <Button onClick={() => navigate('/faq')} className="w-full text-slate-50">
                 Acessar FAQ
               </Button>
             </CardContent>
@@ -92,8 +81,6 @@ const MemberArea = () => {
         </div>
       </main>
       <SiteFooter />
-    </div>
-  );
+    </div>;
 };
-
 export default MemberArea;
