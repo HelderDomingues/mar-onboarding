@@ -4,6 +4,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { logger } from "@/utils/logger";
 import { addLogEntry } from "@/utils/projectLog";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 /**
  * Componente de rota para páginas administrativas
@@ -55,7 +56,11 @@ const AdminRoute = () => {
 
   // Se for administrador, permitir acesso
   addLogEntry('auth', 'Acesso administrativo concedido', {}, user?.id);
-  return <Outlet />;
+  return (
+    <SidebarProvider>
+      <Outlet />
+    </SidebarProvider>
+  );
 };
 
 export default AdminRoute;

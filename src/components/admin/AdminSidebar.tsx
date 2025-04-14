@@ -1,7 +1,7 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sidebar, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
+import { Sidebar, SidebarFooter, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
 import { LogOut, Users, Settings, FileText, Home, Clipboard, LineChart, History, FolderPlus, BarChart } from "lucide-react";
@@ -25,78 +25,73 @@ export function AdminSidebar() {
           <img src="/lovable-uploads/e109ec41-0f89-456d-8081-f73393ed4fd5.png" alt="Crie Valor" className="h-7" />
         </Link>
       </SidebarHeader>
-      <div className="flex flex-col gap-2 p-4">
+      <SidebarContent className="flex flex-col gap-2 p-4">
         <h2 className="text-lg font-semibold pb-2">Administração</h2>
         
-        <Link to="/dashboard">
-          <Button 
-            variant={isActive("/dashboard") ? "default" : "ghost"} 
-            className="w-full justify-start gap-2"
-          >
-            <Home className="h-4 w-4" />
-            Dashboard
-          </Button>
-        </Link>
-        
-        <Link to="/admin/users">
-          <Button 
-            variant={isActive("/admin/users") ? "default" : "ghost"} 
-            className="w-full justify-start gap-2"
-          >
-            <Users className="h-4 w-4" />
-            Usuários
-          </Button>
-        </Link>
-        
-        <Link to="/admin/quiz-responses">
-          <Button 
-            variant={isActive("/admin/quiz-responses") ? "default" : "ghost"} 
-            className="w-full justify-start gap-2"
-          >
-            <Clipboard className="h-4 w-4" />
-            Respostas
-          </Button>
-        </Link>
-        
-        <Link to="/admin/reports">
-          <Button 
-            variant={isActive("/admin/reports") ? "default" : "ghost"} 
-            className="w-full justify-start gap-2"
-          >
-            <BarChart className="h-4 w-4" />
-            Relatórios
-          </Button>
-        </Link>
-        
-        <Link to="/admin/materials">
-          <Button 
-            variant={isActive("/admin/materials") ? "default" : "ghost"} 
-            className="w-full justify-start gap-2"
-          >
-            <FolderPlus className="h-4 w-4" />
-            Materiais
-          </Button>
-        </Link>
-        
-        <Link to="/admin/logs">
-          <Button 
-            variant={isActive("/admin/logs") ? "default" : "ghost"} 
-            className="w-full justify-start gap-2"
-          >
-            <History className="h-4 w-4" />
-            Logs do Sistema
-          </Button>
-        </Link>
-        
-        <Link to="/admin/settings">
-          <Button 
-            variant={isActive("/admin/settings") ? "default" : "ghost"} 
-            className="w-full justify-start gap-2"
-          >
-            <Settings className="h-4 w-4" />
-            Configurações
-          </Button>
-        </Link>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={isActive("/dashboard")}>
+              <Link to="/dashboard" className="w-full justify-start gap-2">
+                <Home className="h-4 w-4" />
+                <span>Dashboard</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={isActive("/admin/users")}>
+              <Link to="/admin/users" className="w-full justify-start gap-2">
+                <Users className="h-4 w-4" />
+                <span>Usuários</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={isActive("/admin/quiz-responses")}>
+              <Link to="/admin/quiz-responses" className="w-full justify-start gap-2">
+                <Clipboard className="h-4 w-4" />
+                <span>Respostas</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={isActive("/admin/reports")}>
+              <Link to="/admin/reports" className="w-full justify-start gap-2">
+                <BarChart className="h-4 w-4" />
+                <span>Relatórios</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={isActive("/admin/materials")}>
+              <Link to="/admin/materials" className="w-full justify-start gap-2">
+                <FolderPlus className="h-4 w-4" />
+                <span>Materiais</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={isActive("/admin/logs")}>
+              <Link to="/admin/logs" className="w-full justify-start gap-2">
+                <History className="h-4 w-4" />
+                <span>Logs do Sistema</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={isActive("/admin/settings")}>
+              <Link to="/admin/settings" className="w-full justify-start gap-2">
+                <Settings className="h-4 w-4" />
+                <span>Configurações</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
         
         <Separator className="my-2" />
         
@@ -108,7 +103,7 @@ export function AdminSidebar() {
           <LogOut className="h-4 w-4" />
           Sair
         </Button>
-      </div>
+      </SidebarContent>
     </Sidebar>
   );
 }

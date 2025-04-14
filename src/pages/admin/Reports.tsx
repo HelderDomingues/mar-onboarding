@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -33,6 +32,7 @@ import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { Separator } from "@/components/ui/separator";
 import { addLogEntry } from "@/utils/projectLog";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 const Reports = () => {
   const { toast } = useToast();
@@ -277,271 +277,273 @@ const Reports = () => {
   });
 
   return (
-    <div className="flex min-h-screen bg-background font-sans">
-      <AdminSidebar />
-      
-      <div className="flex-1">
-        <div className="container mx-auto py-6 space-y-6">
-          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">Relatórios e Análises</h1>
-              <p className="text-muted-foreground">
-                Visualize dados e estatísticas do programa MAR
-              </p>
+    <SidebarProvider>
+      <div className="flex min-h-screen bg-background font-sans">
+        <AdminSidebar />
+        
+        <div className="flex-1">
+          <div className="container mx-auto py-6 space-y-6">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h1 className="text-2xl font-bold">Relatórios e Análises</h1>
+                <p className="text-muted-foreground">
+                  Visualize dados e estatísticas do programa MAR
+                </p>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={() => setSelectedTimeRange("all")}
+                >
+                  <Filter className="h-4 w-4" />
+                  Todos
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={() => setSelectedTimeRange("week")}
+                >
+                  7 dias
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={() => setSelectedTimeRange("month")}
+                >
+                  30 dias
+                </Button>
+              </div>
             </div>
             
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                className="flex items-center gap-2"
-                onClick={() => setSelectedTimeRange("all")}
-              >
-                <Filter className="h-4 w-4" />
-                Todos
-              </Button>
-              <Button 
-                variant="outline" 
-                className="flex items-center gap-2"
-                onClick={() => setSelectedTimeRange("week")}
-              >
-                7 dias
-              </Button>
-              <Button 
-                variant="outline" 
-                className="flex items-center gap-2"
-                onClick={() => setSelectedTimeRange("month")}
-              >
-                30 dias
-              </Button>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Total de Usuários
+                  </CardTitle>
+                  <CardDescription className="text-2xl font-bold">
+                    {loading ? "..." : userCount}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Questionários Completos
+                  </CardTitle>
+                  <CardDescription className="text-2xl font-bold text-green-600">
+                    {loading ? "..." : completionStats.completed}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Em Progresso
+                  </CardTitle>
+                  <CardDescription className="text-2xl font-bold text-amber-600">
+                    {loading ? "..." : completionStats.inProgress}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Taxa de Conclusão
+                  </CardTitle>
+                  <CardDescription className="text-2xl font-bold text-blue-600">
+                    {loading ? "..." : userCount > 0 
+                      ? ((completionStats.completed / userCount) * 100).toFixed(1) + "%" 
+                      : "0%"}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
             </div>
-          </div>
-          
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total de Usuários
-                </CardTitle>
-                <CardDescription className="text-2xl font-bold">
-                  {loading ? "..." : userCount}
-                </CardDescription>
-              </CardHeader>
-            </Card>
+            
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card className="md:col-span-1">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <PieChartIcon className="h-5 w-5 text-primary" />
+                    Status dos Questionários
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                    {loading ? (
+                      <div className="h-full flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={true}
+                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {pieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value) => [value, "Quantidade"]} />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="md:col-span-1">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                    Status por Quantidade
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                    {loading ? (
+                      <div className="h-full flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={barData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="Completos" fill="#10b981" />
+                          <Bar dataKey="Em Progresso" fill="#f97316" />
+                          <Bar dataKey="Não Iniciados" fill="#6b7280" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
             
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Questionários Completos
-                </CardTitle>
-                <CardDescription className="text-2xl font-bold text-green-600">
-                  {loading ? "..." : completionStats.completed}
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Em Progresso
-                </CardTitle>
-                <CardDescription className="text-2xl font-bold text-amber-600">
-                  {loading ? "..." : completionStats.inProgress}
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Taxa de Conclusão
-                </CardTitle>
-                <CardDescription className="text-2xl font-bold text-blue-600">
-                  {loading ? "..." : userCount > 0 
-                    ? ((completionStats.completed / userCount) * 100).toFixed(1) + "%" 
-                    : "0%"}
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-          
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card className="md:col-span-1">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <PieChartIcon className="h-5 w-5 text-primary" />
-                  Status dos Questionários
+                  <Users className="h-5 w-5 text-primary" />
+                  Dados dos Usuários
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-80">
-                  {loading ? (
-                    <div className="h-full flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                    </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={pieData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={true}
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {pieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => [value, "Quantidade"]} />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="md:col-span-1">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                  Status por Quantidade
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-80">
-                  {loading ? (
-                    <div className="h-full flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                    </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={barData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="Completos" fill="#10b981" />
-                        <Bar dataKey="Em Progresso" fill="#f97316" />
-                        <Bar dataKey="Não Iniciados" fill="#6b7280" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                Dados dos Usuários
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="table">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="table">Tabela</TabsTrigger>
-                  <TabsTrigger value="graphs">Gráficos</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="table">
-                  <div className="border rounded-md">
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progresso</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Conclusão</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {loading ? (
+                <Tabs defaultValue="table">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="table">Tabela</TabsTrigger>
+                    <TabsTrigger value="graphs">Gráficos</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="table">
+                    <div className="border rounded-md">
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
                             <tr>
-                              <td colSpan={5} className="text-center py-6">Carregando...</td>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progresso</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Conclusão</th>
                             </tr>
-                          ) : submissions.length === 0 ? (
-                            <tr>
-                              <td colSpan={5} className="text-center py-6">Nenhum dado encontrado</td>
-                            </tr>
-                          ) : (
-                            submissions.map((sub) => (
-                              <tr key={sub.id}>
-                                <td className="px-6 py-4 whitespace-nowrap">{sub.user_name || 'Sem nome'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">{sub.user_email || 'Sem email'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                    sub.completed 
-                                      ? 'bg-green-100 text-green-800' 
-                                      : 'bg-amber-100 text-amber-800'
-                                  }`}>
-                                    {sub.completed ? 'Completo' : 'Em progresso'}
-                                  </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  {sub.completed ? '100%' : `${Math.round((sub.current_module / 8) * 100)}%`}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  {sub.completed_at 
-                                    ? new Date(sub.completed_at).toLocaleDateString('pt-BR') 
-                                    : 'Não concluído'}
-                                </td>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {loading ? (
+                              <tr>
+                                <td colSpan={5} className="text-center py-6">Carregando...</td>
                               </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
+                            ) : submissions.length === 0 ? (
+                              <tr>
+                                <td colSpan={5} className="text-center py-6">Nenhum dado encontrado</td>
+                              </tr>
+                            ) : (
+                              submissions.map((sub) => (
+                                <tr key={sub.id}>
+                                  <td className="px-6 py-4 whitespace-nowrap">{sub.user_name || 'Sem nome'}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap">{sub.user_email || 'Sem email'}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                      sub.completed 
+                                        ? 'bg-green-100 text-green-800' 
+                                        : 'bg-amber-100 text-amber-800'
+                                    }`}>
+                                      {sub.completed ? 'Completo' : 'Em progresso'}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    {sub.completed ? '100%' : `${Math.round((sub.current_module / 8) * 100)}%`}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    {sub.completed_at 
+                                      ? new Date(sub.completed_at).toLocaleDateString('pt-BR') 
+                                      : 'Não concluído'}
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="graphs">
-                  <div className="h-96">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={moduleData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="Completos" fill="#10b981" />
-                        <Bar dataKey="Em Progresso" fill="#f97316" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-            <CardFooter className="border-t pt-6 flex flex-wrap gap-3">
-              <Button 
-                variant="default" 
-                className="flex items-center gap-2"
-                onClick={generatePDF}
-              >
-                <FileText className="h-4 w-4" />
-                Exportar como PDF
-              </Button>
-              <Button 
-                variant="outline" 
-                className="flex items-center gap-2"
-                onClick={generateCSV}
-              >
-                <Download className="h-4 w-4" />
-                Exportar como CSV
-              </Button>
-            </CardFooter>
-          </Card>
+                  </TabsContent>
+                  
+                  <TabsContent value="graphs">
+                    <div className="h-96">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={moduleData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="Completos" fill="#10b981" />
+                          <Bar dataKey="Em Progresso" fill="#f97316" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+              <CardFooter className="border-t pt-6 flex flex-wrap gap-3">
+                <Button 
+                  variant="default" 
+                  className="flex items-center gap-2"
+                  onClick={generatePDF}
+                >
+                  <FileText className="h-4 w-4" />
+                  Exportar como PDF
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={generateCSV}
+                >
+                  <Download className="h-4 w-4" />
+                  Exportar como CSV
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
         </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
