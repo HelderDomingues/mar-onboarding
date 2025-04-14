@@ -228,8 +228,6 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
             message: rpcError.message || 'Erro desconhecido no RPC'
           }
         });
-        
-        // Não retornar ainda, tente o método alternativo
       }
     }
     
