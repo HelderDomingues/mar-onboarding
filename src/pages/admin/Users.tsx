@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -24,7 +25,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, UserPlus, Mail, CheckCircle, XCircle, RefreshCw, Key } from "lucide-react";
+import { Search, UserPlus, Mail, CheckCircle, XCircle, RefreshCw, Key, Loader2 } from "lucide-react";
 
 type UserProfile = {
   id: string;
