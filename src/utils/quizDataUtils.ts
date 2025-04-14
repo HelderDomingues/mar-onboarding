@@ -296,11 +296,21 @@ export const formatQuizAnswers = (answers: Record<string, any>): Record<string, 
     
     if (typeof answer === 'string') {
       try {
-        // Tentar parsear string que pode ser array JSON
-        const parsed = JSON.parse(answer);
-        if (Array.isArray(parsed)) {
-          formatted[key] = parsed;
+        // Verificar se a string parece ser um array JSON
+        if (answer.startsWith('[') && answer.endsWith(']')) {
+          // Tentar parsear string que pode ser array JSON
+          const parsed = JSON.parse(answer);
+          if (Array.isArray(parsed)) {
+            // Converter cada elemento para string caso não seja
+            formatted[key] = parsed.map(item => typeof item === 'string' ? item : String(item));
+          } else {
+            formatted[key] = answer;
+          }
+        } else if (answer.includes(',') && !answer.includes('{') && !answer.includes('"')) {
+          // Se for uma string CSV simples e não um JSON complexo
+          formatted[key] = answer.split(',').map(item => item.trim());
         } else {
+          // Se não for um JSON válido, manter como string
           formatted[key] = answer;
         }
       } catch (e) {

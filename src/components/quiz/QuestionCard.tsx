@@ -272,6 +272,8 @@ export function QuestionCard({
         const selected = question.options.find(opt => getOptionValue(opt) === selectedOption);
         if (selected && optionContainsText(selected, 'outro') && showOtherInput && otherValue) {
           onAnswer(question.id, otherValue);
+        } else if (selected) {
+          onAnswer(question.id, getOptionText(selected));
         } else {
           onAnswer(question.id, selectedOption);
         }
@@ -279,15 +281,26 @@ export function QuestionCard({
         onAnswer(question.id, selectedOption);
       }
     } else if (question.type === 'checkbox') {
-      let answers = [...checkedOptions];
       if (question.options) {
+        const textAnswers = convertOptionsIdsToText(checkedOptions);
+        
         const otherOption = question.options.find(opt => optionContainsText(opt, 'outro'));
         if (otherOption && checkedOptions.includes(getOptionValue(otherOption)) && showOtherInput && otherValue) {
-          answers = answers.filter(ans => ans !== getOptionValue(otherOption));
-          answers.push(otherValue);
+          const otherIndex = textAnswers.findIndex(
+            text => text === getOptionText(otherOption)
+          );
+          
+          if (otherIndex >= 0) {
+            textAnswers[otherIndex] = otherValue;
+          } else {
+            textAnswers.push(otherValue);
+          }
         }
+        
+        onAnswer(question.id, textAnswers);
+      } else {
+        onAnswer(question.id, checkedOptions);
       }
-      onAnswer(question.id, answers);
     } else if (question.type === 'instagram' || question.type === 'url') {
       let formattedAnswer = textAnswer;
       if (question.type === 'instagram' && question.prefix && !formattedAnswer.startsWith(question.prefix)) {
@@ -331,6 +344,15 @@ export function QuestionCard({
       default:
         return true;
     }
+  };
+
+  const convertOptionsIdsToText = (optionIds: string[]): string[] => {
+    if (!question.options) return optionIds;
+    
+    return optionIds.map(optionId => {
+      const option = question.options?.find(opt => getOptionValue(opt) === optionId);
+      return option ? getOptionText(option) : optionId;
+    });
   };
 
   const renderQuestion = () => {

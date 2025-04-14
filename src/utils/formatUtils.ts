@@ -19,19 +19,24 @@ export const formatJsonAnswer = (answer: string | string[] | null | undefined): 
   try {
     // Verificar se é uma string JSON
     if (typeof answer === 'string') {
-      // Tentar fazer o parse se parece ser um JSON
+      // Verificar se parece ser uma string em formato JSON
       if ((answer.startsWith('[') && answer.endsWith(']')) || 
           (answer.startsWith('{') && answer.endsWith('}'))) {
-        const parsed = JSON.parse(answer);
-        
-        // Processar array
-        if (Array.isArray(parsed)) {
-          return formatArrayAnswer(parsed);
-        }
-        
-        // Processar objeto
-        if (typeof parsed === 'object' && parsed !== null) {
-          return formatObjectAnswer(parsed);
+        try {
+          const parsed = JSON.parse(answer);
+          
+          // Processar array
+          if (Array.isArray(parsed)) {
+            return formatArrayAnswer(parsed);
+          }
+          
+          // Processar objeto
+          if (typeof parsed === 'object' && parsed !== null) {
+            return formatObjectAnswer(parsed);
+          }
+        } catch (e) {
+          // Se o parse falhar, não era um JSON válido
+          return answer;
         }
       }
     }

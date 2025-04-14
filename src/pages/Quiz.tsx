@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,7 +45,7 @@ const Quiz = () => {
   const [showAdmin, setShowAdmin] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [dataFetched, setDataFetched] = useState(false); // Novo estado para controlar se os dados já foram buscados
+  const [dataFetched, setDataFetched] = useState(false);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -106,7 +105,6 @@ const Quiz = () => {
         data: { userId: user.id }
       });
       
-      // Carregar módulos do questionário
       const modulesData = await loadQuizModules();
       if (!modulesData || modulesData.length === 0) {
         throw new Error("Nenhum módulo de questionário encontrado.");
@@ -119,13 +117,11 @@ const Quiz = () => {
       
       setModules(modulesData);
       
-      // Carregar perguntas do questionário
       const questionsData = await loadQuizQuestions();
       if (!questionsData) {
         throw new Error("Erro ao carregar perguntas do questionário.");
       }
       
-      // Log para depuração
       logger.info("Questões carregadas com sucesso", {
         tag: 'Quiz',
         data: { count: questionsData.length }
@@ -133,7 +129,6 @@ const Quiz = () => {
       
       setQuestions(questionsData);
       
-      // Configurar o módulo inicial
       const firstModule = modulesData[0];
       const firstModuleQuestions = questionsData.filter(q => q.module_id === firstModule.id);
       
@@ -146,7 +141,6 @@ const Quiz = () => {
       setModuleQuestions(firstModuleQuestions);
       setCurrentQuestionIndex(0);
       
-      // Verificar parâmetros da URL para navegação específica
       if (moduleParam && modulesData.some(m => m.id === moduleParam)) {
         const moduleIndex = modulesData.findIndex(m => m.id === moduleParam);
         if (moduleIndex >= 0) {
@@ -163,7 +157,6 @@ const Quiz = () => {
         }
       }
       
-      // Verificar submissão existente
       const { data: submissionData, error: submissionError } = await supabase
         .from('quiz_submissions')
         .select('*')
@@ -186,7 +179,6 @@ const Quiz = () => {
         const userSubmission = submissionData as unknown as QuizSubmission;
         setSubmission(userSubmission);
         
-        // Verificar se o questionário já foi completo
         const quizCompleted = userSubmission.completed === true || userSubmission.is_complete === true;
         
         if (quizCompleted && !showAdmin && !forceMode && location.pathname === '/quiz' && !location.search) {
@@ -206,7 +198,6 @@ const Quiz = () => {
           }
         }
 
-        // Carregar respostas existentes
         const { data: answersData, error: answersError } = await supabase
           .from('quiz_answers')
           .select('*')
@@ -247,7 +238,6 @@ const Quiz = () => {
           }
         }
       } else {
-        // Criar nova submissão para usuário
         logger.info("Criando nova submissão para o usuário", {
           tag: 'Quiz',
           data: { userId: user.id }
@@ -281,7 +271,7 @@ const Quiz = () => {
       }
 
       setLoadError(null);
-      setDataFetched(true); // Marcar que os dados foram buscados com sucesso
+      setDataFetched(true);
     } catch (error: any) {
       logger.error('Erro ao carregar dados do questionário', {
         tag: 'Quiz',
@@ -298,7 +288,6 @@ const Quiz = () => {
     }
   };
 
-  // Iniciar carregamento quando o usuário estiver autenticado
   useEffect(() => {
     if (isAuthenticated && user && !dataFetched) {
       console.log("Iniciando carregamento de dados...");
@@ -309,7 +298,6 @@ const Quiz = () => {
     }
   }, [isAuthenticated, user, dataFetched]);
 
-  // Recarregar ao mudar parâmetros de URL
   useEffect(() => {
     if (isAuthenticated && user && (moduleParam || questionParam)) {
       console.log("Recarregando dados devido a mudança de parâmetros da URL");
@@ -327,19 +315,13 @@ const Quiz = () => {
       
       const questionInfo = questions.find(q => q.id === questionId);
       
-      // Normalizar a resposta antes de salvar
       let normalizedAnswer: string;
       
       if (Array.isArray(answer)) {
-        // Para respostas de múltipla escolha (checkbox) ou valores múltiplos
-        // Extrair apenas os textos das opções selecionadas
-        const formattedAnswer = formatJsonAnswer(answer);
-        normalizedAnswer = formattedAnswer;
+        normalizedAnswer = answer.join(', ');
       } else if (typeof answer === 'object') {
-        // Este caso nunca deve acontecer com a tipagem atual, mas por segurança
         normalizedAnswer = JSON.stringify(answer);
       } else {
-        // Respostas de texto simples
         normalizedAnswer = answer;
       }
       
@@ -521,7 +503,6 @@ const Quiz = () => {
   const isFirstQuestion = currentModuleIndex === 0 && currentQuestionIndex === 0;
   const isLastQuestion = currentModuleIndex === modules.length - 1 && currentQuestionIndex === moduleQuestions.length - 1;
 
-  // Interface renderizada
   return (
     <div className="min-h-screen flex flex-col quiz-container">
       <DashboardHeader isAdmin={isAdmin} />
