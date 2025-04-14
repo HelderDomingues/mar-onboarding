@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ export interface Question {
   id: string;
   text: string;
   type: QuestionType;
-  options?: QuizOption[] | string[];
+  options?: (QuizOption | string)[];
   required: boolean;
   hint?: string;
   max_options?: number;
@@ -51,6 +52,22 @@ export function QuestionCard({
   const [otherValue, setOtherValue] = useState<string>('');
   const [showOtherInput, setShowOtherInput] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Helper para obter o texto de uma opção, independente do tipo
+  const getOptionText = (option: string | QuizOption): string => {
+    return typeof option === 'string' ? option : option.text;
+  };
+
+  // Helper para obter o valor/id de uma opção, independente do tipo
+  const getOptionValue = (option: string | QuizOption): string => {
+    return typeof option === 'string' ? option : option.id;
+  };
+
+  // Helper para verificar se uma opção contém um texto específico
+  const optionContainsText = (option: string | QuizOption, text: string): boolean => {
+    const optionText = getOptionText(option);
+    return optionText.toLowerCase().includes(text.toLowerCase());
+  };
 
   const getPlaceholder = (question: Question): string => {
     if (question.placeholder) {
@@ -89,29 +106,33 @@ export function QuestionCard({
         setSelectedOption(currentAnswer);
         setTextAnswer(currentAnswer);
 
-        if (question.options?.some(opt => opt.toLowerCase().includes('outro')) && !question.options?.includes(currentAnswer) && currentAnswer !== '') {
+        if (question.options && question.options.some(opt => optionContainsText(opt, 'outro')) &&
+            !question.options.some(opt => getOptionText(opt) === currentAnswer) && 
+            currentAnswer !== '') {
           setOtherValue(currentAnswer);
           setShowOtherInput(true);
           if (question.type === 'radio') {
-            const otherOption = question.options?.find(opt => opt.toLowerCase().includes('outro'));
-            if (otherOption) setSelectedOption(otherOption);
+            const otherOption = question.options.find(opt => optionContainsText(opt, 'outro'));
+            if (otherOption) setSelectedOption(getOptionValue(otherOption));
           }
         }
       } else if (Array.isArray(currentAnswer)) {
         setCheckedOptions(currentAnswer);
 
-        const otherOption = question.options?.find(opt => opt.toLowerCase().includes('outro'));
-        if (otherOption && currentAnswer.some(ans => !question.options?.includes(ans))) {
-          setShowOtherInput(true);
-          const customAnswer = currentAnswer.find(ans => !question.options?.includes(ans));
-          if (customAnswer) setOtherValue(customAnswer);
+        if (question.options) {
+          const otherOption = question.options.find(opt => optionContainsText(opt, 'outro'));
+          if (otherOption && currentAnswer.some(ans => !question.options?.some(opt => getOptionText(opt) === ans))) {
+            setShowOtherInput(true);
+            const customAnswer = currentAnswer.find(ans => !question.options?.some(opt => getOptionText(opt) === ans));
+            if (customAnswer) setOtherValue(customAnswer);
+          }
         }
       }
     }
   }, [question.id, currentAnswer, question.options]);
 
   const handleCheckboxChange = (option: string | QuizOption) => {
-    const optionValue = typeof option === 'string' ? option : option.id;
+    const optionValue = getOptionValue(option);
     
     setCheckedOptions(prev => {
       if (prev.includes(optionValue)) {
@@ -124,8 +145,7 @@ export function QuestionCard({
       }
     });
 
-    const optionText = typeof option === 'string' ? option : option.text;
-    if (optionText.toLowerCase().includes('outro')) {
+    if (optionContainsText(option, 'outro')) {
       setShowOtherInput(!checkedOptions.includes(optionValue));
     }
   };
@@ -133,10 +153,13 @@ export function QuestionCard({
   const handleRadioChange = (value: string) => {
     setSelectedOption(value);
 
-    if (value.toLowerCase().includes('outro')) {
-      setShowOtherInput(true);
-    } else {
-      setShowOtherInput(false);
+    if (question.options) {
+      const selectedOption = question.options.find(opt => getOptionValue(opt) === value);
+      if (selectedOption && optionContainsText(selectedOption, 'outro')) {
+        setShowOtherInput(true);
+      } else {
+        setShowOtherInput(false);
+      }
     }
   };
 
@@ -185,9 +208,13 @@ export function QuestionCard({
           setValidationError("Selecione uma opção.");
           return false;
         }
-        if (selectedOption.toLowerCase().includes('outro') && showOtherInput && otherValue === '') {
-          setValidationError("Especifique sua resposta no campo 'Outro'.");
-          return false;
+        
+        if (question.options) {
+          const selected = question.options.find(opt => getOptionValue(opt) === selectedOption);
+          if (selected && optionContainsText(selected, 'outro') && showOtherInput && otherValue === '') {
+            setValidationError("Especifique sua resposta no campo 'Outro'.");
+            return false;
+          }
         }
         break;
       case 'checkbox':
@@ -195,10 +222,19 @@ export function QuestionCard({
           setValidationError("Selecione pelo menos uma opção.");
           return false;
         }
-        if (checkedOptions.some(opt => opt.toLowerCase().includes('outro')) && showOtherInput && otherValue === '') {
-          setValidationError("Especifique sua resposta no campo 'Outro'.");
-          return false;
+        
+        if (question.options) {
+          const hasOtherSelected = question.options.some(opt => 
+            optionContainsText(opt, 'outro') && 
+            checkedOptions.includes(getOptionValue(opt))
+          );
+          
+          if (hasOtherSelected && showOtherInput && otherValue === '') {
+            setValidationError("Especifique sua resposta no campo 'Outro'.");
+            return false;
+          }
         }
+        
         if (question.max_options && checkedOptions.length > question.max_options) {
           setValidationError(`Selecione no máximo ${question.max_options} opções.`);
           return false;
@@ -261,19 +297,27 @@ export function QuestionCard({
     }
     
     if (question.type === 'radio') {
-      if (selectedOption.toLowerCase().includes('outro') && showOtherInput && otherValue) {
-        onAnswer(question.id, otherValue);
+      if (question.options) {
+        const selected = question.options.find(opt => getOptionValue(opt) === selectedOption);
+        if (selected && optionContainsText(selected, 'outro') && showOtherInput && otherValue) {
+          onAnswer(question.id, otherValue);
+        } else {
+          onAnswer(question.id, selectedOption);
+        }
       } else {
         onAnswer(question.id, selectedOption);
       }
     } else if (question.type === 'checkbox') {
       let answers = [...checkedOptions];
 
-      const otherIndex = answers.findIndex(opt => opt.toLowerCase().includes('outro'));
-      if (otherIndex >= 0 && showOtherInput && otherValue) {
-        answers.splice(otherIndex, 1);
-        answers.push(otherValue);
+      if (question.options) {
+        const otherOption = question.options.find(opt => optionContainsText(opt, 'outro'));
+        if (otherOption && checkedOptions.includes(getOptionValue(otherOption)) && showOtherInput && otherValue) {
+          answers = answers.filter(ans => ans !== getOptionValue(otherOption));
+          answers.push(otherValue);
+        }
       }
+      
       onAnswer(question.id, answers);
     } else if (question.type === 'instagram' || question.type === 'url') {
       let formattedAnswer = textAnswer;
@@ -296,14 +340,25 @@ export function QuestionCard({
     
     switch (question.type) {
       case 'radio':
-        if (selectedOption.toLowerCase().includes('outro')) {
-          return !!otherValue;
+        if (question.options) {
+          const selected = question.options.find(opt => getOptionValue(opt) === selectedOption);
+          if (selected && optionContainsText(selected, 'outro')) {
+            return !!otherValue;
+          }
         }
         return !!selectedOption;
       case 'checkbox':
-        if (checkedOptions.some(opt => opt.toLowerCase().includes('outro')) && !otherValue) {
-          return false;
+        if (question.options) {
+          const hasOtherSelected = question.options.some(opt => 
+            optionContainsText(opt, 'outro') && 
+            checkedOptions.includes(getOptionValue(opt))
+          );
+          
+          if (hasOtherSelected && !otherValue) {
+            return false;
+          }
         }
+        
         return checkedOptions.length > 0 && (
           !question.max_options || checkedOptions.length <= question.max_options
         );
@@ -328,8 +383,8 @@ export function QuestionCard({
           </p>}
           <RadioGroup value={selectedOption} onValueChange={handleRadioChange} className="space-y-3">
             {question.options.map((option, index) => {
-              const optionText = typeof option === 'string' ? option : option.text;
-              const optionValue = typeof option === 'string' ? option : option.id;
+              const optionText = getOptionText(option);
+              const optionValue = getOptionValue(option);
               
               return (
                 <div key={index} className="flex items-center space-x-2">
@@ -439,8 +494,8 @@ export function QuestionCard({
             Marque quantas opções desejar
           </p>
           {question.options.map((option, index) => {
-            const optionText = typeof option === 'string' ? option : option.text;
-            const optionValue = typeof option === 'string' ? option : option.id;
+            const optionText = getOptionText(option);
+            const optionValue = getOptionValue(option);
             
             return (
               <div key={index} className="flex items-center space-x-2">
@@ -478,8 +533,8 @@ export function QuestionCard({
         >
           <option value="">Selecione uma opção</option>
           {question.options.map((option, index) => {
-            const optionText = typeof option === 'string' ? option : option.text;
-            const optionValue = typeof option === 'string' ? option : option.id;
+            const optionText = getOptionText(option);
+            const optionValue = getOptionValue(option);
             
             return (
               <option key={index} value={optionValue}>

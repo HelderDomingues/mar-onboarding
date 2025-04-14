@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,16 @@ export function QuizReview({
       agreement: false
     }
   });
+
+  // Helper para obter o texto de uma opção, independente do tipo
+  const getOptionText = (option: any): string => {
+    return typeof option === 'string' ? option : option.text;
+  };
+
+  // Helper para obter o valor/id de uma opção, independente do tipo
+  const getOptionValue = (option: any): string => {
+    return typeof option === 'string' ? option : option.id;
+  };
 
   useEffect(() => {
     setEditedAnswers({
@@ -265,8 +276,8 @@ export function QuizReview({
             options.push(opt);
             optionTexts[opt] = opt;
           } else {
-            options.push(opt.id);
-            optionTexts[opt.id] = opt.text;
+            options.push(getOptionValue(opt));
+            optionTexts[getOptionValue(opt)] = getOptionText(opt);
           }
         });
         
