@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/routes/ProtectedRoute";
@@ -24,6 +25,7 @@ import NewUser from "@/pages/admin/NewUser";
 import Settings from "@/pages/admin/Settings";
 import Users from "@/pages/admin/Users";
 import QuizResponses from "@/pages/admin/QuizResponses";
+import AdminMaterials from "@/pages/admin/AdminMaterials";
 
 const AppRoutes = () => {
   return (
@@ -47,6 +49,7 @@ const AppRoutes = () => {
         <Route path="users/new" element={<NewUser />} />
         <Route path="users/import" element={<ImportUsers />} />
         <Route path="quiz-responses" element={<QuizResponses />} />
+        <Route path="materials" element={<AdminMaterials />} />
         <Route path="settings" element={<Settings />} />
         <Route path="logs" element={<SystemLog />} />
       </Route>

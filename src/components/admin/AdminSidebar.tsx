@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sidebar, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
-import { LogOut, Users, Settings, FileText, Home, Clipboard, LineChart, History } from "lucide-react";
+import { LogOut, Users, Settings, FileText, Home, Clipboard, LineChart, History, FolderPlus } from "lucide-react";
 
 export function AdminSidebar() {
   const { logout } = useAuth();
@@ -55,6 +55,16 @@ export function AdminSidebar() {
           >
             <Clipboard className="h-4 w-4" />
             Respostas
+          </Button>
+        </Link>
+        
+        <Link to="/admin/materials">
+          <Button 
+            variant={isActive("/admin/materials") ? "default" : "ghost"} 
+            className="w-full justify-start gap-2"
+          >
+            <FolderPlus className="h-4 w-4" />
+            Materiais
           </Button>
         </Link>
         
