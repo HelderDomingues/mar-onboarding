@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -85,8 +86,9 @@ const UsersPage = () => {
         return;
       }
       
+      // Usar a nova função RPC atualizada
       const { data: emailData, error: emailError } = await supabase
-        .rpc('get_user_emails');
+        .rpc('get_users_with_emails');
         
       if (emailError) {
         addLogEntry('error', 'Erro ao buscar emails de usuários via RPC', { 
@@ -112,8 +114,8 @@ const UsersPage = () => {
       const emailMap = new Map<string, string>();
       if (emailData && Array.isArray(emailData)) {
         emailData.forEach((item: any) => {
-          if (item && item.user_id && item.email) {
-            emailMap.set(item.user_id, item.email);
+          if (item && item.user_id && item.user_email) {
+            emailMap.set(item.user_id, item.user_email);
           }
         });
       }
@@ -131,7 +133,7 @@ const UsersPage = () => {
       setUsers(processedUsers);
       
       if (!emailData || emailMap.size === 0) {
-        setError("Acesso limitado aos dados de email. A função get_user_emails pode não estar disponível ou você pode não ter permissões suficientes.");
+        setError("Acesso limitado aos dados de email. A função get_users_with_emails pode não estar disponível ou você pode não ter permissões suficientes.");
       }
     } catch (error: any) {
       console.error('Erro ao buscar usuários:', error);

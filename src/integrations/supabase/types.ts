@@ -587,17 +587,17 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
-      get_user_emails: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          user_id: string
-          email: string
-          created_at: string
-        }[]
-      }
       get_user_role: {
         Args: { user_id: string }
         Returns: string
+      }
+      get_users_with_emails: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: string
+          user_email: string
+          user_created_at: string
+        }[]
       }
       is_admin: {
         Args: Record<PropertyKey, never>
