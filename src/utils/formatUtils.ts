@@ -1,152 +1,120 @@
 
 /**
- * Formatador de respostas JSON para exibição adequada
+ * Utilitário para formatação de dados e respostas do questionário
  */
 
 /**
- * Formata uma resposta que pode estar em formato JSON para exibição legível
- * @param answer Resposta que pode estar em formato JSON
+ * Formata respostas JSON para exibição amigável
+ * @param answerStr String contendo a resposta (possivelmente em formato JSON)
  * @returns String formatada para exibição
  */
-export const formatJsonAnswer = (answer: string | string[] | null | undefined): string => {
-  if (!answer) return "Sem resposta";
-  
-  // Se já for um array, processar diretamente
-  if (Array.isArray(answer)) {
-    return formatArrayAnswer(answer);
-  }
+export const formatJsonAnswer = (answerStr: string | null): string => {
+  if (!answerStr) return '';
   
   try {
-    // Verificar se é uma string JSON
-    if (typeof answer === 'string') {
-      // Verificar se parece ser uma string em formato JSON
-      if ((answer.startsWith('[') && answer.endsWith(']')) || 
-          (answer.startsWith('{') && answer.endsWith('}'))) {
-        try {
-          const parsed = JSON.parse(answer);
-          
-          // Processar array
-          if (Array.isArray(parsed)) {
-            return formatArrayAnswer(parsed);
-          }
-          
-          // Processar objeto
-          if (typeof parsed === 'object' && parsed !== null) {
-            return formatObjectAnswer(parsed);
-          }
-        } catch (e) {
-          // Se o parse falhar, não era um JSON válido
-          return answer;
+    // Verifica se a resposta já é um array (respostas de checkbox)
+    if (answerStr.startsWith('[') && answerStr.endsWith(']')) {
+      const parsed = JSON.parse(answerStr);
+      
+      if (Array.isArray(parsed)) {
+        // Se for um array vazio, retornar string vazia
+        if (parsed.length === 0) return '';
+        
+        // Se for um array de strings, exibir como lista com marcadores
+        if (typeof parsed[0] === 'string') {
+          return parsed.map(item => `• ${item}`).join('\n');
         }
+        
+        // Se for um array de objetos complexos, exibir como JSON formatado
+        return JSON.stringify(parsed, null, 2);
       }
     }
     
-    // Se não for um JSON válido ou não precisar de formatação especial, retornar como está
-    return answer.toString();
-  } catch (e) {
-    // Em caso de erro no parse, retornar a resposta original
-    console.warn("Erro ao formatar resposta JSON:", e);
-    return typeof answer === 'string' ? answer : String(answer);
-  }
-};
-
-/**
- * Processa um array de respostas (usado para checkbox ou múltipla escolha)
- */
-const formatArrayAnswer = (items: any[]): string => {
-  if (items.length === 0) return "Nenhuma opção selecionada";
-  
-  return items.map(item => {
-    if (typeof item === 'object' && item !== null) {
-      // Extrai texto de objetos (opções)
-      return item.text || item.label || item.valor || Object.values(item).join(', ');
+    // Tentar interpretar como JSON
+    if (answerStr.includes('{') || answerStr.includes('[')) {
+      try {
+        const parsed = JSON.parse(answerStr);
+        return typeof parsed === 'string' ? parsed : JSON.stringify(parsed, null, 2);
+      } catch (e) {
+        // Se não for um JSON válido, continuar com o tratamento normal
+      }
     }
-    return item; // Se for string ou outro tipo primitivo
-  }).join(', ');
+    
+    // Resposta comum (texto simples)
+    return answerStr;
+    
+  } catch (error) {
+    console.error('Erro ao formatar resposta:', error);
+    return answerStr || '';
+  }
 };
 
 /**
- * Processa um objeto de resposta
+ * Normaliza e formata respostas antes de salvar no banco de dados
+ * @param answer Resposta para formatar (string, array ou objeto)
+ * @param questionType Tipo da pergunta
+ * @returns String formatada para armazenamento
  */
-const formatObjectAnswer = (obj: Record<string, any>): string => {
-  // Verificar se é uma resposta tipo "outro" 
-  if (obj.other !== undefined && obj.value !== undefined) {
-    return `${obj.value} (${obj.other})`;
-  }
+export const normalizeAnswerForStorage = (answer: any, questionType?: string): string => {
+  if (answer === null || answer === undefined) return '';
   
-  // Para outros tipos de objetos, tentar extrair valores principais
-  const values = Object.entries(obj)
-    .map(([key, value]) => `${key}: ${value}`)
-    .join(', ');
-  
-  return values || JSON.stringify(obj);
-};
-
-/**
- * Converte resposta para formato de array quando necessário (usado para edição em QuizReview)
- * @param answer Resposta do questionário que pode ser array, string ou string JSON
- * @returns Array de strings normalizado
- */
-export const normalizeAnswerToArray = (answer: string | string[] | undefined): string[] => {
-  if (!answer) return [];
-  
-  // Se já for um array, manter como está
-  if (Array.isArray(answer)) {
-    return answer;
-  }
-  
-  // Se for string, verificar se é JSON
-  if (typeof answer === 'string') {
-    try {
-      // Verificar se parece ser um array em formato JSON
+  // Para tipos checkbox, garantir que a resposta seja um array JSON
+  if (questionType === 'checkbox') {
+    if (Array.isArray(answer)) {
+      return JSON.stringify(answer);
+    } else if (typeof answer === 'string') {
+      // Se já for uma string JSON de array, manter como está
       if (answer.startsWith('[') && answer.endsWith(']')) {
-        const parsed = JSON.parse(answer);
-        if (Array.isArray(parsed)) {
-          return parsed;
+        try {
+          JSON.parse(answer); // Validar que é um JSON válido
+          return answer;
+        } catch (e) {
+          // Se não for um JSON válido, converter para array com um item
+          return JSON.stringify([answer]);
         }
       }
-      
-      // Se não for JSON array válido, pode ser uma string com valores separados por vírgula
-      if (answer.includes(',') && !answer.includes('{') && !answer.includes('"')) {
-        return answer.split(',').map(item => item.trim());
-      }
-      
-      // Se for apenas uma única resposta, retornar como array unitário
-      return [answer];
-    } catch (e) {
-      // Se o parse falhar, não era um JSON válido
-      return [answer];
+      // Se for uma string comum, converter para array com um item
+      return JSON.stringify([answer]);
     }
+    // Para qualquer outro tipo, converter para array
+    return JSON.stringify([String(answer)]);
   }
   
-  return [];
+  // Para outros tipos de pergunta
+  if (typeof answer === 'object') {
+    return JSON.stringify(answer);
+  }
+  
+  // Para valores simples, retornar como string
+  return String(answer);
 };
 
 /**
- * Prepara resposta para envio ao servidor, formatando corretamente para múltiplas escolhas
- * @param answer Resposta a ser formatada (string ou array)
- * @param isMultipleChoice Se é uma pergunta de múltipla escolha
- * @returns Valor formatado para armazenamento
+ * Normaliza formato de resposta para exibição
+ * @param answer Resposta a ser normalizada
+ * @param questionType Tipo da pergunta
+ * @returns Resposta normalizada para exibição
  */
-export const prepareAnswerForStorage = (answer: string | string[], isMultipleChoice: boolean): string => {
+export const normalizeAnswerForDisplay = (answer: any, questionType?: string): string | string[] => {
   if (!answer) return '';
   
-  // Se for array e múltipla escolha, converter para string JSON
-  if (Array.isArray(answer) && isMultipleChoice) {
+  // Para tipos checkbox, garantir que a resposta seja um array
+  if (questionType === 'checkbox') {
+    if (typeof answer === 'string') {
+      try {
+        const parsed = JSON.parse(answer);
+        return Array.isArray(parsed) ? parsed : [answer];
+      } catch (e) {
+        return [answer];
+      }
+    }
+    return Array.isArray(answer) ? answer : [String(answer)];
+  }
+  
+  // Para outros tipos, retornar a string diretamente
+  if (typeof answer === 'object') {
     return JSON.stringify(answer);
   }
   
-  // Se não for múltipla escolha mas for array com um único elemento, retornar o elemento
-  if (Array.isArray(answer) && answer.length === 1 && !isMultipleChoice) {
-    return answer[0];
-  }
-  
-  // Se for array mesmo não sendo múltipla escolha, converter para string JSON
-  // (isso pode acontecer em casos onde o usuário inseriu dados de forma não padrão)
-  if (Array.isArray(answer) && !isMultipleChoice) {
-    return JSON.stringify(answer);
-  }
-  
-  // Se for string, manter como está
-  return typeof answer === 'string' ? answer : JSON.stringify(answer);
+  return String(answer);
 };

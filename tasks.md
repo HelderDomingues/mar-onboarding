@@ -10,6 +10,16 @@
   - Problema persiste ao clicar no botão de salvar configuração
   - Decisão: adiar a resolução deste problema para focar em outras funcionalidades críticas
 
+### Erro 406 na Finalização do Questionário
+- [EM ANDAMENTO] Erro 406 persiste quando tentamos finalizar o questionário:
+  - Problema identificado: Campo user_email sendo obrigatório na tabela quiz_answers e quiz_submissions
+  - Tentativas de solução:
+    - [CONCLUÍDO] Atualizar função completeQuizManually para obter e garantir o email do usuário
+    - [CONCLUÍDO] Modificar função saveQuizAnswer para sempre incluir user_email
+    - [CONCLUÍDO] Implementar sistema robusto de logs para rastrear precisamente a origem do erro
+    - [CONCLUÍDO] Corrigir os problemas relacionados a quiz_submissions.user_email e quiz_answers.user_email
+  - Status atual: Modificações implementadas e em fase de teste
+
 ### Links quebrados no Dashboard Administrativo
 - [CONCLUÍDO] Diversos links no dashboard administrativo estavam levando a páginas 404
   - Status:
@@ -31,6 +41,14 @@
   - Erro ocorria nas páginas administrativas que usavam o componente AdminSidebar
   - Causa: o componente Sidebar estava sendo usado sem estar envolvido pelo SidebarProvider
   - Solução: Adicionamos o SidebarProvider ao componente AdminRoute e adaptamos o AdminSidebar para usar os componentes da UI corretamente
+
+### Problemas na exibição e formatação de respostas
+- [EM ANDAMENTO] Melhorias na exibição e formato das respostas:
+  - [CONCLUÍDO] Criado utilitário formatUtils.ts para lidar com formatação de respostas JSON
+  - [CONCLUÍDO] Melhorado componente QuizViewAnswers para exibir respostas formatadas
+  - [CONCLUÍDO] Adicionado botão de exportação de CSV
+  - [PENDENTE] Melhorar a geração de PDFs com informações completas
+  - [PENDENTE] Adicionar uma visualização melhor para respostas de checkbox/radio
 
 ## Página de Perfil do Usuário
 - [CONCLUÍDO] Criação da página de perfil do usuário:
@@ -54,11 +72,20 @@
   - Implementada interface de usuário básica para o editor
   - [PENDENTE] Implementação da lógica de edição e persistência no banco de dados
 
+## Documentação
+- [INICIADO] Documentação do sistema:
+  - [CONCLUÍDO] Implementação do log de implementação (log-implementation.md)
+  - [CONCLUÍDO] Atualização regular do tasks.md
+  - [PENDENTE] Criação de documentação técnica detalhada
+  - [PENDENTE] Documentação de APIs e endpoints
+
 ## Próximos Passos
-1. Implementar funcionalidade completa de edição de questionários (módulos, perguntas, opções)
-2. Melhorar a coleta de dados de tempo e dispositivos para analytics mais detalhados
-3. Aprimorar a interface mobile-first de todas as páginas
-4. Retornar posteriormente ao problema de configuração da chave service_role
+1. Corrigir completamente o erro 406 na finalização do questionário
+2. Criar componentes menores para refatorar arquivos longos (QuizViewAnswers.tsx, etc.)
+3. Implementar funcionalidade completa de edição de questionários (módulos, perguntas, opções)
+4. Melhorar a coleta de dados de tempo e dispositivos para analytics mais detalhados
+5. Aprimorar a interface mobile-first de todas as páginas
+6. Retornar posteriormente ao problema de configuração da chave service_role
 
 ## Tarefas Concluídas
 - Migração da coluna 'email' para 'user_email' na tabela profiles
@@ -70,3 +97,5 @@
 - Criação da página de perfil do usuário
 - Implementação de métricas segmentadas no dashboard administrativo
 - Layout inicial para editor de questionários
+- Adição da logo MAR ao componente QuizViewAnswers
+- Melhorias no formato de exibição de respostas

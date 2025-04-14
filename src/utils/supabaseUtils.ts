@@ -3,6 +3,7 @@ import type { Database } from '@/integrations/supabase/database.types';
 import type { QuizSubmission } from '@/types/quiz';
 import { logger } from '@/utils/logger';
 import { enviarRespostasParaWebhook } from '@/utils/webhookService';
+import { normalizeAnswerForStorage } from '@/utils/formatUtils';
 
 // Verifica se o questionário está completo para o usuário
 export const isQuizComplete = async (userId: string): Promise<boolean> => {
