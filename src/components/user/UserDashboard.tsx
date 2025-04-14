@@ -204,7 +204,7 @@ export function UserDashboard({
                 </> : <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2 text-sm text-slate-600">
                     <BookOpen className="h-4 w-4" />
-                    <span>25 questões distribuídas em 8 módulos</span>
+                    <span>50 questões distribuídas em 10 módulos rápidos.</span>
                   </div>
                   <p className="text-slate-600">
                     O questionário MAR irá mapear seu nível atual e ajudá-lo a identificar oportunidades de crescimento.
