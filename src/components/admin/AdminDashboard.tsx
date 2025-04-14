@@ -442,7 +442,7 @@ export function AdminDashboard({
               Ver Métricas
               <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
-            <Button variant="default" size="sm" onClick={() => navigate("/admin/reports")}>
+            <Button variant="default" size="sm" onClick={() => navigate("/admin/reports")} className="text-slate-50">
               Ver Relatórios
               <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
