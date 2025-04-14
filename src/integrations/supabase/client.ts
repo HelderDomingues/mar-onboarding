@@ -287,7 +287,7 @@ export const configureEmailAccess = async (serviceRoleKey?: string) => {
         }
         
         // Agora testamos a RPC específica para emails
-        const { data, error } = await adminClient.rpc('get_user_emails');
+        const { data, error } = await adminClient.rpc('get_users_with_emails');
         
         if (error) {
           // Analisar o erro para fornecer uma mensagem mais detalhada
@@ -359,7 +359,7 @@ export const configureEmailAccess = async (serviceRoleKey?: string) => {
         };
       }
       
-      const { data, error } = await supabaseAdmin.rpc('get_user_emails');
+      const { data, error } = await supabaseAdmin.rpc('get_users_with_emails');
       
       if (error) {
         // Analisar o erro para fornecer uma mensagem mais detalhada
