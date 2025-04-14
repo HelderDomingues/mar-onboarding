@@ -1,16 +1,15 @@
+
 import React, { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { QuizViewAnswers } from "@/components/quiz/QuizViewAnswers";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+
 const QuizViewAnswersPage = () => {
-  const {
-    isAuthenticated,
-    user,
-    isAdmin
-  } = useAuth();
+  const { isAuthenticated, user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  
   useEffect(() => {
     // Atualiza o título da página
     document.title = "Minhas Respostas | MAR - Crie Valor";
@@ -20,10 +19,13 @@ const QuizViewAnswersPage = () => {
       navigate('/');
     }
   }, [isAuthenticated, navigate]);
+  
   if (!isAuthenticated) {
     return null; // Será redirecionado no useEffect
   }
-  return <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
+  
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
       <DashboardHeader isAdmin={isAdmin} />
       
       <div className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-slate-800">
@@ -35,6 +37,8 @@ const QuizViewAnswersPage = () => {
       </div>
       
       <SiteFooter />
-    </div>;
+    </div>
+  );
 };
+
 export default QuizViewAnswersPage;

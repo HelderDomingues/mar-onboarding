@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +23,7 @@ export function QuizViewAnswers() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [answers, setAnswers] = useState<any[]>([]);
+  const [modules, setModules] = useState<any[]>([]);
   const [submission, setSubmission] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
@@ -32,6 +34,18 @@ export function QuizViewAnswers() {
       
       try {
         setIsLoading(true);
+        
+        // Buscar informações dos módulos primeiro
+        const { data: modulesData, error: modulesError } = await supabase
+          .from('quiz_modules')
+          .select('id, title, order_number')
+          .order('order_number');
+          
+        if (modulesError) {
+          throw modulesError;
+        }
+        
+        setModules(modulesData || []);
         
         // Buscar diretamente da tabela quiz_answers
         const { data: answersData, error: answersError } = await supabase
@@ -54,14 +68,9 @@ export function QuizViewAnswers() {
           throw submissionError;
         }
         
-        // Processar módulos (necessário para ordenação)
-        const { data: modulesData } = await supabase
-          .from('quiz_modules')
-          .select('id, title, order_number')
-          .order('order_number');
-        
-        // Adicionar títulos de módulos às respostas se necessário
+        // Adicionar títulos de módulos às respostas, utilizando os dados obtidos
         const processedAnswers = answersData.map(answer => {
+          // Se não tiver título ou número do módulo, buscar dos módulos carregados
           if (!answer.module_title || !answer.module_number) {
             const module = modulesData?.find(m => m.id === answer.module_id);
             if (module) {
@@ -188,6 +197,7 @@ export function QuizViewAnswers() {
     );
   }
   
+  // Agrupar respostas por módulo
   const modulePattern = /module_(\d+)/;
   const answersByModule: Record<string, any[]> = {};
   
@@ -209,6 +219,12 @@ export function QuizViewAnswers() {
       }
     }
   });
+  
+  // Função auxiliar para buscar título do módulo
+  const getModuleTitle = (moduleNumber: string) => {
+    const moduleData = modules.find(m => m.order_number === parseInt(moduleNumber));
+    return moduleData?.title || '';
+  };
   
   return (
     <div className="w-full max-w-3xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
@@ -234,28 +250,34 @@ export function QuizViewAnswers() {
         
         <CardContent className="p-0">
           <Accordion type="single" collapsible className="w-full divide-y">
-            {Object.keys(answersByModule).sort((a, b) => parseInt(a) - parseInt(b)).map((moduleKey) => (
-              <AccordionItem value={`module-${moduleKey}`} key={moduleKey}>
-                <AccordionTrigger className="px-6 py-4 hover:bg-muted/50">
-                  <span className="font-medium">Módulo {moduleKey}</span>
-                </AccordionTrigger>
-                <AccordionContent className="px-6 py-2">
-                  <div className="space-y-4 my-2">
-                    {answersByModule[moduleKey].map((answer, index) => (
-                      <div key={answer.question_id} className="border-b border-gray-100 pb-4 last:border-none">
-                        <h4 className="font-medium text-sm text-slate-700 mb-1">
-                          Pergunta {index + 1}
-                        </h4>
-                        <p className="text-sm mb-2">{answer.question_text}</p>
-                        <div className="bg-blue-50 p-3 rounded text-sm">
-                          {formatJsonAnswer(answer.answer)}
+            {Object.keys(answersByModule).sort((a, b) => parseInt(a) - parseInt(b)).map((moduleKey) => {
+              const moduleTitle = getModuleTitle(moduleKey);
+              
+              return (
+                <AccordionItem value={`module-${moduleKey}`} key={moduleKey}>
+                  <AccordionTrigger className="px-6 py-4 hover:bg-muted/50">
+                    <span className="font-medium">
+                      Módulo {moduleKey}{moduleTitle ? ` - ${moduleTitle}` : ''}
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-6 py-2">
+                    <div className="space-y-4 my-2">
+                      {answersByModule[moduleKey].map((answer, index) => (
+                        <div key={answer.question_id} className="border-b border-gray-100 pb-4 last:border-none">
+                          <h4 className="font-medium text-sm text-slate-700 mb-1">
+                            Pergunta {index + 1}
+                          </h4>
+                          <p className="text-sm mb-2">{answer.question_text}</p>
+                          <div className="bg-blue-50 p-3 rounded text-sm">
+                            {formatJsonAnswer(answer.answer)}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
           </Accordion>
         </CardContent>
         
