@@ -27,12 +27,24 @@ const formatJsonAnswer = (answer) => {
     if (answer.startsWith('[') && answer.endsWith(']')) {
       const parsed = JSON.parse(answer);
       if (Array.isArray(parsed)) {
-        return parsed.join(', ');
+        // Para cada item no array, verifica se é um objeto ou uma string
+        const formattedItems = parsed.map(item => {
+          if (typeof item === 'object' && item !== null) {
+            // Se for um objeto, retorna o valor texto dele
+            return item.text || item.valor || Object.values(item).join(', ');
+          }
+          return item; // Se for uma string, retorna diretamente
+        });
+        return formattedItems.join(', ');
       }
     }
     return answer;
   } catch (e) {
     // Se não conseguir fazer o parse, retorna a resposta original
+    logger.error("Erro ao formatar resposta JSON:", {
+      tag: 'Quiz',
+      data: { answer, error: e }
+    });
     return answer;
   }
 };
