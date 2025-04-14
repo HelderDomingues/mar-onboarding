@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/routes/ProtectedRoute";
@@ -17,6 +16,7 @@ import IndexPage from "@/pages/Index";
 import TestConnectionPage from "@/pages/TestConnection";
 import SystemLog from "@/pages/SystemLog";
 import DiagnosticoSistema from "@/pages/DiagnosticoSistema";
+import QuizTest from "@/pages/QuizTest";
 
 // Admin pages
 import ImportUsers from "@/pages/admin/ImportUsers";
@@ -39,6 +39,7 @@ const AppRoutes = () => {
       <Route path="/member" element={<ProtectedRoute component={MemberArea} />} />
       <Route path="/faq" element={<ProtectedRoute component={FAQ} />} />
       <Route path="/diagnostico" element={<ProtectedRoute component={DiagnosticoSistema} />} />
+      <Route path="/quiz-test" element={<QuizTest />} />
 
       {/* Admin routes */}
       <Route path="/admin" element={<AdminRoute />}>
