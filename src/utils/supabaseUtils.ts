@@ -176,62 +176,59 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
       data: { userId }
     });
     
-    // Tentativa 1: Usar função RPC via supabaseAdmin
-    if (supabaseAdmin) {
-      try {
-        logger.info('Tentando completar questionário via RPC', {
-          tag: 'Quiz',
-          data: { userId, method: 'RPC' }
-        });
-        
-        const { data, error } = await supabaseAdmin.rpc('complete_quiz', { user_id: userId });
-        
-        if (error) {
-          logger.error("Erro ao completar questionário via RPC:", {
-            tag: 'Quiz',
-            data: { 
-              userId, 
-              error: JSON.stringify(error),
-              errorMessage: error.message,
-              errorDetails: error.details,
-              errorHint: error.hint,
-              errorCode: error.code
-            }
-          });
-          
-          // Não retornar ainda, tente o método alternativo
-          throw {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code,
-            method: 'rpc'
-          };
-        }
-        
-        logger.info('Questionário completado com sucesso via RPC', {
-          tag: 'Quiz',
-          data: { userId, result: data }
-        });
-        
-        return { 
-          success: true, 
-          method: 'rpc' 
-        };
-      } catch (rpcError: any) {
-        // Registra o erro, mas continua para o método alternativo
-        logger.warn('Falha no método RPC, tentando método alternativo', {
+    // Usar função RPC via cliente padrão (não precisa mais do admin)
+    try {
+      logger.info('Tentando completar questionário via RPC', {
+        tag: 'Quiz',
+        data: { userId, method: 'RPC' }
+      });
+      
+      const { data, error } = await supabase.rpc('complete_quiz', { user_id: userId });
+      
+      if (error) {
+        logger.error("Erro ao completar questionário via RPC:", {
           tag: 'Quiz',
           data: { 
             userId, 
-            error: rpcError,
-            message: rpcError.message || 'Erro desconhecido no RPC'
+            error: JSON.stringify(error),
+            errorMessage: error.message,
+            errorDetails: error.details,
+            errorHint: error.hint,
+            errorCode: error.code
           }
         });
+        
+        throw {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          method: 'rpc'
+        };
       }
+      
+      logger.info('Questionário completado com sucesso via RPC', {
+        tag: 'Quiz',
+        data: { userId, result: data }
+      });
+      
+      return { 
+        success: true, 
+        method: 'rpc' 
+      };
+    } catch (rpcError: any) {
+      // Se falhar, tenta o método alternativo
+      logger.warn('Falha no método RPC, tentando método alternativo', {
+        tag: 'Quiz',
+        data: { 
+          userId, 
+          error: rpcError,
+          message: rpcError.message || 'Erro desconhecido no RPC'
+        }
+      });
     }
     
-    // Tentativa 2: Método alternativo via update direto
+    // Método alternativo via update direto
     try {
       logger.info('Tentando completar questionário via atualização direta', {
         tag: 'Quiz',
