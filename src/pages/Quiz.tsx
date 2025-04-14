@@ -10,7 +10,7 @@ import { QuizSuccess } from "@/components/quiz/QuizSuccess";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
-import { loadQuizModules, loadQuizQuestions, mapQuestionsWithOptions } from "@/utils/quizDataUtils";
+import { loadQuizModules, loadQuizQuestions, mapQuestionsWithOptions, loadQuestionOptions } from "@/utils/quizDataUtils";
 import { QuizModule, QuizQuestion, QuizAnswer, QuizSubmission } from "@/types/quiz";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -93,6 +93,7 @@ const Quiz = () => {
         data: { userId: user.id }
       });
       
+      // Carregar módulos do questionário
       const modulesData = await loadQuizModules();
       if (!modulesData || modulesData.length === 0) {
         throw new Error("Nenhum módulo de questionário encontrado.");
@@ -100,20 +101,31 @@ const Quiz = () => {
       
       setModules(modulesData);
       
+      // Carregar perguntas do questionário (com opções)
       const questionsData = await loadQuizQuestions();
       if (!questionsData) {
         throw new Error("Erro ao carregar perguntas do questionário.");
       }
       
+      // Processar os dados das perguntas com as opções
       const questionsWithOptions = mapQuestionsWithOptions(questionsData);
+      
+      // Log para depuração
+      console.log("Questões carregadas com opções:", questionsWithOptions);
+      
       setQuestions(questionsWithOptions);
       
+      // Configurar o módulo inicial
       const firstModule = modulesData[0];
       const firstModuleQuestions = questionsWithOptions.filter(q => q.module_id === firstModule.id);
+      
+      console.log("Perguntas do primeiro módulo:", firstModuleQuestions);
+      
       setCurrentModuleIndex(0);
       setModuleQuestions(firstModuleQuestions);
       setCurrentQuestionIndex(0);
       
+      // Verificar parâmetros da URL para navegação específica
       if (moduleParam && modulesData.some(m => m.id === moduleParam)) {
         const moduleIndex = modulesData.findIndex(m => m.id === moduleParam);
         if (moduleIndex >= 0) {
@@ -130,6 +142,7 @@ const Quiz = () => {
         }
       }
       
+      // Verificar submissão existente
       const { data: submissionData, error: submissionError } = await supabase
         .from('quiz_submissions')
         .select('*')
@@ -144,10 +157,12 @@ const Quiz = () => {
       }
 
       if (submissionData) {
+        console.log("Submissão encontrada:", submissionData);
+        
         const userSubmission = submissionData as unknown as QuizSubmission;
         setSubmission(userSubmission);
         
-        if (userSubmission.completed) {
+        if (userSubmission.is_complete) {
           setIsComplete(true);
           
           if (!showAdmin && !forceMode && location.pathname === '/quiz' && !location.search) {
@@ -168,6 +183,7 @@ const Quiz = () => {
           }
         }
 
+        // Carregar respostas existentes
         const { data: answersData, error: answersError } = await supabase
           .from('quiz_answers')
           .select('*')
@@ -178,6 +194,8 @@ const Quiz = () => {
         }
 
         if (answersData) {
+          console.log("Respostas encontradas:", answersData);
+          
           const loadedAnswers: AnswerMap = {};
           answersData.forEach(ans => {
             try {
@@ -195,18 +213,19 @@ const Quiz = () => {
           });
           setAnswers(loadedAnswers);
           
-          if (userSubmission.current_module >= 8 && !userSubmission.completed && !showReview) {
+          if (userSubmission.current_module >= 8 && !userSubmission.is_complete && !showReview) {
             setShowReview(true);
           }
         }
       } else {
+        // Criar nova submissão para usuário
         const { data: newSubmission, error: createError } = await supabase
           .from('quiz_submissions')
           .insert([{
             user_id: user.id,
             current_module: 1,
             started_at: new Date().toISOString(),
-            user_email: user.email // Adicionando o email do usuário aqui
+            user_email: user.email
           }])
           .select();
 
@@ -236,13 +255,21 @@ const Quiz = () => {
     }
   };
 
+  // Iniciar carregamento quando o usuário estiver autenticado
   useEffect(() => {
     if (isAuthenticated && user) {
       fetchQuizData();
     } else if (!isAuthenticated) {
       navigate('/');
     }
-  }, [isAuthenticated, user, moduleParam, questionParam]);
+  }, [isAuthenticated, user]);
+
+  // Recarregar ao mudar parâmetros de URL
+  useEffect(() => {
+    if (isAuthenticated && user && (moduleParam || questionParam)) {
+      fetchQuizData();
+    }
+  }, [moduleParam, questionParam]);
 
   const saveAnswer = async (questionId: string, answer: string | string[]) => {
     if (!user) return;
@@ -262,7 +289,7 @@ const Quiz = () => {
         question_id: questionId,
         answer: answerValue,
         question_text: questionInfo?.question_text || questionInfo?.text || '',
-        user_email: user.email, // Campo obrigatório que estava faltando
+        user_email: user.email,
         module_id: questionInfo?.module_id,
         module_number: questionInfo?.module_number,
         module_title: questionInfo?.module_title,
@@ -302,7 +329,7 @@ const Quiz = () => {
         error
       } = await supabase.from('quiz_submissions').update({
         current_module: moduleNumber,
-        user_email: user.email // Garantindo que o email seja atualizado se estiver faltando
+        user_email: user.email
       }).eq('user_id', user.id);
       if (error) throw error;
       logger.info('Progresso do módulo atualizado', {
@@ -328,10 +355,9 @@ const Quiz = () => {
       });
       
       const { error } = await supabaseAdmin.from('quiz_submissions').update({
-        completed: true,
+        is_complete: true,
         completed_at: new Date().toISOString(),
-        contact_consent: true,
-        user_email: user.email // Garantindo que o email seja incluído
+        user_email: user.email
       }).eq('user_id', user.id);
       
       if (error) throw error;
@@ -434,6 +460,7 @@ const Quiz = () => {
   const isFirstQuestion = currentModuleIndex === 0 && currentQuestionIndex === 0;
   const isLastQuestion = currentModuleIndex === modules.length - 1 && currentQuestionIndex === moduleQuestions.length - 1;
 
+  // Interface renderizada
   return (
     <div className="min-h-screen flex flex-col quiz-container">
       <DashboardHeader isAdmin={isAdmin} />

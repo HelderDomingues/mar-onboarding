@@ -242,3 +242,34 @@ export const configurarSupabase = () => {
     return false;
   }
 };
+
+// Função para verificar se a tabela de backup existe
+export const verificarTabelasBackup = async (): Promise<boolean> => {
+  try {
+    // Verificar se as tabelas de backup existem
+    const { data, error } = await supabase
+      .from('quiz_questions_backup')
+      .select('count(*)', { count: 'exact', head: true });
+      
+    if (error) {
+      logger.error("Erro ao verificar tabelas de backup:", {
+        tag: 'Supabase',
+        data: { error }
+      });
+      return false;
+    }
+    
+    logger.info('Tabelas de backup verificadas', {
+      tag: 'Supabase',
+      data: { resultado: 'OK' }
+    });
+    
+    return true;
+  } catch (error) {
+    logger.error("Erro ao verificar tabelas de backup:", {
+      tag: 'Supabase',
+      data: { error }
+    });
+    return false;
+  }
+};

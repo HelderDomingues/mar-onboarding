@@ -237,14 +237,12 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string
-          dependency: Json | null
           hint: string | null
           id: string
           max_options: number | null
           module_id: string | null
           module_number: number
           module_title: string
-          options: Json | null
           options_json: Json | null
           order_number: number
           placeholder: string | null
@@ -259,14 +257,12 @@ export type Database = {
         Insert: {
           category?: string | null
           created_at?: string
-          dependency?: Json | null
           hint?: string | null
           id?: string
           max_options?: number | null
           module_id?: string | null
           module_number: number
           module_title: string
-          options?: Json | null
           options_json?: Json | null
           order_number: number
           placeholder?: string | null
@@ -281,14 +277,12 @@ export type Database = {
         Update: {
           category?: string | null
           created_at?: string
-          dependency?: Json | null
           hint?: string | null
           id?: string
           max_options?: number | null
           module_id?: string | null
           module_number?: number
           module_title?: string
-          options?: Json | null
           options_json?: Json | null
           order_number?: number
           placeholder?: string | null
