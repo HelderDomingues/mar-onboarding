@@ -1,7 +1,7 @@
 import React from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, BookOpen, BarChart, CheckCircle, LineChart, Phone, Mail, AlertCircle, MessageSquare } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { QuizSubmission } from "@/types/quiz";
 import { Progress } from "@/components/ui/progress";
@@ -19,10 +19,8 @@ export function UserDashboard({
 }: UserDashboardProps) {
   const navigate = useNavigate();
 
-  // Calcular progresso se tiver submissão
   const progress = submission ? submission.completed ? 100 : submission.current_module / 8 * 100 : 0;
 
-  // Determinar a ação do botão principal baseado no status do questionário
   const getMainActionButton = () => {
     if (!submission) {
       return {
@@ -52,15 +50,14 @@ export function UserDashboard({
     };
   };
   const mainAction = getMainActionButton();
+
   return <div className="space-y-8 max-w-3xl mx-auto">
       <div className="text-center md:text-left">
         <h1 className="text-3xl font-bold mb-2 text-slate-900">Bem-vindo à sua Área de Membro MAR</h1>
         <p className="text-slate-600 max-w-3xl mx-auto md:mx-0">Acesse o Mapa para Alto Rendimento e acompanhe seu progresso para dar clareza aos caminhos da sua empresa.</p>
       </div>
 
-      {/* Layout em coluna única */}
       <div className="space-y-8">
-        {/* 1. Comece Aqui - Vídeo de introdução */}
         <Card className="border-0 shadow-md rounded-xl overflow-hidden bg-gradient-to-br from-blue-800 to-indigo-900 text-white">
           <CardContent className="pt-6 pb-4">
             <div className="flex items-center gap-2 bg-white/10 text-white px-4 py-2 rounded-full font-medium text-sm w-fit mb-4">
@@ -130,7 +127,6 @@ export function UserDashboard({
           </CardContent>
         </Card>
         
-        {/* 2. Card do questionário */}
         <Card className="overflow-hidden border-0 shadow-md hover:shadow-lg transition-all rounded-xl bg-white">
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-8 py-6">
             <div className="flex justify-between items-center">
@@ -215,7 +211,6 @@ export function UserDashboard({
           </CardFooter>
         </Card>
         
-        {/* 3. Materiais Exclusivos */}
         <Card className="overflow-hidden border-0 shadow-md rounded-xl">
           <CardHeader className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white">
             <CardTitle className="flex items-center gap-2 text-white">
@@ -234,7 +229,27 @@ export function UserDashboard({
           </CardContent>
         </Card>
         
-        {/* 4. Card de suporte/ajuda */}
+        <Card className="overflow-hidden border-0 shadow-md rounded-xl">
+          <CardHeader className="bg-gradient-to-r from-violet-500 to-purple-600 text-white">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <HelpCircle className="h-5 w-5" />
+              Precisa de Ajuda?
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-5 px-6">
+            <p className="text-slate-600 mb-4">
+              Encontre respostas para as dúvidas mais comuns sobre o programa MAR.
+            </p>
+            <Button 
+              variant="outline" 
+              className="w-full border-violet-200 text-violet-700 hover:bg-violet-50 rounded-lg" 
+              onClick={() => navigate("/faq")}
+            >
+              Ver Perguntas Frequentes
+            </Button>
+          </CardContent>
+        </Card>
+        
         <Card className="border-0 shadow-md rounded-xl overflow-hidden bg-white">
           <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-6">
             <CardTitle className="flex items-center gap-2 text-white">
