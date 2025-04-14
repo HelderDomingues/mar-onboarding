@@ -9,9 +9,14 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
   if (!userId) return false;
   
   try {
+    logger.info("Verificando status do questionário", {
+      tag: 'Quiz',
+      data: { userId, action: 'isQuizComplete' }
+    });
+    
     const { data, error } = await supabase
       .from('quiz_submissions')
-      .select('is_complete')
+      .select('is_complete, completed')
       .eq('user_id', userId)
       .maybeSingle();
       
@@ -23,7 +28,15 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
       return false;
     }
     
-    return data?.is_complete === true;
+    // Verificar ambos os campos is_complete e completed para compatibilidade
+    const isComplete = data?.is_complete === true || data?.completed === true;
+    
+    logger.info(`Status do questionário: ${isComplete ? 'Completo' : 'Incompleto'}`, {
+      tag: 'Quiz',
+      data: { userId, isComplete }
+    });
+    
+    return isComplete;
   } catch (error) {
     logger.error("Erro ao verificar status do questionário:", {
       tag: 'Quiz',

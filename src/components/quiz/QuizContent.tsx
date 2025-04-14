@@ -146,11 +146,12 @@ export function QuizContent({
 
     const currentAnswer = currentAnswers[currentQuestion.id];
 
+    // Mapeamento cuidadoso entre QuizQuestion e Question
     const mappedQuestion: Question = {
       id: currentQuestion.id,
       text: currentQuestion.text || currentQuestion.question_text || "",
       type: (currentQuestion.type || currentQuestion.question_type || "text") as CardQuestionType,
-      options: currentQuestion.options,
+      options: currentQuestion.options || [],
       required: currentQuestion.required !== undefined ? currentQuestion.required : true,
       hint: currentQuestion.hint,
       max_options: currentQuestion.max_options,
@@ -268,3 +269,4 @@ export function QuizContent({
     </div>
   );
 }
+

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -44,6 +45,7 @@ const Quiz = () => {
   const [showAdmin, setShowAdmin] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [dataFetched, setDataFetched] = useState(false); // Novo estado para controlar se os dados já foram buscados
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -62,6 +64,11 @@ const Quiz = () => {
       if (!user) return;
       
       try {
+        logger.info("Verificando status do questionário", {
+          tag: 'Quiz',
+          data: { userId: user.id }
+        });
+        
         const completed = await isQuizComplete(user.id);
         console.log("Status do questionário:", completed ? "Completo" : "Incompleto");
         
@@ -76,10 +83,16 @@ const Quiz = () => {
         }
       } catch (error) {
         console.error("Erro ao verificar status do questionário:", error);
+        logger.error("Erro ao verificar status do questionário", {
+          tag: 'Quiz',
+          data: { userId: user.id, error }
+        });
       }
     };
     
-    checkQuizStatus();
+    if (user) {
+      checkQuizStatus();
+    }
   }, [user, navigate, location, showAdmin, forceMode]);
 
   const fetchQuizData = async () => {
@@ -98,27 +111,35 @@ const Quiz = () => {
         throw new Error("Nenhum módulo de questionário encontrado.");
       }
       
+      logger.info('Módulos carregados com sucesso', {
+        tag: 'Quiz',
+        data: { count: modulesData.length }
+      });
+      
       setModules(modulesData);
       
-      // Carregar perguntas do questionário (com opções)
+      // Carregar perguntas do questionário
       const questionsData = await loadQuizQuestions();
       if (!questionsData) {
         throw new Error("Erro ao carregar perguntas do questionário.");
       }
       
-      // Processar os dados das perguntas com as opções
-      const questionsWithOptions = mapQuestionsWithOptions(questionsData);
-      
       // Log para depuração
-      console.log("Questões carregadas com opções:", questionsWithOptions);
+      logger.info("Questões carregadas com sucesso", {
+        tag: 'Quiz',
+        data: { count: questionsData.length }
+      });
       
-      setQuestions(questionsWithOptions);
+      setQuestions(questionsData);
       
       // Configurar o módulo inicial
       const firstModule = modulesData[0];
-      const firstModuleQuestions = questionsWithOptions.filter(q => q.module_id === firstModule.id);
+      const firstModuleQuestions = questionsData.filter(q => q.module_id === firstModule.id);
       
-      console.log("Perguntas do primeiro módulo:", firstModuleQuestions);
+      logger.info("Perguntas do primeiro módulo:", {
+        tag: 'Quiz',
+        data: { count: firstModuleQuestions.length }
+      });
       
       setCurrentModuleIndex(0);
       setModuleQuestions(firstModuleQuestions);
@@ -129,7 +150,7 @@ const Quiz = () => {
         const moduleIndex = modulesData.findIndex(m => m.id === moduleParam);
         if (moduleIndex >= 0) {
           setCurrentModuleIndex(moduleIndex);
-          const moduleQuestions = questionsWithOptions.filter(q => q.module_id === moduleParam);
+          const moduleQuestions = questionsData.filter(q => q.module_id === moduleParam);
           setModuleQuestions(moduleQuestions);
           
           if (questionParam) {
@@ -156,12 +177,18 @@ const Quiz = () => {
       }
 
       if (submissionData) {
-        console.log("Submissão encontrada:", submissionData);
+        logger.info("Submissão encontrada:", {
+          tag: 'Quiz',
+          data: { submissionId: submissionData.id }
+        });
         
         const userSubmission = submissionData as unknown as QuizSubmission;
         setSubmission(userSubmission);
         
-        if (userSubmission.completed && !showAdmin && !forceMode && location.pathname === '/quiz' && !location.search) {
+        // Verificar se o questionário já foi completo
+        const quizCompleted = userSubmission.completed === true || userSubmission.is_complete === true;
+        
+        if (quizCompleted && !showAdmin && !forceMode && location.pathname === '/quiz' && !location.search) {
           navigate('/quiz/view-answers');
           return;
         } else if (userSubmission.current_module >= 8 && !showReview) {
@@ -171,7 +198,7 @@ const Quiz = () => {
           setCurrentModuleIndex(moduleIndex);
           
           if (modulesData[moduleIndex]) {
-            const moduleQuestions = questions.filter(
+            const moduleQuestions = questionsData.filter(
               q => q.module_id === modulesData[moduleIndex].id
             );
             setModuleQuestions(moduleQuestions);
@@ -185,11 +212,17 @@ const Quiz = () => {
           .eq('user_id', user.id);
 
         if (answersError) {
-          throw answersError;
+          logger.error('Erro ao carregar respostas existentes', {
+            tag: 'Quiz',
+            data: { error: answersError }
+          });
         }
 
-        if (answersData) {
-          console.log("Respostas encontradas:", answersData);
+        if (answersData && answersData.length > 0) {
+          logger.info("Respostas encontradas:", {
+            tag: 'Quiz',
+            data: { count: answersData.length }
+          });
           
           const loadedAnswers: AnswerMap = {};
           answersData.forEach(ans => {
@@ -208,12 +241,17 @@ const Quiz = () => {
           });
           setAnswers(loadedAnswers);
           
-          if (userSubmission.current_module >= 8 && !userSubmission.completed && !showReview) {
+          if (userSubmission.current_module >= 8 && !quizCompleted && !showReview) {
             setShowReview(true);
           }
         }
       } else {
         // Criar nova submissão para usuário
+        logger.info("Criando nova submissão para o usuário", {
+          tag: 'Quiz',
+          data: { userId: user.id }
+        });
+        
         const { data: newSubmission, error: createError } = await supabase
           .from('quiz_submissions')
           .insert([{
@@ -225,15 +263,24 @@ const Quiz = () => {
           .select();
 
         if (createError) {
+          logger.error('Erro ao criar nova submissão', {
+            tag: 'Quiz',
+            data: { error: createError }
+          });
           throw createError;
         }
 
         if (newSubmission && newSubmission.length > 0) {
+          logger.info("Nova submissão criada com sucesso", {
+            tag: 'Quiz',
+            data: { submissionId: newSubmission[0].id }
+          });
           setSubmission(newSubmission[0] as unknown as QuizSubmission);
         }
       }
 
       setLoadError(null);
+      setDataFetched(true); // Marcar que os dados foram buscados com sucesso
     } catch (error: any) {
       logger.error('Erro ao carregar dados do questionário', {
         tag: 'Quiz',
@@ -252,16 +299,19 @@ const Quiz = () => {
 
   // Iniciar carregamento quando o usuário estiver autenticado
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated && user && !dataFetched) {
+      console.log("Iniciando carregamento de dados...");
       fetchQuizData();
     } else if (!isAuthenticated) {
+      console.log("Redirecionando para a página inicial (não autenticado)");
       navigate('/');
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, dataFetched]);
 
   // Recarregar ao mudar parâmetros de URL
   useEffect(() => {
     if (isAuthenticated && user && (moduleParam || questionParam)) {
+      console.log("Recarregando dados devido a mudança de parâmetros da URL");
       fetchQuizData();
     }
   }, [moduleParam, questionParam]);
@@ -465,7 +515,21 @@ const Quiz = () => {
           <QuizSuccess />
         ) : !isComplete ? (
           <>
-            {hasQuizData ? (
+            {isLoading ? (
+              <div className="text-center p-8 animate-pulse">
+                <h2 className="text-2xl font-bold text-white mb-4">Carregando questionário...</h2>
+                <p className="text-slate-300">
+                  Por favor, aguarde enquanto preparamos o questionário para você.
+                </p>
+              </div>
+            ) : loadError ? (
+              <QuizConfigurationPanel
+                isLoading={false}
+                loadError={loadError}
+                onRefresh={fetchQuizData}
+                isAdmin={showAdmin}
+              />
+            ) : hasQuizData ? (
               <QuizContent
                 currentModule={modules[currentModuleIndex]}
                 moduleQuestions={moduleQuestions}
@@ -487,8 +551,8 @@ const Quiz = () => {
               />
             ) : (
               <QuizConfigurationPanel
-                isLoading={isLoading}
-                loadError={loadError}
+                isLoading={false}
+                loadError="Nenhum dado do questionário foi encontrado. Tente novamente."
                 onRefresh={fetchQuizData}
                 isAdmin={showAdmin}
               />

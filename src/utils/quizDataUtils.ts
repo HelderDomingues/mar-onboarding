@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { QuizModule, QuizQuestion, QuizOption } from '@/types/quiz';
 import { logger } from '@/utils/logger';
@@ -10,6 +9,8 @@ import { logger } from '@/utils/logger';
 // Função para carregar os módulos do questionário
 export const loadQuizModules = async (): Promise<QuizModule[] | null> => {
   try {
+    logger.info('Carregando módulos do questionário', { tag: 'Quiz', action: 'loadQuizModules' });
+    
     const { data, error } = await supabase
       .from('quiz_modules')
       .select('*')
@@ -21,6 +22,16 @@ export const loadQuizModules = async (): Promise<QuizModule[] | null> => {
         data: { error }
       });
       return null;
+    }
+    
+    if (!data || data.length === 0) {
+      logger.warn('Nenhum módulo encontrado', { tag: 'Quiz', action: 'loadQuizModules' });
+    } else {
+      logger.info(`${data.length} módulos carregados com sucesso`, { 
+        tag: 'Quiz', 
+        action: 'loadQuizModules',
+        count: data.length 
+      });
     }
     
     return data as QuizModule[];
@@ -36,6 +47,8 @@ export const loadQuizModules = async (): Promise<QuizModule[] | null> => {
 // Função para carregar as perguntas do questionário
 export const loadQuizQuestions = async (): Promise<QuizQuestion[] | null> => {
   try {
+    logger.info('Carregando perguntas do questionário', { tag: 'Quiz', action: 'loadQuizQuestions' });
+    
     const { data, error } = await supabase
       .from('quiz_questions')
       .select('*')
@@ -49,18 +62,20 @@ export const loadQuizQuestions = async (): Promise<QuizQuestion[] | null> => {
       return null;
     }
     
-    // Carregar as opções para cada pergunta
-    const questionsWithOptions = await Promise.all(
-      data.map(async (question) => {
-        const options = await loadQuestionOptions(question.id);
-        return {
-          ...question,
-          options: options || []
-        };
-      })
-    );
+    if (!data || data.length === 0) {
+      logger.warn('Nenhuma pergunta encontrada', { tag: 'Quiz', action: 'loadQuizQuestions' });
+      return [];
+    }
     
-    return questionsWithOptions as QuizQuestion[];
+    logger.info(`${data.length} perguntas carregadas com sucesso`, { 
+      tag: 'Quiz', 
+      action: 'loadQuizQuestions',
+      count: data.length 
+    });
+    
+    // Processar as perguntas com opções
+    const questionsWithOptions = await mapQuestionsWithOptions(data);
+    return questionsWithOptions;
   } catch (error) {
     logger.error('Exceção ao carregar perguntas', {
       tag: 'Quiz',
@@ -97,65 +112,104 @@ export const loadQuestionOptions = async (questionId: string): Promise<QuizOptio
   }
 };
 
-// Função atualizada para mapear perguntas com suas opções
-export const mapQuestionsWithOptions = (questions: any[]): QuizQuestion[] => {
-  return questions.map(question => {
-    // Usar options_json se disponível, caso contrário usar as opções carregadas
-    let mappedOptions: QuizOption[] = [];
+// Função para mapear perguntas com suas opções
+export const mapQuestionsWithOptions = async (questions: any[]): Promise<QuizQuestion[]> => {
+  try {
+    // Carregar todas as opções de uma vez para maior eficiência
+    const { data: allOptions, error: optionsError } = await supabase
+      .from('quiz_options')
+      .select('*')
+      .order('order_number');
+      
+    if (optionsError) {
+      logger.error('Erro ao carregar todas as opções', {
+        tag: 'Quiz',
+        data: { error: optionsError }
+      });
+    }
     
-    if (question.options_json) {
-      try {
-        // Se options_json já é um objeto, não precisa parsear
-        const optionsData = typeof question.options_json === 'string' 
-          ? JSON.parse(question.options_json) 
-          : question.options_json;
-          
-        if (Array.isArray(optionsData)) {
-          // Converter para o formato QuizOption esperado
-          mappedOptions = optionsData.map((option, index) => {
-            if (typeof option === 'string') {
-              return {
-                id: `option-${question.id}-${index}`,
-                text: option,
-                question_id: question.id,
-                order_number: index
-              };
-            } else if (typeof option === 'object') {
-              return {
-                id: option.id || `option-${question.id}-${index}`,
-                text: option.text,
-                question_id: question.id,
-                order_number: option.order_number || index
-              };
-            }
-            return null;
-          }).filter(Boolean) as QuizOption[];
+    const optionsMap: Record<string, QuizOption[]> = {};
+    
+    // Organizar as opções por question_id
+    if (allOptions) {
+      allOptions.forEach(option => {
+        if (!optionsMap[option.question_id]) {
+          optionsMap[option.question_id] = [];
         }
-      } catch (e) {
-        logger.error('Erro ao processar options_json', {
-          tag: 'Quiz',
-          data: { questionId: question.id, error: e }
-        });
+        optionsMap[option.question_id].push(option);
+      });
+    }
+    
+    return questions.map(question => {
+      // Usar options_json se disponível, caso contrário usar as opções carregadas
+      let mappedOptions: QuizOption[] = [];
+      
+      // Primeiro verificar se temos opções no mapa
+      if (optionsMap[question.id]) {
+        mappedOptions = optionsMap[question.id];
+      } 
+      // Depois tentar usar options_json
+      else if (question.options_json) {
+        try {
+          // Se options_json já é um objeto, não precisa parsear
+          const optionsData = typeof question.options_json === 'string' 
+            ? JSON.parse(question.options_json) 
+            : question.options_json;
+            
+          if (Array.isArray(optionsData)) {
+            // Converter para o formato QuizOption esperado
+            mappedOptions = optionsData.map((option, index) => {
+              if (typeof option === 'string') {
+                return {
+                  id: `option-${question.id}-${index}`,
+                  text: option,
+                  question_id: question.id,
+                  order_number: index
+                };
+              } else if (typeof option === 'object') {
+                return {
+                  id: option.id || `option-${question.id}-${index}`,
+                  text: option.text,
+                  question_id: question.id,
+                  order_number: option.order_number || index
+                };
+              }
+              return null;
+            }).filter(Boolean) as QuizOption[];
+          }
+        } catch (e) {
+          logger.error('Erro ao processar options_json', {
+            tag: 'Quiz',
+            data: { questionId: question.id, error: e }
+          });
+        }
       }
-    }
-    
-    // Se temos opções já carregadas via JOIN, usar elas
-    if (question.options && Array.isArray(question.options) && question.options.length > 0) {
-      mappedOptions = question.options;
-    }
-    
-    // Criar objeto de pergunta com todas as propriedades necessárias
-    return {
-      ...question,
-      options: mappedOptions,
-      hint: question.hint || undefined,
-      max_options: question.max_options || undefined,
-      prefix: question.prefix || undefined,
-      validation: question.validation || undefined,
-      placeholder: question.placeholder || undefined,
-      text: question.question_text || question.text
-    } as QuizQuestion;
-  });
+      
+      // Se nenhuma opção foi encontrada, manter o array vazio
+      if (question.options && Array.isArray(question.options) && question.options.length > 0) {
+        mappedOptions = question.options;
+      }
+      
+      // Garantir que todas as propriedades importantes estejam presentes
+      return {
+        ...question,
+        options: mappedOptions,
+        type: question.question_type || question.type || 'text',
+        hint: question.hint || undefined,
+        max_options: question.max_options || undefined,
+        prefix: question.prefix || undefined,
+        validation: question.validation || undefined,
+        placeholder: question.placeholder || undefined,
+        text: question.question_text || question.text || ''
+      } as QuizQuestion;
+    });
+  } catch (error) {
+    logger.error('Erro ao mapear perguntas com opções', {
+      tag: 'Quiz',
+      data: { error }
+    });
+    return [];
+  }
 };
 
 // Função para verificar consistência entre dados da UI e do banco
