@@ -13,7 +13,7 @@ import { UrlField } from "@/components/quiz/question-types/UrlField";
 import { LimitedCheckbox } from "@/components/quiz/question-types/LimitedCheckbox";
 import { QuizOption } from "@/types/quiz";
 
-export type QuestionType = 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select' | 'url' | 'instagram';
+export type QuestionType = 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select' | 'url' | 'instagram' | 'phone';
 export interface Question {
   id: string;
   text: string;

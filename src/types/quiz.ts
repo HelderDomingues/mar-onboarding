@@ -23,7 +23,7 @@ export interface QuizSubmission {
   last_active?: string; // Última atividade no questionário
 }
 
-export type QuestionType = 'text' | 'textarea' | 'radio' | 'checkbox' | 'select' | 'email' | 'url' | 'instagram' | 'phone' | 'number' | string;
+export type QuestionType = 'text' | 'textarea' | 'radio' | 'checkbox' | 'select' | 'email' | 'url' | 'instagram' | 'phone' | 'number';
 
 export interface QuizModule {
   id: string;
@@ -81,15 +81,4 @@ export interface QuizAnswer {
   user_email?: string;
 }
 
-export interface Question {
-  id: string;
-  text: string;
-  type: QuestionType;
-  options?: (QuizOption | string)[];
-  required: boolean;
-  hint?: string;
-  max_options?: number;
-  prefix?: string;
-  validation?: string;
-  placeholder?: string;
-}
+// Removendo a interface Question duplicada, pois já temos no QuestionCard.tsx
