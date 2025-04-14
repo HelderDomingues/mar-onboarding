@@ -1,185 +1,33 @@
 
-# Tasks do Projeto MAR - Crie Valor Consultoria
+# Sistema MAR - Tarefas e Progresso
 
-## Plano de Reestruturação do Questionário MAR - Abril 2025
+## Stage 5 - Quiz System Enhancement (Current)
 
-### Etapa 1: Preparação e Análise - 14/04/2025
-- [x] Analisar documento de referência do questionário MAR
-- [x] Mapear todos os 9 módulos e suas perguntas
-- [x] Identificar tipos de perguntas necessários
-- [x] Verificar compatibilidade da estrutura atual do banco de dados
-- [x] Atualizar tasks.md com plano detalhado
-- [x] Atualizar log-implementation.md com registro das mudanças
+### ✅ System Logging Enhancement
+- [x] Expanded system log to track quiz actions
+- [x] Implemented time tracking for modules and questions
+- [x] Integrated logging into QuizContent component
 
-### Etapa 2: Reestruturação do Banco de Dados - 15/04/2025
-- [x] Limpar dados existentes nas tabelas de questionário (backup se necessário)
-- [x] Modificar estrutura da tabela `quiz_modules` para comportar 9 módulos
-- [x] Adaptar estrutura da tabela `quiz_questions` para novos tipos de pergunta
-- [x] Criar/atualizar tabela `quiz_sections` para organizar perguntas por seção
-- [x] Atualizar tabela `quiz_options` para suportar opções complexas de múltipla escolha
-- [x] Implementar mecanismo de controle de progresso por módulo
-- [x] Atualizar políticas RLS para novas estruturas
-- [x] Testar integridade referencial após mudanças
+### 🔄 Quiz Access Testing (Current Task)
+- [ ] Test quiz access as regular user
+- [ ] Verify quiz flow from start to finish
+- [ ] Validate answer saving and progression
+- [ ] Test review functionality
+- [ ] Document any issues found
 
-### Etapa 3: População do Banco com Questionário MAR - 16/04/2025
-- [x] Inserir 9 módulos do questionário MAR
-- [x] Criar todas as perguntas com tipos corretos (text, radio, checkbox, etc.)
-- [x] Configurar opções de resposta para perguntas de múltipla escolha
-- [x] Adicionar validações específicas por tipo de pergunta
-- [x] Adicionar textos de ajuda (hints) onde necessário
-- [x] Testar a integridade dos dados inseridos
+### Pending Tasks
+- [ ] Implement comprehensive quiz data export
+- [ ] Add quiz results visualization
+- [ ] Create admin dashboard improvements
 
-### Etapa 4: Atualização de Componentes e Interface - 17/04/2025
-- [x] Adaptar componente QuestionCard para suportar novos tipos de pergunta
-- [x] Atualizar componente QuizContent para navegação entre 9 módulos
-- [x] Adaptar componente QuizProgress para refletir nova estrutura
-- [x] Criar visualização específica para cada tipo de pergunta
-- [x] Implementar validação de entrada por tipo de pergunta
-- [x] Testar fluxo completo do questionário
+## Completed Stages
+- [x] Stage 1 - Initial Setup and Configuration
+- [x] Stage 2 - User Authentication and Authorization
+- [x] Stage 3 - Database Structure and Quiz System
+- [x] Stage 4 - UI Components and Validation
 
-### Etapa 5: Sistema de Logging Aprimorado - 18/04/2025
-- [x] Expandir sistema de log para rastrear ações no questionário
-- [x] Implementar métricas de tempo por módulo e pergunta
-- [ ] Adicionar registro de erros de validação
-- [ ] Criar visualização administrativa de logs
-- [ ] Adicionar exportação de logs para análise
+## Notes
+- Sistema de log expandido e integrado com sucesso
+- Próxima fase: Testar acesso e funcionalidades do questionário como usuário comum
+- Refatoração pendente após conclusão das tarefas principais
 
-### Etapa 6: Funcionalidades Administrativas - 19/04/2025
-- [ ] Implementar exportação de respostas em PDF
-- [ ] Implementar exportação de respostas em formato de planilha
-- [ ] Criar dashboard administrativo para análise de respostas
-- [ ] Desenvolver métricas e visualizações de dados coletados
-- [ ] Testar funcionalidades administrativas
-
-### Etapa 7: Testes e Ajustes Finais - 20/04/2025
-- [ ] Realizar testes de todos os tipos de pergunta
-- [ ] Validar navegação entre módulos
-- [ ] Verificar armazenamento correto de respostas
-- [ ] Testar exportação de dados
-- [ ] Validar permissões e níveis de acesso
-- [ ] Corrigir bugs e problemas identificados
-
-## Histórico de Implementações
-
-### 14/04/2025 - Integração de Métricas de Tempo no QuizContent
-- ✅ Implementados hooks para rastreamento de tempo em módulos e perguntas
-- ✅ Adicionada lógica para iniciar e finalizar timers automáticos
-- ✅ Implementado registro de duração de tempo em cada módulo
-- ✅ Implementado registro de tempo gasto em cada pergunta
-- ✅ Integrados novos métodos de logging com o componente QuizContent
-
-### 14/04/2025 - Sistema de Log Detalhado para Métricas de Tempo
-- ✅ Adicionados métodos específicos para monitoramento de tempo de módulos
-- ✅ Implementado rastreamento detalhado de duração por módulo e pergunta
-- ✅ Expandido sistema de log com métricas de performance
-- ✅ Garantida integração com sistema de log existente
-
-### 17/04/2025 - Adaptação do QuestionCard para Novos Tipos de Pergunta
-- ✅ Corrigidos erros de tipagem no componente QuestionCard
-- ✅ Adicionado suporte para tipos de pergunta Instagram, URL e limitedCheckbox
-- ✅ Implementada validação específica para cada tipo de campo
-- ✅ Adicionado suporte para prefixos e placeholders
-- ✅ Corrigidos erros de compatibilidade entre QuizQuestion e Question
-
-### 16/04/2025 - Implementação Completa do Questionário MAR
-- ✅ Migração SQL executada com sucesso para criar as 52 perguntas em 10 módulos
-- ✅ Implementada estrutura completa conforme documento oficial
-- ✅ Adicionados tipos especiais de pergunta (instagram, email, textarea, etc)
-- ✅ Configurados limites para perguntas de múltipla escolha
-- ✅ Implementadas validações específicas para cada tipo de campo
-- ✅ Atualizadas políticas RLS para acesso seguro aos dados
-- ✅ Verificada integridade referencial entre todas as tabelas
-
-### 16/04/2025 - População do Banco de Dados com Questionário MAR
-- ✅ Criadas e populadas tabelas para os 9 módulos do questionário
-- ✅ Adicionada tabela de seções para organizar perguntas dentro dos módulos
-- ✅ Inseridas perguntas iniciais para cada módulo com tipos variados
-- ✅ Configuradas opções para perguntas de múltipla escolha
-- ✅ Atualizadas políticas RLS para acesso correto às questões e opções
-- ✅ Testada integridade referencial entre módulos, seções, perguntas e opções
-
-### 15/04/2025 - Reestruturação do Banco de Dados para Questionário MAR
-- ✅ Modificada a estrutura da tabela quiz_questions para suportar novos tipos de pergunta
-- ✅ Adicionados campos para validação, placeholder, prefixo e dependências
-- ✅ Criada tabela de seções para organizar perguntas dentro dos módulos
-- ✅ Atualizada a estrutura para suportar campo de categoria
-- ✅ Adicionado suporte para opções com valor e texto
-- ✅ Implementado controle de número máximo de opções selecionáveis
-
-### 15/04/2025 - Preparação para Reestruturação do Questionário MAR
-- ✅ Análise completa do documento de referência do questionário MAR
-- ✅ Mapeamento dos 9 módulos e tipos de perguntas necessários
-- ✅ Atualização dos arquivos de log e documentação
-- ✅ Planejamento detalhado da reestruturação do questionário
-- ✅ Preparação do ambiente para modificações no banco de dados
-
-### 14/04/2025 - Análise do Questionário MAR e Plano de Reestruturação
-- ✅ Identificado problema: estrutura atual do questionário não está alinhada com a especificação oficial
-- ✅ Especificação completa do questionário MAR obtida do documento de referência
-- ✅ Necessária reestruturação completa das tabelas e dados do questionário
-
-### 14/04/2025 - Correção de Erros de Tipagem no QuizConfigurationPanel
-- ✅ Corrigido erro de tipagem no componente QuizConfigurationPanel.tsx
-- ✅ Adicionada definição de interface `QuizSection` ausente no arquivo types/quiz.ts
-- ✅ Corrigidas propriedades ausentes na interface `QuizQuestion`
-- ✅ Implementado sistema de fallback para propriedades que podem estar em formatos diferentes
-
-### 14/04/2025 - Debug Completo e Correção de Acesso ao Questionário
-- ✅ Depuração completa do sistema para resolver problemas de acesso ao questionário
-- ✅ Verificação e correção de múltiplos pontos de falha no fluxo de autenticação e navegação
-- ✅ Restruturação de componentes-chave para eliminar loops infinitos e congelamentos
-- ✅ Otimização do sistema de logs e implementação de padrão singleton para clientes Supabase
-- ✅ Melhoria no sistema de redirecionamento em rotas protegidas
-- ✅ Correção no fluxo de login e redirecionamento
-
-### 13/04/2025 - Correção de Erro no Select.Item
-- ✅ Correção de erro "A <Select.Item /> must have a value prop that is not an empty string"
-- ✅ Verificação e garantia de que todos os componentes SelectItem tenham valores válidos e não vazios
-- ✅ Adição de valores de fallback para itens sem valor definido em QuizConfigurationPanel.tsx e SystemLog.tsx
-
-### 13/04/2025 - Correção de Loop Infinito e Congelamento na Autenticação
-- ✅ Refatoração completa do hook useAuth.tsx para evitar chamadas recursivas e loops
-- ✅ Uso de setTimeout para operações assíncronas dentro do callback onAuthStateChange
-- ✅ Melhoria no componente Login para evitar múltiplas submissões e garantir o redirecionamento
-- ✅ Adição de indicadores de carregamento no componente ProtectedRoute
-- ✅ Correção do fluxo de autenticação para prevenir congelamento da aplicação
-
-## Tarefas Pendentes
-
-### Próxima Tarefa
-- [ ] Adicionar registro de erros de validação
-  - [ ] Atualizar o sistema de logs para capturar erros de validação
-  - [ ] Implementar registro de tentativas mal sucedidas de resposta
-  - [ ] Adicionar indicadores visuais para usuários sobre erros de validação
-  - [ ] Criar funções para analisar padrões de erro frequentes
-
-### Prioridade Alta
-- [ ] Criar visualização administrativa de logs
-- [ ] Adicionar exportação de logs para análise
-- [ ] Implementar componente para exportação de respostas do questionário em PDF
-- [ ] Implementar componente para exportação de respostas do questionário em formato de planilha
-
-### Prioridade Média
-- [ ] Refatorar o componente `src/components/admin/ImportUsers.tsx` (muito extenso, 462 linhas)
-- [ ] Refatorar o componente `src/components/SupabaseConnectionTest.tsx` (muito extenso, 329 linhas)
-- [ ] Refatorar o componente `src/components/debug/ConnectionTester.tsx` (muito extenso, 242 linhas)
-- [ ] Refatorar o componente `src/components/quiz/QuizConfigurationPanel.tsx` (muito extenso, 382 linhas)
-- [ ] Refatorar o componente `src/components/quiz/QuestionCard.tsx` (muito extenso, 324 linhas)
-- [ ] Refatorar o componente `src/pages/SystemLog.tsx` (muito extenso, 277 linhas)
-- [ ] Refatorar o componente `src/pages/Quiz.tsx` (muito extenso, 504 linhas)
-- [ ] Refatorar o componente `src/hooks/useAuth.tsx` (muito extenso, 270 linhas)
-- [ ] Refatorar o componente `src/utils/logger.ts` (muito extenso, 299 linhas)
-- [ ] Refatorar o componente `src/components/quiz/QuizContent.tsx` (muito extenso, 202 linhas)
-
-### Prioridade Baixa
-- [ ] Documentar todas as funções RPC do Supabase
-- [ ] Adicionar mais testes de conexão para verificar o funcionamento das políticas RLS
-- [ ] Melhorar a experiência de erro para usuários quando ocorrerem falhas de permissão
-
-## Observações Gerais
-- A estrutura do questionário MAR foi completamente reestruturada conforme especificação oficial
-- Foram implementados 10 módulos com todas as 52 perguntas necessárias
-- O sistema agora suporta diferentes tipos de pergunta, incluindo instagram e url
-- As tabelas foram organizadas para suportar todos os tipos de pergunta e opções
-- O componente QuestionCard foi adaptado para suportar os novos tipos de pergunta
-- O sistema de log agora rastreia métricas de tempo para módulos e perguntas
