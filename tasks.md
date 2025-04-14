@@ -30,7 +30,7 @@
 - [x] Testar a integridade dos dados inseridos
 
 ### Etapa 4: Atualização de Componentes e Interface - 17/04/2025
-- [ ] Adaptar componente QuestionCard para suportar novos tipos de pergunta
+- [x] Adaptar componente QuestionCard para suportar novos tipos de pergunta
 - [ ] Atualizar componente QuizContent para navegação entre 9 módulos
 - [ ] Adaptar componente QuizProgress para refletir nova estrutura
 - [ ] Criar visualização específica para cada tipo de pergunta
@@ -60,6 +60,13 @@
 - [ ] Corrigir bugs e problemas identificados
 
 ## Histórico de Implementações
+
+### 17/04/2025 - Adaptação do QuestionCard para Novos Tipos de Pergunta
+- ✅ Corrigidos erros de tipagem no componente QuestionCard
+- ✅ Adicionado suporte para tipos de pergunta Instagram, URL e limitedCheckbox
+- ✅ Implementada validação específica para cada tipo de campo
+- ✅ Adicionado suporte para prefixos e placeholders
+- ✅ Corrigidos erros de compatibilidade entre QuizQuestion e Question
 
 ### 16/04/2025 - Implementação Completa do Questionário MAR
 - ✅ Migração SQL executada com sucesso para criar as 52 perguntas em 10 módulos
@@ -126,10 +133,19 @@
 
 ## Tarefas Pendentes
 
+### Próxima Tarefa
+- [ ] Atualizar componente QuizContent para navegação entre 9 módulos
+  - Adaptar o componente para trabalhar com a nova estrutura de 9 módulos
+  - Garantir que a navegação entre módulos funcione corretamente
+  - Implementar carregamento adequado das perguntas por módulo
+  - Atualizar a interface para mostrar o módulo atual
+  - Testar a navegação completa do questionário
+
 ### Prioridade Alta
-- [ ] Adaptar componentes de frontend para trabalhar com a nova estrutura do questionário
+- [ ] Adaptar componente QuizProgress para refletir nova estrutura
+- [ ] Criar visualização específica para cada tipo de pergunta
+- [ ] Implementar validação de entrada por tipo de pergunta
 - [ ] Implementar sistema de log detalhado para rastrear uso do sistema
-- [ ] Criar componentes para novos tipos de pergunta (instagram, url, etc.)
 - [ ] Implementar componente para exportação de respostas do questionário em PDF
 - [ ] Implementar componente para exportação de respostas do questionário em formato de planilha
 
@@ -153,4 +169,5 @@
 - Foram implementados 10 módulos com todas as 52 perguntas necessárias
 - O sistema agora suporta diferentes tipos de pergunta, incluindo instagram e url
 - As tabelas foram organizadas para suportar todos os tipos de pergunta e opções
-- O próximo passo é adaptar os componentes de frontend para a nova estrutura
+- O componente QuestionCard foi adaptado para suportar os novos tipos de pergunta
+- A próxima fase é atualizar o componente QuizContent para navegação entre os 9 módulos
