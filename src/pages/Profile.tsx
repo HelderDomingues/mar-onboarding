@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,10 +10,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { addLogEntry } from "@/utils/projectLog";
 import { Loader2, User, Clock, CheckCircle } from "lucide-react";
-
 const ProfilePage = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const {
+    user
+  } = useAuth();
+  const {
+    toast
+  } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -29,27 +31,23 @@ const ProfilePage = () => {
     completedAt: null,
     timeSpent: 0
   });
-
   useEffect(() => {
     if (user) {
       loadUserProfile();
       loadQuizStats();
     }
   }, [user]);
-
   const loadUserProfile = async () => {
     try {
       setLoading(true);
-      addLogEntry('info', 'Carregando perfil do usuário', { userId: user?.id });
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user?.id)
-        .single();
-      
+      addLogEntry('info', 'Carregando perfil do usuário', {
+        userId: user?.id
+      });
+      const {
+        data,
+        error
+      } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
       if (error) throw error;
-      
       if (data) {
         setProfileData({
           full_name: data.full_name || "",
@@ -59,7 +57,9 @@ const ProfilePage = () => {
       }
     } catch (error: any) {
       console.error("Erro ao carregar perfil:", error);
-      addLogEntry('error', 'Erro ao carregar perfil', { error: error.message });
+      addLogEntry('error', 'Erro ao carregar perfil', {
+        error: error.message
+      });
       toast({
         title: "Erro ao carregar perfil",
         description: "Não foi possível carregar seus dados de perfil.",
@@ -69,17 +69,13 @@ const ProfilePage = () => {
       setLoading(false);
     }
   };
-
   const loadQuizStats = async () => {
     try {
-      const { data, error } = await supabase
-        .from('quiz_submissions')
-        .select('*')
-        .eq('user_id', user?.id)
-        .single();
-      
+      const {
+        data,
+        error
+      } = await supabase.from('quiz_submissions').select('*').eq('user_id', user?.id).single();
       if (error && error.code !== 'PGRST116') throw error;
-      
       if (data) {
         setQuizStats({
           completionStatus: data.completed ? "Completo" : "Em progresso",
@@ -90,32 +86,33 @@ const ProfilePage = () => {
       }
     } catch (error: any) {
       console.error("Erro ao carregar estatísticas do quiz:", error);
-      addLogEntry('error', 'Erro ao carregar estatísticas do quiz', { error: error.message });
+      addLogEntry('error', 'Erro ao carregar estatísticas do quiz', {
+        error: error.message
+      });
     }
   };
-
   const handleSaveProfile = async () => {
     try {
       setSaving(true);
-      addLogEntry('info', 'Atualizando perfil do usuário', { userId: user?.id });
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: profileData.full_name,
-          phone: profileData.phone
-        })
-        .eq('id', user?.id);
-      
+      addLogEntry('info', 'Atualizando perfil do usuário', {
+        userId: user?.id
+      });
+      const {
+        error
+      } = await supabase.from('profiles').update({
+        full_name: profileData.full_name,
+        phone: profileData.phone
+      }).eq('id', user?.id);
       if (error) throw error;
-      
       toast({
         title: "Perfil atualizado",
         description: "Suas informações foram atualizadas com sucesso."
       });
     } catch (error: any) {
       console.error("Erro ao atualizar perfil:", error);
-      addLogEntry('error', 'Erro ao atualizar perfil', { error: error.message });
+      addLogEntry('error', 'Erro ao atualizar perfil', {
+        error: error.message
+      });
       toast({
         title: "Erro ao atualizar perfil",
         description: "Não foi possível atualizar suas informações.",
@@ -129,27 +126,20 @@ const ProfilePage = () => {
   // Função para formatar o tempo em horas e minutos
   const formatTimeSpent = (seconds: number) => {
     if (!seconds) return "0 minutos";
-    
     const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    
+    const minutes = Math.floor(seconds % 3600 / 60);
     if (hours > 0) {
       return `${hours}h ${minutes}min`;
     } else {
       return `${minutes} minutos`;
     }
   };
-
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
+    return <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="container mx-auto py-8 px-4">
+  return <div className="container mx-auto py-8 px-4">
       <h1 className="text-2xl font-bold mb-6">Meu Perfil</h1>
       
       <Tabs defaultValue="personal">
@@ -173,23 +163,15 @@ const ProfilePage = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Nome Completo</Label>
-                <Input
-                  id="fullName"
-                  value={profileData.full_name}
-                  onChange={(e) => setProfileData({...profileData, full_name: e.target.value})}
-                  placeholder="Seu nome completo"
-                />
+                <Input id="fullName" value={profileData.full_name} onChange={e => setProfileData({
+                ...profileData,
+                full_name: e.target.value
+              })} placeholder="Seu nome completo" />
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  value={profileData.user_email}
-                  readOnly
-                  disabled
-                  className="bg-muted"
-                />
+                <Input id="email" value={profileData.user_email} readOnly disabled className="bg-muted" />
                 <p className="text-xs text-muted-foreground">
                   Para alterar seu email, entre em contato com o suporte.
                 </p>
@@ -197,27 +179,21 @@ const ProfilePage = () => {
               
               <div className="space-y-2">
                 <Label htmlFor="phone">Telefone</Label>
-                <Input
-                  id="phone"
-                  value={profileData.phone}
-                  onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
-                  placeholder="Seu número de telefone"
-                />
+                <Input id="phone" value={profileData.phone} onChange={e => setProfileData({
+                ...profileData,
+                phone: e.target.value
+              })} placeholder="Seu número de telefone" />
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button variant="outline" onClick={() => navigate('/dashboard')}>
                 Cancelar
               </Button>
-              <Button onClick={handleSaveProfile} disabled={saving}>
-                {saving ? (
-                  <>
+              <Button onClick={handleSaveProfile} disabled={saving} className="text-slate-50">
+                {saving ? <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Salvando...
-                  </>
-                ) : (
-                  "Salvar Alterações"
-                )}
+                  </> : "Salvar Alterações"}
               </Button>
             </CardFooter>
           </Card>
@@ -261,20 +237,14 @@ const ProfilePage = () => {
                 <div className="border rounded-md p-4">
                   <h3 className="text-sm font-medium text-muted-foreground mb-1">Data de Conclusão</h3>
                   <p className="text-lg font-semibold">
-                    {quizStats.completedAt 
-                      ? new Date(quizStats.completedAt).toLocaleDateString('pt-BR') 
-                      : "Não concluído"}
+                    {quizStats.completedAt ? new Date(quizStats.completedAt).toLocaleDateString('pt-BR') : "Não concluído"}
                   </p>
                 </div>
               </div>
             </CardContent>
             <CardFooter className="flex justify-center">
               <Button onClick={() => navigate('/quiz')}>
-                {quizStats.completionStatus === "Completo" 
-                  ? "Rever Questionário" 
-                  : quizStats.currentModule > 0 
-                    ? "Continuar Questionário" 
-                    : "Iniciar Questionário"}
+                {quizStats.completionStatus === "Completo" ? "Rever Questionário" : quizStats.currentModule > 0 ? "Continuar Questionário" : "Iniciar Questionário"}
               </Button>
             </CardFooter>
           </Card>
@@ -296,8 +266,6 @@ const ProfilePage = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>;
 };
-
 export default ProfilePage;
