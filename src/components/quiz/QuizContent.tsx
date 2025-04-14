@@ -189,12 +189,12 @@ export function QuizContent({
 
   const renderModuleNavigation = () => {
     return (
-      <div className="flex justify-between items-center w-full mt-8 max-w-2xl mx-auto">
+      <div className="flex justify-between items-center w-full mt-8 max-w-2xl mx-auto quiz-content-navigation">
         <Button 
           variant="outline" 
           onClick={onPrev} 
           disabled={isFirst}
-          className="flex items-center gap-2 text-white bg-slate-600 hover:bg-slate-700 border-slate-500"
+          className="flex items-center gap-2 text-white bg-slate-700 hover:bg-slate-800 border-slate-600 shadow-md"
         >
           <ArrowLeft size={16} />
           Anterior
@@ -213,7 +213,7 @@ export function QuizContent({
         <Button 
           onClick={onNext} 
           disabled={isLast}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white border border-blue-500 shadow-md"
         >
           Próximo
           <ArrowRight size={16} />

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -9,6 +10,7 @@ import { supabaseAdmin, supabase, checkSupabaseConnection } from "@/integrations
 import { logger } from "@/utils/logger";
 import { addLogEntry } from "@/utils/projectLog";
 import { QuizModule, QuizQuestion, QuizSection } from "@/types/quiz";
+
 interface QuizConfigurationPanelProps {
   isLoading: boolean;
   loadError: string | null;
@@ -17,12 +19,14 @@ interface QuizConfigurationPanelProps {
   modules: QuizModule[];
   questions: QuizQuestion[];
 }
+
 const errorIcon = error => <div className="text-red-500 text-sm flex items-center gap-1 mt-1">
     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
     </svg>
     <span>{error}</span>
   </div>;
+
 export function QuizConfigurationPanel({
   isLoading,
   loadError,
@@ -32,34 +36,29 @@ export function QuizConfigurationPanel({
   questions = []
 }: QuizConfigurationPanelProps) {
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
-  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
-  const [sections, setSections] = useState<QuizSection[]>([]);
   const [seedModalOpen, setSeedModalOpen] = useState(false);
   const [isSeedingQuiz, setIsSeedingQuiz] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
 
   // Garante que os valores de SelectItem nunca sejam vazios
   const getSelectValue = (value: string | undefined, fallback: string): string => {
     return value || fallback;
   };
+
   const filteredQuestions = React.useMemo(() => {
     if (!selectedModuleId) return [];
     let filtered = questions.filter(q => q.module_id === selectedModuleId);
-    if (selectedSectionId) {
-      // Verifica se a questão tem section_id antes de filtrar por essa propriedade
-      filtered = filtered.filter(q => q.section_id === selectedSectionId);
-    }
     return filtered;
-  }, [questions, selectedModuleId, selectedSectionId]);
+  }, [questions, selectedModuleId]);
+
   const truncateText = (text: string, maxLength: number): string => {
     if (text.length > maxLength) {
       return text.substring(0, maxLength) + "...";
     }
     return text;
   };
+
   const handleSeedQuiz = async () => {
     setIsSeedingQuiz(true);
     try {
@@ -73,9 +72,7 @@ export function QuizConfigurationPanel({
       if (!connectionStatus.connected) {
         throw new Error(`Erro de conexão com Supabase: ${connectionStatus.error}`);
       }
-      const {
-        error
-      } = await supabaseAdmin?.functions.invoke('seed-quiz', {
+      const { error } = await supabaseAdmin?.functions.invoke('seed-quiz', {
         body: {
           action: 'seed'
         }
@@ -118,46 +115,7 @@ export function QuizConfigurationPanel({
       setSeedModalOpen(false);
     }
   };
-  useEffect(() => {
-    const fetchSections = async () => {
-      if (selectedModuleId) {
-        try {
-          const {
-            data,
-            error
-          } = await supabase.from('quiz_sections').select('*').eq('module_id', selectedModuleId);
-          if (error) {
-            logger.error('Erro ao buscar seções', {
-              tag: 'Quiz',
-              data: error
-            });
-            addLogEntry('error', 'Erro ao buscar seções', JSON.stringify(error));
-            toast({
-              title: "Erro ao buscar seções",
-              description: error.message,
-              variant: "destructive"
-            });
-          } else if (data) {
-            setSections(data as QuizSection[]);
-          }
-        } catch (error: any) {
-          logger.error('Erro ao buscar seções', {
-            tag: 'Quiz',
-            data: error
-          });
-          addLogEntry('error', 'Erro ao buscar seções', JSON.stringify(error));
-          toast({
-            title: "Erro ao buscar seções",
-            description: error.message,
-            variant: "destructive"
-          });
-        }
-      } else {
-        setSections([]);
-      }
-    };
-    fetchSections();
-  }, [selectedModuleId, toast]);
+
   return <div className="w-full max-w-4xl mx-auto">
       <div className="mb-8 text-center">
         <h1 className="text-2xl md:text-3xl font-bold mb-4 text-slate-100">
@@ -190,11 +148,11 @@ export function QuizConfigurationPanel({
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-800 mb-4"></div>
           <p className="text-gray-600">Carregando questionário...</p>
         </div> : modules.length > 0 ? <>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 gap-8">
             <div>
               <Label htmlFor="moduleSelect">Módulo</Label>
               <Select value={selectedModuleId || ""} onValueChange={value => setSelectedModuleId(value)}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="Selecione um módulo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -206,23 +164,9 @@ export function QuizConfigurationPanel({
             </div>
 
             <div>
-              <Label htmlFor="sectionSelect">Seção</Label>
-              <Select value={selectedSectionId || ""} onValueChange={value => setSelectedSectionId(value)} disabled={!selectedModuleId}>
-                <SelectTrigger className="w-full text-zinc-950">
-                  <SelectValue placeholder="Selecione uma seção" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sections.map(section => <SelectItem key={section.id} value={getSelectValue(section.id, `section-${section.id}`)}>
-                      {section.name}
-                    </SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
               <Label htmlFor="questionSelect">Pergunta</Label>
               <Select value={selectedQuestionId || ""} onValueChange={value => setSelectedQuestionId(value)} disabled={!selectedModuleId}>
-                <SelectTrigger className="w-full text-zinc-950">
+                <SelectTrigger className="w-full bg-white text-zinc-950">
                   <SelectValue placeholder="Selecione uma pergunta" />
                 </SelectTrigger>
                 <SelectContent>
@@ -240,26 +184,18 @@ export function QuizConfigurationPanel({
               Detalhes
             </h2>
             {selectedModuleId && <div className="mb-4">
-                <h3 className="text-lg font-medium text-gray-600">
+                <h3 className="text-lg font-medium text-slate-300">
                   Módulo Selecionado
                 </h3>
-                <p>
+                <p className="text-white">
                   {modules.find(module => module.id === selectedModuleId)?.title}
                 </p>
               </div>}
-            {selectedSectionId && <div className="mb-4">
-                <h3 className="text-lg font-medium text-gray-600">
-                  Seção Selecionada
-                </h3>
-                <p>
-                  {sections.find(section => section.id === selectedSectionId)?.name}
-                </p>
-              </div>}
             {selectedQuestionId && <div>
-                <h3 className="text-lg font-medium text-gray-600">
+                <h3 className="text-lg font-medium text-slate-300">
                   Pergunta Selecionada
                 </h3>
-                <p>
+                <p className="text-white">
                   {questions.find(question => question.id === selectedQuestionId)?.question_text || questions.find(question => question.id === selectedQuestionId)?.text}
                 </p>
               </div>}

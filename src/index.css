@@ -175,13 +175,35 @@
   @apply text-white;
 }
 
-/* Estilos para os botões do quiz */
+/* Estilos para os botões do quiz - Melhorias de contraste */
 .quiz-nav-button {
-  @apply bg-blue-600 hover:bg-blue-700 text-white border border-blue-500;
+  @apply bg-blue-600 hover:bg-blue-700 text-white border border-blue-500 font-medium shadow-md;
 }
 
 .quiz-prev-button {
-  @apply bg-slate-600 hover:bg-slate-700 text-white border border-slate-500;
+  @apply bg-slate-700 hover:bg-slate-800 text-white border border-slate-600 font-medium shadow-md;
+}
+
+/* Botões de navegação específicos com contraste melhorado */
+.quiz-content-navigation button {
+  @apply shadow-lg border transition-all duration-200;
+}
+
+.quiz-content-navigation button:hover {
+  @apply transform -translate-y-1 shadow-xl;
+}
+
+.quiz-content-navigation button:focus {
+  @apply ring-2 ring-white ring-offset-2 ring-offset-blue-700 outline-none;
+}
+
+/* Melhorias visuais para elementos de seleção */
+.quiz-select-trigger {
+  @apply bg-white text-gray-900 border border-gray-300;
+}
+
+.quiz-select-content {
+  @apply bg-white text-gray-900 border border-gray-300 shadow-xl;
 }
 
 /* Animações */
