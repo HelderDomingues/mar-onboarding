@@ -96,7 +96,6 @@ const QuizReviewPage = () => {
                   const parsed = JSON.parse(ans.answer);
                   processedAnswers[ans.question_id] = Array.isArray(parsed) ? parsed : [ans.answer];
                 } catch (e) {
-                  // Se falhar o parse, pode ser que seja uma resposta em string simples
                   if (ans.answer.includes(',') && !ans.answer.includes('{') && !ans.answer.includes('"')) {
                     processedAnswers[ans.question_id] = ans.answer.split(',').map(item => item.trim());
                   } else {
@@ -107,7 +106,6 @@ const QuizReviewPage = () => {
                 processedAnswers[ans.question_id] = ans.answer;
               }
             } catch (e) {
-              // Em caso de erro no processamento, usar a resposta original
               processedAnswers[ans.question_id] = ans.answer;
             }
           } else {
@@ -125,7 +123,6 @@ const QuizReviewPage = () => {
         }
       });
       
-      // Usar formatQuizAnswers para garantir formato consistente
       const formattedAnswers = formatQuizAnswers(processedAnswers);
       
       setModules(modulesData as unknown as QuizModule[]);
@@ -157,15 +154,24 @@ const QuizReviewPage = () => {
     try {
       logger.info('Iniciando processo de conclusão do questionário', {
         tag: 'Quiz',
-        data: { userId: user.id }
+        data: { userId: user.id, userEmail: user.email }
       });
+      
+      if (!user.email) {
+        throw { 
+          message: "Email do usuário não encontrado", 
+          details: "O email do usuário é necessário para finalizar o questionário",
+          code: "EMAIL_NOT_FOUND"
+        };
+      }
       
       const result = await completeQuizManually(user.id);
       
       if (result.success) {
         logger.info('Questionário completado com sucesso', {
           tag: 'Quiz',
-          userId: user.id
+          userId: user.id,
+          data: { method: result.method }
         });
         
         toast({
@@ -177,7 +183,9 @@ const QuizReviewPage = () => {
       } else {
         throw { 
           message: "Não foi possível completar o questionário", 
-          details: result.error 
+          details: result.details || result.error?.details || "Sem detalhes adicionais",
+          code: result.errorCode || result.error?.code || "COMPLETION_FAILED",
+          hint: result.errorHint || result.error?.hint
         };
       }
     } catch (error: any) {
@@ -187,6 +195,8 @@ const QuizReviewPage = () => {
           error,
           errorMessage: error.message || 'Erro desconhecido',
           errorDetails: error.details || null,
+          errorCode: error.code || null,
+          errorHint: error.hint || null,
           fullError: JSON.stringify(error)
         }
       });
@@ -201,6 +211,14 @@ const QuizReviewPage = () => {
       
       if (error.details) {
         errorMessage += ` Detalhes: ${typeof error.details === 'object' ? JSON.stringify(error.details) : error.details}`;
+      }
+      
+      if (error.code) {
+        errorMessage += ` (Código: ${error.code})`;
+      }
+      
+      if (error.hint) {
+        errorMessage += ` Dica: ${error.hint}`;
       }
       
       toast({

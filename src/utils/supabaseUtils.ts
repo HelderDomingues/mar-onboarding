@@ -1,4 +1,3 @@
-
 import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/database.types';
 import type { QuizSubmission } from '@/types/quiz';
@@ -127,6 +126,9 @@ interface CompleteQuizResult {
   success: boolean;
   method?: 'rpc' | 'direct_update' | 'manual_update';
   error?: any;
+  details?: string;
+  errorCode?: string;
+  errorHint?: string;
 }
 
 // Completa o questionário manualmente para o usuário
@@ -146,7 +148,7 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
         data: { userId, method: 'direct_update' }
       });
       
-      // Verifica primeiro se o registro existe
+      // Verificamos primeiro se o registro existe
       const { data: existingSubmission, error: checkError } = await supabase
         .from('quiz_submissions')
         .select('id')
@@ -170,6 +172,19 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
       // Obtém o email do usuário da sessão atual
       const { data: userSession } = await supabase.auth.getUser();
       const userEmail = userSession?.user?.email;
+      
+      if (!userEmail) {
+        logger.error("Email do usuário não encontrado na sessão", {
+          tag: 'Quiz',
+          data: { userId }
+        });
+        throw {
+          message: "Email do usuário não encontrado na sessão",
+          details: "O email do usuário é obrigatório para concluir o questionário",
+          method: 'direct_update',
+          errorCode: "EMAIL_NOT_FOUND"
+        };
+      }
       
       let updateResult;
       
@@ -243,7 +258,7 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
         }
       });
       
-      // Tenta o método RPC como fallback - ajustado para trabalhar com userEmail
+      // Tenta o método manual como fallback - ajustado para trabalhar com userEmail
       try {
         logger.info('Tentando completar questionário via chamada manual direta (fallback)', {
           tag: 'Quiz',
@@ -253,6 +268,14 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
         // Obtém o email do usuário da sessão atual
         const { data: userSession } = await supabase.auth.getUser();
         const userEmail = userSession?.user?.email;
+        
+        if (!userEmail) {
+          throw {
+            message: "Email do usuário não encontrado na sessão",
+            details: "O email do usuário é obrigatório para concluir o questionário",
+            code: "EMAIL_NOT_FOUND"
+          };
+        }
         
         // Usa transações básicas
         const now = new Date().toISOString();
@@ -290,7 +313,12 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
         }
         
         if (manualResult.error) {
-          throw manualResult.error;
+          throw {
+            message: manualResult.error.message,
+            details: manualResult.error.details,
+            hint: manualResult.error.hint,
+            code: manualResult.error.code
+          };
         }
         
         logger.info('Questionário completado com sucesso via método manual (fallback)', {
@@ -309,11 +337,14 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
           error: {
             direct: directError,
             manual: manualError
-          }
+          },
+          details: manualError.details || directError.details,
+          errorCode: manualError.code || directError.code,
+          errorHint: manualError.hint || directError.hint
         };
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     logger.error("Erro ao completar questionário manualmente:", {
       tag: 'Quiz',
       data: { userId, error }
@@ -321,7 +352,10 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
     
     return { 
       success: false, 
-      error 
+      error, 
+      details: error.details,
+      errorCode: error.code,
+      errorHint: error.hint
     };
   }
 };

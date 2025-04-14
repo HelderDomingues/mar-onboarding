@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -111,6 +110,16 @@ export function QuizReview({
         throw new Error("Email do usuário não encontrado na sessão");
       }
       
+      logger.info('Salvando resposta editada', {
+        tag: 'Quiz',
+        data: { 
+          questionId, 
+          userId, 
+          userEmail,
+          questionText: currentQuestion.question_text || currentQuestion.text
+        }
+      });
+      
       const {
         error
       } = await supabase.from('quiz_answers').upsert({
@@ -215,20 +224,40 @@ export function QuizReview({
     setErrorDetails(null);
     
     try {
-      const userId = (await supabase.auth.getUser()).data.user?.id;
-      if (!userId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !user.id) {
         throw new Error("Usuário não autenticado");
+      }
+      
+      const userId = user.id;
+      const userEmail = user.email;
+      
+      if (!userEmail) {
+        throw new Error("Email do usuário não encontrado na sessão");
       }
       
       logger.info('Iniciando finalização do questionário', {
         tag: 'Quiz',
-        userId
+        userId,
+        data: { userEmail }
       });
       
       const result = await completeQuizManually(userId);
       
       if (!result.success) {
-        throw result.error || new Error("Falha ao completar questionário");
+        const errorDetails = {
+          message: result.error?.message || "Falha ao completar questionário",
+          details: result.details || result.error?.details || "Sem detalhes adicionais",
+          code: result.errorCode || result.error?.code || "UNKNOWN_ERROR",
+          hint: result.errorHint || result.error?.hint || "Tente novamente ou contate o suporte"
+        };
+        
+        logger.error("Erro detalhado na finalização:", {
+          tag: 'Quiz',
+          data: errorDetails
+        });
+        
+        throw errorDetails;
       }
       
       logger.info('Questionário marcado como completo com sucesso', {
