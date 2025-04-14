@@ -510,5 +510,6 @@ export function AdminDashboard({
           </div>
         </CardFooter>
       </Card>
-    </div>;
+    </div>
+  )
 }
