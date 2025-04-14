@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -101,6 +102,7 @@ export function QuizReview({
       
       const isMultipleChoice = ['checkbox', 'radio'].includes(currentQuestion.type || '');
       
+      // Garantir que a resposta seja formatada corretamente conforme o tipo
       const answerValue = prepareAnswerForStorage(answer, isMultipleChoice);
       
       const userEmail = session?.user?.email;
@@ -330,11 +332,12 @@ export function QuizReview({
           }
         });
         
+        // Corrigido: Garantir que selectedOptions seja sempre um array
         const selectedOptions = normalizeAnswerToArray(answer);
         
         return <div className="space-y-2">
           {options.map(option => (
-            <div key={option} className="flex items-center space-x-2">
+            <div key={option} className="flex items-start space-x-2">
               <Checkbox 
                 id={`${questionId}-${option}`} 
                 checked={selectedOptions.includes(option) || selectedOptions.includes(optionTexts[option])} 

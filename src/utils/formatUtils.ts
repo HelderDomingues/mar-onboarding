@@ -8,25 +8,35 @@
  * @param answerStr String contendo a resposta (possivelmente em formato JSON)
  * @returns String formatada para exibição
  */
-export const formatJsonAnswer = (answerStr: string | null): string => {
+export const formatJsonAnswer = (answerStr: string | string[] | null): string => {
   if (!answerStr) return '';
+  
+  // Se já for um array, formatar para exibição
+  if (Array.isArray(answerStr)) {
+    if (answerStr.length === 0) return '';
+    return answerStr.map(item => `• ${item}`).join('\n');
+  }
   
   try {
     // Verifica se a resposta já é um array (respostas de checkbox)
     if (answerStr.startsWith('[') && answerStr.endsWith(']')) {
-      const parsed = JSON.parse(answerStr);
-      
-      if (Array.isArray(parsed)) {
-        // Se for um array vazio, retornar string vazia
-        if (parsed.length === 0) return '';
+      try {
+        const parsed = JSON.parse(answerStr);
         
-        // Se for um array de strings, exibir como lista com marcadores
-        if (typeof parsed[0] === 'string') {
-          return parsed.map(item => `• ${item}`).join('\n');
+        if (Array.isArray(parsed)) {
+          // Se for um array vazio, retornar string vazia
+          if (parsed.length === 0) return '';
+          
+          // Se for um array de strings, exibir como lista com marcadores
+          if (typeof parsed[0] === 'string') {
+            return parsed.map(item => `• ${item}`).join('\n');
+          }
+          
+          // Se for um array de objetos complexos, exibir como JSON formatado
+          return JSON.stringify(parsed, null, 2);
         }
-        
-        // Se for um array de objetos complexos, exibir como JSON formatado
-        return JSON.stringify(parsed, null, 2);
+      } catch (e) {
+        // Se falhar o parse, continuar com o tratamento normal
       }
     }
     
@@ -45,7 +55,7 @@ export const formatJsonAnswer = (answerStr: string | null): string => {
     
   } catch (error) {
     console.error('Erro ao formatar resposta:', error);
-    return answerStr || '';
+    return String(answerStr) || '';
   }
 };
 
