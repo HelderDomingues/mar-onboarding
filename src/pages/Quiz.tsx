@@ -244,17 +244,26 @@ const Quiz = () => {
   const saveAnswer = async (questionId: string, answer: string | string[]) => {
     if (!user) return;
     try {
+      logger.info('Tentando salvar resposta', {
+        tag: 'Quiz',
+        data: { questionId, userId: user.id }
+      });
+      
       let answerValue = typeof answer === 'string' ? answer : JSON.stringify(answer);
+      
       const {
         error
       } = await supabase.from('quiz_answers').upsert([{
         user_id: user.id,
         question_id: questionId,
-        answer: answerValue
+        answer: answerValue,
+        question_text: questions.find(q => q.id === questionId)?.question_text || questions.find(q => q.id === questionId)?.text
       }], {
         onConflict: 'user_id,question_id'
       });
+      
       if (error) throw error;
+      
       logger.info('Resposta salva com sucesso', {
         tag: 'Quiz',
         data: {

@@ -111,11 +111,17 @@ export function QuizReview({
         throw new Error("Usuário não autenticado");
       }
       
+      const currentQuestion = questions.find(q => q.id === questionId);
+      if (!currentQuestion) {
+        throw new Error("Pergunta não encontrada");
+      }
+      
       const answerValue = typeof answer === 'object' ? JSON.stringify(answer) : answer;
       const { error } = await supabase.from('quiz_answers').upsert({
         user_id: userId,
         question_id: questionId,
-        answer: answerValue
+        answer: answerValue,
+        question_text: currentQuestion.question_text || currentQuestion.text
       }, { onConflict: 'user_id,question_id' });
       
       if (error) throw error;

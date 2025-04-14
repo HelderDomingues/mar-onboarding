@@ -59,13 +59,6 @@ export const loadQuizQuestions = async (): Promise<QuizQuestion[] | null> => {
   }
 };
 
-// Função modificada para não depender da tabela quiz_options
-// Esta função não é mais necessária e está mantida apenas para compatibilidade temporária
-export const loadQuizOptions = async () => {
-  logger.info('Função loadQuizOptions está obsoleta, use options_json da tabela quiz_questions');
-  return [];
-};
-
 // Função atualizada para usar apenas options_json
 export const mapQuestionsWithOptions = (questions: any[]): QuizQuestion[] => {
   return questions.map(question => {
@@ -171,13 +164,6 @@ export const transformQuizData = (questions: any[]): QuizQuestion[] => {
         });
         questionObj.options = [];
       }
-    } else if (question.options) {
-      // Fallback temporário para compatibilidade
-      questionObj.options = Array.isArray(question.options) 
-        ? question.options
-        : typeof question.options === 'string' 
-          ? JSON.parse(question.options) 
-          : [];
     } else {
       questionObj.options = [];
     }
