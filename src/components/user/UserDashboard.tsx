@@ -1,4 +1,4 @@
-
+import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock, BookOpen, BarChart, CheckCircle, LineChart, Phone, Mail, AlertCircle, MessageSquare } from "lucide-react";
@@ -9,9 +9,11 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+
 interface UserDashboardProps {
   submission: QuizSubmission | null;
 }
+
 export function UserDashboard({
   submission
 }: UserDashboardProps) {
@@ -53,7 +55,7 @@ export function UserDashboard({
   return <div className="space-y-8 max-w-3xl mx-auto">
       <div className="text-center md:text-left">
         <h1 className="text-3xl font-bold mb-2 text-slate-900">Bem-vindo à sua Área de Membro MAR</h1>
-        <p className="text-slate-600 max-w-3xl mx-auto md:mx-0">Acesse o Mapa para Alto Rendimento e acompanhe seu progresso para dar clareza aos camnhos da sua empresa.</p>
+        <p className="text-slate-600 max-w-3xl mx-auto md:mx-0">Acesse o Mapa para Alto Rendimento e acompanhe seu progresso para dar clareza aos caminhos da sua empresa.</p>
       </div>
 
       {/* Layout em coluna única */}
@@ -78,7 +80,12 @@ export function UserDashboard({
             
             <div className="mb-6">
               <AspectRatio ratio={16 / 9} className="bg-slate-100 rounded-lg overflow-hidden mb-4">
-                <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Vídeo de Introdução ao MAR" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" className="w-full h-full object-cover" />
+                <iframe 
+                  src="https://www.youtube.com/embed/Lr_L7MAIUnM" 
+                  title="Vídeo de Introdução ao MAR" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  className="w-full h-full object-cover" 
+                />
               </AspectRatio>
               <h4 className="font-medium text-white mt-2">Vídeo de Introdução ao MAR</h4>
               <p className="text-blue-100 text-sm">

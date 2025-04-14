@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -92,7 +91,7 @@ export const GetStartedSection = () => {
                       </div>
                     </div>
                     <iframe 
-                      src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+                      src="https://www.youtube.com/embed/Lr_L7MAIUnM" 
                       className="w-full h-full" 
                       title="Vídeo de Introdução ao MAR"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
