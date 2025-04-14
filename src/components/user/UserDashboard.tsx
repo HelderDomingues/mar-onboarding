@@ -9,11 +9,9 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-
 interface UserDashboardProps {
   submission: QuizSubmission | null;
 }
-
 export function UserDashboard({
   submission
 }: UserDashboardProps) {
@@ -232,10 +230,7 @@ export function UserDashboard({
             <p className="text-slate-600 mb-4">
               Encontre respostas para as dúvidas mais comuns sobre o programa MAR.
             </p>
-            <Button 
-              onClick={() => navigate("/faq")} 
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
-            >
+            <Button onClick={() => navigate("/faq")} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white">
               Ver Perguntas Frequentes
             </Button>
           </CardContent>
@@ -252,12 +247,7 @@ export function UserDashboard({
             </CardDescription>
           </div>
           <CardContent className="py-8 px-6">
-            <Button 
-              onClick={() => navigate("/faq")} 
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
-            >
-              Ver Perguntas Frequentes
-            </Button>
+            
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 transform hover:translate-y-[-2px]">
