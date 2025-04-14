@@ -1,3 +1,4 @@
+
 import { createClient, PostgrestError, AuthError } from '@supabase/supabase-js';
 import { logger } from '@/utils/logger';
 import { addLogEntry, LogOptions } from '@/utils/projectLog';
@@ -5,7 +6,6 @@ import { addLogEntry, LogOptions } from '@/utils/projectLog';
 // Project-specific Supabase URL and keys
 const SUPABASE_URL = 'https://btzvozqajqknqfoymxpg.supabase.co';
 export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0enZvenFhanFrbnFmb3lteHBnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxNjYwNjEsImV4cCI6MjA1OTc0MjA2MX0.QdD7bEZBPvVNBhHqgAGtFaZOxJrdosFTElxRUCIrnL8';
-const SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0enZvenFhanFrbnFmb3lteHBnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NDE2NjA2MSwiZXhwIjoyMDU5NzQyMDYxfQ.mZaY-sWwmHmtCQm16nMhF0bGnF8uVkPMSexEFbL5kpY';
 
 // Validate URL and keys
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
@@ -16,6 +16,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 // Isso evita criar múltiplas instâncias de GoTrueClient
 let supabaseInstance = null;
 let supabaseAdminInstance = null;
+let serviceRoleKey = null;
 
 // Opções de configuração com headers explícitos e configurações otimizadas
 const supabaseOptions = {
@@ -50,29 +51,50 @@ const getSupabaseClient = () => {
 };
 
 // Função para criar/obter a instância admin do cliente Supabase
-const getSupabaseAdminClient = () => {
-  if (!supabaseAdminInstance && SUPABASE_SERVICE_ROLE_KEY) {
+const getSupabaseAdminClient = (key = serviceRoleKey) => {
+  // Se não temos key, não podemos criar o cliente admin
+  if (!key) {
+    return null;
+  }
+  
+  // Se já temos uma instância e a key não mudou, retornamos a instância existente
+  if (supabaseAdminInstance && key === serviceRoleKey) {
+    return supabaseAdminInstance;
+  }
+  
+  // Salva a nova key e cria uma nova instância
+  serviceRoleKey = key;
+  
+  try {
     logger.info('Criando nova instância do cliente Supabase Admin');
     addLogEntry('info', 'Criando nova instância do cliente Supabase Admin');
-    supabaseAdminInstance = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    
+    supabaseAdminInstance = createClient(SUPABASE_URL, key, {
       ...supabaseOptions,
       global: {
         ...supabaseOptions.global,
         headers: {
           ...supabaseOptions.global.headers,
-          'apikey': SUPABASE_SERVICE_ROLE_KEY
+          'apikey': key
         }
       }
     });
+    
+    return supabaseAdminInstance;
+  } catch (error) {
+    logger.error('Erro ao criar cliente Supabase Admin:', {
+      error: formatErrorForLog(error)
+    });
+    addLogEntry('error', 'Erro ao criar cliente Supabase Admin', { error: formatErrorForLog(error) });
+    return null;
   }
-  return supabaseAdminInstance;
 };
 
 // Exporta o cliente Supabase como singleton
 export const supabase = getSupabaseClient();
 
 // Exporta o cliente Supabase Admin como singleton (se disponível)
-export const supabaseAdmin = SUPABASE_SERVICE_ROLE_KEY ? getSupabaseAdminClient() : null;
+export const supabaseAdmin = getSupabaseAdminClient();
 
 // Função para formatar erro para log
 export const formatErrorForLog = (error: PostgrestError | Error | AuthError | null): string => {
@@ -87,6 +109,19 @@ export const formatErrorForLog = (error: PostgrestError | Error | AuthError | nu
   }
   
   return JSON.stringify(error);
+};
+
+// Função para validar formato de chave JWT do Supabase
+const isValidSupabaseKey = (key: string): boolean => {
+  // Formato básico: deve ser uma string não vazia com pelo menos 40 caracteres
+  // E deve ter o formato padrão de JWT (3 seções separadas por pontos)
+  if (!key || typeof key !== 'string' || key.length < 40) {
+    return false;
+  }
+  
+  // Deve ter formato de JWT (3 partes separadas por ponto)
+  const parts = key.split('.');
+  return parts.length === 3;
 };
 
 /**
@@ -132,43 +167,97 @@ export const getUserEmails = async () => {
  */
 export const configureEmailAccess = async (serviceRoleKey?: string) => {
   try {
-    // Se uma nova chave foi fornecida, atualiza a instância
+    // Se uma nova chave foi fornecida, validamos o formato
     if (serviceRoleKey) {
-      // Cria uma nova instância com a chave fornecida
-      supabaseAdminInstance = createClient(SUPABASE_URL, serviceRoleKey, {
-        ...supabaseOptions,
-        global: {
-          ...supabaseOptions.global,
-          headers: {
-            ...supabaseOptions.global.headers,
-            'apikey': serviceRoleKey
-          }
-        }
-      });
-      
-      addLogEntry('info', 'Instância admin do Supabase atualizada com nova chave');
-      
-      // Testa a nova instância
-      const { data, error } = await supabaseAdminInstance.rpc('get_user_emails');
-      
-      if (error) {
-        logger.error('Erro ao testar nova chave service_role:', {
-          error: formatErrorForLog(error)
-        });
-        addLogEntry('error', 'Falha ao configurar acesso aos emails - chave inválida', { error: formatErrorForLog(error) });
+      // Validação básica do formato da chave
+      if (!isValidSupabaseKey(serviceRoleKey)) {
+        addLogEntry('error', 'Chave service_role fornecida tem formato inválido');
         return {
           success: false,
-          message: 'Chave service_role inválida ou sem permissões suficientes'
+          message: 'A chave service_role fornecida parece ter um formato inválido. Verifique se copiou corretamente.'
         };
       }
       
-      // Se chegou aqui, a configuração foi bem-sucedida
-      addLogEntry('info', 'Acesso aos emails configurado com sucesso');
-      return {
-        success: true,
-        message: 'Acesso aos emails configurado com sucesso',
-        data
-      };
+      // Cria uma nova instância com a chave fornecida
+      const adminClient = getSupabaseAdminClient(serviceRoleKey);
+      
+      if (!adminClient) {
+        addLogEntry('error', 'Falha ao criar cliente admin com a nova chave');
+        return {
+          success: false,
+          message: 'Erro ao inicializar cliente Supabase com a chave fornecida'
+        };
+      }
+      
+      // Testa a nova instância com uma consulta simples para verificar as permissões
+      try {
+        // Primeiro tentamos uma consulta simples para verificar se a conexão funciona
+        const { error: connectionError } = await adminClient
+          .from('profiles')
+          .select('count', { count: 'exact', head: true });
+        
+        if (connectionError) {
+          logger.error('Erro na consulta de teste com nova chave service_role:', {
+            error: formatErrorForLog(connectionError)
+          });
+          
+          // Se a consulta falhou por erro de permissão, a chave pode estar correta mas não ter permissões suficientes
+          if (connectionError.code === '42501' || connectionError.message.includes('permission')) {
+            addLogEntry('error', 'Chave service_role sem permissões suficientes', { error: formatErrorForLog(connectionError) });
+            return {
+              success: false,
+              message: 'A chave service_role não tem permissões suficientes para acessar os dados necessários'
+            };
+          }
+          
+          // Outros tipos de erro
+          addLogEntry('error', 'Falha na conexão com nova chave service_role', { error: formatErrorForLog(connectionError) });
+          return {
+            success: false,
+            message: 'Erro ao testar a conexão com a chave service_role fornecida'
+          };
+        }
+        
+        // Agora testamos a RPC específica para emails
+        const { data, error } = await adminClient.rpc('get_user_emails');
+        
+        if (error) {
+          // Se a função RPC não existe, sugerimos criar
+          if (error.code === '42883' || error.message.includes('function') && error.message.includes('does not exist')) {
+            addLogEntry('error', 'Função RPC get_user_emails não encontrada no banco de dados', { error: formatErrorForLog(error) });
+            return {
+              success: false,
+              message: 'A função get_user_emails não existe no seu banco de dados Supabase. Certifique-se de que a função foi criada corretamente.'
+            };
+          }
+          
+          logger.error('Erro ao testar nova chave service_role:', {
+            error: formatErrorForLog(error)
+          });
+          addLogEntry('error', 'Falha ao configurar acesso aos emails - erro na RPC', { error: formatErrorForLog(error) });
+          return {
+            success: false,
+            message: 'Chave service_role inválida ou sem permissões suficientes'
+          };
+        }
+        
+        // Se chegou aqui, a configuração foi bem-sucedida
+        addLogEntry('info', 'Acesso aos emails configurado com sucesso');
+        return {
+          success: true,
+          message: 'Acesso aos emails configurado com sucesso',
+          data
+        };
+      } catch (testError) {
+        logger.error('Exceção ao testar nova chave service_role:', {
+          error: formatErrorForLog(testError)
+        });
+        addLogEntry('error', 'Exceção ao testar chave service_role', { error: formatErrorForLog(testError) });
+        return {
+          success: false,
+          message: 'Erro ao testar a chave service_role fornecida'
+        };
+      }
     } else {
       // Testa a instância existente, se houver
       if (!supabaseAdmin) {

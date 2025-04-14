@@ -1,7 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase, supabaseAdmin, getUserEmails } from "@/integrations/supabase/client";
+import { supabase, supabaseAdmin, getUserEmails, configureEmailAccess } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
@@ -48,6 +49,7 @@ const UsersPage = () => {
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [serviceRoleKey, setServiceRoleKey] = useState("");
   const [showConfigForm, setShowConfigForm] = useState(false);
+  const [configResult, setConfigResult] = useState<{success?: boolean; message?: string} | null>(null);
   
   const fetchUsers = async () => {
     if (!user || !isAdmin) return;
@@ -189,6 +191,7 @@ const UsersPage = () => {
   
   const setupEmailAccess = () => {
     setShowConfigForm(true);
+    setConfigResult(null);
   };
   
   const handleConfigureEmailAccess = async () => {
@@ -202,17 +205,20 @@ const UsersPage = () => {
     }
     
     setIsConfiguring(true);
+    setConfigResult(null);
+    
     try {
-      const { configureEmailAccess } = await import('@/integrations/supabase/client');
       const result = await configureEmailAccess(serviceRoleKey);
+      
+      setConfigResult(result);
       
       if (result.success) {
         toast({
           title: "Configuração concluída",
           description: result.message,
         });
-        setShowConfigForm(false);
-        fetchUsers(); // Recarregar usuários com os emails agora disponíveis
+        // Recarregar usuários após configuração bem-sucedida
+        fetchUsers();
       } else {
         toast({
           title: "Erro na configuração",
@@ -227,6 +233,11 @@ const UsersPage = () => {
         description: "Não foi possível configurar o acesso aos emails dos usuários.",
         variant: "destructive",
       });
+      
+      setConfigResult({
+        success: false,
+        message: "Erro inesperado ao configurar acesso aos emails."
+      });
     } finally {
       setIsConfiguring(false);
     }
@@ -235,6 +246,7 @@ const UsersPage = () => {
   const handleCancelConfig = () => {
     setShowConfigForm(false);
     setServiceRoleKey("");
+    setConfigResult(null);
   };
   
   if (!isAuthenticated) {
@@ -325,7 +337,17 @@ const UsersPage = () => {
                           placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                           className="font-mono text-xs"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          A chave deve começar com "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" e ter 3 seções separadas por pontos.
+                        </p>
                       </div>
+                      
+                      {configResult && (
+                        <div className={`p-3 rounded text-sm ${configResult.success ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+                          {configResult.message}
+                        </div>
+                      )}
+                      
                       <div className="flex gap-2 justify-end">
                         <Button variant="outline" onClick={handleCancelConfig} disabled={isConfiguring}>
                           Cancelar
