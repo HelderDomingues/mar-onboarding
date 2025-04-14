@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -335,7 +334,7 @@ const UsersPage = () => {
               </CardHeader>
               <CardContent className="p-0">
                 {error && (
-                  <Alert variant="warning" className="m-4 bg-amber-50 border-amber-300">
+                  <Alert variant="warning" className="m-4">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Atenção</AlertTitle>
                     <AlertDescription className="space-y-2">
