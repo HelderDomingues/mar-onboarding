@@ -6,17 +6,11 @@ import { addLogEntry } from "@/utils/projectLog";
 import { useToast } from "@/components/ui/use-toast";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { UsersTableView } from "@/components/admin/UsersTableView";
+import { ServiceRoleConfig } from "@/components/admin/ServiceRoleConfig";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Search, UserPlus, RefreshCw, AlertTriangle } from "lucide-react";
 import { 
   Card, 
   CardContent, 
@@ -25,31 +19,13 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Search, UserPlus, Mail, CheckCircle, XCircle, RefreshCw, Key, Loader2, AlertTriangle, Info } from "lucide-react";
 import { 
   Alert,
   AlertDescription,
   AlertTitle
 } from "@/components/ui/alert";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-type UserProfile = {
-  id: string;
-  email?: string;
-  full_name?: string;
-  username?: string;
-  created_at?: string;
-  is_admin?: boolean;
-  has_submission?: boolean;
-};
-
-type ConfigResult = {
-  success?: boolean;
-  message?: string;
-  detalhes?: string;
-  codigo?: string;
-};
+import type { UserProfile, ConfigResult } from "@/types/admin";
 
 const UsersPage = () => {
   const { isAuthenticated, user, isAdmin } = useAuth();
@@ -112,7 +88,7 @@ const UsersPage = () => {
       const processedUsers = profilesArray.map(profile => {
         return {
           ...profile,
-          email: emailMap.get(profile.id) || profile.email || "Email não disponível",
+          email: emailMap.get(profile.id) || profile.user_email || "Email não disponível",
           is_admin: adminUserIds.includes(profile.id),
           has_submission: submissionUserIds.includes(profile.id)
         } as UserProfile;
@@ -337,148 +313,23 @@ const UsersPage = () => {
                 )}
                 
                 {showConfigForm && (
-                  <div className="p-4 bg-blue-50 border-l-4 border-blue-500">
-                    <h3 className="font-medium mb-2">Configurar chave service_role do Supabase</h3>
-                    <p className="text-sm mb-4">
-                      Para acessar os emails dos usuários, insira a chave service_role do seu projeto Supabase.
-                      Esta chave pode ser encontrada no painel do Supabase em Configurações do Projeto &gt; API.
-                    </p>
-                    
-                    <div className="flex flex-col gap-4">
-                      <div>
-                        <Label htmlFor="service-role-key">Chave service_role</Label>
-                        <Input 
-                          id="service-role-key"
-                          value={serviceRoleKey}
-                          onChange={(e) => setServiceRoleKey(e.target.value)}
-                          placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                          className="font-mono text-xs"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          A chave deve começar com "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" e ter 3 seções separadas por pontos.
-                        </p>
-                      </div>
-                      
-                      {configResult && (
-                        <Alert 
-                          variant={configResult.success ? "default" : "destructive"}
-                          className={configResult.success ? "bg-green-50 text-green-800 border-green-200" : "bg-red-50 text-red-800 border-red-200"}
-                        >
-                          {configResult.success ? (
-                            <Info className="h-4 w-4" />
-                          ) : (
-                            <AlertTriangle className="h-4 w-4" />
-                          )}
-                          <AlertTitle>{configResult.success ? "Sucesso" : "Erro"}</AlertTitle>
-                          <AlertDescription className="space-y-2">
-                            <p>{configResult.message}</p>
-                            {configResult.detalhes && (
-                              <Accordion type="single" collapsible className="w-full">
-                                <AccordionItem value="details">
-                                  <AccordionTrigger className="text-sm py-2">
-                                    Ver detalhes técnicos
-                                  </AccordionTrigger>
-                                  <AccordionContent className="text-sm bg-gray-50 p-3 rounded border">
-                                    <div className="space-y-2">
-                                      <p><strong>Detalhes:</strong> {configResult.detalhes}</p>
-                                      {configResult.codigo && (
-                                        <p><strong>Código de erro:</strong> {configResult.codigo}</p>
-                                      )}
-                                    </div>
-                                  </AccordionContent>
-                                </AccordionItem>
-                              </Accordion>
-                            )}
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                      
-                      <div className="flex gap-2 justify-end">
-                        <Button variant="outline" onClick={handleCancelConfig} disabled={isConfiguring}>
-                          Cancelar
-                        </Button>
-                        <Button 
-                          onClick={handleConfigureEmailAccess} 
-                          disabled={isConfiguring || !serviceRoleKey.trim()}
-                        >
-                          {isConfiguring ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Configurando...
-                            </>
-                          ) : (
-                            "Salvar configuração"
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                  <ServiceRoleConfig
+                    onConfigure={handleConfigureEmailAccess}
+                    onCancel={handleCancelConfig}
+                    isConfiguring={isConfiguring}
+                    serviceRoleKey={serviceRoleKey}
+                    setServiceRoleKey={setServiceRoleKey}
+                    configResult={configResult}
+                  />
                 )}
                 
-                {isLoading ? (
-                  <div className="flex justify-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>
-                ) : (
-                  <div className="rounded-md">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nome</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Questionário</TableHead>
-                          <TableHead>Admin</TableHead>
-                          <TableHead className="text-right">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredUsers.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
-                              {searchQuery ? 'Nenhum usuário encontrado com os critérios informados' : 'Nenhum usuário cadastrado'}
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          filteredUsers.map((user) => (
-                            <TableRow key={user.id} className="hover:bg-muted/50">
-                              <TableCell className="font-medium">
-                                {user.full_name || user.username || 'Sem nome'}
-                              </TableCell>
-                              <TableCell>{user.email || 'Email não disponível'}</TableCell>
-                              <TableCell>
-                                {user.has_submission ? (
-                                  <div className="flex items-center gap-1 text-green-600">
-                                    <CheckCircle className="h-4 w-4" />
-                                    <span>Completo</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-1 text-orange-500">
-                                    <XCircle className="h-4 w-4" />
-                                    <span>Pendente</span>
-                                  </div>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <Button 
-                                  variant={user.is_admin ? "default" : "outline"}
-                                  size="sm"
-                                  onClick={() => handleToggleAdmin(user.id, !!user.is_admin)}
-                                >
-                                  {user.is_admin ? 'Admin' : 'Usuário'}
-                                </Button>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Button variant="ghost" size="icon" onClick={() => handleSendEmail(user.id)}>
-                                  <Mail className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
+                <UsersTableView
+                  users={users}
+                  isLoading={isLoading}
+                  searchQuery={searchQuery}
+                  onToggleAdmin={handleToggleAdmin}
+                  onSendEmail={handleSendEmail}
+                />
               </CardContent>
               <CardFooter className="flex justify-between border-t py-4 px-6 text-muted-foreground text-sm">
                 <p>Atualizado em {new Date().toLocaleDateString('pt-BR')}</p>

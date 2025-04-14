@@ -16,7 +16,7 @@ export interface Database {
           full_name: string | null
           username: string | null
           avatar_url: string | null
-          email: string | null
+          user_email: string | null
           created_at: string
           updated_at: string | null
         }
@@ -25,7 +25,7 @@ export interface Database {
           full_name?: string | null
           username?: string | null
           avatar_url?: string | null
-          email?: string | null
+          user_email?: string | null
           created_at?: string
           updated_at?: string | null
         }
@@ -34,7 +34,7 @@ export interface Database {
           full_name?: string | null
           username?: string | null
           avatar_url?: string | null
-          email?: string | null
+          user_email?: string | null
           created_at?: string
           updated_at?: string | null
         }

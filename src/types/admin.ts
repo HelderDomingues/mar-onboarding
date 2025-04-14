@@ -4,6 +4,7 @@
 export type UserProfile = {
   id: string;
   email?: string;
+  user_email?: string; // Adicionado o novo campo
   full_name?: string;
   username?: string;
   created_at?: string;
