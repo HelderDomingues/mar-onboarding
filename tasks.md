@@ -16,33 +16,37 @@
 - [x] Correção do erro "Label is not defined" na página de usuários
 - [x] Melhoria na validação da chave service_role para acesso aos emails
 - [x] Aprimoramento da interface de configuração de acesso aos emails com feedback mais claro
+- [x] Correção da função de completar questionário
 
 ## Tarefas em Andamento
 
-- [ ] Implementação completa das funções de gestão de usuários
-- [ ] Exportação de respostas dos questionários em formato de planilha
-- [ ] Integração com webhook para notificações externas
-- [ ] Personalização do email de convite para novos usuários
+- [ ] Correção da formatação de respostas JSON nas visualizações do questionário
+- [ ] Aprimoramento da geração de PDF com perguntas e respostas completas
+- [ ] Normalização do armazenamento de respostas no banco de dados
 
 ## Próximos Passos
 
 - [ ] Implementar integração para envio de relatório por email
 - [ ] Adicionar opção de filtro avançado para análise de respostas
 - [ ] Desenvolver painel de estatísticas para administradores
-- [ ] Melhorar a aparência visual dos relatórios PDF
 - [ ] Otimização da performance para grandes volumes de dados
 - [ ] Implementar cache para consultas frequentes
 
 ## Otimizações e Refatorações Necessárias
 
 - [ ] Refatorar o componente Users.tsx para reduzir complexidade e tamanho
-- [ ] Refatorar client.ts para melhor organização do código
+- [ ] Refatorar pdfGenerator.ts para melhor organização do código
+- [ ] Refatorar Quiz.tsx para reduzir tamanho e complexidade
+- [ ] Refatorar QuizViewAnswers.tsx para melhor tratamento das respostas
+- [ ] Refatorar supabaseUtils.ts para melhor organização
+- [ ] Criar utilidade separada para formatação de respostas JSON
 - [ ] Otimizar consultas ao banco de dados para melhor performance
-- [ ] Criar componentes reutilizáveis para tabelas de administração
-- [ ] Implementar sistema de logs mais abrangente
 
 ## Problemas Conhecidos
 
 - [x] ~~Service Role Key não está sendo reconhecida corretamente~~ (Corrigido)
-- [ ] Alguns emails de usuários não estão visíveis
+- [x] ~~Alguns emails de usuários não estão visíveis~~ (Corrigido)
+- [x] ~~Função de completar questionário falha~~ (Corrigido)
+- [ ] Respostas de múltipla escolha são exibidas em formato JSON bruto
+- [ ] PDF gerado mostra apenas nomes dos módulos sem as perguntas e respostas
 - [ ] Função get_user_emails precisa ser criada no banco de dados

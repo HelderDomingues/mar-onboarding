@@ -2,6 +2,34 @@
 
 ## Histórico do Projeto
 
+### Capítulo 9: Correção de Problemas na Exibição de Respostas
+**Data: Abril de 2025**
+
+Após a correção da funcionalidade de completar o questionário, identificamos e estamos trabalhando em problemas relacionados à formatação e exibição das respostas:
+
+1. **Problemas identificados**:
+   - Respostas de múltipla escolha e checkbox são exibidas em formato JSON bruto
+   - Visualização "Minhas Respostas" não exibe o conteúdo formatado corretamente
+   - PDF gerado não inclui perguntas e respostas, apenas os módulos
+   - CSV sendo exportado com formatação incorreta para respostas complexas
+
+2. **Análise da causa raiz**:
+   - Respostas são armazenadas no banco como strings JSON para perguntas de múltipla escolha
+   - Falta de normalização no armazenamento entre diferentes tipos de perguntas
+   - Função de formatação não está processando corretamente todos os tipos de respostas
+   - Lógica de geração de PDF precisa ser aprimorada para incluir respostas completas
+
+3. **Plano de ação**:
+   - Normalizar o formato de armazenamento de respostas no banco de dados
+   - Melhorar as funções de formatação para exibir corretamente respostas JSON
+   - Aprimorar o gerador de PDF para incluir perguntas e respostas completas
+   - Garantir compatibilidade com respostas já armazenadas no banco
+
+4. **Requisito crítico**:
+   - Manter a funcionalidade de conclusão do questionário intacta
+   - Preservar dados existentes durante as modificações
+   - Implementar melhorias de forma incremental e com testes constantes
+
 ### Capítulo 8: Implementação Completa do Questionário MAR
 **Data: Abril de 2025**
 
@@ -304,17 +332,13 @@ $$;
 
 Este log será continuamente atualizado conforme o projeto avança.
 
-## Resumo de Progresso
-- [x] Reestruturação completa do banco de dados para o questionário MAR
-- [x] Criação de 10 módulos conforme especificação oficial
-- [x] Implementação das 52 perguntas com todos os tipos necessários
-- [x] Configuração de limites para perguntas de seleção múltipla
-- [x] Implementação de validações específicas por tipo de campo
-- [x] Atualização das políticas RLS para controle de acesso
+## Resumo de Progresso Atual
+- [x] Correção da funcionalidade de completar questionários
+- [x] Implementação da exportação de respostas em CSV (funcionando corretamente)
+- [x] Reestruturação das tabelas do banco de dados para o questionário MAR
 - [x] Correção de bugs críticos no fluxo de autenticação
-- [x] Otimização do sistema de logs
-- [ ] Adaptação dos componentes de frontend para a nova estrutura
-- [ ] Implementação da exportação de respostas em PDF/planilha
-- [ ] Criação de dashboard administrativo para análise de respostas
+- [ ] Correção da formatação de respostas JSON
+- [ ] Aprimoramento da geração de PDF com respostas completas
+- [ ] Normalização do armazenamento de respostas no banco de dados
 
-O sistema agora possui uma estrutura robusta de banco de dados que reflete completamente a especificação oficial do questionário MAR. Foram implementados 10 módulos com todas as 52 perguntas, incluindo uma variedade de tipos de campos e opções. O próximo passo é adaptar os componentes de frontend para trabalhar com essa nova estrutura e implementar a exportação de respostas para análise.
+O sistema está com a funcionalidade crítica de completar questionários operando corretamente. As próximas melhorias focam na qualidade da visualização e exportação das respostas, sem comprometer a estabilidade alcançada.
