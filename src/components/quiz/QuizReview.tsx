@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -103,10 +104,18 @@ export function QuizReview({
       
       const answerValue = prepareAnswerForStorage(answer, isMultipleChoice);
       
+      // Obter o email do usuário da sessão
+      const userEmail = session?.user?.email;
+      
+      if (!userEmail) {
+        throw new Error("Email do usuário não encontrado na sessão");
+      }
+      
       const {
         error
       } = await supabase.from('quiz_answers').upsert({
         user_id: userId,
+        user_email: userEmail, // Adicionado o campo user_email
         question_id: questionId,
         answer: answerValue,
         question_text: currentQuestion.question_text || currentQuestion.text,

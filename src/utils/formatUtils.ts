@@ -118,3 +118,91 @@ export const normalizeAnswerForDisplay = (answer: any, questionType?: string): s
   
   return String(answer);
 };
+
+/**
+ * Converte uma resposta para um array de strings, independentemente do formato original
+ * @param answer Resposta a ser convertida (string, array ou objeto)
+ * @returns Array de strings
+ */
+export const normalizeAnswerToArray = (answer: any): string[] => {
+  if (!answer) return [];
+  
+  if (Array.isArray(answer)) {
+    return answer.map(item => String(item));
+  }
+  
+  if (typeof answer === 'string') {
+    // Tenta interpretar como JSON array
+    if (answer.startsWith('[') && answer.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(answer);
+        if (Array.isArray(parsed)) {
+          return parsed.map(item => String(item));
+        }
+      } catch (e) {
+        // Se falhar o parse, continua o processamento abaixo
+      }
+    }
+    
+    // Se contiver vírgulas e não parece ser JSON, divide por vírgulas
+    if (answer.includes(',') && !answer.includes('{') && !answer.includes('"')) {
+      return answer.split(',').map(item => item.trim());
+    }
+    
+    // Caso contrário, retorna como array de um item
+    return [answer];
+  }
+  
+  // Para outros tipos, converte para string e retorna como array de um item
+  return [String(answer)];
+};
+
+/**
+ * Prepara a resposta para armazenamento considerando seu tipo
+ * @param answer Resposta para ser preparada
+ * @param isMultipleChoice Indica se é uma pergunta de múltipla escolha (checkbox/radio)
+ * @returns String formatada para armazenamento
+ */
+export const prepareAnswerForStorage = (answer: any, isMultipleChoice: boolean): string => {
+  if (answer === null || answer === undefined) return '';
+  
+  // Para perguntas de múltipla escolha
+  if (isMultipleChoice) {
+    if (Array.isArray(answer)) {
+      return JSON.stringify(answer);
+    } else if (typeof answer === 'string') {
+      // Se já for uma string JSON de array, validar
+      if (answer.startsWith('[') && answer.endsWith(']')) {
+        try {
+          JSON.parse(answer); // Validar que é um JSON válido
+          return answer;
+        } catch (e) {
+          // Se não for um JSON válido, converter para array com um item
+          return JSON.stringify([answer]);
+        }
+      }
+      // Para strings que podem ser listas separadas por vírgula
+      if (answer.includes(',')) {
+        const items = answer.split(',').map(item => item.trim());
+        return JSON.stringify(items);
+      }
+      // Se for uma string comum, converter para array com um item
+      return JSON.stringify([answer]);
+    }
+    // Para qualquer outro tipo, converter para array
+    return JSON.stringify([String(answer)]);
+  }
+  
+  // Para outros tipos de resposta
+  if (typeof answer === 'object' && !Array.isArray(answer)) {
+    return JSON.stringify(answer);
+  }
+  
+  // Para arrays não relacionados a múltipla escolha, converter para string
+  if (Array.isArray(answer)) {
+    return answer.join(', ');
+  }
+  
+  // Para valores simples, retornar como string
+  return String(answer);
+};
