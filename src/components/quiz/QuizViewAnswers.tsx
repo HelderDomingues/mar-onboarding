@@ -205,7 +205,7 @@ export function QuizViewAnswers() {
   };
   return <div className="w-full max-w-3xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
       <Card>
-        <CardHeader className="bg-sky-900">
+        <CardHeader className="bg-sky-900 rounded-lg">
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-xl font-bold text-slate-300">Confira Suas Respostas Aqui</CardTitle>
