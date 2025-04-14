@@ -252,7 +252,7 @@ export function QuizViewAnswers() {
             Exportar CSV
           </Button>
           
-          <Button onClick={handleDownloadPDF} disabled={downloading}>
+          <Button onClick={handleDownloadPDF} disabled={downloading} className="text-slate-50">
             <File className="h-4 w-4 mr-2" />
             Baixar PDF
           </Button>
