@@ -208,7 +208,7 @@ export function QuizConfigurationPanel({
             <div>
               <Label htmlFor="sectionSelect">Seção</Label>
               <Select value={selectedSectionId || ""} onValueChange={value => setSelectedSectionId(value)} disabled={!selectedModuleId}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full text-zinc-950">
                   <SelectValue placeholder="Selecione uma seção" />
                 </SelectTrigger>
                 <SelectContent>
