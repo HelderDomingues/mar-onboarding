@@ -1,4 +1,3 @@
-
 # Log de Implementação - Sistema MAR da Crie Valor
 
 ## Índice
@@ -272,6 +271,37 @@
 - Eliminação de congelamentos durante login e navegação
 - Prevenção de múltiplas submissões de formulário
 - Feedback visual durante o processo de autenticação
+
+### 14/04/2025 - Correção do Método de Finalização do Questionário
+**Status:** Concluído
+
+#### Descrição
+- Identificado e corrigido problema persistente com a finalização do questionário (Erro 406)
+- Simplificação da função `complete_quiz` no `supabaseUtils.ts`
+- Implementação de método alternativo de atualização do questionário
+
+#### Detalhes Técnicos
+- Arquivos modificados:
+  - `src/utils/supabaseUtils.ts`
+  - `src/components/quiz/QuizReview.tsx`
+  - Políticas RLS para `quiz_submissions` e `quiz_answers`
+
+- Estratégias de Correção:
+  - Remoção da dependência do `supabaseAdmin`
+  - Implementação de método RPC padrão
+  - Fallback para atualização direta em caso de falha do RPC
+  - Logs detalhados para rastreamento de erros
+
+- Principais Modificações:
+  - Simplificação do método de finalização do questionário
+  - Adição de tratamento de erro robusto
+  - Melhoria na logging de erros para diagnóstico
+
+#### Impacto
+- Resolução do Erro 406 na finalização do questionário
+- Melhoria na experiência do usuário ao completar o questionário
+- Sistema mais resiliente a falhas durante a finalização
+- Logs mais detalhados para depuração
 
 ## Resumo de Progresso
 - [x] Reestruturação completa do banco de dados para o questionário MAR
