@@ -9,7 +9,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { addLogEntry } from "@/utils/projectLog";
-import { Loader2, User, Clock, CheckCircle } from "lucide-react";
+import { Loader2, User, Clock, CheckCircle, FileEdit, Trash2, Upload } from "lucide-react";
+import { useAvatarUpload } from '@/hooks/useAvatarUpload';
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
 const ProfilePage = () => {
   const {
     user
@@ -23,7 +26,8 @@ const ProfilePage = () => {
   const [profileData, setProfileData] = useState({
     full_name: "",
     user_email: "",
-    phone: ""
+    phone: "",
+    avatar_url: ""
   });
   const [quizStats, setQuizStats] = useState({
     completionStatus: "Não iniciado",
@@ -31,12 +35,16 @@ const ProfilePage = () => {
     completedAt: null,
     timeSpent: 0
   });
+  const { uploadAvatar, deleteAvatar, uploading } = useAvatarUpload(user?.id || '');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+
   useEffect(() => {
     if (user) {
       loadUserProfile();
       loadQuizStats();
     }
   }, [user]);
+
   const loadUserProfile = async () => {
     try {
       setLoading(true);
@@ -52,7 +60,8 @@ const ProfilePage = () => {
         setProfileData({
           full_name: data.full_name || "",
           user_email: data.user_email || user?.email || "",
-          phone: data.phone || ""
+          phone: data.phone || "",
+          avatar_url: data.avatar_url || ""
         });
       }
     } catch (error: any) {
@@ -69,6 +78,7 @@ const ProfilePage = () => {
       setLoading(false);
     }
   };
+
   const loadQuizStats = async () => {
     try {
       const {
@@ -91,6 +101,7 @@ const ProfilePage = () => {
       });
     }
   };
+
   const handleSaveProfile = async () => {
     try {
       setSaving(true);
@@ -123,7 +134,19 @@ const ProfilePage = () => {
     }
   };
 
-  // Função para formatar o tempo em horas e minutos
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      uploadAvatar(file);
+    }
+  };
+
+  const handleDeleteAvatar = () => {
+    deleteAvatar();
+    setAvatarFile(null);
+  };
+
   const formatTimeSpent = (seconds: number) => {
     if (!seconds) return "0 minutos";
     const hours = Math.floor(seconds / 3600);
@@ -134,11 +157,13 @@ const ProfilePage = () => {
       return `${minutes} minutos`;
     }
   };
+
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>;
   }
+
   return <div className="container mx-auto py-8 px-4">
       <h1 className="text-2xl font-bold mb-6">Meu Perfil</h1>
       
@@ -266,6 +291,51 @@ const ProfilePage = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <div className="mb-6 flex flex-col items-center">
+        <Avatar className="w-24 h-24 mb-4">
+          <AvatarImage 
+            src={profileData.avatar_url || undefined} 
+            alt={profileData.full_name || 'Avatar do usuário'} 
+          />
+          <AvatarFallback>
+            {profileData.full_name 
+              ? profileData.full_name.split(' ').map(n => n[0]).join('').toUpperCase() 
+              : 'US'}
+          </AvatarFallback>
+        </Avatar>
+        
+        <div className="flex items-center gap-2">
+          <input 
+            type="file" 
+            accept="image/jpeg,image/png,image/gif" 
+            onChange={handleAvatarChange} 
+            className="hidden" 
+            id="avatar-upload" 
+            disabled={uploading}
+          />
+          <label 
+            htmlFor="avatar-upload" 
+            className="cursor-pointer inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
+          >
+            <FileEdit className="w-4 h-4" />
+            {uploading ? 'Enviando...' : 'Alterar Avatar'}
+          </label>
+          
+          {profileData.avatar_url && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleDeleteAvatar} 
+              className="text-destructive hover:text-destructive/80"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Remover
+            </Button>
+          )}
+        </div>
+      </div>
     </div>;
 };
+
 export default ProfilePage;
