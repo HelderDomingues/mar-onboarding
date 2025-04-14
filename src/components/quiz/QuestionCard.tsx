@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,18 +6,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { PrefixInput } from "@/components/ui/prefix-input";
 import { InfoIcon } from "lucide-react";
 import { InstagramField } from "@/components/quiz/question-types/InstagramField";
 import { UrlField } from "@/components/quiz/question-types/UrlField";
 import { LimitedCheckbox } from "@/components/quiz/question-types/LimitedCheckbox";
+import { QuizOption } from "@/types/quiz";
 
 export type QuestionType = 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select' | 'url' | 'instagram';
 export interface Question {
   id: string;
   text: string;
   type: QuestionType;
-  options?: string[];
+  options?: QuizOption[] | string[];
   required: boolean;
   hint?: string;
   max_options?: number;
@@ -53,7 +52,6 @@ export function QuestionCard({
   const [showOtherInput, setShowOtherInput] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Gerar placeholder apropriado baseado no tipo da pergunta e texto
   const getPlaceholder = (question: Question): string => {
     if (question.placeholder) {
       return question.placeholder;
@@ -78,9 +76,7 @@ export function QuestionCard({
     }
   };
 
-  // Limpar e carregar as respostas quando a pergunta mudar
   useEffect(() => {
-    // Limpar todas as respostas quando a pergunta muda
     setSelectedOption('');
     setTextAnswer('');
     setCheckedOptions([]);
@@ -88,7 +84,6 @@ export function QuestionCard({
     setShowOtherInput(false);
     setValidationError(null);
     
-    // Carregar as respostas existentes apenas se houver
     if (currentAnswer !== undefined) {
       if (typeof currentAnswer === 'string') {
         setSelectedOption(currentAnswer);
@@ -115,21 +110,23 @@ export function QuestionCard({
     }
   }, [question.id, currentAnswer, question.options]);
 
-  const handleCheckboxChange = (option: string) => {
+  const handleCheckboxChange = (option: string | QuizOption) => {
+    const optionValue = typeof option === 'string' ? option : option.id;
+    
     setCheckedOptions(prev => {
-      if (prev.includes(option)) {
-        return prev.filter(item => item !== option);
+      if (prev.includes(optionValue)) {
+        return prev.filter(item => item !== optionValue);
       } else {
-        // Verificar o limite de opções apenas ao adicionar
-        if (question.max_options && prev.length >= question.max_options && !prev.includes(option)) {
+        if (question.max_options && prev.length >= question.max_options && !prev.includes(optionValue)) {
           return prev;
         }
-        return [...prev, option];
+        return [...prev, optionValue];
       }
     });
 
-    if (option.toLowerCase().includes('outro')) {
-      setShowOtherInput(!checkedOptions.includes(option));
+    const optionText = typeof option === 'string' ? option : option.text;
+    if (optionText.toLowerCase().includes('outro')) {
+      setShowOtherInput(!checkedOptions.includes(optionValue));
     }
   };
 
@@ -151,11 +148,10 @@ export function QuestionCard({
       selectedOption === '' || 
       checkedOptions.length === 0
     )) {
-      return true; // Não é obrigatório, então é válido mesmo vazio
+      return true;
     }
     
     if (question.validation) {
-      // Validações específicas baseadas no campo validation
       switch (question.validation) {
         case 'email':
           const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -166,7 +162,6 @@ export function QuestionCard({
           break;
         case 'url':
           try {
-            // Adicionar protocolo se não existir
             const urlString = textAnswer.startsWith('http') ? textAnswer : `https://${textAnswer}`;
             new URL(urlString);
           } catch (e) {
@@ -184,7 +179,6 @@ export function QuestionCard({
       }
     }
     
-    // Validações por tipo
     switch (question.type) {
       case 'radio':
         if (selectedOption === '') {
@@ -242,7 +236,6 @@ export function QuestionCard({
           return false;
         } else {
           try {
-            // Adicionar protocolo se não existir
             const urlString = textAnswer.startsWith('http') ? textAnswer : `https://${textAnswer}`;
             new URL(urlString);
           } catch (e) {
@@ -283,7 +276,6 @@ export function QuestionCard({
       }
       onAnswer(question.id, answers);
     } else if (question.type === 'instagram' || question.type === 'url') {
-      // Garantir que mantemos o formato padrão para Instagram e URL
       let formattedAnswer = textAnswer;
       
       if (question.type === 'instagram' && question.prefix && !formattedAnswer.startsWith(question.prefix)) {
@@ -327,6 +319,179 @@ export function QuestionCard({
     }
   };
 
+  const renderQuestion = () => {
+    if (question.type === 'radio' && question.options) {
+      return (
+        <div>
+          {question.type === 'radio' && <p className="text-sm text-muted-foreground mb-4">
+            Selecione uma opção abaixo
+          </p>}
+          <RadioGroup value={selectedOption} onValueChange={handleRadioChange} className="space-y-3">
+            {question.options.map((option, index) => {
+              const optionText = typeof option === 'string' ? option : option.text;
+              const optionValue = typeof option === 'string' ? option : option.id;
+              
+              return (
+                <div key={index} className="flex items-center space-x-2">
+                  <RadioGroupItem value={optionValue} id={`option-${question.id}-${index}`} />
+                  <Label htmlFor={`option-${question.id}-${index}`} className="text-base">
+                    {optionText}
+                  </Label>
+                </div>
+              );
+            })}
+          </RadioGroup>
+          
+          {showOtherInput && <div className="mt-2 pl-6">
+            <Input 
+              type="text" 
+              placeholder="Especifique sua resposta..." 
+              value={otherValue} 
+              onChange={e => setOtherValue(e.target.value)} 
+              className="w-full text-slate-900" 
+            />
+          </div>}
+        </div>
+      );
+    }
+
+    if (question.type === 'text') {
+      return (
+        <Input 
+          type="text" 
+          placeholder={getPlaceholder(question)} 
+          value={textAnswer} 
+          onChange={e => setTextAnswer(e.target.value)} 
+          className="w-full text-slate-900" 
+        />
+      );
+    }
+
+    if (question.type === 'email') {
+      return (
+        <Input 
+          type="email" 
+          placeholder={getPlaceholder(question)} 
+          value={textAnswer} 
+          onChange={e => setTextAnswer(e.target.value)} 
+          className="w-full text-slate-900" 
+        />
+      );
+    }
+
+    if (question.type === 'url') {
+      return (
+        <UrlField
+          id={`url-${question.id}`}
+          value={textAnswer}
+          onChange={setTextAnswer}
+          placeholder={getPlaceholder(question)}
+          hint={question.hint}
+          required={question.required}
+          prefix={question.prefix || 'https://'}
+          error={validationError}
+        />
+      );
+    }
+
+    if (question.type === 'instagram') {
+      return (
+        <InstagramField
+          id={`instagram-${question.id}`}
+          value={textAnswer}
+          onChange={setTextAnswer}
+          placeholder={getPlaceholder(question)}
+          hint={question.hint}
+          required={question.required}
+          prefix={question.prefix || '@'}
+          error={validationError}
+        />
+      );
+    }
+
+    if (question.type === 'number') {
+      return (
+        <Input 
+          type="number" 
+          placeholder={getPlaceholder(question)} 
+          value={textAnswer} 
+          onChange={e => setTextAnswer(e.target.value)} 
+          className="w-full text-slate-900" 
+        />
+      );
+    }
+
+    if (question.type === 'textarea') {
+      return (
+        <Textarea 
+          placeholder={getPlaceholder(question)} 
+          value={textAnswer} 
+          onChange={e => setTextAnswer(e.target.value)} 
+          className="min-h-[120px] text-slate-900" 
+        />
+      );
+    }
+
+    if (question.type === 'checkbox' && question.options) {
+      return (
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground mb-3">
+            Marque quantas opções desejar
+          </p>
+          {question.options.map((option, index) => {
+            const optionText = typeof option === 'string' ? option : option.text;
+            const optionValue = typeof option === 'string' ? option : option.id;
+            
+            return (
+              <div key={index} className="flex items-center space-x-2">
+                <Checkbox 
+                  id={`checkbox-${question.id}-${index}`} 
+                  checked={checkedOptions.includes(optionValue)} 
+                  onCheckedChange={() => handleCheckboxChange(option)} 
+                />
+                <label htmlFor={`checkbox-${question.id}-${index}`} className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  {optionText}
+                </label>
+              </div>
+            );
+          })}
+          
+          {showOtherInput && <div className="mt-2 pl-6">
+            <Input 
+              type="text" 
+              placeholder="Especifique sua resposta..." 
+              value={otherValue} 
+              onChange={e => setOtherValue(e.target.value)} 
+              className="w-full text-slate-900" 
+            />
+          </div>}
+        </div>
+      );
+    }
+
+    if (question.type === 'select' && question.options) {
+      return (
+        <select 
+          className="w-full border border-gray-300 rounded-md p-2 text-slate-900" 
+          value={selectedOption} 
+          onChange={e => setSelectedOption(e.target.value)}
+        >
+          <option value="">Selecione uma opção</option>
+          {question.options.map((option, index) => {
+            const optionText = typeof option === 'string' ? option : option.text;
+            const optionValue = typeof option === 'string' ? option : option.id;
+            
+            return (
+              <option key={index} value={optionValue}>
+                {optionText}
+              </option>
+            );
+          })}
+        </select>
+      );
+    }
+  };
+
   return <Card className="w-full max-w-2xl animate-fade-in quiz-card">
       <CardHeader>
         <CardTitle className="text-xl flex items-start">
@@ -342,140 +507,7 @@ export function QuestionCard({
       </CardHeader>
       
       <CardContent>
-        {question.type === 'radio' && question.options && <div>
-            {question.type === 'radio' && <p className="text-sm text-muted-foreground mb-4">
-                Selecione uma opção abaixo
-              </p>}
-            <RadioGroup value={selectedOption} onValueChange={handleRadioChange} className="space-y-3">
-              {question.options.map((option, index) => <div key={index} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option} id={`option-${question.id}-${index}`} />
-                  <Label htmlFor={`option-${question.id}-${index}`} className="text-base">
-                    {option}
-                  </Label>
-                </div>)}
-            </RadioGroup>
-            
-            {showOtherInput && <div className="mt-2 pl-6">
-                <Input 
-                  type="text" 
-                  placeholder="Especifique sua resposta..." 
-                  value={otherValue} 
-                  onChange={e => setOtherValue(e.target.value)} 
-                  className="w-full text-slate-900" 
-                />
-              </div>}
-          </div>}
-        
-        {question.type === 'text' && <Input 
-            type="text" 
-            placeholder={getPlaceholder(question)} 
-            value={textAnswer} 
-            onChange={e => setTextAnswer(e.target.value)} 
-            className="w-full text-slate-900" 
-          />}
-        
-        {question.type === 'email' && <Input 
-            type="email" 
-            placeholder={getPlaceholder(question)} 
-            value={textAnswer} 
-            onChange={e => setTextAnswer(e.target.value)} 
-            className="w-full text-slate-900" 
-          />}
-        
-        {question.type === 'url' && (
-          <UrlField
-            id={`url-${question.id}`}
-            value={textAnswer}
-            onChange={setTextAnswer}
-            placeholder={getPlaceholder(question)}
-            hint={question.hint}
-            required={question.required}
-            prefix={question.prefix || 'https://'}
-            error={validationError}
-          />
-        )}
-        
-        {question.type === 'instagram' && (
-          <InstagramField
-            id={`instagram-${question.id}`}
-            value={textAnswer}
-            onChange={setTextAnswer}
-            placeholder={getPlaceholder(question)}
-            hint={question.hint}
-            required={question.required}
-            prefix={question.prefix || '@'}
-            error={validationError}
-          />
-        )}
-        
-        {question.type === 'number' && <Input 
-            type="number" 
-            placeholder={getPlaceholder(question)} 
-            value={textAnswer} 
-            onChange={e => setTextAnswer(e.target.value)} 
-            className="w-full text-slate-900" 
-          />}
-        
-        {question.type === 'textarea' && <Textarea 
-            placeholder={getPlaceholder(question)} 
-            value={textAnswer} 
-            onChange={e => setTextAnswer(e.target.value)} 
-            className="min-h-[120px] text-slate-900" 
-          />}
-        
-        {question.type === 'checkbox' && question.options && (
-          question.max_options ? (
-            <LimitedCheckbox
-              id={`checkbox-${question.id}`}
-              options={question.options}
-              value={checkedOptions}
-              onChange={setCheckedOptions}
-              maxOptions={question.max_options}
-              hint={question.hint}
-              required={question.required}
-              error={validationError}
-            />
-          ) : (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground mb-3">
-                Marque quantas opções desejar
-              </p>
-              {question.options.map((option, index) => <div key={index} className="flex items-center space-x-2">
-                  <Checkbox id={`checkbox-${question.id}-${index}`} checked={checkedOptions.includes(option)} onCheckedChange={() => handleCheckboxChange(option)} />
-                  <label htmlFor={`checkbox-${question.id}-${index}`} className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    {option}
-                  </label>
-                </div>)}
-              
-              {showOtherInput && <div className="mt-2 pl-6">
-                  <Input 
-                    type="text" 
-                    placeholder="Especifique sua resposta..." 
-                    value={otherValue} 
-                    onChange={e => setOtherValue(e.target.value)} 
-                    className="w-full text-slate-900" 
-                  />
-                </div>}
-            </div>
-          )
-        )}
-        
-        {question.type === 'select' && question.options && <select 
-            className="w-full border border-gray-300 rounded-md p-2 text-slate-900" 
-            value={selectedOption} 
-            onChange={e => setSelectedOption(e.target.value)}
-          >
-            <option value="">Selecione uma opção</option>
-            {question.options.map((option, index) => <option key={index} value={option}>
-                {option}
-              </option>)}
-          </select>}
-          
-        {validationError && (
-          <p className="text-sm text-red-500 mt-2">
-            {validationError}
-          </p>
-        )}
+        {renderQuestion()}
       </CardContent>
       
       <CardFooter className="flex justify-between">

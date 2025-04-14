@@ -1,3 +1,4 @@
+
 import React from "react";
 import { QuestionCard } from "@/components/quiz/QuestionCard";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
@@ -55,9 +56,23 @@ export function QuizContent({
     // Use o ID da pergunta para encontrar a resposta atual
     const currentAnswer = currentAnswers[currentQuestion.id];
 
+    // Mapeamos a pergunta do tipo QuizQuestion para o tipo Question aceito pelo QuestionCard
+    const mappedQuestion = {
+      id: currentQuestion.id,
+      text: currentQuestion.text || currentQuestion.question_text || "",
+      type: currentQuestion.type,
+      options: currentQuestion.options,
+      required: currentQuestion.required !== undefined ? currentQuestion.required : true,
+      hint: currentQuestion.hint,
+      max_options: currentQuestion.max_options,
+      prefix: currentQuestion.prefix,
+      validation: currentQuestion.validation,
+      placeholder: currentQuestion.placeholder
+    };
+
     return (
       <QuestionCard
-        question={currentQuestion}
+        question={mappedQuestion}
         onAnswer={onAnswer}
         onNext={onNext}
         onPrev={onPrev}

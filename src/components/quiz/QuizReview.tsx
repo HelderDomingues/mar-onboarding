@@ -256,11 +256,20 @@ export function QuizReview({
         return <Textarea value={typeof answer === 'string' ? answer : ''} onChange={e => handleInputChange(questionId, e.target.value)} className="w-full text-slate-900" placeholder="Digite sua resposta aqui" />;
       case 'checkbox':
       case 'radio':
-        const options = question.options?.map(opt => opt.id) || [];
-        const optionTexts = question.options?.reduce((acc, opt) => {
-          acc[opt.id] = opt.text;
-          return acc;
-        }, {} as Record<string, string>) || {};
+        const questionOptions = question.options || [];
+        let options: string[] = [];
+        let optionTexts: Record<string, string> = {};
+        
+        questionOptions.forEach(opt => {
+          if (typeof opt === 'string') {
+            options.push(opt);
+            optionTexts[opt] = opt;
+          } else {
+            options.push(opt.id);
+            optionTexts[opt.id] = opt.text;
+          }
+        });
+        
         let selectedOptions: string[] = [];
         if (Array.isArray(answer)) {
           selectedOptions = answer;
