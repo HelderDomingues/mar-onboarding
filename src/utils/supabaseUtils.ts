@@ -125,7 +125,7 @@ export const processQuizAnswersToSimplified = async (userId: string) => {
 // Retorno detalhado para a função completeQuizManually
 interface CompleteQuizResult {
   success: boolean;
-  method?: 'rpc' | 'direct_update';
+  method?: 'rpc' | 'direct_update' | 'manual_update';
   error?: any;
 }
 
