@@ -205,16 +205,16 @@ export function QuizViewAnswers() {
   };
   return <div className="w-full max-w-3xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
       <Card>
-        <CardHeader className="bg-primary/5">
+        <CardHeader className="bg-sky-900">
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-xl font-bold">Confira Suas Respostas Aqui</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-xl font-bold text-slate-300">Confira Suas Respostas Aqui</CardTitle>
+              <CardDescription className="text-slate-300">
                 Questionário MAR - {submission?.completed_at ? new Date(submission.completed_at).toLocaleDateString('pt-BR') : 'Em andamento'}
               </CardDescription>
             </div>
             
-            {submission?.completed && <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200">
+            {submission?.completed && <Badge variant="secondary" className="text-green-800 bg-lime-400">
                 Completado
               </Badge>}
           </div>
