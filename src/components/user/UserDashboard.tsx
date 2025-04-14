@@ -220,7 +220,7 @@ export function UserDashboard({
         </Card>
         
         <Card className="overflow-hidden border-0 shadow-md rounded-xl">
-          <CardHeader className="bg-gradient-to-r from-blue-300 to-purple-600 text-white">
+          <CardHeader className="bg-gradient-to-r from-blue-700 to-purple-300 text-white">
             <CardTitle className="flex items-center gap-2 text-white">
               <HelpCircle className="h-5 w-5" />
               Precisa de Ajuda?
