@@ -1,3 +1,4 @@
+
 import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/database.types';
 import type { QuizSubmission } from '@/types/quiz';
@@ -196,7 +197,7 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
             completed: true,
             completed_at: now,
             last_active: now,
-            user_email: userEmail // Adiciona o email do usuário
+            user_email: userEmail // Usamos user_email em vez de email
           })
           .eq('user_id', userId);
       } else {
@@ -205,7 +206,7 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
           .from('quiz_submissions')
           .insert({
             user_id: userId,
-            user_email: userEmail, // Adiciona o email do usuário
+            user_email: userEmail, // Usamos user_email em vez de email
             completed: true,
             completed_at: now,
             started_at: now,
@@ -295,7 +296,7 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
               completed: true,
               completed_at: now,
               last_active: now,
-              user_email: userEmail
+              user_email: userEmail // Usamos user_email em vez de email
             })
             .eq('id', existingSubmission.id);
         } else {
@@ -303,7 +304,7 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
             .from('quiz_submissions')
             .insert({
               user_id: userId,
-              user_email: userEmail,
+              user_email: userEmail, // Usamos user_email em vez de email
               completed: true,
               completed_at: now,
               started_at: now,

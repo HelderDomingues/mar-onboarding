@@ -101,7 +101,6 @@ export function QuizReview({
       
       const isMultipleChoice = ['checkbox', 'radio'].includes(currentQuestion.type || '');
       
-      // Garantir que a resposta seja formatada corretamente conforme o tipo
       const answerValue = prepareAnswerForStorage(answer, isMultipleChoice);
       
       const userEmail = session?.user?.email;
@@ -361,7 +360,6 @@ export function QuizReview({
           }
         });
         
-        // Corrigido: Garantir que selectedOptions seja sempre um array
         const selectedOptions = normalizeAnswerToArray(answer);
         
         return <div className="space-y-2">

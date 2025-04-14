@@ -1,4 +1,3 @@
-
 /**
  * Utilitário para formatação de dados e respostas do questionário
  */
@@ -8,54 +7,35 @@
  * @param answerStr String contendo a resposta (possivelmente em formato JSON)
  * @returns String formatada para exibição
  */
-export const formatJsonAnswer = (answerStr: string | string[] | null): string => {
-  if (!answerStr) return '';
-  
-  // Se já for um array, formatar para exibição
-  if (Array.isArray(answerStr)) {
-    if (answerStr.length === 0) return '';
-    return answerStr.map(item => `• ${item}`).join('\n');
-  }
+export const formatJsonAnswer = (answer: string | string[] | null | undefined): string => {
+  if (answer === null || answer === undefined) return "Não respondido";
   
   try {
-    // Verifica se a resposta já é um array (respostas de checkbox)
-    if (answerStr.startsWith('[') && answerStr.endsWith(']')) {
+    // Se for um array, juntamos os elementos
+    if (Array.isArray(answer)) {
+      return answer.join(", ");
+    }
+    
+    // Se for uma string que parece ser um JSON, tentamos formatá-la
+    const answerStr = String(answer);
+    
+    if (answerStr.startsWith("[") && answerStr.endsWith("]")) {
       try {
         const parsed = JSON.parse(answerStr);
-        
         if (Array.isArray(parsed)) {
-          // Se for um array vazio, retornar string vazia
-          if (parsed.length === 0) return '';
-          
-          // Se for um array de strings, exibir como lista com marcadores
-          if (typeof parsed[0] === 'string') {
-            return parsed.map(item => `• ${item}`).join('\n');
-          }
-          
-          // Se for um array de objetos complexos, exibir como JSON formatado
-          return JSON.stringify(parsed, null, 2);
+          return parsed.join(", ");
         }
       } catch (e) {
-        // Se falhar o parse, continuar com o tratamento normal
+        // Se falhar ao fazer parse, apenas retorna a string original
+        return answerStr;
       }
     }
     
-    // Tentar interpretar como JSON
-    if (answerStr.includes('{') || answerStr.includes('[')) {
-      try {
-        const parsed = JSON.parse(answerStr);
-        return typeof parsed === 'string' ? parsed : JSON.stringify(parsed, null, 2);
-      } catch (e) {
-        // Se não for um JSON válido, continuar com o tratamento normal
-      }
-    }
-    
-    // Resposta comum (texto simples)
+    // Para outros tipos de resposta, como texto simples, URL, etc.
     return answerStr;
-    
   } catch (error) {
-    console.error('Erro ao formatar resposta:', error);
-    return String(answerStr) || '';
+    console.error("Erro ao formatar resposta:", error);
+    return String(answer);
   }
 };
 
