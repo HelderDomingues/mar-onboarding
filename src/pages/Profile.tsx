@@ -161,7 +161,14 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white relative">
+      <div className="absolute top-4 right-4">
+        <img 
+          src="/lovable-uploads/688f0f25-3ab1-477c-b825-415931722359.png" 
+          alt="Logo MAR" 
+          className="h-12 w-auto object-contain"
+        />
+      </div>
       <div className="container mx-auto py-6 px-4 max-w-5xl">
         <div className="flex items-center mb-6 gap-2">
           <Button 
