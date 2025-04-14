@@ -18,12 +18,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { addLogEntry } from "@/utils/projectLog";
 
 const NewUserPage = () => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   const [email, setEmail] = useState("");
@@ -50,32 +50,53 @@ const NewUserPage = () => {
     setIsLoading(true);
     
     try {
-      // Tentar criar o usuário
-      const { data: userData, error: userError } = await supabase.auth.admin.createUser({
+      // Registrar tentativa de criação de usuário
+      addLogEntry('admin', 'Tentativa de criação de usuário', {
         email,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: name
-        }
+        makeAdmin,
+        byUser: user?.id
+      }, user?.id);
+      
+      // Obter email do admin atual
+      const adminEmail = user?.email;
+      if (!adminEmail) {
+        throw new Error("Não foi possível identificar o administrador");
+      }
+      
+      // Usar função RPC segura para criar usuário
+      const { data, error } = await supabase.rpc('admin_create_user', {
+        admin_email: adminEmail,
+        new_user_email: email,
+        new_user_password: password,
+        new_user_name: name || email,
+        make_admin: makeAdmin
       });
       
-      if (userError) {
-        throw userError;
+      if (error) {
+        addLogEntry('error', 'Erro ao criar usuário via RPC', {
+          error: error.message,
+          email
+        }, user?.id);
+        
+        throw error;
       }
       
-      const newUserId = userData.user.id;
-      
-      // Se for admin, adicionar à tabela de roles
-      if (makeAdmin) {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({ user_id: newUserId, role: 'admin' });
-          
-        if (roleError) {
-          console.error("Erro ao adicionar papel de admin:", roleError);
-        }
+      // Verificar resposta da função
+      if (!data.success) {
+        addLogEntry('error', 'Erro retornado pela função admin_create_user', {
+          message: data.message,
+          error_code: data.error_code,
+          email
+        }, user?.id);
+        
+        throw new Error(data.message || "Ocorreu um erro ao criar o usuário");
       }
+      
+      addLogEntry('admin', 'Usuário criado com sucesso', {
+        email,
+        isAdmin: makeAdmin,
+        newUserId: data.user_id
+      }, user?.id);
       
       toast({
         title: "Usuário criado com sucesso",
@@ -87,11 +108,21 @@ const NewUserPage = () => {
       
     } catch (error: any) {
       console.error("Erro ao criar usuário:", error);
-      setFormError(error.message || "Ocorreu um erro ao criar o usuário");
+      
+      // Mensagens de erro específicas
+      let errorMessage = "Ocorreu um erro ao criar o usuário";
+      
+      if (error.message && error.message.includes("email já está em uso")) {
+        errorMessage = "Este email já está sendo utilizado por outro usuário";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setFormError(errorMessage);
       toast({
         variant: "destructive",
         title: "Erro ao criar usuário",
-        description: error.message || "Ocorreu um erro ao criar o usuário",
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);

@@ -569,6 +569,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_create_user: {
+        Args: {
+          admin_email: string
+          new_user_email: string
+          new_user_password: string
+          new_user_name: string
+          make_admin?: boolean
+        }
+        Returns: Json
+      }
       complete_quiz: {
         Args: { user_id: string }
         Returns: boolean
@@ -576,6 +586,14 @@ export type Database = {
       gerar_respostas_json: {
         Args: { p_user_id: string }
         Returns: Json
+      }
+      get_user_emails: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: string
+          email: string
+          created_at: string
+        }[]
       }
       get_user_role: {
         Args: { user_id: string }

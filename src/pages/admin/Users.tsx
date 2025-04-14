@@ -1,8 +1,7 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase, supabaseAdmin, getUserEmails, configureEmailAccess } from "@/integrations/supabase/client";
+import { supabase, supabaseAdmin, getUserEmails, configureEmailAccess, addLogEntry } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
@@ -72,7 +71,17 @@ const UsersPage = () => {
         return;
       }
       
-      const emailData = await getUserEmails();
+      const { data: emailData, error: emailError } = await supabase
+        .rpc('get_user_emails');
+        
+      if (emailError) {
+        addLogEntry('error', 'Erro ao buscar emails de usuários via RPC', { 
+          error: emailError.message,
+          code: emailError.code
+        }, user?.id);
+        
+        setError("Não foi possível obter os emails dos usuários. Verifique suas permissões de administrador.");
+      }
       
       const { data: adminRoles, error: adminRolesError } = await supabase
         .from('user_roles')
@@ -106,16 +115,23 @@ const UsersPage = () => {
       });
       
       setUsers(processedUsers);
-      if (!emailData) {
-        setError("Acesso limitado aos dados de email. Utilize o método alternativo para ver todos os emails.");
+      
+      if (!emailData || emailMap.size === 0) {
+        setError("Acesso limitado aos dados de email. A função get_user_emails pode não estar disponível ou você pode não ter permissões suficientes.");
       }
     } catch (error: any) {
       console.error('Erro ao buscar usuários:', error);
+      
+      addLogEntry('error', 'Erro ao buscar lista de usuários', { 
+        error: error.message
+      }, user?.id);
+      
       toast({
         title: "Erro ao carregar usuários",
         description: "Ocorreu um problema ao buscar os dados dos usuários.",
         variant: "destructive",
       });
+      
       setError("Erro ao buscar usuários: " + error.message);
     } finally {
       setIsLoading(false);
@@ -217,7 +233,6 @@ const UsersPage = () => {
           title: "Configuração concluída",
           description: result.message,
         });
-        // Recarregar usuários após configuração bem-sucedida
         fetchUsers();
       } else {
         toast({

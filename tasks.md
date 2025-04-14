@@ -20,6 +20,9 @@
 - [x] Correção da formatação de respostas JSON nas visualizações do questionário
 - [x] Normalização do armazenamento de respostas no banco de dados
 - [x] Criação de utilidade separada para formatação de respostas JSON
+- [x] Criação da função RPC get_user_emails para acesso seguro aos emails dos usuários
+- [x] Criação da função admin_create_user para criação segura de usuários pelo administrador
+- [x] Implementação da função de criação de usuários pelo administrador no frontend
 
 ## Tarefas em Andamento
 
@@ -48,4 +51,3 @@
 - [x] ~~Função de completar questionário falha~~ (Corrigido)
 - [x] ~~Respostas de múltipla escolha são exibidas em formato JSON bruto~~ (Corrigido)
 - [ ] PDF gerado mostra apenas nomes dos módulos sem as perguntas e respostas
-- [ ] Função get_user_emails precisa ser criada no banco de dados

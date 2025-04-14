@@ -125,29 +125,26 @@ const isValidSupabaseKey = (key: string): boolean => {
 };
 
 /**
- * Função para obter emails de usuários (requer privilégios admin)
- * Esta função utiliza o cliente admin para acessar diretamente a tabela auth.users
+ * Função para obter emails de usuários usando a nova função RPC
+ * Esta versão usa a função RPC segura get_user_emails
  */
 export const getUserEmails = async () => {
   try {
-    if (!supabaseAdmin) {
-      logger.warn('Tentativa de acessar emails sem cliente admin', {
-        warning: 'Acesso a emails requer privilégios de admin'
-      });
-      addLogEntry('warning', 'Tentativa de acessar emails sem cliente admin configurado');
-      return null;
-    }
+    addLogEntry('info', 'Buscando emails de usuários via RPC');
     
-    addLogEntry('info', 'Buscando emails de usuários via cliente admin');
-    
-    // Usando RPC para reduzir superfície de ataque (ao invés de consultar diretamente auth.users)
-    const { data, error } = await supabaseAdmin.rpc('get_user_emails');
+    // Usando a nova função RPC para get_user_emails
+    const { data, error } = await supabase.rpc('get_user_emails');
     
     if (error) {
       logger.error('Erro ao buscar emails de usuários:', {
         error: formatErrorForLog(error)
       });
-      addLogEntry('error', 'Erro ao buscar emails de usuários via RPC', { error: formatErrorForLog(error) });
+      
+      addLogEntry('error', 'Erro ao buscar emails de usuários via RPC', { 
+        error: formatErrorForLog(error),
+        errorCode: error.code
+      });
+      
       return null;
     }
     
@@ -156,7 +153,11 @@ export const getUserEmails = async () => {
     logger.error('Exceção ao buscar emails de usuários:', {
       error: formatErrorForLog(error)
     });
-    addLogEntry('error', 'Exceção ao buscar emails de usuários', { error: formatErrorForLog(error) });
+    
+    addLogEntry('error', 'Exceção ao buscar emails de usuários', { 
+      error: formatErrorForLog(error) 
+    });
+    
     return null;
   }
 };
