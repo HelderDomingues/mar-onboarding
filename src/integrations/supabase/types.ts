@@ -455,11 +455,11 @@ export type Database = {
       }
       quiz_submissions: {
         Row: {
+          completed: boolean
           completed_at: string | null
           current_module: number
           device_info: string | null
           id: string
-          is_complete: boolean
           last_active: string | null
           modules_completed: number[] | null
           sessions: number | null
@@ -471,11 +471,11 @@ export type Database = {
           webhook_processed: boolean | null
         }
         Insert: {
+          completed?: boolean
           completed_at?: string | null
           current_module?: number
           device_info?: string | null
           id?: string
-          is_complete?: boolean
           last_active?: string | null
           modules_completed?: number[] | null
           sessions?: number | null
@@ -487,11 +487,11 @@ export type Database = {
           webhook_processed?: boolean | null
         }
         Update: {
+          completed?: boolean
           completed_at?: string | null
           current_module?: number
           device_info?: string | null
           id?: string
-          is_complete?: boolean
           last_active?: string | null
           modules_completed?: number[] | null
           sessions?: number | null
@@ -584,6 +584,19 @@ export type Database = {
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      registrar_respostas_completas: {
+        Args: { new: Database["public"]["Tables"]["quiz_submissions"]["Row"] }
+        Returns: {
+          data_submissao: string
+          id: string
+          respostas: Json
+          submission_id: string
+          user_email: string
+          user_id: string
+          user_name: string | null
+          webhook_processed: boolean | null
+        }
       }
       update_user_quiz_progress: {
         Args: {

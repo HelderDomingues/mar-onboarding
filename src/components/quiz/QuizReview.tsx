@@ -9,9 +9,10 @@ import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { completeQuizManually } from "@/utils/supabaseUtils";
 import { logger } from "@/utils/logger";
+
 interface QuizReviewProps {
   modules: QuizModule[];
   questions: QuizQuestion[];
@@ -19,6 +20,7 @@ interface QuizReviewProps {
   onComplete: () => void;
   onEdit: (moduleIndex: number, questionIndex: number) => void;
 }
+
 export function QuizReview({
   modules,
   questions,
@@ -43,29 +45,31 @@ export function QuizReview({
     }
   });
 
-  // Helper para obter o texto de uma opção, independente do tipo
   const getOptionText = (option: any): string => {
     return typeof option === 'string' ? option : option.text;
   };
 
-  // Helper para obter o valor/id de uma opção, independente do tipo
   const getOptionValue = (option: any): string => {
     return typeof option === 'string' ? option : option.id;
   };
+
   useEffect(() => {
     setEditedAnswers({
       ...answers
     });
   }, [answers]);
+
   const currentDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
   });
+
   const questionsByModule = modules.map(module => ({
     module,
     questions: questions.filter(q => q.module_id === module.id)
   }));
+
   const formatAnswerValue = (value: string | string[] | undefined) => {
     if (!value) return "Sem resposta";
     if (Array.isArray(value)) {
@@ -84,12 +88,15 @@ export function QuizReview({
     }
     return String(value);
   };
+
   const handleTermsChange = (checked: boolean) => {
     setAgreedToTerms(checked);
   };
+
   const handleEditClick = (questionId: string) => {
     setEditingQuestionId(questionId);
   };
+
   const handleSaveEdit = async (questionId: string) => {
     try {
       const answer = editedAnswers[questionId];
@@ -132,18 +139,21 @@ export function QuizReview({
     }
     setEditingQuestionId(null);
   };
+
   const handleCancelEdit = () => {
     setEditingQuestionId(null);
     setEditedAnswers({
       ...answers
     });
   };
+
   const handleInputChange = (questionId: string, value: string | string[]) => {
     setEditedAnswers(prev => ({
       ...prev,
       [questionId]: value
     }));
   };
+
   const handleCheckboxChange = (questionId: string, option: string, checked: boolean) => {
     let currentAnswers: string[] = [];
     if (Array.isArray(editedAnswers[questionId])) {
@@ -175,6 +185,7 @@ export function QuizReview({
       [questionId]: newAnswers
     }));
   };
+
   const handleCompleteQuiz = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -193,6 +204,7 @@ export function QuizReview({
       setIsSubmitting(false);
     }
   };
+
   const handleFinalizeQuiz = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -202,25 +214,51 @@ export function QuizReview({
       if (!userId) {
         throw new Error("Usuário não autenticado");
       }
+      
       logger.info('Iniciando finalização do questionário', {
         tag: 'Quiz',
         userId
       });
-      const {
-        error
-      } = await supabase.from('quiz_submissions').update({
-        completed: true,
-        completed_at: new Date().toISOString(),
-        contact_consent: true
-      }).eq('user_id', userId);
-      if (error) {
-        throw error;
+      
+      if (supabaseAdmin) {
+        const { data, error } = await supabaseAdmin.rpc('complete_quiz', { user_id: userId });
+        
+        if (error) {
+          logger.error('Erro ao completar questionário via RPC:', {
+            tag: 'Quiz',
+            data: { userId, error: JSON.stringify(error) }
+          });
+          throw error;
+        }
+        
+        logger.info('Questionário marcado como completo com sucesso via RPC', {
+          tag: 'Quiz',
+          data: { userId, result: data }
+        });
+        
+        await onComplete();
+      } else {
+        const { error } = await supabase.from('quiz_submissions').update({
+          completed: true,
+          completed_at: new Date().toISOString(),
+          contact_consent: true
+        }).eq('user_id', userId);
+        
+        if (error) {
+          logger.error('Erro ao completar questionário (método alternativo):', {
+            tag: 'Quiz',
+            data: { userId, error: JSON.stringify(error) }
+          });
+          throw error;
+        }
+        
+        logger.info('Questionário marcado como completo com sucesso (método alternativo)', {
+          tag: 'Quiz',
+          data: { userId }
+        });
+        
+        await onComplete();
       }
-      logger.info("Questionário marcado como completo com sucesso", {
-        tag: 'Quiz',
-        userId
-      });
-      await onComplete();
     } catch (error: any) {
       logger.error("Erro na finalização:", error);
       setSubmissionError("Não foi possível finalizar o questionário. Por favor, tente novamente.");
@@ -234,6 +272,7 @@ export function QuizReview({
       setIsSubmitting(false);
     }
   };
+
   const renderEditField = (question: QuizQuestion) => {
     const questionId = question.id;
     const answer = editedAnswers[questionId];
@@ -287,6 +326,7 @@ export function QuizReview({
         return <Input value={typeof answer === 'string' ? answer : ''} onChange={e => handleInputChange(questionId, e.target.value)} className="w-full text-slate-900" placeholder="Digite sua resposta aqui" />;
     }
   };
+
   return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-6">
       {!confirmed ? <>
           <Card className="quiz-card">

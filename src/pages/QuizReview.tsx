@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -142,7 +141,6 @@ const QuizReviewPage = () => {
         data: { userId: user.id }
       });
       
-      // Abordagem simplificada: usar diretamente a função utilitária
       const success = await completeQuizManually(user.id);
       
       if (success) {

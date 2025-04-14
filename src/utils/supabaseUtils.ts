@@ -16,7 +16,7 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
     
     const { data, error } = await supabase
       .from('quiz_submissions')
-      .select('is_complete, completed')
+      .select('completed')
       .eq('user_id', userId)
       .maybeSingle();
       
@@ -28,8 +28,8 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
       return false;
     }
     
-    // Verificar ambos os campos is_complete e completed para compatibilidade
-    const isComplete = data?.is_complete === true || data?.completed === true;
+    // Verificar apenas a coluna 'completed' conforme nova estrutura
+    const isComplete = data?.completed === true;
     
     logger.info(`Status do questionário: ${isComplete ? 'Completo' : 'Incompleto'}`, {
       tag: 'Quiz',
@@ -162,7 +162,7 @@ export const getQuizDetails = async (userId: string) => {
 
 // Completa o questionário manualmente para o usuário
 export const completeQuizManually = async (userId: string): Promise<boolean> => {
-  if (!userId || !supabaseAdmin) return false;
+  if (!userId) return false;
   
   try {
     logger.info('Iniciando processo para completar questionário manualmente', {
@@ -170,24 +170,52 @@ export const completeQuizManually = async (userId: string): Promise<boolean> => 
       data: { userId }
     });
     
-    // Usamos diretamente a RPC que foi criada no SQL para garantir privilégios adequados
-    const { data, error } = await supabaseAdmin
-      .rpc('complete_quiz', { user_id: userId });
-    
-    if (error) {
-      logger.error("Erro ao completar questionário via RPC:", {
+    // Verificar se o supabaseAdmin está disponível
+    if (supabaseAdmin) {
+      // Usar a função RPC complete_quiz
+      const { data, error } = await supabaseAdmin.rpc('complete_quiz', { user_id: userId });
+      
+      if (error) {
+        logger.error("Erro ao completar questionário via RPC:", {
+          tag: 'Quiz',
+          data: { userId, error: JSON.stringify(error) }
+        });
+        return false;
+      }
+      
+      logger.info('Questionário completado com sucesso via RPC', {
         tag: 'Quiz',
-        data: { userId, error: JSON.stringify(error) }
+        data: { userId, result: data }
       });
-      return false;
+      
+      return data === true;
+    } else {
+      // Método alternativo caso o admin não esteja disponível
+      logger.warn('Cliente admin não disponível, usando método alternativo', {
+        tag: 'Quiz',
+        data: { userId }
+      });
+      
+      const { error } = await supabase.from('quiz_submissions').update({
+        completed: true,
+        completed_at: new Date().toISOString()
+      }).eq('user_id', userId);
+      
+      if (error) {
+        logger.error("Erro ao completar questionário (método alternativo):", {
+          tag: 'Quiz',
+          data: { userId, error: JSON.stringify(error) }
+        });
+        return false;
+      }
+      
+      logger.info('Questionário completado com sucesso (método alternativo)', {
+        tag: 'Quiz',
+        data: { userId }
+      });
+      
+      return true;
     }
-    
-    logger.info('Questionário completado com sucesso via RPC', {
-      tag: 'Quiz',
-      data: { userId, result: data }
-    });
-    
-    return data === true;
   } catch (error) {
     logger.error("Erro ao completar questionário manualmente:", {
       tag: 'Quiz',
