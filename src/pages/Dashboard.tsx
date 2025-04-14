@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { QuizSubmission } from "@/types/quiz";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
+import { logger } from "@/utils/logger";
+import { addLogEntry } from "@/utils/projectLog";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -22,6 +24,8 @@ const Dashboard = () => {
       
       try {
         setIsLoading(true);
+        addLogEntry('info', 'Verificando permissões de usuário no dashboard', { userId: user.id });
+        
         const { data, error } = await supabase
           .from('user_roles')
           .select('role')
@@ -31,9 +35,17 @@ const Dashboard = () => {
           
         if (!error && data) {
           setIsAdmin(true);
+          logger.info('Usuário identificado como administrador', {
+            tag: 'Dashboard',
+            userId: user.id
+          });
         }
       } catch (error) {
         console.error('Erro ao verificar permissões:', error);
+        logger.error('Erro ao verificar permissões de usuário', {
+          tag: 'Dashboard',
+          error
+        });
       } finally {
         setIsLoading(false);
       }
@@ -43,6 +55,8 @@ const Dashboard = () => {
       if (!user) return;
       
       try {
+        addLogEntry('info', 'Buscando questionário do usuário', { userId: user.id });
+        
         const { data, error } = await supabase
           .from('quiz_submissions')
           .select('*')
@@ -51,9 +65,17 @@ const Dashboard = () => {
           
         if (!error && data) {
           setSubmission(data as QuizSubmission);
+          logger.info('Questionário do usuário carregado com sucesso', {
+            tag: 'Dashboard',
+            userId: user.id
+          });
         }
       } catch (error) {
         console.error('Erro ao buscar questionário:', error);
+        logger.error('Erro ao buscar questionário do usuário', {
+          tag: 'Dashboard',
+          error
+        });
       }
     };
     

@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Cog, Home, LogOut, ChevronDown } from "lucide-react";
+import { Cog, Home, LogOut, ChevronDown, User } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { logger } from "@/utils/logger";
 
@@ -74,6 +74,16 @@ export function DashboardHeader({ isAdmin = false }: DashboardHeaderProps) {
             <span className="hidden sm:inline">Dashboard</span>
           </Button>
           
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => navigate('/profile')}
+            className="text-slate-600 hover:text-slate-900 gap-2"
+          >
+            <User className="h-4 w-4" />
+            <span className="hidden sm:inline">Perfil</span>
+          </Button>
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center gap-2">
@@ -91,6 +101,10 @@ export function DashboardHeader({ isAdmin = false }: DashboardHeaderProps) {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => navigate('/dashboard')}>
                 Dashboard
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem onClick={() => navigate('/profile')}>
+                Perfil
               </DropdownMenuItem>
               
               <DropdownMenuItem onClick={() => navigate('/member')}>

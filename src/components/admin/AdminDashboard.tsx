@@ -1,7 +1,13 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, BookOpen, BarChart, ChevronRight, Users as UsersIcon, FileCheck, FileBarChart, LineChart, PieChart, ArrowUpRight, ArrowDown, TrendingUp, Layers, Search, Filter } from "lucide-react";
+import { 
+  Clock, BookOpen, BarChart, ChevronRight, Users as UsersIcon, 
+  FileCheck, FileBarChart, LineChart, PieChart, ArrowUpRight, 
+  ArrowDown, TrendingUp, Layers, Search, Filter, User, Settings, 
+  LayoutDashboard
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { QuizSubmission } from "@/types/quiz";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,30 +15,41 @@ import { BarChart as ReBarChart, Bar, XAxis, YAxis, Tooltip as ChartTooltip, Leg
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
+import { addLogEntry } from "@/utils/projectLog";
+
 interface AdminDashboardProps {
   submission?: QuizSubmission | null;
   isAdmin: boolean;
 }
+
 export function AdminDashboard({
   submission,
   isAdmin
 }: AdminDashboardProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  
   const [stats, setStats] = useState({
     totalUsers: '...',
     completedSubmissions: '...',
     inProgressSubmissions: '...',
     completionRate: '...'
   });
+  
   const [chartData, setChartData] = useState<any[]>([]);
   const [lineChartData, setLineChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
   useEffect(() => {
     // Se não for admin, não fazemos as consultas
     if (!isAdmin) return;
+    
     const fetchStats = async () => {
       try {
         setIsLoading(true);
+        addLogEntry('info', 'Carregando estatísticas do dashboard administrativo');
+        
         // Buscar contagem de usuários
         const {
           count: usersCount,
@@ -59,6 +76,7 @@ export function AdminDashboard({
           count: 'exact',
           head: true
         }).eq('completed', false);
+        
         if (!usersError && !completedError && !inProgressError) {
           const usersTotal = usersCount || 0;
           const completed = completedCount || 0;
@@ -98,16 +116,40 @@ export function AdminDashboard({
             };
           });
           setLineChartData(last7Days);
+        } else {
+          const errorMessage = usersError || completedError || inProgressError;
+          console.error("Erro ao buscar estatísticas:", errorMessage);
+          addLogEntry('error', 'Erro ao buscar estatísticas do dashboard', {
+            error: errorMessage?.message
+          });
+          
+          toast({
+            title: "Erro ao carregar estatísticas",
+            description: "Não foi possível carregar as estatísticas do dashboard.",
+            variant: "destructive"
+          });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Erro ao buscar estatísticas", error);
+        addLogEntry('error', 'Erro ao buscar estatísticas do dashboard', {
+          error: error.message
+        });
+        
+        toast({
+          title: "Erro ao carregar estatísticas",
+          description: "Ocorreu um erro inesperado ao carregar os dados.",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
     };
+    
     fetchStats();
-  }, [isAdmin]);
-  return <div className="space-y-6 w-full font-sans">
+  }, [isAdmin, toast]);
+
+  return (
+    <div className="space-y-6 w-full font-sans">
       {/* Cabeçalho da página */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -117,7 +159,7 @@ export function AdminDashboard({
           </p>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input type="search" placeholder="Pesquisar..." className="pl-9 w-full md:w-[200px] h-9" />
@@ -126,111 +168,205 @@ export function AdminDashboard({
             <Filter className="h-4 w-4 mr-1" />
             Filtros
           </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigate("/profile")} 
+            className="flex items-center gap-1"
+          >
+            <User className="h-4 w-4" />
+            <span className="hidden md:inline">Perfil</span>
+          </Button>
         </div>
       </div>
 
-      {/* Cards de estatísticas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="dashboard-card">
-          <CardContent className="p-0">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Usuários</p>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <h3 className="text-2xl font-bold">{stats.totalUsers}</h3>
-                  <Badge variant="outline" className="font-medium bg-green-50 text-green-700 border-green-200">
-                    <ArrowUpRight className="h-3 w-3 mr-1" />
-                    12%
-                  </Badge>
+      {/* Visão geral e ações rápidas */}
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-lg font-medium">
+            <LayoutDashboard className="h-5 w-5 inline-block mr-2 text-blue-600" />
+            Visão Consolidada do Sistema
+          </CardTitle>
+          <CardDescription>
+            Acompanhe os principais indicadores e acesse ações rápidas
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {/* Cards de estatísticas */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="dashboard-card bg-gradient-to-br from-blue-50 to-white border-blue-200">
+              <CardContent className="p-0">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Usuários</p>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <h3 className="text-2xl font-bold">{stats.totalUsers}</h3>
+                      <Badge variant="outline" className="font-medium bg-green-50 text-green-700 border-green-200">
+                        <ArrowUpRight className="h-3 w-3 mr-1" />
+                        12%
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="rounded-full p-2 bg-blue-100 text-blue-600">
+                    <UsersIcon className="h-5 w-5" />
+                  </div>
                 </div>
-              </div>
-              <div className="rounded-full p-2 bg-blue-100 text-blue-600">
+                <div className="mt-4 text-xs flex justify-between">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-xs p-0 h-auto text-muted-foreground hover:text-primary" 
+                    onClick={() => navigate('/admin/users')}
+                  >
+                    Ver detalhes <ChevronRight className="ml-1 h-3 w-3" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="dashboard-card bg-gradient-to-br from-green-50 to-white border-green-200">
+              <CardContent className="p-0">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Questionários Completos</p>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <h3 className="text-2xl font-bold">{stats.completedSubmissions}</h3>
+                      <Badge variant="outline" className="font-medium bg-green-50 text-green-700 border-green-200">
+                        <ArrowUpRight className="h-3 w-3 mr-1" />
+                        8%
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="rounded-full p-2 bg-green-100 text-green-600">
+                    <FileCheck className="h-5 w-5" />
+                  </div>
+                </div>
+                <div className="mt-4 text-xs flex justify-between">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-xs p-0 h-auto text-muted-foreground hover:text-primary" 
+                    onClick={() => navigate('/admin/reports')}
+                  >
+                    Ver relatórios <ChevronRight className="ml-1 h-3 w-3" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="dashboard-card bg-gradient-to-br from-amber-50 to-white border-amber-200">
+              <CardContent className="p-0">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Em Progresso</p>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <h3 className="text-2xl font-bold">{stats.inProgressSubmissions}</h3>
+                      <Badge variant="outline" className="font-medium bg-amber-50 text-amber-700 border-amber-200">
+                        <TrendingUp className="h-3 w-3 mr-1" />
+                        3%
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="rounded-full p-2 bg-amber-100 text-amber-600">
+                    <Clock className="h-5 w-5" />
+                  </div>
+                </div>
+                <div className="mt-4 text-xs flex justify-between">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-xs p-0 h-auto text-muted-foreground hover:text-primary"
+                    onClick={() => navigate('/admin/metrics')}
+                  >
+                    Ver métricas <ChevronRight className="ml-1 h-3 w-3" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="dashboard-card bg-gradient-to-br from-indigo-50 to-white border-indigo-200">
+              <CardContent className="p-0">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Taxa de Conclusão</p>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <h3 className="text-2xl font-bold">{stats.completionRate}</h3>
+                      <Badge variant="outline" className="font-medium bg-red-50 text-red-700 border-red-200">
+                        <ArrowDown className="h-3 w-3 mr-1" />
+                        2%
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="rounded-full p-2 bg-indigo-100 text-indigo-600">
+                    <BarChart className="h-5 w-5" />
+                  </div>
+                </div>
+                <div className="mt-4 text-xs flex justify-between">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-xs p-0 h-auto text-muted-foreground hover:text-primary"
+                    onClick={() => navigate('/admin/metrics')}
+                  >
+                    Análise completa <ChevronRight className="ml-1 h-3 w-3" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Botões de ação rápida */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+            <Button 
+              onClick={() => navigate("/admin/users")} 
+              variant="outline" 
+              className="justify-start text-left h-auto py-3"
+            >
+              <div className="rounded-full p-2 bg-blue-100 text-blue-600 mr-3">
                 <UsersIcon className="h-5 w-5" />
               </div>
-            </div>
-            <div className="mt-4 text-xs flex justify-between">
-              <Button variant="ghost" size="sm" className="text-xs p-0 h-auto text-muted-foreground hover:text-primary" onClick={() => navigate('/admin/users')}>
-                Ver detalhes <ChevronRight className="ml-1 h-3 w-3" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="dashboard-card">
-          <CardContent className="p-0">
-            <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Questionários Completos</p>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <h3 className="text-2xl font-bold">{stats.completedSubmissions}</h3>
-                  <Badge variant="outline" className="font-medium bg-green-50 text-green-700 border-green-200">
-                    <ArrowUpRight className="h-3 w-3 mr-1" />
-                    8%
-                  </Badge>
-                </div>
+                <p className="font-medium">Gerenciar Usuários</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Cadastre, edite e visualize usuários
+                </p>
               </div>
-              <div className="rounded-full p-2 bg-green-100 text-green-600">
-                <FileCheck className="h-5 w-5" />
+            </Button>
+            
+            <Button 
+              onClick={() => navigate("/admin/reports")} 
+              variant="outline" 
+              className="justify-start text-left h-auto py-3"
+            >
+              <div className="rounded-full p-2 bg-green-100 text-green-600 mr-3">
+                <FileBarChart className="h-5 w-5" />
               </div>
-            </div>
-            <div className="mt-4 text-xs flex justify-between">
-              <Button variant="ghost" size="sm" className="text-xs p-0 h-auto text-muted-foreground hover:text-primary" onClick={() => navigate('/admin/reports')}>
-                Ver relatórios <ChevronRight className="ml-1 h-3 w-3" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="dashboard-card">
-          <CardContent className="p-0">
-            <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Em Progresso</p>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <h3 className="text-2xl font-bold">{stats.inProgressSubmissions}</h3>
-                  <Badge variant="outline" className="font-medium bg-amber-50 text-amber-700 border-amber-200">
-                    <TrendingUp className="h-3 w-3 mr-1" />
-                    3%
-                  </Badge>
-                </div>
+                <p className="font-medium">Relatórios e Análises</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Visualize relatórios de desempenho
+                </p>
               </div>
-              <div className="rounded-full p-2 bg-amber-100 text-amber-600">
-                <Clock className="h-5 w-5" />
+            </Button>
+            
+            <Button 
+              onClick={() => navigate("/admin/quiz-editor")} 
+              variant="outline" 
+              className="justify-start text-left h-auto py-3"
+            >
+              <div className="rounded-full p-2 bg-purple-100 text-purple-600 mr-3">
+                <Layers className="h-5 w-5" />
               </div>
-            </div>
-            <div className="mt-4 text-xs flex justify-between">
-              <Button variant="ghost" size="sm" className="text-xs p-0 h-auto text-muted-foreground hover:text-primary" onClick={() => navigate('/admin/reports')}>
-                Ver detalhes <ChevronRight className="ml-1 h-3 w-3" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="dashboard-card">
-          <CardContent className="p-0">
-            <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Taxa de Conclusão</p>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <h3 className="text-2xl font-bold">{stats.completionRate}</h3>
-                  <Badge variant="outline" className="font-medium bg-red-50 text-red-700 border-red-200">
-                    <ArrowDown className="h-3 w-3 mr-1" />
-                    2%
-                  </Badge>
-                </div>
+                <p className="font-medium">Editor de Questionário</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Edite módulos e questões do quiz
+                </p>
               </div>
-              <div className="rounded-full p-2 bg-indigo-100 text-indigo-600">
-                <BarChart className="h-5 w-5" />
-              </div>
-            </div>
-            <div className="mt-4 text-xs flex justify-between">
-              <Button variant="ghost" size="sm" className="text-xs p-0 h-auto text-muted-foreground hover:text-primary" onClick={() => navigate('/admin/reports')}>
-                Análise completa <ChevronRight className="ml-1 h-3 w-3" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Cards de ações */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -263,10 +399,24 @@ export function AdminDashboard({
             <p className="text-sm text-muted-foreground">
               Visualize relatórios de desempenho e análises das respostas dos usuários.
             </p>
-            <Button variant="outline" className="w-full justify-between" onClick={() => navigate("/admin/reports")}>
-              Ver Relatórios
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="default" 
+                className="flex-1 justify-between" 
+                onClick={() => navigate("/admin/reports")}
+              >
+                Ver Relatórios
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="outline" 
+                className="flex-1 justify-between" 
+                onClick={() => navigate("/admin/metrics")}
+              >
+                Ver Métricas
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -348,10 +498,16 @@ export function AdminDashboard({
           <p className="text-sm text-muted-foreground">
             Atualizado em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR')}
           </p>
-          <Button variant="outline" size="sm" onClick={() => navigate("/admin/reports")}>
-            Ver mais análises
-            <ChevronRight className="ml-1 h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate("/admin/metrics")}>
+              Ver Métricas
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+            <Button variant="default" size="sm" onClick={() => navigate("/admin/reports")}>
+              Ver Relatórios
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     </div>;
