@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -57,25 +56,20 @@ const Quiz = () => {
     checkAdmin();
   }, [user, adminParam, isAdmin]);
 
-  // Verifica se o questionário foi concluído ao montar o componente
   useEffect(() => {
     const checkQuizStatus = async () => {
       if (!user) return;
       
       try {
-        // Verifica se o questionário está completo
         const completed = await isQuizComplete(user.id);
         console.log("Status do questionário:", completed ? "Completo" : "Incompleto");
         
-        // Se estiver completo e não for modo admin, redirecionar para visualizar respostas
         if (completed && !forceMode && !showAdmin) {
           setIsComplete(true);
           
-          // Se estamos no modo de revisão, permitir a visualização
           if (forceMode === 'review') {
             setShowReview(true);
           } else if (location.pathname === '/quiz' && !location.search) {
-            // Apenas redireciona se estamos na página principal do quiz sem parâmetros
             navigate('/quiz/view-answers');
           }
         }
@@ -126,7 +120,20 @@ const Quiz = () => {
 
           const questionsWithOptions = questionsData.map(question => {
             const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
-            return { ...question, options } as unknown as QuizQuestion;
+            let questionOptions = options.map(opt => opt.text);
+            
+            const newQuestion = {
+              ...question,
+              options: questionOptions,
+              hint: question.hint || undefined,
+              max_options: question.max_options || undefined,
+              prefix: question.prefix || undefined,
+              validation: question.validation || undefined,
+              placeholder: question.placeholder || undefined,
+              text: question.question_text || question.text
+            };
+            
+            return newQuestion as unknown as QuizQuestion;
           });
 
           setQuestions(questionsWithOptions);
@@ -173,14 +180,11 @@ const Quiz = () => {
           if (userSubmission.completed) {
             setIsComplete(true);
             
-            // Se o questionário está completo e o usuário está tentando continuar, 
-            // redirecionar para a página de visualização de respostas
             if (!showAdmin && !forceMode && location.pathname === '/quiz' && !location.search) {
               navigate('/quiz/view-answers');
               return;
             }
           } else if (userSubmission.current_module >= 8 && !showReview) {
-            // Se chegou ao último módulo e não está na revisão, mostrar a revisão
             setShowReview(true);
           } else if (!moduleParam) {
             const moduleIndex = Math.max(0, userSubmission.current_module - 1);
@@ -221,7 +225,6 @@ const Quiz = () => {
             });
             setAnswers(loadedAnswers);
             
-            // Se todas as perguntas estão respondidas, mostrar a revisão
             if (userSubmission.current_module >= 8 && !userSubmission.completed && !showReview) {
               setShowReview(true);
             }
@@ -393,7 +396,6 @@ const Quiz = () => {
       } else {
         setShowReview(true);
         window.scrollTo(0, 0);
-        // Atualizar o módulo para 8 para indicar que todos os módulos foram concluídos
         await updateCurrentModule(8);
       }
     }
@@ -427,21 +429,18 @@ const Quiz = () => {
   };
 
   useEffect(() => {
-    // Atualiza o título da página
     document.title = "Questionário MAR | Crie Valor";
     
-    // Redirecionar se não estiver autenticado
     if (!isAuthenticated) {
       navigate('/');
     }
   }, [isAuthenticated, navigate]);
 
   if (!isAuthenticated) {
-    return null; // Redirecionado pelo useEffect
+    return null;
   }
 
   if (isComplete && !showAdmin && !forceMode && !showSuccess) {
-    // Se o questionário está completo e não é admin, redirecionar para visualizar respostas
     navigate('/quiz/view-answers');
     return null;
   }

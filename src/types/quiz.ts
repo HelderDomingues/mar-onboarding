@@ -22,7 +22,7 @@ export interface QuizQuestion {
   required: boolean;
   order_number: number;
   hint: string | null;
-  options?: QuizOption[];
+  options?: QuizOption[] | string[];
   
   // Campos adicionais para a nova estrutura
   question_number?: number;

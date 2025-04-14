@@ -8,7 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { PrefixInput } from "@/components/ui/prefix-input";
-import { InfoIcon, Eye, EyeOff } from "lucide-react";
+import { InfoIcon } from "lucide-react";
+import { InstagramField } from "@/components/quiz/question-types/InstagramField";
+import { UrlField } from "@/components/quiz/question-types/UrlField";
+import { LimitedCheckbox } from "@/components/quiz/question-types/LimitedCheckbox";
 
 export type QuestionType = 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select' | 'url' | 'instagram';
 export interface Question {
@@ -18,6 +21,10 @@ export interface Question {
   options?: string[];
   required: boolean;
   hint?: string;
+  max_options?: number;
+  prefix?: string;
+  validation?: string;
+  placeholder?: string;
 }
 
 interface QuestionCardProps {
@@ -44,19 +51,14 @@ export function QuestionCard({
   const [checkedOptions, setCheckedOptions] = useState<string[]>([]);
   const [otherValue, setOtherValue] = useState<string>('');
   const [showOtherInput, setShowOtherInput] = useState<boolean>(false);
-
-  // Verificar se é uma pergunta de Instagram
-  const isInstagramQuestion = (text: string): boolean => {
-    return (
-      text.toLowerCase().includes('instagram da empresa') ||
-      text.toLowerCase().includes('instagram concorrente a') ||
-      text.toLowerCase().includes('instagram concorrente b') ||
-      text.toLowerCase().includes('instagram concorrente c')
-    );
-  };
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Gerar placeholder apropriado baseado no tipo da pergunta e texto
   const getPlaceholder = (question: Question): string => {
+    if (question.placeholder) {
+      return question.placeholder;
+    }
+    
     const text = question.text.toLowerCase();
     
     if (text.includes('telefone') || text.includes('whatsapp')) {
@@ -84,6 +86,7 @@ export function QuestionCard({
     setCheckedOptions([]);
     setOtherValue('');
     setShowOtherInput(false);
+    setValidationError(null);
     
     // Carregar as respostas existentes apenas se houver
     if (currentAnswer !== undefined) {
@@ -117,6 +120,10 @@ export function QuestionCard({
       if (prev.includes(option)) {
         return prev.filter(item => item !== option);
       } else {
+        // Verificar o limite de opções apenas ao adicionar
+        if (question.max_options && prev.length >= question.max_options && !prev.includes(option)) {
+          return prev;
+        }
         return [...prev, option];
       }
     });
@@ -136,7 +143,130 @@ export function QuestionCard({
     }
   };
 
+  const validateInput = (): boolean => {
+    setValidationError(null);
+    
+    if (!question.required && (
+      textAnswer === '' || 
+      selectedOption === '' || 
+      checkedOptions.length === 0
+    )) {
+      return true; // Não é obrigatório, então é válido mesmo vazio
+    }
+    
+    if (question.validation) {
+      // Validações específicas baseadas no campo validation
+      switch (question.validation) {
+        case 'email':
+          const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailPattern.test(textAnswer)) {
+            setValidationError("E-mail inválido. Por favor, digite um e-mail válido.");
+            return false;
+          }
+          break;
+        case 'url':
+          try {
+            // Adicionar protocolo se não existir
+            const urlString = textAnswer.startsWith('http') ? textAnswer : `https://${textAnswer}`;
+            new URL(urlString);
+          } catch (e) {
+            setValidationError("URL inválida. Por favor, digite um endereço web válido.");
+            return false;
+          }
+          break;
+        case 'phone':
+          const phonePattern = /^[0-9]{10,11}$/;
+          if (!phonePattern.test(textAnswer.replace(/\D/g, ''))) {
+            setValidationError("Telefone inválido. Digite apenas números, incluindo DDD.");
+            return false;
+          }
+          break;
+      }
+    }
+    
+    // Validações por tipo
+    switch (question.type) {
+      case 'radio':
+        if (selectedOption === '') {
+          setValidationError("Selecione uma opção.");
+          return false;
+        }
+        if (selectedOption.toLowerCase().includes('outro') && showOtherInput && otherValue === '') {
+          setValidationError("Especifique sua resposta no campo 'Outro'.");
+          return false;
+        }
+        break;
+      case 'checkbox':
+        if (checkedOptions.length === 0) {
+          setValidationError("Selecione pelo menos uma opção.");
+          return false;
+        }
+        if (checkedOptions.some(opt => opt.toLowerCase().includes('outro')) && showOtherInput && otherValue === '') {
+          setValidationError("Especifique sua resposta no campo 'Outro'.");
+          return false;
+        }
+        if (question.max_options && checkedOptions.length > question.max_options) {
+          setValidationError(`Selecione no máximo ${question.max_options} opções.`);
+          return false;
+        }
+        break;
+      case 'text':
+      case 'textarea':
+        if (textAnswer.trim() === '') {
+          setValidationError("Este campo é obrigatório.");
+          return false;
+        }
+        break;
+      case 'email':
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (textAnswer.trim() === '') {
+          setValidationError("Este campo é obrigatório.");
+          return false;
+        } else if (!emailPattern.test(textAnswer)) {
+          setValidationError("E-mail inválido. Por favor, digite um e-mail válido.");
+          return false;
+        }
+        break;
+      case 'number':
+        if (textAnswer.trim() === '') {
+          setValidationError("Este campo é obrigatório.");
+          return false;
+        } else if (isNaN(Number(textAnswer))) {
+          setValidationError("Digite apenas números.");
+          return false;
+        }
+        break;
+      case 'url':
+        if (textAnswer.trim() === '') {
+          setValidationError("Este campo é obrigatório.");
+          return false;
+        } else {
+          try {
+            // Adicionar protocolo se não existir
+            const urlString = textAnswer.startsWith('http') ? textAnswer : `https://${textAnswer}`;
+            new URL(urlString);
+          } catch (e) {
+            setValidationError("URL inválida. Por favor, digite um endereço web válido.");
+            return false;
+          }
+        }
+        break;
+      case 'instagram':
+        if (textAnswer.trim() === '') {
+          setValidationError("Este campo é obrigatório.");
+          return false;
+        }
+        break;
+    }
+    
+    return true;
+  };
+
   const handleNext = () => {
+    if (!validateInput()) {
+      return;
+    }
+    
     if (question.type === 'radio') {
       if (selectedOption.toLowerCase().includes('outro') && showOtherInput && otherValue) {
         onAnswer(question.id, otherValue);
@@ -152,6 +282,17 @@ export function QuestionCard({
         answers.push(otherValue);
       }
       onAnswer(question.id, answers);
+    } else if (question.type === 'instagram' || question.type === 'url') {
+      // Garantir que mantemos o formato padrão para Instagram e URL
+      let formattedAnswer = textAnswer;
+      
+      if (question.type === 'instagram' && question.prefix && !formattedAnswer.startsWith(question.prefix)) {
+        formattedAnswer = `${question.prefix}${formattedAnswer}`;
+      } else if (question.type === 'url' && !formattedAnswer.startsWith('http')) {
+        formattedAnswer = `https://${formattedAnswer}`;
+      }
+      
+      onAnswer(question.id, formattedAnswer);
     } else {
       onAnswer(question.id, textAnswer);
     }
@@ -160,6 +301,7 @@ export function QuestionCard({
 
   const isAnswerValid = () => {
     if (!question.required) return true;
+    
     switch (question.type) {
       case 'radio':
         if (selectedOption.toLowerCase().includes('outro')) {
@@ -170,13 +312,14 @@ export function QuestionCard({
         if (checkedOptions.some(opt => opt.toLowerCase().includes('outro')) && !otherValue) {
           return false;
         }
-        return checkedOptions.length > 0;
+        return checkedOptions.length > 0 && (
+          !question.max_options || checkedOptions.length <= question.max_options
+        );
       case 'text':
       case 'textarea':
       case 'email':
       case 'number':
       case 'instagram':
-        return !!textAnswer;
       case 'url':
         return !!textAnswer;
       default:
@@ -240,24 +383,28 @@ export function QuestionCard({
           />}
         
         {question.type === 'url' && (
-          <PrefixInput 
-            prefix="https://" 
-            placeholder={getPlaceholder(question)} 
-            type="text" 
-            value={textAnswer} 
-            onChange={e => setTextAnswer(e.target.value)}
-            className="text-slate-900"
+          <UrlField
+            id={`url-${question.id}`}
+            value={textAnswer}
+            onChange={setTextAnswer}
+            placeholder={getPlaceholder(question)}
+            hint={question.hint}
+            required={question.required}
+            prefix={question.prefix || 'https://'}
+            error={validationError}
           />
         )}
         
         {question.type === 'instagram' && (
-          <PrefixInput 
-            prefix="https://instagram.com/" 
-            placeholder={getPlaceholder(question)} 
-            type="text" 
-            value={textAnswer} 
-            onChange={e => setTextAnswer(e.target.value)}
-            className="text-slate-900"
+          <InstagramField
+            id={`instagram-${question.id}`}
+            value={textAnswer}
+            onChange={setTextAnswer}
+            placeholder={getPlaceholder(question)}
+            hint={question.hint}
+            required={question.required}
+            prefix={question.prefix || '@'}
+            error={validationError}
           />
         )}
         
@@ -276,27 +423,42 @@ export function QuestionCard({
             className="min-h-[120px] text-slate-900" 
           />}
         
-        {question.type === 'checkbox' && question.options && <div className="space-y-3">
-            <p className="text-sm text-muted-foreground mb-3">
-              Marque quantas opções desejar
-            </p>
-            {question.options.map((option, index) => <div key={index} className="flex items-center space-x-2">
-                <Checkbox id={`checkbox-${question.id}-${index}`} checked={checkedOptions.includes(option)} onCheckedChange={() => handleCheckboxChange(option)} />
-                <label htmlFor={`checkbox-${question.id}-${index}`} className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  {option}
-                </label>
-              </div>)}
-            
-            {showOtherInput && <div className="mt-2 pl-6">
-                <Input 
-                  type="text" 
-                  placeholder="Especifique sua resposta..." 
-                  value={otherValue} 
-                  onChange={e => setOtherValue(e.target.value)} 
-                  className="w-full text-slate-900" 
-                />
-              </div>}
-          </div>}
+        {question.type === 'checkbox' && question.options && (
+          question.max_options ? (
+            <LimitedCheckbox
+              id={`checkbox-${question.id}`}
+              options={question.options}
+              value={checkedOptions}
+              onChange={setCheckedOptions}
+              maxOptions={question.max_options}
+              hint={question.hint}
+              required={question.required}
+              error={validationError}
+            />
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground mb-3">
+                Marque quantas opções desejar
+              </p>
+              {question.options.map((option, index) => <div key={index} className="flex items-center space-x-2">
+                  <Checkbox id={`checkbox-${question.id}-${index}`} checked={checkedOptions.includes(option)} onCheckedChange={() => handleCheckboxChange(option)} />
+                  <label htmlFor={`checkbox-${question.id}-${index}`} className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    {option}
+                  </label>
+                </div>)}
+              
+              {showOtherInput && <div className="mt-2 pl-6">
+                  <Input 
+                    type="text" 
+                    placeholder="Especifique sua resposta..." 
+                    value={otherValue} 
+                    onChange={e => setOtherValue(e.target.value)} 
+                    className="w-full text-slate-900" 
+                  />
+                </div>}
+            </div>
+          )
+        )}
         
         {question.type === 'select' && question.options && <select 
             className="w-full border border-gray-300 rounded-md p-2 text-slate-900" 
@@ -308,6 +470,12 @@ export function QuestionCard({
                 {option}
               </option>)}
           </select>}
+          
+        {validationError && (
+          <p className="text-sm text-red-500 mt-2">
+            {validationError}
+          </p>
+        )}
       </CardContent>
       
       <CardFooter className="flex justify-between">
@@ -315,7 +483,7 @@ export function QuestionCard({
           Anterior
         </Button>
         
-        <Button onClick={handleNext} className="quiz-btn text-white" disabled={question.required && !isAnswerValid()}>
+        <Button onClick={handleNext} className="quiz-btn text-white">
           {isLast ? "Finalizar" : "Próximo"}
         </Button>
       </CardFooter>
