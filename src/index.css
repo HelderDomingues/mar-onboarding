@@ -100,7 +100,7 @@
     --quiz-text: 0 0% 100%;
     --quiz-button: 210 100% 50%;
     --quiz-button-hover: 210 100% 45%;
-    --quiz-button-text: 0 0% 100%;
+    --quiz-button-text: 0 100% 0%;
   }
 }
 
