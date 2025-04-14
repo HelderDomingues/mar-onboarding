@@ -1,7 +1,18 @@
+
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { HelpCircle } from "lucide-react";
+import { 
+  HelpCircle, 
+  CheckCircle, 
+  AlertCircle, 
+  Clock, 
+  BookOpen, 
+  LineChart, 
+  MessageSquare, 
+  Mail, 
+  Phone
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { QuizSubmission } from "@/types/quiz";
 import { Progress } from "@/components/ui/progress";
