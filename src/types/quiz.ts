@@ -1,4 +1,3 @@
-
 export interface QuizSubmission {
   id: string;
   user_id: string;
@@ -21,9 +20,6 @@ export interface QuizSubmission {
   total_time_spent?: number; // Tempo total gasto em segundos
   device_info?: string; // Informações do dispositivo usado
   last_active?: string; // Última atividade no questionário
-  
-  // Garantir compatibilidade com o banco de dados
-  is_complete?: boolean; // Vai ser usado no lugar de 'completed' em alguns lugares
 }
 
 export type QuestionType = 'text' | 'textarea' | 'radio' | 'checkbox' | 'select' | 'email' | 'url' | 'instagram' | 'phone' | 'number';
@@ -83,5 +79,3 @@ export interface QuizAnswer {
   question_type?: string;
   user_email?: string;
 }
-
-// Removendo a interface Question duplicada, pois já temos no QuestionCard.tsx
