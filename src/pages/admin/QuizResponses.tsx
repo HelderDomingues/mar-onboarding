@@ -122,13 +122,7 @@ const QuizResponses = () => {
         throw error;
       }
       
-      // Converter 'completed' para 'is_complete' para compatibilidade com a interface atual
-      const formattedData = data?.map(item => ({
-        ...item,
-        completed: item.completed
-      }));
-      
-      setSubmissions(formattedData as unknown as QuizSubmission[]);
+      setSubmissions(data as unknown as QuizSubmission[]);
       setSelectedRows([]);
     } catch (error: any) {
       logger.error('Erro ao buscar submissões:', {
