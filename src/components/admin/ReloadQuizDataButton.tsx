@@ -19,7 +19,7 @@ export function ReloadQuizDataButton() {
       if (success) {
         toast({
           title: "Dados carregados com sucesso!",
-          description: "O questionário MAR foi recarregado corretamente com todas as 50 perguntas e suas opções.",
+          description: "O questionário MAR foi recarregado corretamente com todas as 57 perguntas e suas opções.",
         });
       } else {
         toast({

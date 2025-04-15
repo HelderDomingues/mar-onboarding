@@ -100,13 +100,14 @@ export const seedQuizData = async (): Promise<boolean> => {
     // Associar IDs de módulos às perguntas
     const questionsToInsert = quizQuestionsData.map(question => {
       // Determinar o módulo baseado no order_number da pergunta
-      // Agora temos 7 módulos e 50 perguntas
+      // Agora temos 8 módulos e 57 perguntas
       const moduleNumber = question.order_number <= 8 ? 1 : 
                           question.order_number <= 15 ? 2 :
                           question.order_number <= 22 ? 3 :
                           question.order_number <= 28 ? 4 :
                           question.order_number <= 33 ? 5 :
-                          question.order_number <= 43 ? 6 : 7;
+                          question.order_number <= 43 ? 6 : 
+                          question.order_number <= 50 ? 7 : 8;
       
       const moduleId = moduleMap.get(moduleNumber);
       
@@ -141,7 +142,7 @@ export const seedQuizData = async (): Promise<boolean> => {
       tag: 'Admin'
     });
     
-    // Criar um mapa de perguntas por número global (1-50)
+    // Criar um mapa de perguntas por número global (1-57)
     const questionMap = new Map();
     questionsData?.forEach(question => {
       // A ordem global da pergunta seria o question_number
@@ -194,8 +195,8 @@ export const seedQuizData = async (): Promise<boolean> => {
     
     const questionCount = totalQuestions?.length || 0;
     
-    if (questionCount !== 50) {
-      logger.error(`Erro: Número incorreto de perguntas após inserção. Esperado: 50, Encontrado: ${questionCount}`, {
+    if (questionCount !== 57) {
+      logger.error(`Erro: Número incorreto de perguntas após inserção. Esperado: 57, Encontrado: ${questionCount}`, {
         tag: 'Admin'
       });
       return false;
