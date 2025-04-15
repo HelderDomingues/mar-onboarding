@@ -30,6 +30,7 @@ import AdminMaterials from "@/pages/admin/AdminMaterials";
 import Reports from "@/pages/admin/Reports";
 import Metrics from "@/pages/admin/Metrics";
 import QuizEditor from "@/pages/admin/QuizEditor";
+import SeedQuiz from "@/pages/admin/SeedQuiz";
 
 const AppRoutes = () => {
   return (
@@ -55,6 +56,7 @@ const AppRoutes = () => {
         <Route path="users/import" element={<ImportUsers />} />
         <Route path="quiz-responses" element={<QuizResponses />} />
         <Route path="quiz-editor" element={<QuizEditor />} />
+        <Route path="seed-quiz" element={<SeedQuiz />} />
         <Route path="materials" element={<AdminMaterials />} />
         <Route path="metrics" element={<Metrics />} />
         <Route path="settings" element={<Settings />} />

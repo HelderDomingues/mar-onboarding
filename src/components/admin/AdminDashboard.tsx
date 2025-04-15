@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, BookOpen, BarChart, ChevronRight, Users as UsersIcon, FileCheck, FileBarChart, LineChart, PieChart, ArrowUpRight, ArrowDown, TrendingUp, Layers, Search, Filter, User, Settings, LayoutDashboard } from "lucide-react";
+import { Clock, BookOpen, BarChart, ChevronRight, Users as UsersIcon, FileCheck, FileBarChart, LineChart, PieChart, ArrowUpRight, ArrowDown, TrendingUp, Layers, Search, Filter, User, Settings, LayoutDashboard, Database } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { QuizSubmission } from "@/types/quiz";
 import { supabase } from "@/integrations/supabase/client";
@@ -300,14 +300,14 @@ export function AdminDashboard({
               </div>
             </Button>
             
-            <Button onClick={() => navigate("/admin/quiz-editor")} variant="outline" className="justify-start text-left h-auto py-3">
+            <Button onClick={() => navigate("/admin/seed-quiz")} variant="outline" className="justify-start text-left h-auto py-3">
               <div className="rounded-full p-2 bg-purple-100 text-purple-600 mr-3">
-                <Layers className="h-5 w-5" />
+                <Database className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-medium">Editor de Questionário</p>
+                <p className="font-medium">Configurar Questionário</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Edite módulos e questões do quiz
+                  Configure e recarregue os dados do quiz
                 </p>
               </div>
             </Button>
@@ -328,10 +328,16 @@ export function AdminDashboard({
             <p className="text-sm text-muted-foreground">
               Acesse o questionário MAR em modo administrador para editar questões e módulos.
             </p>
-            <Button onClick={() => navigate("/quiz?admin=true")} className="w-full justify-between text-slate-50">
-              Acessar Questionário
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => navigate("/quiz?admin=true")} className="flex-1 justify-between text-slate-50">
+                Acessar Questionário
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button onClick={() => navigate("/admin/seed-quiz")} variant="outline" className="flex-1 justify-between">
+                Configurar Questionário
+                <Database className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
           </CardContent>
         </Card>
         

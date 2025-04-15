@@ -1,159 +1,273 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { 
-  Sidebar, 
-  SidebarContent, 
-  SidebarHeader, 
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton
-} from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { 
-  LayoutDashboard, 
+  ChevronRight, 
   Users, 
-  FileText, 
-  Settings, 
-  LogOut, 
-  BarChart3, 
-  BookOpen,
+  Settings as SettingsIcon, 
+  LayoutDashboard, 
+  HelpCircle, 
+  FileBarChart2, 
+  ListChecks, 
   FileEdit,
-  BookCheck
+  Database,
+  BarChart,
+  BookOpen,
+  PanelLeftClose,
+  ShieldAlert,
+  LogOut
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { 
+  Sidebar, 
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu, 
+  SidebarMenuItem, 
+  SidebarMenuButton, 
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarTrigger
+} from "@/components/ui/sidebar";
+import { logger } from "@/utils/logger";
+import { addLogEntry } from "@/utils/projectLog";
 
 export function AdminSidebar() {
-  const { pathname } = useLocation();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
+  const location = useLocation();
+  const { user, logout } = useAuth();
+  
+  const currentRoute = location.pathname;
+  
+  const handleLogout = async () => {
+    try {
+      logger.info('Iniciando logout a partir da sidebar', { tag: 'Admin' });
+      addLogEntry('auth', 'Solicitação de logout via AdminSidebar');
+      await logout();
+    } catch (error) {
+      logger.error('Erro durante logout a partir da sidebar', { 
+        tag: 'Admin', 
+        data: error 
+      });
+    }
   };
-
+  
   return (
-    <Sidebar>
-      <SidebarHeader>
-        <div className="flex items-center gap-2 px-4 py-2">
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
-            CV
+    <Sidebar className="fixed left-0 top-0 bottom-0 w-64 border-r bg-card text-card-foreground">
+      <SidebarHeader className="sticky top-0 z-10 border-b bg-background px-6 py-4">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white">
+            <span className="font-semibold">CV</span>
           </div>
-          <div>
-            <h2 className="text-lg font-bold">Crie Valor</h2>
-            <p className="text-xs text-muted-foreground">Painel Administrativo</p>
+          <div className="font-medium">
+            <div className="text-lg font-semibold">Crie Valor</div>
+            <div className="text-xs text-muted-foreground">Painel Administrativo</div>
           </div>
         </div>
       </SidebarHeader>
       
-      <SidebarContent>
+      <SidebarContent className="px-4 py-6">
         <SidebarGroup>
           <SidebarGroupLabel>Navegação</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === "/admin"}>
-                <Link to="/admin">
-                  <LayoutDashboard size={18} />
-                  <span>Dashboard</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === "/admin/users"}>
-                <Link to="/admin/users">
-                  <Users size={18} />
-                  <span>Usuários</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith("/admin/quiz")}>
-                <Link to="/admin/quiz-responses">
-                  <FileText size={18} />
-                  <span>Questionários</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === "/admin/quiz-editor"}>
-                <Link to="/admin/quiz-editor">
-                  <FileEdit size={18} />
-                  <span>Editor de Questionário</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === "/admin/seed-quiz"}>
-                <Link to="/admin/seed-quiz">
-                  <BookCheck size={18} />
-                  <span>Importar Questionário</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === "/admin/reports"}>
-                <Link to="/admin/reports">
-                  <BarChart3 size={18} />
-                  <span>Relatórios e Análises</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === "/admin/materials"}>
-                <Link to="/admin/materials">
-                  <BookOpen size={18} />
-                  <span>Materiais</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === "/admin/settings"}>
-                <Link to="/admin/settings">
-                  <Settings size={18} />
-                  <span>Configurações</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link 
+                    to="/admin/users" 
+                    className={`${currentRoute === '/admin/users' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    <span>Dashboard</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link 
+                    to="/admin/users" 
+                    className={`${currentRoute === '/admin/users' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                  >
+                    <Users className="h-4 w-4" />
+                    <span>Usuários</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link 
+                    to="/admin/quiz-responses" 
+                    className={`${currentRoute === '/admin/quiz-responses' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                  >
+                    <ListChecks className="h-4 w-4" />
+                    <span>Questionários</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link 
+                    to="/admin/quiz-editor" 
+                    className={`${currentRoute === '/admin/quiz-editor' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                  >
+                    <FileEdit className="h-4 w-4" />
+                    <span>Editor de Questionário</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link 
+                    to="/admin/seed-quiz" 
+                    className={`${currentRoute === '/admin/seed-quiz' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                  >
+                    <Database className="h-4 w-4" />
+                    <span>Configurar Questionário</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link 
+                    to="/admin/reports" 
+                    className={`${currentRoute === '/admin/reports' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                  >
+                    <FileBarChart2 className="h-4 w-4" />
+                    <span>Relatórios e Análises</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link 
+                    to="/admin/materials" 
+                    className={`${currentRoute === '/admin/materials' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    <span>Materiais</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link 
+                    to="/admin/metrics" 
+                    className={`${currentRoute === '/admin/metrics' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                  >
+                    <BarChart className="h-4 w-4" />
+                    <span>Métricas</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link 
+                    to="/admin/settings" 
+                    className={`${currentRoute === '/admin/settings' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                  >
+                    <SettingsIcon className="h-4 w-4" />
+                    <span>Configurações</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link 
+                    to="/admin/logs" 
+                    className={`${currentRoute === '/admin/logs' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                  >
+                    <ShieldAlert className="h-4 w-4" />
+                    <span>Logs</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter>
-        <div className="px-3 py-2">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
-              {user?.email?.charAt(0).toUpperCase() || "U"}
+      <SidebarFooter className="border-t py-4 px-6">
+        <div className="flex flex-col space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center">
+                <span className="text-xs font-medium text-primary">
+                  {user?.email ? user.email.substring(0, 2).toUpperCase() : 'AD'}
+                </span>
+              </div>
+              <div className="text-sm font-medium">
+                {user?.email ? user.email : 'Administrador'}
+              </div>
             </div>
-            <div className="overflow-hidden">
-              <p className="text-sm font-medium truncate">{user?.email}</p>
-              <p className="text-xs text-muted-foreground">Administrador</p>
-            </div>
+            <button 
+              onClick={handleLogout}
+              className="text-destructive hover:text-destructive/80"
+              title="Sair"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
           
-          <Button 
-            variant="outline" 
-            className="w-full justify-start" 
-            size="sm"
-            onClick={handleSignOut}
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Sair
-          </Button>
+          <SidebarTrigger>
+            <Button variant="outline" size="sm" className="w-full justify-between">
+              <span>Ocultar Sidebar</span>
+              <PanelLeftClose className="ml-2 h-4 w-4" />
+            </Button>
+          </SidebarTrigger>
         </div>
       </SidebarFooter>
     </Sidebar>
   );
 }
+
+// Componente de Button para uso interno
+const Button = ({ 
+  children, 
+  variant = "default", 
+  size = "default", 
+  className = "", 
+  ...props 
+}) => {
+  const getVariantClasses = () => {
+    switch (variant) {
+      case "default":
+        return "bg-primary text-primary-foreground hover:bg-primary/90";
+      case "outline":
+        return "border border-input bg-background hover:bg-accent hover:text-accent-foreground";
+      default:
+        return "";
+    }
+  };
+  
+  const getSizeClasses = () => {
+    switch (size) {
+      case "sm":
+        return "h-8 rounded-md px-3 text-xs";
+      case "default":
+        return "h-9 px-4 py-2 rounded-md";
+      case "lg":
+        return "h-10 rounded-md px-8";
+      default:
+        return "";
+    }
+  };
+  
+  return (
+    <button 
+      className={`inline-flex items-center justify-center font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none ${getVariantClasses()} ${getSizeClasses()} ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
