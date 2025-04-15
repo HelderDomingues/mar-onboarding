@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabaseAdmin } from "@/integrations/supabase/client";
@@ -103,13 +104,13 @@ const QuizResponses = () => {
       
       let query = supabaseAdmin
         .from('quiz_submissions')
-        .select('id, user_id, user_name, user_email, started_at, completed_at, is_complete, webhook_processed')
+        .select('id, user_id, user_name, user_email, started_at, completed_at, completed, webhook_processed')
         .order('started_at', { ascending: false });
       
       if (statusFilter === 'complete') {
-        query = query.eq('is_complete', true);
+        query = query.eq('completed', true);
       } else if (statusFilter === 'incomplete') {
-        query = query.eq('is_complete', false);
+        query = query.eq('completed', false);
       } else if (statusFilter === 'processed') {
         query = query.eq('webhook_processed', true);
       } else if (statusFilter === 'unprocessed') {
@@ -122,7 +123,13 @@ const QuizResponses = () => {
         throw error;
       }
       
-      setSubmissions(data as unknown as QuizSubmission[]);
+      // Converter 'completed' para 'is_complete' para compatibilidade com a interface atual
+      const formattedData = data?.map(item => ({
+        ...item,
+        is_complete: item.completed
+      }));
+      
+      setSubmissions(formattedData as unknown as QuizSubmission[]);
       setSelectedRows([]);
     } catch (error: any) {
       logger.error('Erro ao buscar submissões:', {
