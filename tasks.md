@@ -62,10 +62,18 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - [CONCLUÍDO] Criar componente de teste para validar webhook
 
 #### FASE 7: Limpeza e Normalização do Banco de Dados
-- [CONCLUÍDO] Remover tabelas de backup desnecessárias
-- [CONCLUÍDO] Consolidar estrutura de opções
-- [CONCLUÍDO] Eliminar estruturas não utilizadas
-- [CONCLUÍDO] Padronizar nomenclatura (is_complete vs completed)
+- [EM ANDAMENTO] Remover tabelas de backup desnecessárias:
+  - [PENDENTE] Criar script SQL para remover tabelas *_backup
+  - [PENDENTE] Executar remoção após backup dos dados
+- [EM ANDAMENTO] Consolidar estrutura de opções:
+  - [PENDENTE] Padronizar uso de campos options vs options_json
+  - [PENDENTE] Remover campos duplicados
+- [EM ANDAMENTO] Eliminar estruturas não utilizadas:
+  - [PENDENTE] Identificar tabelas e colunas sem uso
+  - [PENDENTE] Remover após validação
+- [EM ANDAMENTO] Padronizar nomenclatura:
+  - [PENDENTE] Corrigir inconsistência entre is_complete vs completed
+  - [PENDENTE] Verificar e corrigir questões de pluralização em nomes de colunas
 
 #### FASE 8: Testes e Validação
 - [EM ANDAMENTO] Implementar testes abrangentes:
@@ -85,28 +93,49 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - [CONCLUÍDO] Melhoria da interface de teste de webhook
   - [CONCLUÍDO] Documentação completa de funcionamento
 
+#### FASE 10: Refatoração e Modularização de Código [NOVA]
+- [EM ANDAMENTO] Refatorar arquivos grandes em módulos menores:
+  - [PENDENTE] Dividir quiz-webhook/index.ts em módulos funcionais
+  - [PENDENTE] Refatorar webhookService.ts em componentes menores
+  - [PENDENTE] Extrair lógicas comuns para utilitários reutilizáveis
+- [PENDENTE] Eliminar código redundante e morto:
+  - [PENDENTE] Remover imports não utilizados
+  - [PENDENTE] Eliminar funções duplicadas ou obsoletas
+  - [PENDENTE] Padronizar abordagens para operações comuns
+
 ### Micro Tarefas Detalhadas
 
-#### Para FASE 9: Resolução Final de Problemas de Integração com Make.com (CONCLUÍDO)
-1. [CONCLUÍDO] Redesenhar a edge function quiz-webhook para maior robustez:
-   - Implementar validação de payloads
-   - Sanitizar dados antes de envio
-   - Adicionar fallbacks para busca de dados
-   - Incluir limite de taxa de requisições
-   - Rastrear IP dos solicitantes
-   - Adicionar logs detalhados
-2. [CONCLUÍDO] Atualizar serviço webhook:
-   - Melhorar retorno de erros e manipulação
-   - Uniformizar formato de resposta
-   - Adicionar validação de entrada
-3. [CONCLUÍDO] Aprimorar interface de teste:
-   - Exibir detalhes da resposta do webhook
-   - Adicionar dicas para resolução de problemas
-   - Melhorar feedback visual
-4. [CONCLUÍDO] Garantir compatibilidade com Make.com:
-   - Normalizar dados para formato plano
-   - Lidar com campos nulos
-   - Assegurar estrutura de resposta esperada
+#### Para FASE 7: Limpeza e Normalização do Banco de Dados (EM ANDAMENTO)
+1. [EM ANDAMENTO] Script para remoção de tabelas de backup:
+   - Criar script SQL para remover tabelas com sufixo _backup
+   - Verificar dependências entre tabelas antes da remoção
+   - Executar em ambiente de teste antes da produção
+   - Confirmar que não há impacto em funcionalidades existentes
+2. [PENDENTE] Consolidação de estrutura de dados:
+   - Mapear todos os campos inconsistentes (is_complete vs completed)
+   - Criar plano de migração com mínimo impacto
+   - Atualizar referências no código após mudanças de schema
+3. [PENDENTE] Eliminação de colunas redundantes:
+   - Identificar campos duplicados entre tabelas
+   - Consolidar em uma única fonte de verdade
+   - Atualizar consultas SQL para usar estrutura simplificada
+
+#### Para FASE 10: Refatoração e Modularização de Código [NOVA]
+1. [EM ANDAMENTO] Refatoração do Código de Webhook:
+   - Extrair funções de utilidade (validação, tratamento de erro, formatação)
+   - Criar interfaces TypeScript para melhor tipagem
+   - Melhorar documentação e comentários de código
+   - Implementar mecanismos de proteção adicionais
+2. [PENDENTE] Limpeza do código TypeScript:
+   - Identificar e remover imports não utilizados
+   - Eliminar código morto e funções obsoletas
+   - Padronizar nomenclatura e estilos de código
+   - Garantir que interfaces e tipos estejam atualizados
+3. [PENDENTE] Melhorias de usabilidade:
+   - Identificar pontos de confusão na interface
+   - Melhorar feedback ao usuário durante operações
+   - Padronizar componentes de exibição de erros
+   - Adicionar dicas contextuais em áreas complexas
 
 ## Problemas e Soluções Anteriores
 
@@ -194,12 +223,16 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - Implementar limites de taxa para prevenir abusos
   - Sempre validar formatos de objeto antes de processá-los
   - Manter logs detalhados para facilitar diagnóstico de problemas
+  - Executar limpezas periódicas do banco de dados e código
+  - Validar mudanças de forma incremental antes de marcar como concluídas
 
 ## Próximos Passos (Priorizados)
-1. Verificar funcionamento da integração com Make.com com dados reais
-2. Continuar implementação do editor de questionários
-3. Retornar à configuração da chave service_role
-4. Expandir documentação técnica do sistema
+1. [ATUALIZADO] Limpeza das tabelas _backup e normalização do banco de dados
+2. Refatoração de arquivos grandes em componentes menores
+3. Verificar funcionamento da integração com Make.com com dados reais
+4. Continuar implementação do editor de questionários
+5. Retornar à configuração da chave service_role
+6. Expandir documentação técnica do sistema
 
 ## Tarefas Concluídas (Últimas adições)
 - Resolução completa dos problemas da edge function quiz-webhook
@@ -207,3 +240,4 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
 - Adição de fallbacks para casos de dados ausentes
 - Melhoria da interface do componente WebhookTester
 - Documentação atualizada com lições aprendidas
+- Adição de novas fases de limpeza e refatoração no plano de ação
