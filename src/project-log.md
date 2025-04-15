@@ -3,6 +3,33 @@
 
 ## Histórico do Projeto
 
+### Capítulo 11: Problemas com o Sidebar e Expansão do Questionário
+**Data: Abril de 2025**
+
+Foram identificados problemas persistentes com o componente Sidebar e iniciamos a expansão do questionário para 13 módulos:
+
+1. **Problemas com o Sidebar**:
+   - Os botões da sidebar ficam invisíveis no estado normal, só aparecem ao passar o mouse
+   - O botão "Ocultar Sidebar" não funciona corretamente
+   - Há problemas com os estilos e contrastes dos elementos da interface
+   - Possíveis problemas na implementação do SidebarProvider e nas funções de toggle
+
+2. **Expansão do Questionário**:
+   - O plano foi atualizado para implementar um total de 13 módulos para o questionário MAR
+   - Estamos trabalhando na implementação do Módulo 10 (Clientes e Perspectiva de Mercado)
+   - Foi identificado que as perguntas do Módulo 9 não estão aparecendo corretamente na tabela quiz_questions
+   - Ajustamos o script de seed para acomodar os módulos adicionais
+
+3. **Decisão Estratégica**:
+   - Priorizamos a implementação completa do questionário, deixando a correção dos problemas da sidebar para um momento posterior
+   - Esta decisão foi documentada no tasks.md e será revisitada após a conclusão do questionário
+
+4. **Próximos Passos**:
+   - Finalizar implementação dos Módulos 10-13
+   - Testar todas as perguntas e opções
+   - Certificar-se de que os mapeamentos entre módulos, perguntas e opções estão corretos
+   - Retornar à correção dos problemas da sidebar após completar o questionário
+
 ### Capítulo 10: Solução para Formatação de Respostas
 **Data: Abril de 2025**
 
@@ -366,8 +393,14 @@ Este log será continuamente atualizado conforme o projeto avança.
 - [x] Implementação da exportação de respostas em CSV (funcionando corretamente)
 - [x] Reestruturação das tabelas do banco de dados para o questionário MAR
 - [x] Correção de bugs críticos no fluxo de autenticação
+- [x] Implementação do Módulo 8 (Perspectiva de Processos Internos)
+- [x] Implementação do Módulo 9 (Perspectiva de inovação, aprendizado e crescimento)
+- [ ] Correção de bugs do Módulo 9 (perguntas não aparecem na tabela)
+- [EM ANDAMENTO] Implementação do Módulo 10 (Clientes e Perspectiva de Mercado)
+- [ ] Implementação dos Módulos 11-13
 - [ ] Correção da formatação de respostas JSON
 - [ ] Aprimoramento da geração de PDF com respostas completas
 - [ ] Normalização do armazenamento de respostas no banco de dados
+- [ ] Correção dos problemas da sidebar (adiado)
 
-O sistema está com a funcionalidade crítica de completar questionários operando corretamente. As próximas melhorias focam na qualidade da visualização e exportação das respostas, sem comprometer a estabilidade alcançada.
+O sistema está com a funcionalidade crítica de completar questionários operando corretamente. As próximas melhorias focam na implementação completa de todos os módulos do questionário (9-13) e, posteriormente, na resolução dos problemas da sidebar.

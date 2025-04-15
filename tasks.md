@@ -1,4 +1,3 @@
-
 # Sistema MAR - Crie Valor Consultoria
 
 ## Contextualização do Projeto - ATENÇÃO: ESTE HEADER NÃO DEVE SER ALTERADO, EXCLUIDO OU SUBSTITUIDO. DEVE CONSTAR EM TODAS AS INSTANCIAS/ATUALIZAÇÕES DO ARQUIVO. 
@@ -151,11 +150,20 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - [CONCLUÍDO] Inserir TODAS as opções de resposta conforme o questionário original
   - [CONCLUÍDO] Configurar corretamente todos os tipos de perguntas (text, radio, checkbox, etc.)
   - [CONCLUÍDO] Implementar o módulo "Objetivos e Desafios" (Módulo 8) com questões numeradas de 51 a 56
+  - [EM ANDAMENTO] Implementar os módulos 9, 10, 11, 12 e 13 com todas as questões correspondentes
   - [PENDENTE] Testar a exibição e funcionamento correto do questionário
+
+#### FASE 12: Problemas com a Sidebar [NOVA]
+- [PENDENTE] Correção de problemas de UI na sidebar:
+  - [PENDENTE] Resolver problema dos botões invisíveis no estado normal
+  - [PENDENTE] Corrigir funcionalidade do botão "Ocultar Sidebar"
+  - [PENDENTE] Reorganizar estrutura do componente AdminSidebar
+  - [PENDENTE] Corrigir integração com o SidebarProvider
+  - [PENDENTE] Melhorar contraste e visibilidade dos elementos da sidebar
 
 ### Micro Tarefas Detalhadas
 
-#### Para FASE 11: Correção da Implementação do Questionário MAR
+#### Para FASE 11: Implementação Completa do Questionário MAR
 1. [CONCLUÍDO] Correção do Script de Seed do Questionário:
    - [CONCLUÍDO] Remoção das opções existentes (são apenas dados de teste)
    - [CONCLUÍDO] Uso das perguntas exatas fornecidas no questionário MAR
@@ -170,6 +178,19 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
    - [PENDENTE] Confirmar que todas as opções de resposta estão disponíveis
    - [PENDENTE] Testar o fluxo completo do questionário com as perguntas corretas
    - [PENDENTE] Validar o armazenamento correto das respostas no banco de dados
+
+#### Para FASE 12: Sidebar [NOVA]
+1. [PENDENTE] Análise dos problemas da sidebar:
+   - [PENDENTE] Investigar problemas de visibilidade dos botões da sidebar
+   - [PENDENTE] Analisar falha na funcionalidade de toggle da sidebar
+   - [PENDENTE] Verificar implementação correta do contexto da sidebar
+   - [PENDENTE] Corrigir aplicação de estilos e contraste no componente
+
+2. [PENDENTE] Correção dos problemas:
+   - [PENDENTE] Refatorar AdminSidebar.tsx para melhorar organização do código
+   - [PENDENTE] Corrigir implementação do toggleSidebar
+   - [PENDENTE] Atualizar estilos para garantir visibilidade dos elementos
+   - [PENDENTE] Implementar testes para verificar comportamento correto da sidebar
 
 ## Problemas e Soluções Anteriores
 
@@ -263,14 +284,22 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - Numerar corretamente as perguntas conforme sequência estabelecida
 
 ## Próximos Passos (Priorizados)
-1. [CONCLUÍDO] Implementação correta do Módulo 8 do questionário (Objetivos e Desafios)
+1. [EM ANDAMENTO] Implementação de todos os módulos do questionário (9, 10, 11, 12 e 13)
 2. [PENDENTE] Validação do funcionamento do questionário após implementação dos módulos
 3. [PENDENTE] Verificar funcionamento da integração com Make.com com dados reais
 4. [PENDENTE] Limpeza das tabelas _backup e normalização do banco de dados
 5. [PENDENTE] Expandir documentação técnica do sistema
+6. [PENDENTE] Retornar para resolver os problemas da sidebar após completar o questionário
+
+## Problema Crítico: Sidebar [IMPORTANTE]
+Os problemas com a sidebar persistem após tentativas de correção. Foi documentado que:
+- Os botões da sidebar ficam invisíveis no estado normal, só aparecem ao passar o mouse
+- O botão "Ocultar Sidebar" não funciona corretamente
+- Há problemas com os estilos e contrastes dos elementos
+
+**NOTA**: Estamos priorizando a implementação do questionário conforme solicitado. Os problemas da sidebar serão tratados posteriormente após a finalização do questionário.
 
 ## Tarefas Concluídas (Últimas adições)
-- [CONCLUÍDO] Criação do arquivo quiz-data.ts com dados do Módulo 8 (Objetivos e Desafios)
-- [CONCLUÍDO] Implementação das perguntas 51-56 do Módulo 8 com as opções corretas
-- [CONCLUÍDO] Atualização do script de seed para mapear corretamente modules, questions e options
-- [CONCLUÍDO] Correção da numeração das perguntas para seguir a sequência correta do questionário
+- [CONCLUÍDO] Documentação dos problemas persistentes com a sidebar
+- [CONCLUÍDO] Atualização do plano para incluir módulos adicionais (9-13) do questionário
+- [EM ANDAMENTO] Implementação do módulo 10 do questionário

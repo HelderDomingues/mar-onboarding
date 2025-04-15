@@ -1,6 +1,7 @@
 /**
  * Dados das perguntas do questionário MAR
  */
+
 export const quizQuestionsData = [
   {
     order_number: 1,
@@ -485,5 +486,47 @@ export const quizQuestionsData = [
     required: true,
     hint: "Selecione a opção que melhor descreve a situação da sua empresa",
     module_id: "g5h6i7j8-9012-cdef-g234-56789abcdefg",
+  },
+  
+  // Módulo 10: Clientes e Perspectiva de Mercado
+  {
+    id: "7fac6bba-5cdc-433f-86d9-ad4b5566c84b",
+    text: "Sua empresa oferece oportunidades para que seus clientes dêem feedback?",
+    type: "radio",
+    module_id: "", // Será preenchido dinamicamente no seed
+    order_number: 61,
+    required: true
+  },
+  {
+    id: "8abc7ccb-6ded-544f-97ea-be5c6677d95c",
+    text: "Como sua empresa monitora a satisfação dos clientes?",
+    type: "checkbox",
+    module_id: "", // Será preenchido dinamicamente no seed
+    order_number: 62,
+    required: true
+  },
+  {
+    id: "9bcd8ddc-7efe-655f-a8fb-cf6d7788ea6d",
+    text: "Quais estratégias sua empresa utiliza para fidelizar clientes?",
+    type: "checkbox",
+    module_id: "", // Será preenchido dinamicamente no seed
+    order_number: 63,
+    required: true
+  },
+  {
+    id: "acde9eed-8fgf-766f-b9gc-dg7e889ffb7e",
+    text: "Sua empresa tem um processo definido para lidar com reclamações de clientes?",
+    type: "radio",
+    module_id: "", // Será preenchido dinamicamente no seed
+    order_number: 64,
+    required: true
+  },
+  {
+    id: "bdef0ffe-9hgh-877g-cahd-eh8f990ggc8f",
+    text: "Qual é o nível de retenção de clientes da sua empresa?",
+    type: "radio",
+    module_id: "", // Será preenchido dinamicamente no seed
+    order_number: 65,
+    required: true
   }
 ];

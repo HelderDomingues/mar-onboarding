@@ -56,5 +56,29 @@ export const quizModulesData = [
     title: "Perspectiva de inovação, aprendizado e crescimento",
     description: "Como aprendemos e melhoramos?",
     order_number: 9,
+  },
+  {
+    id: "h6i7j8k9-0123-defg-h345-6789abcdefgh",
+    title: "Clientes e Perspectiva de Mercado",
+    description: "Como nossos clientes nos enxergam?",
+    order_number: 10,
+  },
+  {
+    id: "i7j8k9l0-1234-efgh-i456-789abcdefghi",
+    title: "Prioridades e Ações",
+    description: "O que devemos priorizar em nossa empresa?",
+    order_number: 11,
+  },
+  {
+    id: "j8k9l0m1-2345-fghi-j567-89abcdefghij",
+    title: "Acompanhamento e Medição",
+    description: "Como acompanhamos nosso progresso?",
+    order_number: 12,
+  },
+  {
+    id: "k9l0m1n2-3456-ghij-k678-9abcdefghijk",
+    title: "Observações Finais",
+    description: "Comentários adicionais e conclusão",
+    order_number: 13,
   }
 ];

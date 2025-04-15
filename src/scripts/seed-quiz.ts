@@ -100,7 +100,7 @@ export const seedQuizData = async (): Promise<boolean> => {
     // Associar IDs de módulos às perguntas
     const questionsToInsert = quizQuestionsData.map(question => {
       // Determinar o módulo baseado no order_number da pergunta
-      // Agora temos 9 módulos e 60 perguntas
+      // Agora temos 13 módulos 
       let moduleNumber = 1;
       
       if (question.order_number <= 8) moduleNumber = 1;
@@ -111,7 +111,11 @@ export const seedQuizData = async (): Promise<boolean> => {
       else if (question.order_number <= 43) moduleNumber = 6; 
       else if (question.order_number <= 50) moduleNumber = 7; 
       else if (question.order_number <= 57) moduleNumber = 8; 
-      else moduleNumber = 9;
+      else if (question.order_number <= 60) moduleNumber = 9;
+      else if (question.order_number <= 65) moduleNumber = 10;
+      else if (question.order_number <= 70) moduleNumber = 11;
+      else if (question.order_number <= 75) moduleNumber = 12;
+      else moduleNumber = 13;
       
       const moduleId = moduleMap.get(moduleNumber);
       
@@ -146,7 +150,7 @@ export const seedQuizData = async (): Promise<boolean> => {
       tag: 'Admin'
     });
     
-    // Criar um mapa de perguntas por número global (1-60)
+    // Criar um mapa de perguntas por número global (1-80)
     const questionMap = new Map();
     questionsData?.forEach(question => {
       // A ordem global da pergunta seria o question_number
@@ -199,8 +203,11 @@ export const seedQuizData = async (): Promise<boolean> => {
     
     const questionCount = totalQuestions?.length || 0;
     
-    if (questionCount !== 60) {
-      logger.error(`Erro: Número incorreto de perguntas após inserção. Esperado: 60, Encontrado: ${questionCount}`, {
+    // Atualizamos a verificação para o número total de perguntas esperado (60-80 dependendo do número total)
+    const expectedQuestionCount = quizQuestionsData.length;
+    
+    if (questionCount !== expectedQuestionCount) {
+      logger.error(`Erro: Número incorreto de perguntas após inserção. Esperado: ${expectedQuestionCount}, Encontrado: ${questionCount}`, {
         tag: 'Admin'
       });
       return false;

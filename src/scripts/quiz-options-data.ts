@@ -1,6 +1,7 @@
 /**
- * Dados das opções de resposta do questionário MAR
+ * Dados das opções para as perguntas do questionário MAR
  */
+
 export const quizOptionsData = [
   {
     question_number: 7,
@@ -619,6 +620,141 @@ export const quizOptionsData = [
   {
     question_number: 60,
     text: "Sim, outra forma",
+    order_number: 5
+  },
+  
+  // Opções para pergunta 61 - Feedback de clientes
+  {
+    question_number: 61,
+    text: "Sim, frequentemente através de pesquisas e enquetes",
+    order_number: 1
+  },
+  {
+    question_number: 61,
+    text: "Sim, ocasionalmente quando necessário",
+    order_number: 2
+  },
+  {
+    question_number: 61,
+    text: "Raramente coletamos feedback formal",
+    order_number: 3
+  },
+  {
+    question_number: 61,
+    text: "Não temos processos estruturados para feedback",
+    order_number: 4
+  },
+  
+  // Opções para pergunta 62 - Monitoramento de satisfação
+  {
+    question_number: 62,
+    text: "Net Promoter Score (NPS)",
+    order_number: 1
+  },
+  {
+    question_number: 62,
+    text: "Pesquisas de satisfação periódicas",
+    order_number: 2
+  },
+  {
+    question_number: 62,
+    text: "Análise de reclamações e elogios",
+    order_number: 3
+  },
+  {
+    question_number: 62,
+    text: "Entrevistas com clientes",
+    order_number: 4
+  },
+  {
+    question_number: 62,
+    text: "Taxa de recompra/renovação",
+    order_number: 5
+  },
+  {
+    question_number: 62,
+    text: "Não monitoramos formalmente",
+    order_number: 6
+  },
+  
+  // Opções para pergunta 63 - Fidelização
+  {
+    question_number: 63,
+    text: "Programas de fidelidade/recompensas",
+    order_number: 1
+  },
+  {
+    question_number: 63,
+    text: "Comunicação personalizada",
+    order_number: 2
+  },
+  {
+    question_number: 63,
+    text: "Atendimento de excelência",
+    order_number: 3
+  },
+  {
+    question_number: 63,
+    text: "Conteúdo educacional exclusivo",
+    order_number: 4
+  },
+  {
+    question_number: 63,
+    text: "Descontos para clientes recorrentes",
+    order_number: 5
+  },
+  {
+    question_number: 63,
+    text: "Não temos estratégias específicas",
+    order_number: 6
+  },
+  
+  // Opções para pergunta 64 - Processo para reclamações
+  {
+    question_number: 64,
+    text: "Sim, temos um processo bem definido e estruturado",
+    order_number: 1
+  },
+  {
+    question_number: 64,
+    text: "Sim, mas o processo não é totalmente formalizado",
+    order_number: 2
+  },
+  {
+    question_number: 64,
+    text: "Tratamos caso a caso sem processo específico",
+    order_number: 3
+  },
+  {
+    question_number: 64,
+    text: "Não temos um processo estruturado",
+    order_number: 4
+  },
+  
+  // Opções para pergunta 65 - Retenção de clientes
+  {
+    question_number: 65,
+    text: "Excelente (mais de 90% de retenção)",
+    order_number: 1
+  },
+  {
+    question_number: 65,
+    text: "Boa (70-90% de retenção)",
+    order_number: 2
+  },
+  {
+    question_number: 65,
+    text: "Regular (50-70% de retenção)",
+    order_number: 3
+  },
+  {
+    question_number: 65,
+    text: "Baixa (menos de 50% de retenção)",
+    order_number: 4
+  },
+  {
+    question_number: 65,
+    text: "Não medimos formalmente nossa taxa de retenção",
     order_number: 5
   }
 ];
