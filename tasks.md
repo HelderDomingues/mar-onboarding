@@ -145,22 +145,24 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
 
 #### FASE 11: Correção da Implementação do Questionário MAR [NOVA]
 - [EM ANDAMENTO] Implementar corretamente o questionário MAR:
-  - [EM ANDAMENTO] Limpar dados existentes do questionário (apenas dados de teste)
-  - [EM ANDAMENTO] Corrigir o script seed-quiz.ts para mapear corretamente as questões
-  - [EM ANDAMENTO] Inserir EXATAMENTE as 52 perguntas fornecidas, sem alterações
-  - [EM ANDAMENTO] Inserir TODAS as opções de resposta conforme o questionário original
-  - [EM ANDAMENTO] Configurar corretamente todos os tipos de perguntas (text, radio, checkbox, etc.)
+  - [CONCLUÍDO] Limpar dados existentes do questionário (apenas dados de teste)
+  - [CONCLUÍDO] Corrigir o script seed-quiz.ts para mapear corretamente as questões
+  - [CONCLUÍDO] Inserir EXATAMENTE as 52 perguntas fornecidas, sem alterações
+  - [CONCLUÍDO] Inserir TODAS as opções de resposta conforme o questionário original
+  - [CONCLUÍDO] Configurar corretamente todos os tipos de perguntas (text, radio, checkbox, etc.)
+  - [CONCLUÍDO] Implementar o módulo "Objetivos e Desafios" (Módulo 8) com questões numeradas de 51 a 56
   - [PENDENTE] Testar a exibição e funcionamento correto do questionário
 
 ### Micro Tarefas Detalhadas
 
 #### Para FASE 11: Correção da Implementação do Questionário MAR
-1. [EM ANDAMENTO] Correção do Script de Seed do Questionário:
+1. [CONCLUÍDO] Correção do Script de Seed do Questionário:
    - [CONCLUÍDO] Remoção das opções existentes (são apenas dados de teste)
-   - [EM ANDAMENTO] Uso das perguntas exatas fornecidas no questionário MAR
-   - [EM ANDAMENTO] Implementação precisa de todas as opções de resposta
+   - [CONCLUÍDO] Uso das perguntas exatas fornecidas no questionário MAR
+   - [CONCLUÍDO] Implementação precisa de todas as opções de resposta
    - [CONCLUÍDO] Correção da lógica de mapeamento entre questões e opções
-   - [EM ANDAMENTO] Criação de interface para inserção de módulos individuais
+   - [CONCLUÍDO] Criação de interface para inserção de módulos individuais
+   - [CONCLUÍDO] Implementação do módulo "Objetivos e Desafios" com questões numeradas corretamente (51-56)
    - [PENDENTE] Testes de validação após a execução do script
 
 2. [PENDENTE] Validação da Implementação:
@@ -258,18 +260,17 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - Executar limpezas periódicas do banco de dados e código
   - Validar mudanças de forma incremental antes de marcar como concluídas
   - Usar EXATAMENTE os dados fornecidos pelo cliente sem modificações
+  - Numerar corretamente as perguntas conforme sequência estabelecida
 
 ## Próximos Passos (Priorizados)
-1. [ATUALIZADO] Implementação correta do Módulo 1 do questionário (Informações Pessoais)
-2. [PENDENTE] Implementação do Módulo 2 do questionário (Marketing)
-3. [PENDENTE] Implementação do Módulo 3 do questionário (Vendas)
-4. [PENDENTE] Validação do funcionamento do questionário após implementação dos primeiros módulos
-5. [PENDENTE] Verificar funcionamento da integração com Make.com com dados reais
-6. [PENDENTE] Limpeza das tabelas _backup e normalização do banco de dados
-7. [PENDENTE] Expandir documentação técnica do sistema
+1. [CONCLUÍDO] Implementação correta do Módulo 8 do questionário (Objetivos e Desafios)
+2. [PENDENTE] Validação do funcionamento do questionário após implementação dos módulos
+3. [PENDENTE] Verificar funcionamento da integração com Make.com com dados reais
+4. [PENDENTE] Limpeza das tabelas _backup e normalização do banco de dados
+5. [PENDENTE] Expandir documentação técnica do sistema
 
 ## Tarefas Concluídas (Últimas adições)
-- Criação do arquivo quiz-data.ts com dados do Módulo 1
-- Implementação da página SeedQuiz para facilitar a inserção dos dados do questionário
-- Atualização do script de seed para mapear corretamente modules, questions e options
-- Adição do link para a nova página no AdminSidebar
+- [CONCLUÍDO] Criação do arquivo quiz-data.ts com dados do Módulo 8 (Objetivos e Desafios)
+- [CONCLUÍDO] Implementação das perguntas 51-56 do Módulo 8 com as opções corretas
+- [CONCLUÍDO] Atualização do script de seed para mapear corretamente modules, questions e options
+- [CONCLUÍDO] Correção da numeração das perguntas para seguir a sequência correta do questionário

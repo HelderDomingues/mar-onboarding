@@ -1,207 +1,705 @@
-
-import { v4 as uuidv4 } from 'uuid';
-
-/**
- * Dados dos módulos do questionário MAR
- */
 export const quizModulesData = [
   {
+    id: "f36c994b-cb94-497a-b49b-a94990195a5b",
     title: "Informações Pessoais",
-    description: "Informações básicas sobre você e sua empresa",
-    order_number: 1
+    description: "Neste módulo, coletaremos algumas informações básicas sobre você para personalizar sua experiência.",
+    order_number: 1,
   },
   {
+    id: "e4b1b111-9c9a-4b5a-8b0e-7b7b7b7b7b7b",
     title: "Marketing",
-    description: "Análise da estratégia de marketing do seu negócio",
-    order_number: 2
-  },
-  {
-    title: "Vendas",
-    description: "Avaliação do processo de vendas e conversão",
-    order_number: 3
-  },
-  {
-    title: "Atendimento",
-    description: "Análise do atendimento ao cliente e suporte",
-    order_number: 4
-  },
-  {
-    title: "Financeiro",
-    description: "Avaliação da gestão financeira do negócio",
-    order_number: 5
-  },
-  {
-    title: "Recursos Humanos",
-    description: "Análise da gestão de pessoas e cultura organizacional",
-    order_number: 6
-  },
-  {
-    title: "Operacional",
-    description: "Avaliação da estrutura operacional e processos",
-    order_number: 7
-  }
-];
-
-/**
- * Dados das perguntas do questionário MAR
- */
-export const quizQuestionsData = [
-  // Módulo 1: Informações Pessoais
-  {
-    text: "Qual é o seu nome completo?",
-    type: "text",
-    required: true,
-    module_number: 1,
-    order_number: 1
-  },
-  {
-    text: "Qual é o seu e-mail para contato?",
-    type: "email",
-    required: true,
-    module_number: 1,
+    description: "Neste módulo, vamos avaliar suas estratégias e táticas de marketing atuais.",
     order_number: 2,
-    validation: "email"
   },
   {
-    text: "Qual é o seu telefone/WhatsApp?",
-    type: "text",
-    required: true,
-    module_number: 1,
+    id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    title: "Vendas",
+    description: "Neste módulo, vamos analisar seu processo de vendas e identificar oportunidades de melhoria.",
     order_number: 3,
-    validation: "phone",
-    placeholder: "Apenas números com DDD (ex: 11999999999)"
   },
   {
-    text: "Qual é o nome da sua empresa?",
-    type: "text",
-    required: true,
-    module_number: 1,
-    order_number: 4
+    id: "b8a9d123-4567-890a-bcde-f01234567890",
+    title: "Financeiro",
+    description: "Neste módulo, vamos examinar suas finanças e contabilidade para garantir a saúde financeira da sua empresa.",
+    order_number: 4,
   },
   {
-    text: "Qual é o segmento da sua empresa?",
-    type: "text",
-    required: true,
-    module_number: 1,
+    id: "c5d6e7f8-90ab-cdef-1234-567890abcdef",
+    title: "Operações",
+    description: "Neste módulo, vamos otimizar seus processos operacionais para aumentar a eficiência e reduzir custos.",
     order_number: 5,
-    hint: "Por exemplo: E-commerce, Consultoria, Tecnologia, Saúde, etc."
   },
   {
-    text: "Há quanto tempo sua empresa está no mercado?",
-    type: "radio",
-    required: true,
-    module_number: 1,
-    order_number: 6
+    id: "d2e3f4g5-6789-0abc-def1-23456789abcd",
+    title: "Pessoas",
+    description: "Neste módulo, vamos desenvolver sua equipe e cultura organizacional para atrair e reter talentos.",
+    order_number: 6,
   },
   {
-    text: "Quantos funcionários ou colaboradores sua empresa possui atualmente?",
-    type: "radio",
-    required: true,
-    module_number: 1,
-    order_number: 7
+    id: "e9f0a1b2-c3d4-e5f6-7890-123456789abc",
+    title: "Jurídico",
+    description: "Neste módulo, vamos garantir a conformidade legal e proteger seus ativos.",
+    order_number: 7,
   },
   {
-    text: "Qual é o seu faturamento anual aproximado?",
-    type: "radio",
-    required: true,
-    module_number: 1,
+    id: "544a07b1-06f3-48b6-a0cd-f6c67a9b03d8", // ID do módulo fornecido
+    title: "Objetivos e Desafios",
+    description: "Neste módulo, vamos explorar seus objetivos de curto e longo prazo, bem como os principais desafios que sua empresa enfrenta.",
     order_number: 8,
-    hint: "Esta informação é confidencial e será usada apenas para análise"
   }
 ];
 
-/**
- * Dados das opções de resposta do questionário MAR
- */
-export const quizOptionsData = [
-  // Opções para pergunta 6 (Tempo no mercado)
+export const quizQuestionsData = [
   {
-    text: "Menos de 1 ano",
-    question_number: 6,
-    order_number: 1
+    order_number: 1,
+    text: "Qual o seu nome completo?",
+    type: "text",
+    required: true,
+    hint: "Digite seu nome completo",
+    module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
   },
   {
-    text: "Entre 1 e 3 anos",
-    question_number: 6,
-    order_number: 2
+    order_number: 2,
+    text: "Qual o seu cargo na empresa?",
+    type: "text",
+    required: true,
+    hint: "Digite seu cargo na empresa",
+    module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
   },
   {
-    text: "Entre 3 e 5 anos",
-    question_number: 6,
-    order_number: 3
+    order_number: 3,
+    text: "Qual o nome da sua empresa?",
+    type: "text",
+    required: true,
+    hint: "Digite o nome da sua empresa",
+    module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
   },
   {
-    text: "Entre 5 e 10 anos",
-    question_number: 6,
-    order_number: 4
+    order_number: 4,
+    text: "Qual o seu e-mail de contato?",
+    type: "text",
+    required: true,
+    hint: "Digite seu e-mail de contato",
+    module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
   },
   {
-    text: "Mais de 10 anos",
-    question_number: 6,
-    order_number: 5
-  },
-  
-  // Opções para pergunta 7 (Número de funcionários)
-  {
-    text: "Somente eu",
-    question_number: 7,
-    order_number: 1
+    order_number: 5,
+    text: "Qual o seu telefone de contato?",
+    type: "text",
+    required: true,
+    hint: "Digite seu telefone de contato",
+    module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
   },
   {
-    text: "2 a 5 colaboradores",
-    question_number: 7,
-    order_number: 2
+    order_number: 6,
+    text: "Qual o segmento da sua empresa?",
+    type: "text",
+    required: true,
+    hint: "Digite o segmento da sua empresa",
+    module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
   },
   {
-    text: "6 a 10 colaboradores",
-    question_number: 7,
-    order_number: 3
+    order_number: 7,
+    text: "Quantos funcionários sua empresa possui?",
+    type: "radio",
+    required: true,
+    hint: "Selecione o número de funcionários da sua empresa",
+    module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
   },
   {
-    text: "11 a 20 colaboradores",
-    question_number: 7,
-    order_number: 4
+    order_number: 8,
+    text: "Qual o faturamento anual da sua empresa?",
+    type: "radio",
+    required: true,
+    hint: "Selecione o faturamento anual da sua empresa",
+    module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
   },
   {
-    text: "21 a 50 colaboradores",
-    question_number: 7,
-    order_number: 5
+    order_number: 9,
+    text: "Como você descreveria o seu conhecimento sobre marketing?",
+    type: "radio",
+    required: true,
+    hint: "Selecione o nível de conhecimento que melhor descreve sua experiência com marketing",
+    module_id: "e4b1b111-9c9a-4b5a-8b0e-7b7b7b7b7b7b",
   },
   {
-    text: "Mais de 50 colaboradores",
-    question_number: 7,
-    order_number: 6
-  },
-  
-  // Opções para pergunta 8 (Faturamento)
-  {
-    text: "Até R$ 100 mil",
-    question_number: 8,
-    order_number: 1
+    order_number: 10,
+    text: "Qual o principal objetivo de marketing da sua empresa atualmente?",
+    type: "radio",
+    required: true,
+    hint: "Selecione o objetivo que sua empresa busca alcançar com o marketing",
+    module_id: "e4b1b111-9c9a-4b5a-8b0e-7b7b7b7b7b7b",
   },
   {
-    text: "Entre R$ 100 mil e R$ 300 mil",
-    question_number: 8,
-    order_number: 2
+    order_number: 11,
+    text: "Quais canais de marketing sua empresa utiliza com mais frequência?",
+    type: "checkbox",
+    required: true,
+    hint: "Selecione os canais de marketing que sua empresa utiliza com mais frequência",
+    module_id: "e4b1b111-9c9a-4b5a-8b0e-7b7b7b7b7b7b",
   },
   {
-    text: "Entre R$ 300 mil e R$ 1 milhão",
-    question_number: 8,
-    order_number: 3
+    order_number: 12,
+    text: "Qual o seu orçamento mensal para marketing?",
+    type: "radio",
+    required: true,
+    hint: "Selecione a faixa de orçamento que sua empresa investe em marketing mensalmente",
+    module_id: "e4b1b111-9c9a-4b5a-8b0e-7b7b7b7b7b7b",
   },
   {
-    text: "Entre R$ 1 milhão e R$ 5 milhões",
-    question_number: 8,
-    order_number: 4
+    order_number: 13,
+    text: "Como você avalia o retorno sobre o investimento (ROI) das suas ações de marketing?",
+    type: "radio",
+    required: true,
+    hint: "Selecione a opção que melhor descreve como você avalia o ROI das suas ações de marketing",
+    module_id: "e4b1b111-9c9a-4b5a-8b0e-7b7b7b7b7b7b",
   },
   {
-    text: "Acima de R$ 5 milhões",
-    question_number: 8,
-    order_number: 5
+    order_number: 14,
+    text: "Quais métricas você acompanha para medir o sucesso das suas campanhas de marketing?",
+    type: "checkbox",
+    required: true,
+    hint: "Selecione as métricas que você acompanha para medir o sucesso das suas campanhas de marketing",
+    module_id: "e4b1b111-9c9a-4b5a-8b0e-7b7b7b7b7b7b",
   },
   {
-    text: "Prefiro não informar",
-    question_number: 8,
-    order_number: 6
+    order_number: 15,
+    text: "Qual a sua principal dificuldade em relação ao marketing da sua empresa?",
+    type: "textarea",
+    required: true,
+    hint: "Descreva qual a sua principal dificuldade em relação ao marketing da sua empresa",
+    module_id: "e4b1b111-9c9a-4b5a-8b0e-7b7b7b7b7b7b",
+  },
+  {
+    order_number: 16,
+    text: "Como você descreveria o seu processo de vendas atual?",
+    type: "radio",
+    required: true,
+    hint: "Selecione a opção que melhor descreve o seu processo de vendas atual",
+    module_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+  },
+  {
+    order_number: 17,
+    text: "Qual o tamanho da sua equipe de vendas?",
+    type: "radio",
+    required: true,
+    hint: "Selecione o tamanho da sua equipe de vendas",
+    module_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+  },
+  {
+    order_number: 18,
+    text: "Qual o ticket médio de vendas da sua empresa?",
+    type: "radio",
+    required: true,
+    hint: "Selecione o ticket médio de vendas da sua empresa",
+    module_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+  },
+  {
+    order_number: 19,
+    text: "Qual o tempo médio de fechamento de uma venda?",
+    type: "radio",
+    required: true,
+    hint: "Selecione o tempo médio de fechamento de uma venda",
+    module_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+  },
+  {
+    order_number: 20,
+    text: "Quais as principais fontes de leads da sua empresa?",
+    type: "checkbox",
+    required: true,
+    hint: "Selecione as principais fontes de leads da sua empresa",
+    module_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+  },
+  {
+    order_number: 21,
+    text: "Qual a taxa de conversão de leads em clientes?",
+    type: "radio",
+    required: true,
+    hint: "Selecione a taxa de conversão de leads em clientes",
+    module_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+  },
+  {
+    order_number: 22,
+    text: "Qual a sua principal dificuldade em relação às vendas da sua empresa?",
+    type: "textarea",
+    required: true,
+    hint: "Descreva qual a sua principal dificuldade em relação às vendas da sua empresa",
+    module_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+  },
+  {
+    order_number: 23,
+    text: "Como você descreveria a saúde financeira da sua empresa?",
+    type: "radio",
+    required: true,
+    hint: "Selecione a opção que melhor descreve a saúde financeira da sua empresa",
+    module_id: "b8a9d123-4567-890a-bcde-f01234567890",
+  },
+  {
+    order_number: 24,
+    text: "Qual o regime tributário da sua empresa?",
+    type: "radio",
+    required: true,
+    hint: "Selecione o regime tributário da sua empresa",
+    module_id: "b8a9d123-4567-890a-bcde-f01234567890",
+  },
+  {
+    order_number: 25,
+    text: "Sua empresa possui um sistema de gestão financeira?",
+    type: "radio",
+    required: true,
+    hint: "Selecione se sua empresa possui um sistema de gestão financeira",
+    module_id: "b8a9d123-4567-890a-bcde-f01234567890",
+  },
+  {
+    order_number: 26,
+    text: "Com que frequência você acompanha o fluxo de caixa da sua empresa?",
+    type: "radio",
+    required: true,
+    hint: "Selecione a frequência com que você acompanha o fluxo de caixa da sua empresa",
+    module_id: "b8a9d123-4567-890a-bcde-f01234567890",
+  },
+  {
+    order_number: 27,
+    text: "Sua empresa possui um planejamento financeiro?",
+    type: "radio",
+    required: true,
+    hint: "Selecione se sua empresa possui um planejamento financeiro",
+    module_id: "b8a9d123-4567-890a-bcde-f01234567890",
+  },
+  {
+    order_number: 28,
+    text: "Qual a sua principal dificuldade em relação às finanças da sua empresa?",
+    type: "textarea",
+    required: true,
+    hint: "Descreva qual a sua principal dificuldade em relação às finanças da sua empresa",
+    module_id: "b8a9d123-4567-890a-bcde-f01234567890",
+  },
+  {
+    order_number: 29,
+    text: "Como você descreveria a eficiência dos processos operacionais da sua empresa?",
+    type: "radio",
+    required: true,
+    hint: "Selecione a opção que melhor descreve a eficiência dos processos operacionais da sua empresa",
+    module_id: "c5d6e7f8-90ab-cdef-1234-567890abcdef",
+  },
+  {
+    order_number: 30,
+    text: "Sua empresa utiliza alguma ferramenta de gestão de projetos?",
+    type: "radio",
+    required: true,
+    hint: "Selecione se sua empresa utiliza alguma ferramenta de gestão de projetos",
+    module_id: "c5d6e7f8-90ab-cdef-1234-567890abcdef",
+  },
+  {
+    order_number: 31,
+    text: "Sua empresa possui um sistema de controle de qualidade?",
+    type: "radio",
+    required: true,
+    hint: "Selecione se sua empresa possui um sistema de controle de qualidade",
+    module_id: "c5d6e7f8-90ab-cdef-1234-567890abcdef",
+  },
+  {
+    order_number: 32,
+    text: "Como você avalia a capacidade da sua empresa de se adaptar a mudanças no mercado?",
+    type: "radio",
+    required: true,
+    hint: "Selecione a opção que melhor descreve a capacidade da sua empresa de se adaptar a mudanças no mercado",
+    module_id: "c5d6e7f8-90ab-cdef-1234-567890abcdef",
+  },
+  {
+    order_number: 33,
+    text: "Qual a sua principal dificuldade em relação aos processos operacionais da sua empresa?",
+    type: "textarea",
+    required: true,
+    hint: "Descreva qual a sua principal dificuldade em relação aos processos operacionais da sua empresa",
+    module_id: "c5d6e7f8-90ab-cdef-1234-567890abcdef",
+  },
+  {
+    order_number: 34,
+    text: "Como você descreveria o clima organizacional da sua empresa?",
+    type: "radio",
+    required: true,
+    hint: "Selecione a opção que melhor descreve o clima organizacional da sua empresa",
+    module_id: "d2e3f4g5-6789-0abc-def1-23456789abcd",
+  },
+  {
+    order_number: 35,
+    text: "Sua empresa possui um plano de carreira para os funcionários?",
+    type: "radio",
+    required: true,
+    hint: "Selecione se sua empresa possui um plano de carreira para os funcionários",
+    module_id: "d2e3f4g5-6789-0abc-def1-23456789abcd",
+  },
+  {
+    order_number: 36,
+    text: "Sua empresa oferece treinamentos para os funcionários?",
+    type: "radio",
+    required: true,
+    hint: "Selecione se sua empresa oferece treinamentos para os funcionários",
+    module_id: "d2e3f4g5-6789-0abc-def1-23456789abcd",
+  },
+  {
+    order_number: 37,
+    text: "Como você avalia o nível de engajamento dos seus funcionários?",
+    type: "radio",
+    required: true,
+    hint: "Selecione a opção que melhor descreve o nível de engajamento dos seus funcionários",
+    module_id: "d2e3f4g5-6789-0abc-def1-23456789abcd",
+  },
+  {
+    order_number: 38,
+    text: "Qual a sua principal dificuldade em relação à gestão de pessoas na sua empresa?",
+    type: "textarea",
+    required: true,
+    hint: "Descreva qual a sua principal dificuldade em relação à gestão de pessoas na sua empresa",
+    module_id: "d2e3f4g5-6789-0abc-def1-23456789abcd",
+  },
+  {
+    order_number: 39,
+    text: "Sua empresa possui assessoria jurídica?",
+    type: "radio",
+    required: true,
+    hint: "Selecione se sua empresa possui assessoria jurídica",
+    module_id: "e9f0a1b2-c3d4-e5f6-7890-123456789abc",
+  },
+  {
+    order_number: 40,
+    text: "Sua empresa possui contratos de prestação de serviços?",
+    type: "radio",
+    required: true,
+    hint: "Selecione se sua empresa possui contratos de prestação de serviços",
+    module_id: "e9f0a1b2-c3d4-e5f6-7890-123456789abc",
+  },
+  {
+    order_number: 41,
+    text: "Sua empresa possui registro de marca?",
+    type: "radio",
+    required: true,
+    hint: "Selecione se sua empresa possui registro de marca",
+    module_id: "e9f0a1b2-c3d4-e5f6-7890-123456789abc",
+  },
+  {
+    order_number: 42,
+    text: "Sua empresa está em dia com as obrigações fiscais?",
+    type: "radio",
+    required: true,
+    hint: "Selecione se sua empresa está em dia com as obrigações fiscais",
+    module_id: "e9f0a1b2-c3d4-e5f6-7890-123456789abc",
+  },
+  {
+    order_number: 43,
+    text: "Sua empresa possui algum processo judicial em andamento?",
+    type: "radio",
+    required: true,
+    hint: "Selecione se sua empresa possui algum processo judicial em andamento",
+    module_id: "e9f0a1b2-c3d4-e5f6-7890-123456789abc",
+  },
+  {
+    order_number: 44,
+    text: "Qual a sua principal dificuldade em relação às questões jurídicas da sua empresa?",
+    type: "textarea",
+    required: true,
+    hint: "Descreva qual a sua principal dificuldade em relação às questões jurídicas da sua empresa",
+    module_id: "e9f0a1b2-c3d4-e5f6-7890-123456789abc",
+  },
+  {
+    order_number: 45,
+    text: "Qual o seu nível de satisfação com os resultados da sua empresa?",
+    type: "radio",
+    required: true,
+    hint: "Selecione o nível de satisfação que melhor descreve sua experiência com os resultados da sua empresa",
+    module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
+  },
+  {
+    order_number: 46,
+    text: "Quais as suas principais metas para os próximos 12 meses?",
+    type: "textarea",
+    required: true,
+    hint: "Descreva quais as suas principais metas para os próximos 12 meses",
+    module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
+  },
+  {
+    order_number: 47,
+    text: "Quais os seus maiores desafios para alcançar essas metas?",
+    type: "textarea",
+    required: true,
+    hint: "Descreva quais os seus maiores desafios para alcançar essas metas",
+    module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
+  },
+  {
+    order_number: 48,
+    text: "O que você espera alcançar com a consultoria da Crie Valor?",
+    type: "textarea",
+    required: true,
+    hint: "Descreva o que você espera alcançar com a consultoria da Crie Valor",
+    module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
+  },
+  {
+    order_number: 49,
+    text: "Como você conheceu a Crie Valor?",
+    type: "radio",
+    required: true,
+    hint: "Selecione como você conheceu a Crie Valor",
+    module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
+  },
+  {
+    order_number: 50,
+    text: "Você já participou de alguma consultoria antes?",
+    type: "radio",
+    required: true,
+    hint: "Selecione se você já participou de alguma consultoria antes",
+    module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
+  },
+  {
+    order_number: 51,
+    text: "Quais são os objetivos da sua empresa para os próximos 12 meses?",
+    type: "checkbox",
+    required: true,
+    hint: "Selecione todos os objetivos que sua empresa pretende alcançar no próximo ano",
+    module_id: "544a07b1-06f3-48b6-a0cd-f6c67a9b03d8",
+  },
+  {
+    order_number: 52,
+    text: "Quais são os objetivos da sua empresa para os próximos 3-5 anos?",
+    type: "checkbox",
+    required: true,
+    hint: "Selecione os objetivos de médio e longo prazo que sua empresa pretende alcançar",
+    module_id: "544a07b1-06f3-48b6-a0cd-f6c67a9b03d8",
+  },
+  {
+    order_number: 53,
+    text: "Quais são os principais desafios que sua empresa enfrenta atualmente?",
+    type: "checkbox",
+    required: true,
+    hint: "Selecione todos os desafios relevantes que sua empresa está enfrentando no momento",
+    module_id: "544a07b1-06f3-48b6-a0cd-f6c67a9b03d8",
+  },
+  {
+    order_number: 54,
+    text: "Dentre os desafios selecionados acima, qual você considera mais urgente resolver?",
+    type: "textarea",
+    required: true,
+    hint: "Escolha apenas um dos desafios que você selecionou na pergunta anterior",
+    module_id: "544a07b1-06f3-48b6-a0cd-f6c67a9b03d8",
+  },
+  {
+    order_number: 55,
+    text: "Como líder, quais são seus principais desafios pessoais na gestão do negócio?",
+    type: "checkbox",
+    required: true,
+    hint: "Selecione todos os desafios pessoais que você enfrenta como gestor(a) do seu negócio",
+    module_id: "544a07b1-06f3-48b6-a0cd-f6c67a9b03d8",
+  },
+  {
+    order_number: 56,
+    text: "Como esses desafios pessoais impactam o desenvolvimento do seu negócio?",
+    type: "textarea",
+    required: true,
+    hint: "Descreva como os desafios pessoais selecionados afetam o crescimento e operação da sua empresa",
+    module_id: "544a07b1-06f3-48b6-a0cd-f6c67a9b03d8",
   }
 ];
+
+export const quizOptionsData = [
+  {
+    question_number: 7,
+    text: "1-10 funcionários",
+    order_number: 1,
+  },
+  {
+    question_number: 7,
+    text: "11-50 funcionários",
+    order_number: 2,
+  },
+  {
+    question_number: 7,
+    text: "51-200 funcionários",
+    order_number: 3,
+  },
+  {
+    question_number: 7,
+    text: "Mais de 200 funcionários",
+    order_number: 4,
+  },
+  {
+    question_number: 8,
+    text: "Até R$ 360 mil",
+    order_number: 1,
+  },
+  {
+    question_number: 8,
+    text: "De R$ 360 mil a R$ 3,6 milhões",
+    order_number: 2,
+  },
+  {
+    question_number: 8,
+    text: "De R$ 3,6 milhões a R$ 4,8 milhões",
+    order_number: 3,
+  },
+  {
+    question_number: 8,
+    text: "De R$ 4,8 milhões a R$ 10 milhões",
+    order_number: 4,
+  },
+  {
+    question_number: 8,
+    text: "Acima de R$ 10 milhões",
+    order_number: 5,
+  },
+  {
+    question_number: 9,
+    text: "Nenhum",
+    order_number: 1,
+  },
+  {
+    question_number: 9,
+    text: "Básico",
+    order_number: 2,
+  },
+  {
+    question_number: 9,
+    text: "Intermediário",
+    order_number: 3,
+  },
+  {
+    question_number: 9,
+    text: "Avançado",
+    order_number: 4,
+  },
+  {
+    question_number: 10,
+    text: "Aumentar o reconhecimento da marca",
+    order_number: 1,
+  },
+  {
+    question_number: 10,
+    text: "Gerar leads qualificados",
+    order_number: 2,
+  },
+  {
+    question_number: 10,
+    text: "Aumentar as vendas",
+    order_number: 3,
+  },
+  {
+    question_number: 10,
+    text: "Fidelizar clientes",
+    order_number: 4,
+  },
+  {
+    question_number: 11,
+    text: "Redes sociais",
+    order_number: 1,
+  },
+  {
+    question_number: 11,
+    text: "E-mail marketing",
+    order_number: 2,
+  },
+  {
+    question_number: 11,
+    text: "Anúncios pagos (Google Ads, Facebook Ads, etc.)",
+    order_number: 3,
+  },
+  {
+    question_number: 11,
+    text: "Marketing de conteúdo (blog, vídeos, etc.)",
+    order_number: 4,
+  },
+  {
+    question_number: 11,
+    text: "SEO (Search Engine Optimization)",
+    order_number: 5,
+  },
+  {
+    question_number: 11,
+    text: "Marketing de influência",
+    order_number: 6,
+  },
+  {
+    question_number: 11,
+    text: "Outros",
+    order_number: 7,
+  },
+  {
+    question_number: 12,
+    text: "Até R$ 500",
+    order_number: 1,
+  },
+  {
+    question_number: 12,
+    text: "De R$ 500 a R$ 1.000",
+    order_number: 2,
+  },
+  {
+    question_number: 12,
+    text: "De R$ 1.000 a R$ 5.000",
+    order_number: 3,
+  },
+  {
+    question_number: 12,
+    text: "De R$ 5.000 a R$ 10.000",
+    order_number: 4,
+  },
+  {
+    question_number: 12,
+    text: "Acima de R$ 10.000",
+    order_number: 5,
+  },
+  {
+    question_number: 13,
+    text: "Não avalio",
+    order_number: 1,
+  },
+  {
+    question_number: 13,
+    text: "Acompanho o faturamento",
+    order_number: 2,
+  },
+  {
+    question_number: 13,
+    text: "Utilizo ferramentas de análise (Google Analytics, etc.)",
+    order_number: 3,
+  },
+  {
+    question_number: 13,
+    text: "Calculo o ROI com base nos resultados",
+    order_number: 4,
+  },
+  {
+    question_number: 14,
+    text: "Número de visitantes no site",
+    order_number: 1,
+  },
+  {
+    question_number: 14,
+    text: "Taxa de conversão de leads",
+    order_number: 2,
+  },
+  {
+    question_number: 14,
+    text: "Custo por lead",
+    order_number: 3,
+  },
+  {
+    question_number: 14,
+    text: "Número de vendas",
+    order_number: 4,
+  },
+  {
+    question_number: 14,
+    text: "Valor do ticket médio",
+    order_number: 5,
+  },
+  {
+    question_number: 14,
+    text: "Retorno sobre o investimento (ROI)",
+    order_number: 6,
+  },
+  {
+    question_number: 14,
+    text: "Outras",
+    order_number: 7,
+  },
+  {
+    question_number: 5
