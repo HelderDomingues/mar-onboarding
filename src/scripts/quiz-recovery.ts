@@ -2,7 +2,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
 import { addLogEntry } from '@/utils/projectLog';
-import { quizModulesData, quizQuestionsData, quizOptionsData } from './quiz-data';
+import { quizModulesData } from './quiz-modules-data';
+import { quizQuestionsData, quizOptionsData } from './quiz-data';
 
 /**
  * Script de recuperação de dados do questionário MAR
@@ -155,25 +156,33 @@ export const recoverQuizData = async (): Promise<{
         const { error: deleteOptionsError } = await supabase
           .from('quiz_options')
           .delete()
-          .neq('id', '00000000-0000-0000-0000-000000000000');
+          .gt('id', '00000000-0000-0000-0000-000000000000');
           
         if (deleteOptionsError) {
           logger.error('Erro ao limpar opções:', {
             tag: 'RecoveryTool',
             data: { error: deleteOptionsError }
           });
+          return {
+            success: false,
+            message: `Erro ao limpar opções: ${deleteOptionsError.message}`
+          };
         }
         
         const { error: deleteQuestionsError } = await supabase
           .from('quiz_questions')
           .delete()
-          .neq('id', '00000000-0000-0000-0000-000000000000');
+          .gt('id', '00000000-0000-0000-0000-000000000000');
           
         if (deleteQuestionsError) {
           logger.error('Erro ao limpar perguntas:', {
             tag: 'RecoveryTool',
             data: { error: deleteQuestionsError }
           });
+          return {
+            success: false,
+            message: `Erro ao limpar perguntas: ${deleteQuestionsError.message}`
+          };
         }
         
         hasExistingQuestions = false;
@@ -214,11 +223,22 @@ export const recoverQuizData = async (): Promise<{
           });
         }
         
+        // Garantir que temos um module_id válido
+        const validModuleId = moduleId || quizModulesData.find(m => m.order_number === moduleNumber)?.id;
+        
+        if (!validModuleId) {
+          logger.error(`Não foi possível encontrar um ID de módulo válido para a pergunta ${question.order_number}`, {
+            tag: 'RecoveryTool' 
+          });
+          // Não inserir perguntas sem um module_id válido
+          return null;
+        }
+        
         return {
           ...question,
-          module_id: moduleId || question.module_id
+          module_id: validModuleId
         };
-      });
+      }).filter(Boolean); // Remover quaisquer valores nulos
       
       // Inserir perguntas
       const { data: questionsData, error: insertQuestionsError } = await supabase
@@ -251,25 +271,38 @@ export const recoverQuizData = async (): Promise<{
       const { error: deleteOptionsError } = await supabase
         .from('quiz_options')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000');
+        .gt('id', '00000000-0000-0000-0000-000000000000');
         
       if (deleteOptionsError) {
         logger.error('Erro ao limpar opções existentes:', {
           tag: 'RecoveryTool',
           data: { error: deleteOptionsError }
         });
+        return {
+          success: false,
+          message: `Erro ao limpar opções existentes: ${deleteOptionsError.message}`
+        };
       }
       
       // Preparar opções com os IDs de perguntas corretos
       const optionsToInsert = quizOptionsData
-        .filter(option => questionMap.has(option.question_number))
+        .filter(option => {
+          // Filtrar apenas opções com números de pergunta válidos
+          const hasQuestionId = questionMap.has(option.question_number);
+          if (!hasQuestionId) {
+            logger.warn(`Opção para pergunta inexistente ${option.question_number} será ignorada`, {
+              tag: 'RecoveryTool'
+            });
+          }
+          return hasQuestionId;
+        })
         .map(option => ({
           text: option.text,
           question_id: questionMap.get(option.question_number),
           order_number: option.order_number
         }));
       
-      // Inserir opções
+      // Inserir opções apenas se houver opções para inserir
       if (optionsToInsert.length > 0) {
         const { data: optionsData, error: insertOptionsError } = await supabase
           .from('quiz_options')
@@ -288,6 +321,10 @@ export const recoverQuizData = async (): Promise<{
         }
         
         logger.info(`${optionsData?.length || 0} opções inseridas com sucesso`, {
+          tag: 'RecoveryTool'
+        });
+      } else {
+        logger.warn('Nenhuma opção válida para inserir', {
           tag: 'RecoveryTool'
         });
       }
