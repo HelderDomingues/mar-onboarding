@@ -9,14 +9,17 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+
 interface UserDashboardProps {
   submission: QuizSubmission | null;
 }
+
 export function UserDashboard({
   submission
 }: UserDashboardProps) {
   const navigate = useNavigate();
   const progress = submission ? submission.completed ? 100 : submission.current_module / 8 * 100 : 0;
+
   const getMainActionButton = () => {
     if (!submission) {
       return {
@@ -45,7 +48,9 @@ export function UserDashboard({
       variant: "default" as const
     };
   };
+
   const mainAction = getMainActionButton();
+
   return <div className="space-y-8 max-w-3xl mx-auto">
       <div className="text-center md:text-left">
         <h1 className="text-3xl font-bold mb-2 text-slate-900">Bem-vindo à sua Área de Membro MAR</h1>

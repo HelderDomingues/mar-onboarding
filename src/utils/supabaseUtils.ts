@@ -1,4 +1,3 @@
-
 import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/database.types';
 import type { QuizSubmission } from '@/types/quiz';

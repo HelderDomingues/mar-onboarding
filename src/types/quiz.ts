@@ -1,3 +1,4 @@
+
 export interface QuizSubmission {
   id: string;
   user_id: string;
