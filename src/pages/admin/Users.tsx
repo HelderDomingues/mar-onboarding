@@ -62,17 +62,27 @@ const UsersPage = () => {
       }
       
       const emailData = await getUserEmails();
-        
-      const { data: adminRoles, error: adminRolesError } = await supabase
+      
+      const { data: adminRolesData, error: adminRolesError } = await supabase
         .from('user_roles')
         .select('user_id')
         .eq('role', 'admin');
+      
+      if (adminRolesError) {
+        console.error('Erro ao buscar papéis de administrador:', adminRolesError);
+        addLogEntry('error', 'Erro ao buscar papéis de administrador', { 
+          error: adminRolesError.message
+        }, user?.id);
+      }
       
       const { data: submissions, error: submissionsError } = await supabase
         .from('quiz_submissions')
         .select('user_id');
         
-      const adminUserIds = adminRoles?.map(role => role.user_id) || [];
+      const adminUserIds = Array.isArray(adminRolesData) 
+        ? adminRolesData.map(role => role.user_id) 
+        : [];
+        
       const submissionUserIds = submissions?.map(sub => sub.user_id) || [];
       
       const emailMap = new Map<string, string>();

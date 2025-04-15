@@ -32,14 +32,15 @@ export function QuizHeader({
     const fetchProfile = async () => {
       if (user?.id) {
         try {
+          // Modificado para evitar usar .single() diretamente
           const { data, error } = await supabase
             .from('profiles')
             .select('full_name, avatar_url')
             .eq('id', user.id)
-            .single();
+            .limit(1);
             
-          if (!error && data) {
-            setProfile(data);
+          if (!error && data && data.length > 0) {
+            setProfile(data[0]);
           }
         } catch (error) {
           console.error('Erro ao buscar perfil:', error);

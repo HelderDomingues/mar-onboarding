@@ -406,8 +406,7 @@ export const checkSupabaseConnection = async () => {
     const { data, error } = await supabase
       .from('quiz_modules')
       .select('count')
-      .limit(1)
-      .single();
+      .limit(1);
     
     if (error) {
       addLogEntry('error', 'Falha ao testar conexão com Supabase', { error: JSON.stringify(error) });

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,14 +49,15 @@ export function QuizViewAnswers() {
           throw answersError;
         }
 
-        // Buscar submissão
+        // Buscar submissão - MODIFICADO para evitar uso de .maybeSingle()
         const {
           data: submissionData,
           error: submissionError
         } = await supabase.from('quiz_submissions')
           .select('*')
           .eq('user_id', user.id)
-          .maybeSingle();
+          .limit(1);
+          
         if (submissionError) {
           throw submissionError;
         }
@@ -80,12 +80,13 @@ export function QuizViewAnswers() {
           data: {
             userId: user.id,
             answersCount: processedAnswers.length,
-            hasSubmission: !!submissionData
+            hasSubmission: submissionData && submissionData.length > 0
           }
         });
         
         setAnswers(processedAnswers);
-        setSubmission(submissionData);
+        // Usar o primeiro resultado se houver dados
+        setSubmission(submissionData && submissionData.length > 0 ? submissionData[0] : null);
       } catch (error) {
         console.error("Erro ao buscar respostas:", error);
         toast({
