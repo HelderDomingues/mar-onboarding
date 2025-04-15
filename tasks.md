@@ -23,14 +23,15 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - [CONCLUÍDO] Garantir que informações completas de erro estejam sempre disponíveis
 
 #### FASE 3: Correção das Políticas RLS e Funções PostgreSQL
-- [PENDENTE] Revisão e correção das políticas RLS:
-  - Corrigir política para a tabela `quiz_respostas_completas`
-  - Verificar consistência nas permissões entre tabelas relacionadas
-  - Testar permissões com diferentes tipos de usuário
-- [PENDENTE] Otimização das funções PostgreSQL:
-  - Revisar função `registrar_respostas_completas`
-  - Garantir que o trigger esteja funcionando corretamente
-  - Implementar mais verificações e validações nos parâmetros
+- [CONCLUÍDO] Revisão e correção das políticas RLS:
+  - [CONCLUÍDO] Corrigir política para a tabela `quiz_respostas_completas`
+  - [CONCLUÍDO] Verificar consistência nas permissões entre tabelas relacionadas
+  - [CONCLUÍDO] Implementar políticas para administradores e usuários comuns
+- [CONCLUÍDO] Otimização das funções PostgreSQL:
+  - [CONCLUÍDO] Revisar função `registrar_respostas_completas`
+  - [CONCLUÍDO] Modificar função para usar SECURITY DEFINER
+  - [CONCLUÍDO] Implementar mais verificações e validações nos parâmetros
+  - [CONCLUÍDO] Garantir que o trigger esteja funcionando corretamente
 
 #### FASE 4: Refatoração da Função completeQuizManually
 - [PARCIALMENTE CONCLUÍDO] Reescrever a função `completeQuizManually`:
@@ -63,23 +64,14 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
 
 ### Micro Tarefas Detalhadas
 
-#### Para FASE 2: Padronização da Estrutura de Erros (CONCLUÍDO)
-1. [CONCLUÍDO] Criar interface `SystemError` em `src/types/errors.ts`
-2. [CONCLUÍDO] Criar interface `OperationResult` em `src/types/errors.ts`
-3. [CONCLUÍDO] Criar enumerações `ErrorCategory` e `SupabaseErrorCode` em `src/types/errors.ts`
-4. [CONCLUÍDO] Implementar função auxiliar `getErrorCategory` para classificar erros
-5. [CONCLUÍDO] Criar utilitário `errorUtils.ts` com funções para formatação de erros
-6. [CONCLUÍDO] Atualizar `utils/supabaseUtils.ts` para usar nova interface de erro
-7. [CONCLUÍDO] Atualizar função `completeQuizManually` para normalizar formato de erros
-8. [CONCLUÍDO] Implementar funções auxiliares para padronização de erros
-9. [CONCLUÍDO] Atualizar `QuizReview.tsx` para usar o novo sistema de erros
-10. [CONCLUÍDO] Atualizar a página `QuizReview.tsx` para usar os novos utilitários de erro
-
-#### Para FASE 3: Correção das Políticas RLS e Funções PostgreSQL
-1. [PENDENTE] Revisar função `registrar_respostas_completas`
-2. [PENDENTE] Corrigir permissões na tabela `quiz_respostas_completas`
-3. [PENDENTE] Verificar consistência de permissões entre tabelas relacionadas
-4. [PENDENTE] Garantir que a coluna `user_email` esteja sempre preenchida
+#### Para FASE 3: Correção das Políticas RLS e Funções PostgreSQL (CONCLUÍDO)
+1. [CONCLUÍDO] Habilitar Row Level Security (RLS) na tabela `quiz_respostas_completas`
+2. [CONCLUÍDO] Criar política RLS para inserção de dados pelos próprios usuários
+3. [CONCLUÍDO] Criar política RLS para seleção de dados pelos próprios usuários
+4. [CONCLUÍDO] Criar política RLS para administradores visualizarem todos os dados
+5. [CONCLUÍDO] Modificar a função `registrar_respostas_completas` para usar SECURITY DEFINER
+6. [CONCLUÍDO] Adicionar validações extras na função `registrar_respostas_completas`
+7. [CONCLUÍDO] Recriar o trigger para garantir o funcionamento correto
 
 #### Para FASE 4: Refatoração da Função completeQuizManually
 1. [CONCLUÍDO] Simplificar a estrutura da função para uso de um único método
@@ -116,13 +108,14 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
     - [CONCLUÍDO] Corrigir os problemas relacionados a quiz_submissions.user_email e quiz_answers.user_email
 
 ### Novo problema: Erro 42501 (Permission Denied)
-- [EM ANDAMENTO] Identificado erro 42501 ao tentar finalizar questionário:
+- [CONCLUÍDO] Erro 42501 ao tentar finalizar questionário:
   - Problema: Permissão negada ao interagir com tabela quiz_respostas_completas
-  - Investigação:
-    - [CONCLUÍDO] Implementada estrutura de erro padronizada para melhor diagnosticar
-    - [PENDENTE] Verificar políticas RLS na tabela
-    - [PENDENTE] Confirmar que a função registrar_respostas_completas tem permissões adequadas
-    - [PENDENTE] Analisar permissões do usuário no contexto da operação
+  - Solução implementada:
+    - [CONCLUÍDO] Habilitado Row Level Security na tabela quiz_respostas_completas
+    - [CONCLUÍDO] Criadas políticas RLS para permitir inserção e seleção de dados próprios
+    - [CONCLUÍDO] Criada política especial para administradores
+    - [CONCLUÍDO] Modificada função registrar_respostas_completas para usar SECURITY DEFINER
+    - [CONCLUÍDO] Adicionadas validações extras e tratamento de erros na função
 
 ### Links quebrados no Dashboard Administrativo
 - [CONCLUÍDO] Diversos links no dashboard administrativo estavam levando a páginas 404
@@ -191,19 +184,19 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - Padronizar retorno de funções para garantir consistência na interface
   - Implementar formatação de erros padronizada em todo o sistema
   - Garantir exibição detalhada de erros para facilitar depuração
+  - Usar SECURITY DEFINER em funções PostgreSQL que precisam ignorar RLS
 
 ## Próximos Passos (Priorizados)
-1. Implementar a Fase 3: Correção das Políticas RLS e Funções PostgreSQL
-2. Concluir a Fase 4: Refatoração da Função completeQuizManually
-3. Implementar a Fase 5: Aprimoramento do Sistema de Logs
-4. Implementar a Fase 7: Testes e Validação
-5. Retornar aos problemas pendentes: melhorar geração de PDFs e visualização de respostas
-6. Continuar implementação do editor de questionários
+1. Concluir a Fase 4: Refatoração da Função completeQuizManually
+2. Implementar a Fase 5: Aprimoramento do Sistema de Logs
+3. Implementar a Fase 7: Testes e Validação
+4. Retornar aos problemas pendentes: melhorar geração de PDFs e visualização de respostas
+5. Continuar implementação do editor de questionários
 
 ## Tarefas Concluídas (Últimas adições)
-- Implementação completa da padronização da estrutura de erros (FASE 2)
-- Criação de interfaces para erros e resultados de operações
-- Implementação de utilitários para formatação de erros
-- Atualização da função completeQuizManually para usar o novo padrão de erros
-- Refatoração do componente QuizReview para exibir erros de forma padronizada
-- Melhoria na exibição de detalhes técnicos de erro para facilitar depuração
+- Implementação completa da Fase 3: Correção das Políticas RLS e Funções PostgreSQL
+- Habilitação de Row Level Security na tabela quiz_respostas_completas
+- Implementação de políticas RLS para usuários e administradores
+- Modificação da função registrar_respostas_completas para usar SECURITY DEFINER
+- Adição de validações extras na função registrar_respostas_completas
+- Recriação do trigger para garantir funcionamento correto
