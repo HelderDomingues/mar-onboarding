@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
@@ -44,9 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             addLogEntry('auth', 'Verificando status de administrador', { userId }, userId);
             
-            // Corrigindo o problema do erro 406:
-            // Em vez de fazer uma consulta direta à tabela user_roles, 
-            // vamos usar a função RPC is_admin, que não gera o erro 406
+            // Usar somente a função RPC is_admin sem fallback para a tabela user_roles
             const { data, error } = await supabase.rpc('is_admin');
             
             if (error) {
@@ -55,44 +52,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 data: { error, userId }
               });
               
-              // Fallback: tentar verificar diretamente via tabela user_roles
-              // Mas agora usando .maybeSingle() em vez de .single() para evitar erros
-              try {
-                const { data: roleData, error: roleError } = await supabase
-                  .from('user_roles')
-                  .select('role')
-                  .eq('user_id', userId)
-                  .eq('role', 'admin')
-                  .maybeSingle();
-                
-                if (roleError) {
-                  logger.error('Erro no fallback para verificar papel de administrador:', {
-                    tag: 'Auth',
-                    data: { error: roleError, userId }
-                  });
-                  addLogEntry('error', 'Erro no fallback para verificar papel de administrador', { error: roleError, userId }, userId);
-                  resolve(false);
-                  return;
-                }
-                
-                const isUserAdmin = !!roleData;
-                logger.info('Status de admin verificado via fallback:', {
-                  tag: 'Auth',
-                  data: { isAdmin: isUserAdmin, userId }
-                });
-                
-                addLogEntry('auth', 'Status de admin verificado via fallback', { isAdmin: isUserAdmin }, userId);
-                resolve(isUserAdmin);
-                return;
-              } catch (fallbackError) {
-                logger.error('Exceção no fallback para verificar papel de administrador:', {
-                  tag: 'Auth',
-                  data: { error: fallbackError, userId }
-                });
-                addLogEntry('error', 'Exceção no fallback para verificar papel de administrador', { error: fallbackError }, userId);
-                resolve(false);
-                return;
-              }
+              addLogEntry('error', 'Erro ao verificar papel de administrador', { error }, userId);
+              resolve(false);
+              return;
             }
             
             logger.info('Status de admin verificado via RPC:', {
