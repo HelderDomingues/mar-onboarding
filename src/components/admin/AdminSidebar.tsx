@@ -82,10 +82,10 @@ export function AdminSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className="text-foreground">
                   <Link 
                     to="/admin/users" 
-                    className={`${currentRoute === '/admin/users' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                    className={`${currentRoute === '/admin/users' ? 'bg-accent/60 text-accent-foreground font-medium' : 'hover:bg-accent/50'}`}
                   >
                     <LayoutDashboard className="h-4 w-4" />
                     <span>Dashboard</span>
@@ -94,10 +94,10 @@ export function AdminSidebar() {
               </SidebarMenuItem>
               
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className="text-foreground">
                   <Link 
                     to="/admin/users" 
-                    className={`${currentRoute === '/admin/users' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                    className={`${currentRoute === '/admin/users' ? 'bg-accent/60 text-accent-foreground font-medium' : 'hover:bg-accent/50'}`}
                   >
                     <Users className="h-4 w-4" />
                     <span>Usuários</span>
@@ -106,10 +106,10 @@ export function AdminSidebar() {
               </SidebarMenuItem>
               
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className="text-foreground">
                   <Link 
                     to="/admin/quiz-responses" 
-                    className={`${currentRoute === '/admin/quiz-responses' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                    className={`${currentRoute === '/admin/quiz-responses' ? 'bg-accent/60 text-accent-foreground font-medium' : 'hover:bg-accent/50'}`}
                   >
                     <ListChecks className="h-4 w-4" />
                     <span>Questionários</span>
@@ -118,10 +118,10 @@ export function AdminSidebar() {
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className="text-foreground">
                   <Link 
                     to="/admin/quiz-editor" 
-                    className={`${currentRoute === '/admin/quiz-editor' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                    className={`${currentRoute === '/admin/quiz-editor' ? 'bg-accent/60 text-accent-foreground font-medium' : 'hover:bg-accent/50'}`}
                   >
                     <FileEdit className="h-4 w-4" />
                     <span>Editor de Questionário</span>
@@ -130,10 +130,10 @@ export function AdminSidebar() {
               </SidebarMenuItem>
               
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className="text-foreground">
                   <Link 
                     to="/admin/seed-quiz" 
-                    className={`${currentRoute === '/admin/seed-quiz' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                    className={`${currentRoute === '/admin/seed-quiz' ? 'bg-accent/60 text-accent-foreground font-medium' : 'hover:bg-accent/50'}`}
                   >
                     <Database className="h-4 w-4" />
                     <span>Configurar Questionário</span>
@@ -142,10 +142,10 @@ export function AdminSidebar() {
               </SidebarMenuItem>
               
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className="text-foreground">
                   <Link 
                     to="/admin/reports" 
-                    className={`${currentRoute === '/admin/reports' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                    className={`${currentRoute === '/admin/reports' ? 'bg-accent/60 text-accent-foreground font-medium' : 'hover:bg-accent/50'}`}
                   >
                     <FileBarChart2 className="h-4 w-4" />
                     <span>Relatórios e Análises</span>
@@ -154,10 +154,10 @@ export function AdminSidebar() {
               </SidebarMenuItem>
               
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className="text-foreground">
                   <Link 
                     to="/admin/materials" 
-                    className={`${currentRoute === '/admin/materials' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                    className={`${currentRoute === '/admin/materials' ? 'bg-accent/60 text-accent-foreground font-medium' : 'hover:bg-accent/50'}`}
                   >
                     <BookOpen className="h-4 w-4" />
                     <span>Materiais</span>
@@ -166,10 +166,10 @@ export function AdminSidebar() {
               </SidebarMenuItem>
               
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className="text-foreground">
                   <Link 
                     to="/admin/metrics" 
-                    className={`${currentRoute === '/admin/metrics' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                    className={`${currentRoute === '/admin/metrics' ? 'bg-accent/60 text-accent-foreground font-medium' : 'hover:bg-accent/50'}`}
                   >
                     <BarChart className="h-4 w-4" />
                     <span>Métricas</span>
@@ -178,10 +178,10 @@ export function AdminSidebar() {
               </SidebarMenuItem>
               
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className="text-foreground">
                   <Link 
                     to="/admin/settings" 
-                    className={`${currentRoute === '/admin/settings' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                    className={`${currentRoute === '/admin/settings' ? 'bg-accent/60 text-accent-foreground font-medium' : 'hover:bg-accent/50'}`}
                   >
                     <SettingsIcon className="h-4 w-4" />
                     <span>Configurações</span>
@@ -190,10 +190,10 @@ export function AdminSidebar() {
               </SidebarMenuItem>
               
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className="text-foreground">
                   <Link 
                     to="/admin/logs" 
-                    className={`${currentRoute === '/admin/logs' ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                    className={`${currentRoute === '/admin/logs' ? 'bg-accent/60 text-accent-foreground font-medium' : 'hover:bg-accent/50'}`}
                   >
                     <ShieldAlert className="h-4 w-4" />
                     <span>Logs</span>
