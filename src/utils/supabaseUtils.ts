@@ -1,4 +1,3 @@
-
 import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/database.types';
 import type { QuizSubmission } from '@/types/quiz';
@@ -117,11 +116,6 @@ export const processQuizAnswersToSimplified = async (userId: string) => {
     return null;
   }
 };
-
-// Retorno detalhado para a função completeQuizManually
-interface CompleteQuizResult extends OperationResult {
-  method?: 'rpc' | 'direct_update' | 'manual_update';
-}
 
 /**
  * Completa o questionário para o usuário atual

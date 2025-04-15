@@ -187,6 +187,9 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - Garantir exibição detalhada de erros para facilitar depuração
   - Usar SECURITY DEFINER em funções PostgreSQL que precisam ignorar RLS
   - Evitar múltiplos métodos de fallback quando um único método bem implementado é suficiente
+  - Reutilizar componentes e funções existentes ao invés de criar novas com funcionalidade similar
+  - Sempre verificar o contexto do usuário antes de executar operações que exigem permissões específicas
+  - Garantir que emails de usuários sejam sempre obtidos e armazenados em todas as tabelas relacionadas
 
 ## Próximos Passos (Priorizados)
 1. Implementar a Fase 5: Aprimoramento do Sistema de Logs
@@ -195,14 +198,10 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
 4. Continuar implementação do editor de questionários
 
 ## Tarefas Concluídas (Últimas adições)
-- Implementação completa da Fase 3: Correção das Políticas RLS e Funções PostgreSQL
-- Habilitação de Row Level Security na tabela quiz_respostas_completas
-- Implementação de políticas RLS para usuários e administradores
-- Modificação da função registrar_respostas_completas para usar SECURITY DEFINER
-- Adição de validações extras na função registrar_respostas_completas
-- Recriação do trigger para garantir funcionamento correto
 - Implementação completa da Fase 4: Refatoração da Função completeQuizManually
 - Simplificação da lógica de fluxo removendo métodos redundantes de fallback
 - Padronização da estrutura de retorno para melhor tratamento de erros
 - Adição de validações para campos obrigatórios como email do usuário
-- Melhoria na qualidade e detalhamento dos logs para facilitar depuração
+- Atualização da função PostgreSQL complete_quiz com melhores práticas de logs e tratamento de erros
+- Melhoria na obtenção do email do usuário, tentando múltiplas fontes como perfil e auth.users
+- Correção de bugs na função completeQuizManually onde emails não estavam sendo corretamente propagados
