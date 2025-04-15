@@ -50,5 +50,11 @@ export const quizModulesData = [
     title: "Perspectiva de Processos Internos",
     description: "Como fazemos o nosso trabalho?",
     order_number: 8,
+  },
+  {
+    id: "g5h6i7j8-9012-cdef-g234-56789abcdefg",
+    title: "Perspectiva de inovação, aprendizado e crescimento",
+    description: "Como aprendemos e melhoramos?",
+    order_number: 9,
   }
 ];

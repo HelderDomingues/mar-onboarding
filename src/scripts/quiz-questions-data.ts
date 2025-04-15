@@ -459,5 +459,31 @@ export const quizQuestionsData = [
     required: true,
     hint: "Descreva detalhadamente sua prioridade ou problema relacionado aos processos internos",
     module_id: "f4g5h6i7-8901-bcde-f123-456789abcdef",
+  },
+  
+  // Módulo 9: Perspectiva de inovação, aprendizado e crescimento
+  {
+    order_number: 58,
+    text: "Quais são as principais áreas em que seus funcionários precisam se desenvolver ou aprender mais nos próximos 12 meses?",
+    type: "checkbox",
+    required: true,
+    hint: "Você pode marcar mais de uma opção",
+    module_id: "g5h6i7j8-9012-cdef-g234-56789abcdefg",
+  },
+  {
+    order_number: 59,
+    text: "Como sua empresa incentiva os funcionários a terem novas ideias e a buscar soluções inovadoras?",
+    type: "checkbox",
+    required: true,
+    hint: "Você pode marcar mais de uma opção",
+    module_id: "g5h6i7j8-9012-cdef-g234-56789abcdefg",
+  },
+  {
+    order_number: 60,
+    text: "Sua empresa oferece oportunidades para que os funcionários continuem aprendendo e se desenvolvendo?",
+    type: "radio",
+    required: true,
+    hint: "Selecione a opção que melhor descreve a situação da sua empresa",
+    module_id: "g5h6i7j8-9012-cdef-g234-56789abcdefg",
   }
 ];

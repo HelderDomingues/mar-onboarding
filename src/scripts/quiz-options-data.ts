@@ -518,5 +518,107 @@ export const quizOptionsData = [
     question_number: 56,
     text: "Sim, utilizamos outra ferramenta",
     order_number: 5
+  },
+  
+  // Opções Módulo 9: Perspectiva de inovação, aprendizado e crescimento
+  {
+    question_number: 58,
+    text: "Conhecimentos técnicos específicos da área de atuação",
+    order_number: 1
+  },
+  {
+    question_number: 58,
+    text: "Habilidades de liderança e gestão de equipes",
+    order_number: 2
+  },
+  {
+    question_number: 58,
+    text: "Técnicas de vendas e marketing",
+    order_number: 3
+  },
+  {
+    question_number: 58,
+    text: "Habilidades para atender melhor os clientes",
+    order_number: 4
+  },
+  {
+    question_number: 58,
+    text: "Conhecimento sobre novas tecnologias",
+    order_number: 5
+  },
+  {
+    question_number: 58,
+    text: "Habilidades de comunicação, trabalho em equipe, etc.",
+    order_number: 6
+  },
+  {
+    question_number: 58,
+    text: "Não identificamos necessidades específicas",
+    order_number: 7
+  },
+  {
+    question_number: 58,
+    text: "Outra",
+    order_number: 8
+  },
+  {
+    question_number: 59,
+    text: "Realizamos reuniões para discutir ideias",
+    order_number: 1
+  },
+  {
+    question_number: 59,
+    text: "Temos um sistema para que os funcionários possam dar sugestões",
+    order_number: 2
+  },
+  {
+    question_number: 59,
+    text: "Investimos em pesquisa e desenvolvimento de novos produtos ou serviços",
+    order_number: 3
+  },
+  {
+    question_number: 59,
+    text: "Buscamos parcerias com outras empresas ou instituições para inovar",
+    order_number: 4
+  },
+  {
+    question_number: 59,
+    text: "Criamos um ambiente de trabalho onde as pessoas se sentem à vontade para experimentar e aprender com os erros",
+    order_number: 5
+  },
+  {
+    question_number: 59,
+    text: "Não temos nenhuma iniciativa formal para isso",
+    order_number: 6
+  },
+  {
+    question_number: 59,
+    text: "Outra",
+    order_number: 7
+  },
+  {
+    question_number: 60,
+    text: "Não",
+    order_number: 1
+  },
+  {
+    question_number: 60,
+    text: "Sim, oferecemos treinamentos internos regularmente",
+    order_number: 2
+  },
+  {
+    question_number: 60,
+    text: "Sim, ajudamos financeiramente os funcionários a fazerem cursos externos",
+    order_number: 3
+  },
+  {
+    question_number: 60,
+    text: "Sim, utilizamos plataformas online de aprendizado",
+    order_number: 4
+  },
+  {
+    question_number: 60,
+    text: "Sim, outra forma",
+    order_number: 5
   }
 ];
