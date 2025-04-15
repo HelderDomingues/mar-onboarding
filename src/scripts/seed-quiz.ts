@@ -97,7 +97,7 @@ export const seedQuizData = async (): Promise<boolean> => {
       const originalQuestionOrder = question.order_number;
       
       // Criamos uma chave para reconhecer a questão pelo formato usado nas opções
-      const questionKey = `question_${originalQuestionModule}_${originalQuestionOrder}`;
+      const questionKey = `question_${moduleMap.get(originalQuestionOrder)}_${originalQuestionOrder}`;
       questionMap.set(questionKey, question.id);
     });
     
