@@ -23,8 +23,8 @@ const SecurityPolicyTester: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
-  const tables = ['profiles', 'quiz_questions', 'quiz_submissions', 'materials'];
-  const operations = ['select', 'insert', 'update', 'delete'];
+  const tables = ['profiles', 'quiz_questions', 'quiz_submissions', 'materials', 'user_roles'];
+  const operations = ['select', 'insert', 'update', 'delete', 'rpc'];
   
   const testSecurityPolicy = async () => {
     setIsLoading(true);
@@ -43,35 +43,40 @@ const SecurityPolicyTester: React.FC = () => {
         }
       };
       
-      switch (operation) {
-        case 'select':
-          response = await supabase
-            .from(table)
-            .select('*')
-            .limit(10);
-          break;
-        case 'insert':
-          response = await supabase
-            .from(table)
-            .insert([{ id: userId || 'test-id', name: 'Test User' }])
-            .select();
-          break;
-        case 'update':
-          response = await supabase
-            .from(table)
-            .update({ name: 'Updated User' })
-            .eq('id', userId || 'test-id')
-            .select();
-          break;
-        case 'delete':
-          response = await supabase
-            .from(table)
-            .delete()
-            .eq('id', userId || 'test-id')
-            .select();
-          break;
-        default:
-          throw new Error('Operação não suportada');
+      if (operation === 'rpc') {
+        // Testar uma função RPC específica (is_admin)
+        response = await supabase.rpc('is_admin');
+      } else {
+        switch (operation) {
+          case 'select':
+            response = await supabase
+              .from(table)
+              .select('*')
+              .limit(10);
+            break;
+          case 'insert':
+            response = await supabase
+              .from(table)
+              .insert([{ id: userId || 'test-id', name: 'Test User' }])
+              .select();
+            break;
+          case 'update':
+            response = await supabase
+              .from(table)
+              .update({ name: 'Updated User' })
+              .eq('id', userId || 'test-id')
+              .select();
+            break;
+          case 'delete':
+            response = await supabase
+              .from(table)
+              .delete()
+              .eq('id', userId || 'test-id')
+              .select();
+            break;
+          default:
+            throw new Error('Operação não suportada');
+        }
       }
       
       if (userId && operation === 'select') {

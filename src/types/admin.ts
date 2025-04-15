@@ -4,7 +4,7 @@
 export type UserProfile = {
   id: string;
   email?: string;
-  user_email?: string; // Adicionado o novo campo
+  user_email?: string; // Nome atualizado da coluna
   full_name?: string;
   username?: string;
   created_at?: string;
@@ -21,7 +21,7 @@ export type ConfigResult = {
 
 export interface EmailData {
   user_id: string;
-  user_email: string;
+  user_email: string; // Nome atualizado da coluna
   user_created_at: string;
   user_name: string | null;
 };
@@ -29,6 +29,7 @@ export interface EmailData {
 export interface UserRoleData {
   user_id: string;
   role: string;
+  user_email?: string; // Nome atualizado da coluna
 };
 
 export interface SubmissionData {

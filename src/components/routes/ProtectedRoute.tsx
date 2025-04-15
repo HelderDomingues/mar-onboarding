@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { addLogEntry } from "@/utils/projectLog";
+import { logger } from "@/utils/logger";
 
 interface ProtectedRouteProps {
   component: React.ComponentType<any>;
@@ -23,11 +24,27 @@ export const ProtectedRoute = ({ component: Component }: ProtectedRouteProps) =>
         path: window.location.pathname
       }, user?.id);
       
+      logger.info('Tentativa de acesso à rota protegida', {
+        tag: 'Auth',
+        data: {
+          isAuthenticated,
+          userId: user?.id || 'não autenticado',
+          path: window.location.pathname
+        }
+      });
+      
       // Apenas redirecionar se não estiver autenticado e não estiver carregando
       if (!isAuthenticated) {
         addLogEntry('auth', 'Redirecionando usuário não autenticado para página inicial', {
           path: window.location.pathname
         }, user?.id);
+        
+        logger.warn('Redirecionando usuário não autenticado', {
+          tag: 'Auth',
+          data: {
+            path: window.location.pathname
+          }
+        });
         
         // Usar timeout para evitar problemas de navegação durante renderização
         setTimeout(() => {
