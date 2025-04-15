@@ -34,12 +34,6 @@ export const quizModulesData = [
     title: "Pessoas",
     description: "Neste módulo, vamos desenvolver sua equipe e cultura organizacional para atrair e reter talentos.",
     order_number: 6,
-  },
-  {
-    id: "e9f0a1b2-c3d4-e5f6-7890-123456789abc",
-    title: "Jurídico",
-    description: "Neste módulo, vamos garantir a conformidade legal e proteger seus ativos.",
-    order_number: 7,
   }
 ];
 
@@ -350,54 +344,6 @@ export const quizQuestionsData = [
   },
   {
     order_number: 39,
-    text: "Sua empresa possui assessoria jurídica?",
-    type: "radio",
-    required: true,
-    hint: "Selecione se sua empresa possui assessoria jurídica",
-    module_id: "e9f0a1b2-c3d4-e5f6-7890-123456789abc",
-  },
-  {
-    order_number: 40,
-    text: "Sua empresa possui contratos de prestação de serviços?",
-    type: "radio",
-    required: true,
-    hint: "Selecione se sua empresa possui contratos de prestação de serviços",
-    module_id: "e9f0a1b2-c3d4-e5f6-7890-123456789abc",
-  },
-  {
-    order_number: 41,
-    text: "Sua empresa possui registro de marca?",
-    type: "radio",
-    required: true,
-    hint: "Selecione se sua empresa possui registro de marca",
-    module_id: "e9f0a1b2-c3d4-e5f6-7890-123456789abc",
-  },
-  {
-    order_number: 42,
-    text: "Sua empresa está em dia com as obrigações fiscais?",
-    type: "radio",
-    required: true,
-    hint: "Selecione se sua empresa está em dia com as obrigações fiscais",
-    module_id: "e9f0a1b2-c3d4-e5f6-7890-123456789abc",
-  },
-  {
-    order_number: 43,
-    text: "Sua empresa possui algum processo judicial em andamento?",
-    type: "radio",
-    required: true,
-    hint: "Selecione se sua empresa possui algum processo judicial em andamento",
-    module_id: "e9f0a1b2-c3d4-e5f6-7890-123456789abc",
-  },
-  {
-    order_number: 44,
-    text: "Qual a sua principal dificuldade em relação às questões jurídicas da sua empresa?",
-    type: "textarea",
-    required: true,
-    hint: "Descreva qual a sua principal dificuldade em relação às questões jurídicas da sua empresa",
-    module_id: "e9f0a1b2-c3d4-e5f6-7890-123456789abc",
-  },
-  {
-    order_number: 45,
     text: "Qual o seu nível de satisfação com os resultados da sua empresa?",
     type: "radio",
     required: true,
@@ -405,7 +351,7 @@ export const quizQuestionsData = [
     module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
   },
   {
-    order_number: 46,
+    order_number: 40,
     text: "Quais as suas principais metas para os próximos 12 meses?",
     type: "textarea",
     required: true,
@@ -413,7 +359,7 @@ export const quizQuestionsData = [
     module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
   },
   {
-    order_number: 47,
+    order_number: 41,
     text: "Quais os seus maiores desafios para alcançar essas metas?",
     type: "textarea",
     required: true,
@@ -421,7 +367,7 @@ export const quizQuestionsData = [
     module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
   },
   {
-    order_number: 48,
+    order_number: 42,
     text: "O que você espera alcançar com a consultoria da Crie Valor?",
     type: "textarea",
     required: true,
@@ -429,7 +375,7 @@ export const quizQuestionsData = [
     module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
   },
   {
-    order_number: 49,
+    order_number: 43,
     text: "Como você conheceu a Crie Valor?",
     type: "radio",
     required: true,
@@ -437,7 +383,7 @@ export const quizQuestionsData = [
     module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
   },
   {
-    order_number: 50,
+    order_number: 44,
     text: "Você já participou de alguma consultoria antes?",
     type: "radio",
     required: true,
@@ -648,358 +594,68 @@ export const quizOptionsData = [
     order_number: 7,
   },
   {
-    question_number: 49,
+    question_number: 39,
+    text: "Muito insatisfeito",
+    order_number: 1,
+  },
+  {
+    question_number: 39,
+    text: "Insatisfeito",
+    order_number: 2,
+  },
+  {
+    question_number: 39,
+    text: "Neutro",
+    order_number: 3,
+  },
+  {
+    question_number: 39,
+    text: "Satisfeito",
+    order_number: 4,
+  },
+  {
+    question_number: 39,
+    text: "Muito satisfeito",
+    order_number: 5,
+  },
+  {
+    question_number: 43,
     text: "Redes Sociais",
     order_number: 1,
   },
   {
-    question_number: 49,
+    question_number: 43,
     text: "Indicação de amigos",
     order_number: 2,
   },
   {
-    question_number: 49,
+    question_number: 43,
     text: "Google",
     order_number: 3,
   },
   {
-    question_number: 49,
+    question_number: 43,
     text: "Eventos",
     order_number: 4,
   },
   {
-    question_number: 49,
+    question_number: 43,
     text: "LinkedIn",
     order_number: 5,
   },
   {
-    question_number: 49,
+    question_number: 43,
     text: "Outros",
     order_number: 6,
   },
   {
-    question_number: 50,
+    question_number: 44,
     text: "Sim",
     order_number: 1,
   },
   {
-    question_number: 50,
+    question_number: 44,
     text: "Não",
     order_number: 2,
-  },
-  {
-    question_number: 51,
-    text: "Aumentar o faturamento",
-    order_number: 1,
-  },
-  {
-    question_number: 51,
-    text: "Expandir base de clientes",
-    order_number: 2,
-  },
-  {
-    question_number: 51,
-    text: "Lançar novos produtos/serviços",
-    order_number: 3,
-  },
-  {
-    question_number: 51,
-    text: "Melhorar margens de lucro",
-    order_number: 4,
-  },
-  {
-    question_number: 51,
-    text: "Otimizar processos operacionais",
-    order_number: 5,
-  },
-  {
-    question_number: 51,
-    text: "Investir em marketing digital",
-    order_number: 6,
-  },
-  {
-    question_number: 51,
-    text: "Implementar sistema de gestão",
-    order_number: 7,
-  },
-  {
-    question_number: 51,
-    text: "Expandir equipe",
-    order_number: 8,
-  },
-  {
-    question_number: 51,
-    text: "Abrir nova unidade/filial",
-    order_number: 9,
-  },
-  {
-    question_number: 51,
-    text: "Desenvolver parcerias estratégicas",
-    order_number: 10,
-  },
-  {
-    question_number: 51,
-    text: "Melhorar a experiência do cliente",
-    order_number: 11,
-  },
-  {
-    question_number: 51,
-    text: "Não sei responder",
-    order_number: 12,
-  },
-  {
-    question_number: 51,
-    text: "Outro",
-    order_number: 13,
-  },
-  {
-    question_number: 52,
-    text: "Ser referência no segmento",
-    order_number: 1,
-  },
-  {
-    question_number: 52,
-    text: "Expandir para outros estados/países",
-    order_number: 2,
-  },
-  {
-    question_number: 52,
-    text: "Diversificar portfolio de produtos/serviços",
-    order_number: 3,
-  },
-  {
-    question_number: 52,
-    text: "Desenvolver nova linha de negócios",
-    order_number: 4,
-  },
-  {
-    question_number: 52,
-    text: "Automatizar processos principais",
-    order_number: 5,
-  },
-  {
-    question_number: 52,
-    text: "Criar franquia do negócio",
-    order_number: 6,
-  },
-  {
-    question_number: 52,
-    text: "Atrair investimentos externos",
-    order_number: 7,
-  },
-  {
-    question_number: 52,
-    text: "Realizar aquisições estratégicas",
-    order_number: 8,
-  },
-  {
-    question_number: 52,
-    text: "Desenvolver modelo de negócio escalável",
-    order_number: 9,
-  },
-  {
-    question_number: 52,
-    text: "Preparar empresa para venda/sucessão",
-    order_number: 10,
-  },
-  {
-    question_number: 52,
-    text: "Não sei responder",
-    order_number: 11,
-  },
-  {
-    question_number: 52,
-    text: "Outro",
-    order_number: 12,
-  },
-  {
-    question_number: 53,
-    text: "Aumentar vendas/receita",
-    order_number: 1,
-  },
-  {
-    question_number: 53,
-    text: "Reduzir custos operacionais",
-    order_number: 2,
-  },
-  {
-    question_number: 53,
-    text: "Melhorar a qualidade dos produtos/serviços",
-    order_number: 3,
-  },
-  {
-    question_number: 53,
-    text: "Expandir para novos mercados",
-    order_number: 4,
-  },
-  {
-    question_number: 53,
-    text: "Desenvolver novos produtos/serviços",
-    order_number: 5,
-  },
-  {
-    question_number: 53,
-    text: "Contratar e reter talentos",
-    order_number: 6,
-  },
-  {
-    question_number: 53,
-    text: "Melhorar processos internos",
-    order_number: 7,
-  },
-  {
-    question_number: 53,
-    text: "Implementar tecnologias",
-    order_number: 8,
-  },
-  {
-    question_number: 53,
-    text: "Gestão financeira",
-    order_number: 9,
-  },
-  {
-    question_number: 53,
-    text: "Marketing e divulgação",
-    order_number: 10,
-  },
-  {
-    question_number: 53,
-    text: "Concorrência acirrada",
-    order_number: 11,
-  },
-  {
-    question_number: 53,
-    text: "Regulamentações e compliance",
-    order_number: 12,
-  },
-  {
-    question_number: 53,
-    text: "Outro",
-    order_number: 13,
-  },
-  {
-    question_number: 55,
-    text: "Gerenciar tempo",
-    order_number: 1,
-  },
-  {
-    question_number: 55,
-    text: "Delegar responsabilidades",
-    order_number: 2,
-  },
-  {
-    question_number: 55,
-    text: "Tomar decisões estratégicas",
-    order_number: 3,
-  },
-  {
-    question_number: 55,
-    text: "Lidar com stress e pressão",
-    order_number: 4,
-  },
-  {
-    question_number: 55,
-    text: "Equilibrar vida pessoal e profissional",
-    order_number: 5,
-  },
-  {
-    question_number: 55,
-    text: "Desenvolver habilidades de liderança",
-    order_number: 6,
-  },
-  {
-    question_number: 55,
-    text: "Networking e relacionamentos",
-    order_number: 7,
-  },
-  {
-    question_number: 55,
-    text: "Manter-se atualizado com tendências do mercado",
-    order_number: 8,
-  },
-  {
-    question_number: 55,
-    text: "Gestão de conflitos",
-    order_number: 9,
-  },
-  {
-    question_number: 55,
-    text: "Comunicação efetiva",
-    order_number: 10,
-  },
-  {
-    question_number: 55,
-    text: "Atrair e reter talentos",
-    order_number: 11,
-  },
-  {
-    question_number: 55,
-    text: "Construir e manter uma cultura organizacional positiva",
-    order_number: 12,
-  },
-  {
-    question_number: 55,
-    text: "Fomentar a inovação e a criatividade na equipe",
-    order_number: 13,
-  },
-  {
-    question_number: 55,
-    text: "Gerenciar as finanças e a rentabilidade do negócio",
-    order_number: 14,
-  },
-  {
-    question_number: 55,
-    text: "Adaptar-se a mudanças no mercado e na tecnologia",
-    order_number: 15,
-  },
-  {
-    question_number: 55,
-    text: "Manter a motivação e o engajamento da equipe",
-    order_number: 16,
-  },
-  {
-    question_number: 55,
-    text: "Lidar com a incerteza e a ambiguidade",
-    order_number: 17,
-  },
-  {
-    question_number: 55,
-    text: "Manter a própria motivação e resiliência",
-    order_number: 18,
-  },
-  {
-    question_number: 55,
-    text: "Definir e comunicar a visão e os valores da empresa",
-    order_number: 19,
-  },
-  {
-    question_number: 55,
-    text: "Garantir a sustentabilidade e a responsabilidade social do negócio",
-    order_number: 20,
-  },
-  {
-    question_number: 55,
-    text: "Lidar com a burocracia e regulamentações",
-    order_number: 21,
-  },
-  {
-    question_number: 55,
-    text: "Encontrar o equilíbrio entre o curto e o longo prazo nas decisões",
-    order_number: 22,
-  },
-  {
-    question_number: 55,
-    text: "Construir confiança e transparência com a equipe",
-    order_number: 23,
-  },
-  {
-    question_number: 55,
-    text: "Gerenciar o crescimento do negócio de forma sustentável",
-    order_number: 24,
-  },
-  {
-    question_number: 55,
-    text: "Outros",
-    order_number: 25,
   }
 ];
