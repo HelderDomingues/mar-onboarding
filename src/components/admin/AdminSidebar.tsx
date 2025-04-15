@@ -1,139 +1,105 @@
-
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Sidebar, SidebarFooter, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
+import { Sidebar, SidebarNav, SidebarSection, SidebarLink } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { 
-  LogOut, 
+  LayoutDashboard, 
   Users, 
+  FileText, 
   Settings, 
-  Home, 
-  Clipboard, 
-  LineChart, 
-  History, 
-  FolderPlus, 
-  BarChart,
+  LogOut, 
+  BarChart3, 
+  BookOpen,
   FileEdit,
-  PieChart
+  BookCheck
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 export function AdminSidebar() {
-  const { logout } = useAuth();
-  const location = useLocation();
-  
-  const isActive = (path: string) => {
-    return location.pathname.startsWith(path);
+  const { pathname } = useLocation();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
   };
-  
-  const handleLogout = async () => {
-    await logout();
-  };
-  
+
   return (
-    <Sidebar className="border-r bg-white">
-      <SidebarHeader className="h-16 flex items-center px-6 border-b">
-        <Link to="/dashboard">
-          <img src="/lovable-uploads/e109ec41-0f89-456d-8081-f73393ed4fd5.png" alt="Crie Valor" className="h-7" />
-        </Link>
-      </SidebarHeader>
-      <SidebarContent className="flex flex-col gap-2 p-4">
-        <h2 className="text-lg font-semibold pb-2">Administração</h2>
-        
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isActive("/dashboard")}>
-              <Link to="/dashboard" className="w-full justify-start gap-2">
-                <Home className="h-4 w-4" />
-                <span>Dashboard</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+    <Sidebar>
+      <SidebarSection>
+        <div className="flex items-center gap-2 px-4 py-2">
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
+            CV
+          </div>
+          <div>
+            <h2 className="text-lg font-bold">Crie Valor</h2>
+            <p className="text-xs text-muted-foreground">Painel Administrativo</p>
+          </div>
+        </div>
+      </SidebarSection>
+      
+      <SidebarSection>
+        <SidebarNav>
+          <SidebarLink to="/admin" icon={<LayoutDashboard size={18} />} active={pathname === "/admin"}>
+            Dashboard
+          </SidebarLink>
           
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isActive("/admin/users")}>
-              <Link to="/admin/users" className="w-full justify-start gap-2">
-                <Users className="h-4 w-4" />
-                <span>Usuários</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          <SidebarLink to="/admin/users" icon={<Users size={18} />} active={pathname === "/admin/users"}>
+            Usuários
+          </SidebarLink>
           
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isActive("/admin/quiz-responses")}>
-              <Link to="/admin/quiz-responses" className="w-full justify-start gap-2">
-                <Clipboard className="h-4 w-4" />
-                <span>Respostas</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          <SidebarLink to="/admin/quiz" icon={<FileText size={18} />} active={pathname.startsWith("/admin/quiz")}>
+            Questionários
+          </SidebarLink>
           
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isActive("/admin/quiz-editor")}>
-              <Link to="/admin/quiz-editor" className="w-full justify-start gap-2">
-                <FileEdit className="h-4 w-4" />
-                <span>Editor do Quiz</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          <SidebarLink to="/admin/quiz-editor" icon={<FileEdit size={18} />} active={pathname === "/admin/quiz-editor"}>
+            Editor de Questionário
+          </SidebarLink>
           
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isActive("/admin/reports")}>
-              <Link to="/admin/reports" className="w-full justify-start gap-2">
-                <BarChart className="h-4 w-4" />
-                <span>Relatórios</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          <SidebarLink to="/admin/seed-quiz" icon={<BookCheck size={18} />}>
+            Importar Questionário
+          </SidebarLink>
           
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isActive("/admin/metrics")}>
-              <Link to="/admin/metrics" className="w-full justify-start gap-2">
-                <PieChart className="h-4 w-4" />
-                <span>Métricas</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          <SidebarLink to="/admin/reports" icon={<BarChart3 size={18} />} active={pathname === "/admin/reports"}>
+            Relatórios e Análises
+          </SidebarLink>
           
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isActive("/admin/materials")}>
-              <Link to="/admin/materials" className="w-full justify-start gap-2">
-                <FolderPlus className="h-4 w-4" />
-                <span>Materiais</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          <SidebarLink to="/admin/materials" icon={<BookOpen size={18} />} active={pathname === "/admin/materials"}>
+            Materiais
+          </SidebarLink>
           
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isActive("/admin/logs")}>
-              <Link to="/admin/logs" className="w-full justify-start gap-2">
-                <History className="h-4 w-4" />
-                <span>Logs do Sistema</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          <SidebarLink to="/admin/settings" icon={<Settings size={18} />} active={pathname === "/admin/settings"}>
+            Configurações
+          </SidebarLink>
+        </SidebarNav>
+      </SidebarSection>
+      
+      <SidebarSection className="mt-auto">
+        <div className="px-3 py-2">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
+              {user?.email?.charAt(0).toUpperCase() || "U"}
+            </div>
+            <div className="overflow-hidden">
+              <p className="text-sm font-medium truncate">{user?.email}</p>
+              <p className="text-xs text-muted-foreground">Administrador</p>
+            </div>
+          </div>
           
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isActive("/admin/settings")}>
-              <Link to="/admin/settings" className="w-full justify-start gap-2">
-                <Settings className="h-4 w-4" />
-                <span>Configurações</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        
-        <Separator className="my-2" />
-        
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start gap-2 text-red-500 hover:text-red-700 hover:bg-red-50"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-4 w-4" />
-          Sair
-        </Button>
-      </SidebarContent>
+          <Button 
+            variant="outline" 
+            className="w-full justify-start" 
+            size="sm"
+            onClick={handleSignOut}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Sair
+          </Button>
+        </div>
+      </SidebarSection>
     </Sidebar>
   );
 }
