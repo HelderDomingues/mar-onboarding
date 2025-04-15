@@ -92,16 +92,13 @@ export const seedQuizData = async (): Promise<boolean> => {
     // Associar IDs de perguntas às opções
     const questionMap = new Map();
     questionsData?.forEach(question => {
-      // O ID original está no formato 'question_X_Y'
-      const originalQuestions = quizQuestionsData.filter(q => q.module_id === question.module_id);
-      if (originalQuestions && originalQuestions.length > 0) {
-        const matchingQuestion = originalQuestions.find(q => 
-          q.text === question.text && q.order_number === question.order_number
-        );
-        if (matchingQuestion) {
-          questionMap.set(matchingQuestion.id, question.id);
-        }
-      }
+      // Buscamos a pergunta correspondente no array original
+      const originalQuestionModule = question.module_id;
+      const originalQuestionOrder = question.order_number;
+      
+      // Criamos uma chave para reconhecer a questão pelo formato usado nas opções
+      const questionKey = `question_${originalQuestionModule}_${originalQuestionOrder}`;
+      questionMap.set(questionKey, question.id);
     });
     
     const optionsToInsert = quizOptionsData
