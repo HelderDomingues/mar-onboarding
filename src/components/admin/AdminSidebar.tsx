@@ -54,6 +54,14 @@ export function AdminSidebar() {
     }
   };
   
+  const handleCollapseSidebar = () => {
+    // Utilizando querySelector para obter o elemento e depois HTMLElement para acessar click
+    const triggerElement = document.querySelector('[data-sidebar="trigger"]');
+    if (triggerElement && triggerElement instanceof HTMLElement) {
+      triggerElement.click();
+    }
+  };
+  
   return (
     <Sidebar className="fixed left-0 top-0 bottom-0 w-64 border-r bg-card text-card-foreground">
       <SidebarHeader className="sticky top-0 z-10 border-b bg-background px-6 py-4">
@@ -223,7 +231,7 @@ export function AdminSidebar() {
             variant="outline" 
             size="sm" 
             className="w-full justify-between"
-            onClick={() => document.querySelector('[data-sidebar="trigger"]')?.click()}
+            onClick={handleCollapseSidebar}
           >
             <span>Ocultar Sidebar</span>
             <PanelLeftClose className="ml-2 h-4 w-4" />
