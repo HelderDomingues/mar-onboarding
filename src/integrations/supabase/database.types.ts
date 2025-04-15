@@ -45,21 +45,21 @@ export interface Database {
           user_id: string
           role: string
           created_at: string
-          email: string | null
+          user_email: string | null
         }
         Insert: {
           id?: string
           user_id: string
           role: string
           created_at?: string
-          email?: string | null
+          user_email?: string | null
         }
         Update: {
           id?: string
           user_id?: string
           role?: string
           created_at?: string
-          email?: string | null
+          user_email?: string | null
         }
       }
       quiz_modules: {
@@ -180,7 +180,7 @@ export interface Database {
           id: string
           user_id: string
           current_module: number
-          is_complete: boolean
+          completed: boolean
           started_at: string
           completed_at: string | null
           user_email: string
@@ -191,7 +191,7 @@ export interface Database {
           id?: string
           user_id: string
           current_module?: number
-          is_complete?: boolean
+          completed?: boolean
           started_at?: string
           completed_at?: string | null
           user_email: string
@@ -202,7 +202,7 @@ export interface Database {
           id?: string
           user_id?: string
           current_module?: number
-          is_complete?: boolean
+          completed?: boolean
           started_at?: string
           completed_at?: string | null
           user_email?: string

@@ -24,14 +24,14 @@ export interface EmailData {
   user_email: string;
   user_created_at: string;
   user_name: string | null;
-}
+};
 
 export interface UserRoleData {
   user_id: string;
   role: string;
-}
+};
 
 export interface SubmissionData {
   user_id: string;
   completed?: boolean;
-}
+};

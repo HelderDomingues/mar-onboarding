@@ -149,8 +149,6 @@ export type Database = {
           question_id: string
           question_text: string
           question_type: string | null
-          section_id: string | null
-          section_name: string | null
           time_spent: number | null
           updated_at: string
           user_email: string
@@ -168,8 +166,6 @@ export type Database = {
           question_id: string
           question_text: string
           question_type?: string | null
-          section_id?: string | null
-          section_name?: string | null
           time_spent?: number | null
           updated_at?: string
           user_email: string
@@ -187,23 +183,13 @@ export type Database = {
           question_id?: string
           question_text?: string
           question_type?: string | null
-          section_id?: string | null
-          section_name?: string | null
           time_spent?: number | null
           updated_at?: string
           user_email?: string
           user_id?: string
           user_name?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_answers_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_questions"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       quiz_modules: {
         Row: {
@@ -253,84 +239,6 @@ export type Database = {
         }
         Relationships: []
       }
-      quiz_questions: {
-        Row: {
-          category: string | null
-          created_at: string
-          hint: string | null
-          id: string
-          max_options: number | null
-          module_id: string | null
-          module_number: number
-          module_title: string
-          options_json: Json | null
-          order_number: number
-          placeholder: string | null
-          prefix: string | null
-          question_number: number
-          question_text: string
-          question_type: string
-          required: boolean | null
-          section_id: string | null
-          validation: string | null
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string
-          hint?: string | null
-          id?: string
-          max_options?: number | null
-          module_id?: string | null
-          module_number: number
-          module_title: string
-          options_json?: Json | null
-          order_number: number
-          placeholder?: string | null
-          prefix?: string | null
-          question_number: number
-          question_text: string
-          question_type: string
-          required?: boolean | null
-          section_id?: string | null
-          validation?: string | null
-        }
-        Update: {
-          category?: string | null
-          created_at?: string
-          hint?: string | null
-          id?: string
-          max_options?: number | null
-          module_id?: string | null
-          module_number?: number
-          module_title?: string
-          options_json?: Json | null
-          order_number?: number
-          placeholder?: string | null
-          prefix?: string | null
-          question_number?: number
-          question_text?: string
-          question_type?: string
-          required?: boolean | null
-          section_id?: string | null
-          validation?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_questions_module_id_fkey"
-            columns: ["module_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_modules"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "quiz_questions_section_id_fkey"
-            columns: ["section_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_sections"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       quiz_respostas_completas: {
         Row: {
           data_submissao: string
@@ -372,41 +280,6 @@ export type Database = {
           },
         ]
       }
-      quiz_sections: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: string
-          module_id: string
-          name: string
-          order_number: number
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          module_id: string
-          name: string
-          order_number: number
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          module_id?: string
-          name?: string
-          order_number?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_sections_module_id_fkey"
-            columns: ["module_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_modules"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       quiz_submissions: {
         Row: {
           completed: boolean
@@ -416,7 +289,6 @@ export type Database = {
           id: string
           last_active: string | null
           modules_completed: number[] | null
-          sessions: number | null
           started_at: string
           total_time_spent: number | null
           user_email: string | null
@@ -432,7 +304,6 @@ export type Database = {
           id?: string
           last_active?: string | null
           modules_completed?: number[] | null
-          sessions?: number | null
           started_at?: string
           total_time_spent?: number | null
           user_email?: string | null
@@ -448,7 +319,6 @@ export type Database = {
           id?: string
           last_active?: string | null
           modules_completed?: number[] | null
-          sessions?: number | null
           started_at?: string
           total_time_spent?: number | null
           user_email?: string | null
@@ -461,23 +331,23 @@ export type Database = {
       user_roles: {
         Row: {
           created_at: string
-          email: string | null
           id: string
           role: string
+          user_email: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
-          email?: string | null
           id?: string
           role: string
+          user_email?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
-          email?: string | null
           id?: string
           role?: string
+          user_email?: string | null
           user_id?: string
         }
         Relationships: []
