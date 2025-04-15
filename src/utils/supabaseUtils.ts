@@ -1,10 +1,11 @@
+
 import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/database.types';
 import type { QuizSubmission } from '@/types/quiz';
 import { logger } from '@/utils/logger';
 import { enviarRespostasParaWebhook } from '@/utils/webhookService';
 import { normalizeAnswerForStorage } from '@/utils/formatUtils';
-import { SystemError, OperationResult } from '@/types/errors';
+import { SystemError, OperationResult, ErrorCategory } from '@/types/errors';
 import { formatError, parseSupabaseError, logError } from '@/utils/errorUtils';
 
 // Verifica se o questionário está completo para o usuário
@@ -124,12 +125,12 @@ interface CompleteQuizResult extends OperationResult {
 
 /**
  * Completa o questionário para o usuário atual
- * Função refatorada para melhor tratamento de erros e garantir uso correto do email
+ * Versão otimizada da função com melhor tratamento de erros e sem métodos redundantes
  * 
  * @param userId ID do usuário para completar o questionário
  * @returns Resultado da operação com detalhes adicionais
  */
-export const completeQuizManually = async (userId: string): Promise<CompleteQuizResult> => {
+export const completeQuizManually = async (userId: string): Promise<OperationResult> => {
   // Validação inicial do ID do usuário
   if (!userId) {
     const error: SystemError = {
@@ -173,78 +174,67 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
       };
     }
     
-    // Passo 2: Verificar se já existe uma submissão para o usuário
-    const { data: existingSubmission, error: checkError } = await supabase
-      .from('quiz_submissions')
-      .select('id, user_email, completed')
-      .eq('user_id', userId)
+    // Passo 2: Buscar informações completas do perfil para ter o nome do usuário
+    const { data: userProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', userId)
       .maybeSingle();
-      
-    if (checkError) {
-      throw parseSupabaseError(checkError, 'completeQuizManually.checkExisting');
-    }
     
-    const now = new Date().toISOString();
-    let updateResult;
-    
-    // Passo 3: Atualizar ou criar submissão com o email correto
-    if (existingSubmission) {
-      // Se já existe submissão, apenas atualizamos
-      logger.info('Atualizando submissão existente para completar questionário', {
+    // Não falharemos se o perfil não for encontrado, apenas logamos
+    if (profileError) {
+      logger.warn('Erro ao buscar perfil do usuário, continuando sem nome completo', {
         tag: 'Quiz',
-        data: { 
-          submissionId: existingSubmission.id,
-          previousCompleted: existingSubmission.completed,
-          userEmail: userEmail
-        }
+        data: { userId, error: profileError }
       });
-      
-      updateResult = await supabase
-        .from('quiz_submissions')
-        .update({
-          completed: true,
-          completed_at: now,
-          last_active: now,
-          user_email: userEmail, // Garantimos que o email esteja presente
-          webhook_processed: false // Marcamos para processamento de webhook
-        })
-        .eq('id', existingSubmission.id);
-    } else {
-      // Se não existe, criamos nova submissão
-      logger.info('Criando nova submissão para completar questionário', {
-        tag: 'Quiz',
-        data: { userId, userEmail }
-      });
-      
-      updateResult = await supabase
-        .from('quiz_submissions')
-        .insert({
-          user_id: userId,
-          user_email: userEmail,
-          completed: true,
-          completed_at: now,
-          started_at: now,
-          last_active: now,
-          current_module: 8, // Assume que completou todos os módulos
-          webhook_processed: false
-        });
     }
     
-    // Passo 4: Verificar se a atualização foi bem-sucedida
-    if (updateResult.error) {
-      throw parseSupabaseError(updateResult.error, 'completeQuizManually.updateSubmission');
+    const userName = userProfile?.full_name || null;
+    
+    // Passo 3: Usar a função complete_quiz do PostgreSQL via RPC
+    // Esta função está configurada como SECURITY DEFINER e tem todas as validações necessárias
+    logger.info('Chamando função RPC complete_quiz para finalizar questionário', {
+      tag: 'Quiz',
+      data: { userId, userEmail, userName }
+    });
+    
+    const { data: rpcResult, error: rpcError } = await supabase.rpc('complete_quiz', {
+      user_id: userId
+    });
+    
+    // Se houve erro na chamada RPC, registrar e retornar
+    if (rpcError) {
+      throw {
+        message: "Erro ao completar questionário via RPC",
+        code: rpcError.code,
+        details: rpcError.message,
+        origin: 'supabase',
+        context: 'completeQuizManually.rpcCall'
+      };
     }
     
-    logger.info('Questionário completado com sucesso', {
+    // Se a RPC retornou false, algo deu errado
+    if (rpcResult === false) {
+      throw {
+        message: "Falha ao completar questionário",
+        code: "RPC_RETURNED_FALSE",
+        details: "A função RPC retornou false indicando falha interna",
+        origin: 'supabase',
+        context: 'completeQuizManually.rpcResult'
+      };
+    }
+    
+    // Passo 4: Registrar sucesso e retornar
+    logger.info('Questionário completado com sucesso via RPC', {
       tag: 'Quiz',
       data: { userId, userEmail }
     });
     
     return { 
       success: true, 
-      method: existingSubmission ? 'direct_update' : 'manual_update',
+      method: 'rpc',
       message: 'Questionário concluído com sucesso',
-      data: { userId, timestamp: now }
+      data: { userId, timestamp: new Date().toISOString() }
     };
   } catch (error: any) {
     // Tratamento de erros unificado
@@ -253,6 +243,19 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
       : formatError(error, 'completeQuizManually');
     
     logError(formattedError, 'Quiz');
+    
+    // Se for erro de permissão (42501), fornecer mensagem mais detalhada
+    if (formattedError.code === '42501') {
+      return { 
+        success: false, 
+        error: {
+          ...formattedError,
+          message: "Erro de permissão ao acessar dados do questionário",
+          hint: "Verifique se as políticas RLS estão configuradas corretamente"
+        },
+        message: `Erro de permissão (42501): As políticas de segurança do banco de dados impediram a operação.`
+      };
+    }
     
     return { 
       success: false, 

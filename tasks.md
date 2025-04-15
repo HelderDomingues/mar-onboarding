@@ -1,4 +1,3 @@
-
 # Tarefas do Projeto MAR - Crie Valor Consultoria
 
 ## Plano de Resolução e Melhoria do Sistema (Atualizado em 15/04/2025)
@@ -40,6 +39,7 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - [CONCLUÍDO] Remover sistema de fallback entre métodos (simplificação)
   - [CONCLUÍDO] Adicionar validações adicionais para campos obrigatórios
   - [CONCLUÍDO] Garantir que o email do usuário seja sempre obtido e utilizado
+  - [CONCLUÍDO] Implementar chamada direta à função RPC `complete_quiz`
 
 #### FASE 5: Aprimoramento do Sistema de Logs
 - [PENDENTE] Expandir o sistema de logs:
@@ -77,7 +77,8 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
 1. [CONCLUÍDO] Simplificar a estrutura da função para uso de um único método
 2. [CONCLUÍDO] Implementar verificação robusta de email e dados do usuário
 3. [CONCLUÍDO] Padronizar formato de retorno para sucesso e falha
-4. [PENDENTE] Adicionar validação de dados antes de tentar atualizar banco
+4. [CONCLUÍDO] Adicionar validação de dados antes de tentar atualizar banco
+5. [CONCLUÍDO] Utilizar a função RPC `complete_quiz` para conclusão do questionário
 
 #### Para FASE 5: Aprimoramento do Sistema de Logs
 1. [PENDENTE] Adicionar logs específicos para operações no banco de dados
@@ -205,4 +206,3 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
 - Padronização da estrutura de retorno para melhor tratamento de erros
 - Adição de validações para campos obrigatórios como email do usuário
 - Melhoria na qualidade e detalhamento dos logs para facilitar depuração
-
