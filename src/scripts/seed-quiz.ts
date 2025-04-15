@@ -79,7 +79,7 @@ export const seedQuizData = async (): Promise<boolean> => {
       });
     }
     
-    const hasExistingQuestions = existingQuestions && existingQuestions.length > 0;
+    let hasExistingQuestions = existingQuestions && existingQuestions.length > 0;
     
     // IMPORTANTE: Só limpar dados existentes se explicitamente solicitado
     // ou se estamos em um estado inconsistente
@@ -119,6 +119,7 @@ export const seedQuizData = async (): Promise<boolean> => {
       }
       
       logger.info('Perguntas existentes removidas com sucesso', { tag: 'Admin' });
+      hasExistingQuestions = false;
     }
     
     // Se já temos perguntas e não queremos limpar, não precisamos fazer nada

@@ -138,7 +138,7 @@ export const recoverQuizData = async (): Promise<{
       });
     }
     
-    const hasExistingQuestions = existingQuestions && existingQuestions.length > 0;
+    let hasExistingQuestions = existingQuestions && existingQuestions.length > 0;
     
     if (hasExistingQuestions) {
       logger.info(`Encontradas ${existingQuestions.length} perguntas existentes. Verificando consistência...`, {
