@@ -1,3 +1,4 @@
+
 import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/database.types';
 import type { QuizSubmission } from '@/types/quiz';
@@ -17,19 +18,20 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
       data: { userId, action: 'isQuizComplete' }
     });
     
+    // Modificado para usar limit(1) ao invés de maybeSingle()
     const { data, error } = await supabase
       .from('quiz_submissions')
       .select('completed')
       .eq('user_id', userId)
-      .maybeSingle();
+      .limit(1);
       
     if (error) {
       logError(parseSupabaseError(error, 'isQuizComplete'), 'Quiz');
       return false;
     }
     
-    // Verificar apenas a coluna 'completed'
-    const isComplete = data?.completed === true;
+    // Verificar apenas a coluna 'completed' no primeiro resultado se existir
+    const isComplete = data && data.length > 0 && data[0]?.completed === true;
     
     logger.info(`Status do questionário: ${isComplete ? 'Completo' : 'Incompleto'}`, {
       tag: 'Quiz',

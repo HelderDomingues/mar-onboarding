@@ -239,6 +239,47 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_questions: {
+        Row: {
+          created_at: string
+          hint: string | null
+          id: string
+          module_id: string
+          order_number: number
+          required: boolean | null
+          text: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          hint?: string | null
+          id?: string
+          module_id: string
+          order_number: number
+          required?: boolean | null
+          text: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          hint?: string | null
+          id?: string
+          module_id?: string
+          order_number?: number
+          required?: boolean | null
+          text?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_respostas_completas: {
         Row: {
           data_submissao: string
