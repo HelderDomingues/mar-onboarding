@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +13,8 @@ import { logger } from "@/utils/logger";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { formatQuizAnswers } from "@/utils/quizDataUtils";
+import { SystemError } from "@/types/errors";
+import { formatError, formatErrorForDisplay, formatTechnicalError } from "@/utils/errorUtils";
 
 const QuizReviewPage = () => {
   const { isAuthenticated, user, isAdmin } = useAuth();
@@ -22,7 +25,7 @@ const QuizReviewPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
-  const [completionError, setCompletionError] = useState<any>(null);
+  const [completionError, setCompletionError] = useState<SystemError | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -54,28 +57,36 @@ const QuizReviewPage = () => {
         .select('*')
         .order('order_number');
 
-      if (modulesError) throw modulesError;
+      if (modulesError) {
+        throw formatError(modulesError, 'fetchQuizData.modules');
+      }
       
       const { data: questionsData, error: questionsError } = await supabase
         .from('quiz_questions')
         .select('*')
         .order('order_number');
 
-      if (questionsError) throw questionsError;
+      if (questionsError) {
+        throw formatError(questionsError, 'fetchQuizData.questions');
+      }
       
       const { data: optionsData, error: optionsError } = await supabase
         .from('quiz_options')
         .select('*')
         .order('order_number');
 
-      if (optionsError) throw optionsError;
+      if (optionsError) {
+        throw formatError(optionsError, 'fetchQuizData.options');
+      }
       
       const { data: answersData, error: answersError } = await supabase
         .from('quiz_answers')
         .select('*')
         .eq('user_id', user.id);
 
-      if (answersError) throw answersError;
+      if (answersError) {
+        throw formatError(answersError, 'fetchQuizData.answers');
+      }
       
       const questionsWithOptions = questionsData.map(question => {
         const options = optionsData?.filter(opt => opt.question_id === question.id) || [];
@@ -130,14 +141,18 @@ const QuizReviewPage = () => {
       setAnswers(formattedAnswers);
       setError(null);
     } catch (error: any) {
+      const formattedError = formatError(error, 'QuizReview.fetchQuizData');
+      
       logger.error("Erro ao buscar dados do questionário:", {
         tag: 'Quiz',
-        data: error
+        data: formattedError
       });
-      setError(`Não foi possível carregar os dados do questionário: ${error.message || 'Erro desconhecido'}`);
+      
+      setError(formatErrorForDisplay(formattedError));
+      
       toast({
         title: "Erro",
-        description: `Não foi possível carregar os dados do questionário: ${error.message || 'Erro desconhecido'}`,
+        description: formatErrorForDisplay(formattedError),
         variant: "destructive"
       });
     } finally {
@@ -158,11 +173,11 @@ const QuizReviewPage = () => {
       });
       
       if (!user.email) {
-        throw { 
+        throw formatError({
           message: "Email do usuário não encontrado", 
+          code: "EMAIL_NOT_FOUND",
           details: "O email do usuário é necessário para finalizar o questionário",
-          code: "EMAIL_NOT_FOUND"
-        };
+        }, 'QuizReview.handleComplete');
       }
       
       const result = await completeQuizManually(user.id);
@@ -181,49 +196,21 @@ const QuizReviewPage = () => {
         
         navigate('/dashboard');
       } else {
-        throw { 
-          message: "Não foi possível completar o questionário", 
-          details: result.details || result.error?.details || "Sem detalhes adicionais",
-          code: result.errorCode || result.error?.code || "COMPLETION_FAILED",
-          hint: result.errorHint || result.error?.hint
-        };
+        throw result.error || formatError("Não foi possível completar o questionário", 'QuizReview.handleComplete');
       }
     } catch (error: any) {
+      const formattedError = formatError(error, 'QuizReview.handleComplete');
+      
       logger.error("Erro ao finalizar questionário:", {
         tag: 'Quiz',
-        data: {
-          error,
-          errorMessage: error.message || 'Erro desconhecido',
-          errorDetails: error.details || null,
-          errorCode: error.code || null,
-          errorHint: error.hint || null,
-          fullError: JSON.stringify(error)
-        }
+        data: formattedError
       });
       
-      setCompletionError(error);
-      
-      let errorMessage = "Não foi possível registrar a conclusão do questionário.";
-      
-      if (error.message) {
-        errorMessage += ` Erro: ${error.message}`;
-      }
-      
-      if (error.details) {
-        errorMessage += ` Detalhes: ${typeof error.details === 'object' ? JSON.stringify(error.details) : error.details}`;
-      }
-      
-      if (error.code) {
-        errorMessage += ` (Código: ${error.code})`;
-      }
-      
-      if (error.hint) {
-        errorMessage += ` Dica: ${error.hint}`;
-      }
+      setCompletionError(formattedError);
       
       toast({
         title: "Erro ao finalizar questionário",
-        description: errorMessage,
+        description: formatErrorForDisplay(formattedError),
         variant: "destructive"
       });
     } finally {
@@ -296,6 +283,9 @@ const QuizReviewPage = () => {
               <h4 className="font-semibold text-red-200 mb-2">Detalhes técnicos do erro:</h4>
               <div className="space-y-2 text-xs font-mono bg-black/30 p-3 rounded overflow-auto max-h-64">
                 {completionError.message && <p><strong>Mensagem:</strong> {completionError.message}</p>}
+                {completionError.code && <p><strong>Código:</strong> {completionError.code}</p>}
+                {completionError.origin && <p><strong>Origem:</strong> {completionError.origin}</p>}
+                {completionError.hint && <p><strong>Dica:</strong> {completionError.hint}</p>}
                 {completionError.details && (
                   <p><strong>Detalhes:</strong> {
                     typeof completionError.details === 'object' 
@@ -303,9 +293,8 @@ const QuizReviewPage = () => {
                       : completionError.details
                   }</p>
                 )}
-                {completionError.code && <p><strong>Código:</strong> {completionError.code}</p>}
-                {completionError.hint && <p><strong>Dica:</strong> {completionError.hint}</p>}
-                <pre className="whitespace-pre-wrap mt-2">
+                {completionError.context && <p><strong>Contexto:</strong> {completionError.context}</p>}
+                <pre className="whitespace-pre-wrap mt-2 text-slate-100">
                   {JSON.stringify(completionError, null, 2)}
                 </pre>
               </div>

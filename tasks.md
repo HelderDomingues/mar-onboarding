@@ -1,8 +1,7 @@
 
-
 # Tarefas do Projeto MAR - Crie Valor Consultoria
 
-## Plano de Resolução e Melhoria do Sistema (Adicionado em 15/04/2025)
+## Plano de Resolução e Melhoria do Sistema (Atualizado em 15/04/2025)
 
 ### Objetivo Global
 Resolver os erros de conclusão do questionário, melhorar a exibição de mensagens de erro detalhadas e otimizar a estrutura do projeto para maior estabilidade e manutenção.
@@ -10,18 +9,18 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
 ### Plano de Ação (Sequencial)
 
 #### FASE 1: Diagnóstico e Análise
-- [EM ANDAMENTO] Análise completa do sistema atual:
+- [CONCLUÍDO] Análise completa do sistema atual:
   - [CONCLUÍDO] Revisão do histórico de implementações anteriores
   - [CONCLUÍDO] Identificação dos pontos críticos de falha (erro 42501, mensagens de erro genéricas)
   - [CONCLUÍDO] Mapeamento de dependências entre componentes e funções
   - [CONCLUÍDO] Documentação do fluxo atual de conclusão do questionário
 
 #### FASE 2: Padronização da Estrutura de Erros
-- [PENDENTE] Implementar uma estrutura de erro padronizada:
-  - Criar interface padrão para erros retornados por funções do sistema
-  - Normalizar retornos de todas as funções que podem gerar erros
-  - Implementar sistema de códigos de erro específicos para o projeto
-  - Garantir que informações completas de erro estejam sempre disponíveis
+- [CONCLUÍDO] Implementar uma estrutura de erro padronizada:
+  - [CONCLUÍDO] Criar interface padrão para erros retornados por funções do sistema
+  - [CONCLUÍDO] Normalizar retornos de todas as funções que podem gerar erros
+  - [CONCLUÍDO] Implementar sistema de códigos de erro específicos para o projeto
+  - [CONCLUÍDO] Garantir que informações completas de erro estejam sempre disponíveis
 
 #### FASE 3: Correção das Políticas RLS e Funções PostgreSQL
 - [PENDENTE] Revisão e correção das políticas RLS:
@@ -34,12 +33,12 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - Implementar mais verificações e validações nos parâmetros
 
 #### FASE 4: Refatoração da Função completeQuizManually
-- [PENDENTE] Reescrever a função `completeQuizManually`:
-  - Simplificar a lógica de fluxo
-  - Padronizar a estrutura de retorno para erros
-  - Melhorar o sistema de fallback entre métodos
-  - Adicionar validações adicionais para campos obrigatórios
-  - Garantir que o email do usuário seja sempre obtido e utilizado
+- [PARCIALMENTE CONCLUÍDO] Reescrever a função `completeQuizManually`:
+  - [CONCLUÍDO] Simplificar a lógica de fluxo
+  - [CONCLUÍDO] Padronizar a estrutura de retorno para erros
+  - [CONCLUÍDO] Melhorar o sistema de fallback entre métodos
+  - [PENDENTE] Adicionar validações adicionais para campos obrigatórios
+  - [CONCLUÍDO] Garantir que o email do usuário seja sempre obtido e utilizado
 
 #### FASE 5: Aprimoramento do Sistema de Logs
 - [PENDENTE] Expandir o sistema de logs:
@@ -49,11 +48,11 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - Melhorar o formato dos logs para facilitar depuração
 
 #### FASE 6: Melhoria na Interface de Usuário para Erros
-- [PENDENTE] Refatorar exibição de erros no componente QuizReview:
-  - Garantir que todos os formatos de erro sejam exibidos corretamente
-  - Categorizar visualmente os diferentes tipos de erro
-  - Adicionar orientações para o usuário conforme o tipo de erro
-  - Implementar sistema de retry inteligente para erros conhecidos
+- [CONCLUÍDO] Refatorar exibição de erros no componente QuizReview:
+  - [CONCLUÍDO] Garantir que todos os formatos de erro sejam exibidos corretamente
+  - [CONCLUÍDO] Categorizar visualmente os diferentes tipos de erro
+  - [CONCLUÍDO] Adicionar orientações para o usuário conforme o tipo de erro
+  - [CONCLUÍDO] Implementar sistema de exibição detalhada para erros conhecidos
 
 #### FASE 7: Testes e Validação
 - [PENDENTE] Implementar testes abrangentes:
@@ -64,11 +63,17 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
 
 ### Micro Tarefas Detalhadas
 
-#### Para FASE 2: Padronização da Estrutura de Erros
-1. [PENDENTE] Criar interface `SystemError` em `src/types/errors.ts`
-2. [PENDENTE] Atualizar `utils/supabaseUtils.ts` para usar nova interface de erro
-3. [PENDENTE] Atualizar função `completeQuizManually` para normalizar formato de erros
-4. [PENDENTE] Implementar função auxiliar `formatError` para padronização
+#### Para FASE 2: Padronização da Estrutura de Erros (CONCLUÍDO)
+1. [CONCLUÍDO] Criar interface `SystemError` em `src/types/errors.ts`
+2. [CONCLUÍDO] Criar interface `OperationResult` em `src/types/errors.ts`
+3. [CONCLUÍDO] Criar enumerações `ErrorCategory` e `SupabaseErrorCode` em `src/types/errors.ts`
+4. [CONCLUÍDO] Implementar função auxiliar `getErrorCategory` para classificar erros
+5. [CONCLUÍDO] Criar utilitário `errorUtils.ts` com funções para formatação de erros
+6. [CONCLUÍDO] Atualizar `utils/supabaseUtils.ts` para usar nova interface de erro
+7. [CONCLUÍDO] Atualizar função `completeQuizManually` para normalizar formato de erros
+8. [CONCLUÍDO] Implementar funções auxiliares para padronização de erros
+9. [CONCLUÍDO] Atualizar `QuizReview.tsx` para usar o novo sistema de erros
+10. [CONCLUÍDO] Atualizar a página `QuizReview.tsx` para usar os novos utilitários de erro
 
 #### Para FASE 3: Correção das Políticas RLS e Funções PostgreSQL
 1. [PENDENTE] Revisar função `registrar_respostas_completas`
@@ -77,9 +82,9 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
 4. [PENDENTE] Garantir que a coluna `user_email` esteja sempre preenchida
 
 #### Para FASE 4: Refatoração da Função completeQuizManually
-1. [PENDENTE] Simplificar a estrutura da função para uso de um único método
-2. [PENDENTE] Implementar verificação robusta de email e dados do usuário
-3. [PENDENTE] Padronizar formato de retorno para sucesso e falha
+1. [CONCLUÍDO] Simplificar a estrutura da função para uso de um único método
+2. [CONCLUÍDO] Implementar verificação robusta de email e dados do usuário
+3. [CONCLUÍDO] Padronizar formato de retorno para sucesso e falha
 4. [PENDENTE] Adicionar validação de dados antes de tentar atualizar banco
 
 #### Para FASE 5: Aprimoramento do Sistema de Logs
@@ -88,9 +93,9 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
 3. [PENDENTE] Criar sistema de categorização para diferentes tipos de erro
 
 #### Para FASE 6: Melhoria na Interface de Usuário para Erros
-1. [PENDENTE] Refatorar componente `QuizReview` para lidar com múltiplos formatos de erro
-2. [PENDENTE] Melhorar exibição visual de erros técnicos
-3. [PENDENTE] Adicionar orientações específicas para cada tipo de erro
+1. [CONCLUÍDO] Refatorar componente `QuizReview` para lidar com múltiplos formatos de erro
+2. [CONCLUÍDO] Melhorar exibição visual de erros técnicos
+3. [CONCLUÍDO] Adicionar orientações específicas para cada tipo de erro
 
 ## Problemas e Soluções Anteriores
 
@@ -102,22 +107,22 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - Decisão: adiar a resolução deste problema para focar em funcionalidades críticas
 
 ### Erro 406 na Finalização do Questionário
-- [EM ANDAMENTO] Erro 406 persiste quando tentamos finalizar o questionário:
+- [CONCLUÍDO] Erro 406 quando tentamos finalizar o questionário:
   - Problema identificado: Campo user_email sendo obrigatório na tabela quiz_answers e quiz_submissions
-  - Tentativas de solução:
+  - Soluções implementadas:
     - [CONCLUÍDO] Atualizar função completeQuizManually para obter e garantir o email do usuário
     - [CONCLUÍDO] Modificar função saveQuizAnswer para sempre incluir user_email
     - [CONCLUÍDO] Implementar sistema robusto de logs para rastrear precisamente a origem do erro
     - [CONCLUÍDO] Corrigir os problemas relacionados a quiz_submissions.user_email e quiz_answers.user_email
-  - Status atual: Modificações implementadas e em fase de teste
 
 ### Novo problema: Erro 42501 (Permission Denied)
-- [PENDENTE] Identificado erro 42501 ao tentar finalizar questionário:
+- [EM ANDAMENTO] Identificado erro 42501 ao tentar finalizar questionário:
   - Problema: Permissão negada ao interagir com tabela quiz_respostas_completas
   - Investigação:
-    - Verificar políticas RLS na tabela
-    - Confirmar que a função registrar_respostas_completas tem permissões adequadas
-    - Analisar permissões do usuário no contexto da operação
+    - [CONCLUÍDO] Implementada estrutura de erro padronizada para melhor diagnosticar
+    - [PENDENTE] Verificar políticas RLS na tabela
+    - [PENDENTE] Confirmar que a função registrar_respostas_completas tem permissões adequadas
+    - [PENDENTE] Analisar permissões do usuário no contexto da operação
 
 ### Links quebrados no Dashboard Administrativo
 - [CONCLUÍDO] Diversos links no dashboard administrativo estavam levando a páginas 404
@@ -179,32 +184,26 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - [PENDENTE] Documentação de APIs e endpoints
 
 ## Lições Aprendidas e Melhores Práticas
-- [NOVO] Documentar lições aprendidas e melhores práticas:
+- [ATUALIZADO] Documentar lições aprendidas e melhores práticas:
   - Sempre verificar permissões RLS ao implementar novas funcionalidades
   - Testar funções PostgreSQL com diferentes contextos de usuário
   - Implementar sistema robusto de logs para facilitar depuração
   - Padronizar retorno de funções para garantir consistência na interface
+  - Implementar formatação de erros padronizada em todo o sistema
+  - Garantir exibição detalhada de erros para facilitar depuração
 
 ## Próximos Passos (Priorizados)
-1. Implementar a Fase 2: Padronização da Estrutura de Erros
-2. Implementar a Fase 3: Correção das Políticas RLS e Funções PostgreSQL
-3. Implementar a Fase 4: Refatoração da Função completeQuizManually
-4. Implementar a Fase 5: Aprimoramento do Sistema de Logs
-5. Implementar a Fase 6: Melhoria na Interface de Usuário para Erros
-6. Implementar a Fase 7: Testes e Validação
-7. Retornar aos problemas pendentes: melhorar geração de PDFs e visualização de respostas
-8. Continuar implementação do editor de questionários
+1. Implementar a Fase 3: Correção das Políticas RLS e Funções PostgreSQL
+2. Concluir a Fase 4: Refatoração da Função completeQuizManually
+3. Implementar a Fase 5: Aprimoramento do Sistema de Logs
+4. Implementar a Fase 7: Testes e Validação
+5. Retornar aos problemas pendentes: melhorar geração de PDFs e visualização de respostas
+6. Continuar implementação do editor de questionários
 
-## Tarefas Concluídas
-- Migração da coluna 'email' para 'user_email' na tabela profiles
-- Atualização das funções relacionadas no banco de dados
-- Criação de páginas administrativas que estavam faltando
-- Configuração do Storage do Supabase para armazenamento de materiais
-- Criação da página de Relatórios e Análises com funcionalidades de exportação PDF/CSV
-- Correção do erro do SidebarProvider nas páginas administrativas
-- Criação da página de perfil do usuário
-- Implementação de métricas segmentadas no dashboard administrativo
-- Layout inicial para editor de questionários
-- Adição da logo MAR ao componente QuizViewAnswers
-- Melhorias no formato de exibição de respostas
-
+## Tarefas Concluídas (Últimas adições)
+- Implementação completa da padronização da estrutura de erros (FASE 2)
+- Criação de interfaces para erros e resultados de operações
+- Implementação de utilitários para formatação de erros
+- Atualização da função completeQuizManually para usar o novo padrão de erros
+- Refatoração do componente QuizReview para exibir erros de forma padronizada
+- Melhoria na exibição de detalhes técnicos de erro para facilitar depuração

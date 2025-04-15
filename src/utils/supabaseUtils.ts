@@ -4,6 +4,8 @@ import type { QuizSubmission } from '@/types/quiz';
 import { logger } from '@/utils/logger';
 import { enviarRespostasParaWebhook } from '@/utils/webhookService';
 import { normalizeAnswerForStorage } from '@/utils/formatUtils';
+import { SystemError, OperationResult } from '@/types/errors';
+import { formatError, parseSupabaseError, logError } from '@/utils/errorUtils';
 
 // Verifica se o questionário está completo para o usuário
 export const isQuizComplete = async (userId: string): Promise<boolean> => {
@@ -22,10 +24,7 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
       .maybeSingle();
       
     if (error) {
-      logger.error("Erro ao verificar status do questionário:", {
-        tag: 'Quiz',
-        data: { userId, error }
-      });
+      logError(parseSupabaseError(error, 'isQuizComplete'), 'Quiz');
       return false;
     }
     
@@ -39,10 +38,7 @@ export const isQuizComplete = async (userId: string): Promise<boolean> => {
     
     return isComplete;
   } catch (error) {
-    logger.error("Erro ao verificar status do questionário:", {
-      tag: 'Quiz',
-      data: { userId, error }
-    });
+    logError(formatError(error, 'isQuizComplete'), 'Quiz');
     return false;
   }
 };
@@ -122,18 +118,22 @@ export const processQuizAnswersToSimplified = async (userId: string) => {
 };
 
 // Retorno detalhado para a função completeQuizManually
-interface CompleteQuizResult {
-  success: boolean;
+interface CompleteQuizResult extends OperationResult {
   method?: 'rpc' | 'direct_update' | 'manual_update';
-  error?: any;
-  details?: string;
-  errorCode?: string;
-  errorHint?: string;
 }
 
 // Completa o questionário manualmente para o usuário
 export const completeQuizManually = async (userId: string): Promise<CompleteQuizResult> => {
-  if (!userId) return { success: false, error: 'ID de usuário não fornecido' };
+  if (!userId) {
+    const error: SystemError = {
+      message: 'ID de usuário não fornecido',
+      code: 'USER_ID_REQUIRED',
+      origin: 'client',
+      context: 'completeQuizManually'
+    };
+    logError(error, 'Quiz');
+    return { success: false, error };
+  }
   
   try {
     logger.info('Iniciando processo para completar questionário manualmente', {
@@ -156,15 +156,9 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
         .maybeSingle();
         
       if (checkError) {
-        logger.error("Erro ao verificar existência de submissão:", {
-          tag: 'Quiz',
-          data: { userId, error: checkError }
-        });
-        throw {
-          message: "Erro ao verificar existência de submissão",
-          details: checkError,
-          method: 'direct_update'
-        };
+        const formattedError = parseSupabaseError(checkError, 'completeQuizManually.checkExisting');
+        logError(formattedError, 'Quiz');
+        throw formattedError;
       }
       
       const now = new Date().toISOString();
@@ -174,16 +168,15 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
       const userEmail = userSession?.user?.email;
       
       if (!userEmail) {
-        logger.error("Email do usuário não encontrado na sessão", {
-          tag: 'Quiz',
-          data: { userId }
-        });
-        throw {
+        const error: SystemError = {
           message: "Email do usuário não encontrado na sessão",
+          code: "EMAIL_NOT_FOUND",
           details: "O email do usuário é obrigatório para concluir o questionário",
-          method: 'direct_update',
-          errorCode: "EMAIL_NOT_FOUND"
+          origin: 'client',
+          context: 'completeQuizManually.getUserEmail'
         };
+        logError(error, 'Quiz');
+        throw error;
       }
       
       let updateResult;
@@ -215,25 +208,10 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
       }
       
       if (updateResult.error) {
-        logger.error("Erro ao completar questionário (método direto):", {
-          tag: 'Quiz',
-          data: { 
-            userId, 
-            error: JSON.stringify(updateResult.error),
-            errorMessage: updateResult.error.message,
-            errorDetails: updateResult.error.details,
-            errorCode: updateResult.error.code,
-            errorHint: updateResult.error.hint
-          }
-        });
+        const formattedError = parseSupabaseError(updateResult.error, 'completeQuizManually.directUpdate');
+        logError(formattedError, 'Quiz');
         
-        throw {
-          message: updateResult.error.message,
-          details: updateResult.error.details,
-          hint: updateResult.error.hint,
-          code: updateResult.error.code,
-          method: 'direct_update'
-        };
+        throw formattedError;
       }
       
       logger.info('Questionário completado com sucesso (método direto)', {
@@ -243,20 +221,15 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
       
       return { 
         success: true, 
-        method: 'direct_update' 
+        method: 'direct_update',
+        message: 'Questionário concluído com sucesso' 
       };
     } catch (directError: any) {
-      logger.error("Erro ao completar questionário com método direto:", {
-        tag: 'Quiz',
-        data: { 
-          userId, 
-          error: directError,
-          errorMessage: directError.message || 'Erro desconhecido',
-          errorDetails: directError.details || null,
-          errorCode: directError.code || null,
-          errorHint: directError.hint || null
-        }
-      });
+      const formattedDirectError = directError.code 
+        ? directError // Já está formatado
+        : formatError(directError, 'completeQuizManually.directUpdate');
+      
+      logError(formattedDirectError, 'Quiz');
       
       // Tenta o método manual como fallback - ajustado para trabalhar com userEmail
       try {
@@ -270,11 +243,14 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
         const userEmail = userSession?.user?.email;
         
         if (!userEmail) {
-          throw {
+          const error: SystemError = {
             message: "Email do usuário não encontrado na sessão",
+            code: "EMAIL_NOT_FOUND",
             details: "O email do usuário é obrigatório para concluir o questionário",
-            code: "EMAIL_NOT_FOUND"
+            origin: 'client',
+            context: 'completeQuizManually.fallback.getUserEmail'
           };
+          throw error;
         }
         
         // Usa transações básicas
@@ -313,12 +289,8 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
         }
         
         if (manualResult.error) {
-          throw {
-            message: manualResult.error.message,
-            details: manualResult.error.details,
-            hint: manualResult.error.hint,
-            code: manualResult.error.code
-          };
+          const formattedError = parseSupabaseError(manualResult.error, 'completeQuizManually.fallback');
+          throw formattedError;
         }
         
         logger.info('Questionário completado com sucesso via método manual (fallback)', {
@@ -328,34 +300,45 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
         
         return { 
           success: true, 
-          method: 'manual_update' 
+          method: 'manual_update',
+          message: 'Questionário concluído com sucesso (método alternativo)'
         };
       } catch (manualError: any) {
+        // Formatar erro manual se ainda não estiver formatado
+        const formattedManualError = manualError.code 
+          ? manualError 
+          : formatError(manualError, 'completeQuizManually.fallback');
+        
         // Ambos os métodos falharam
+        const combinedError: SystemError = {
+          message: "Falha ao completar questionário após múltiplas tentativas",
+          code: formattedManualError.code || formattedDirectError.code,
+          details: {
+            directError: formattedDirectError,
+            manualError: formattedManualError
+          },
+          hint: formattedManualError.hint || formattedDirectError.hint,
+          origin: 'multiple',
+          context: 'completeQuizManually.allMethods'
+        };
+        
+        logError(combinedError, 'Quiz');
+        
         return { 
           success: false,
-          error: {
-            direct: directError,
-            manual: manualError
-          },
-          details: manualError.details || directError.details,
-          errorCode: manualError.code || directError.code,
-          errorHint: manualError.hint || directError.hint
+          error: combinedError,
+          message: 'Não foi possível completar o questionário após várias tentativas'
         };
       }
     }
   } catch (error: any) {
-    logger.error("Erro ao completar questionário manualmente:", {
-      tag: 'Quiz',
-      data: { userId, error }
-    });
+    const formattedError = formatError(error, 'completeQuizManually');
+    logError(formattedError, 'Quiz');
     
     return { 
       success: false, 
-      error, 
-      details: error.details,
-      errorCode: error.code,
-      errorHint: error.hint
+      error: formattedError,
+      message: 'Erro ao completar questionário: ' + formattedError.message
     };
   }
 };
