@@ -1,3 +1,4 @@
+
 export const quizModulesData = [
   {
     id: "f36c994b-cb94-497a-b49b-a94990195a5b",
@@ -753,3 +754,133 @@ export const quizOptionsData = [
     order_number: 4
   },
   {
+    question_number: 45,
+    text: "Outra",
+    order_number: 5
+  },
+  {
+    question_number: 46,
+    text: "Sim, detalhado",
+    order_number: 1
+  },
+  {
+    question_number: 46,
+    text: "Sim, mas ainda em elaboração",
+    order_number: 2
+  },
+  {
+    question_number: 46,
+    text: "Não",
+    order_number: 3
+  },
+  {
+    question_number: 47,
+    text: "O total de vendas (faturamento)",
+    order_number: 1
+  },
+  {
+    question_number: 47,
+    text: "O custo dos produtos ou serviços vendidos",
+    order_number: 2
+  },
+  {
+    question_number: 47,
+    text: "O lucro bruto (faturamento menos o custo)",
+    order_number: 3
+  },
+  {
+    question_number: 47,
+    text: "As despesas da empresa (aluguel, salários, etc.)",
+    order_number: 4
+  },
+  {
+    question_number: 47,
+    text: "O lucro líquido (o que sobra depois de todas as despesas)",
+    order_number: 5
+  },
+  {
+    question_number: 47,
+    text: "O dinheiro que entra e sai da empresa (fluxo de caixa)",
+    order_number: 6
+  },
+  {
+    question_number: 47,
+    text: "O ponto de equilíbrio (quando a receita cobre os custos)",
+    order_number: 7
+  },
+  {
+    question_number: 47,
+    text: "O valor médio que cada cliente gasta (ticket médio)",
+    order_number: 8
+  },
+  {
+    question_number: 47,
+    text: "O retorno sobre o investimento (ROI)",
+    order_number: 9
+  },
+  {
+    question_number: 47,
+    text: "Não acompanho indicadores financeiros específicos",
+    order_number: 10
+  },
+  {
+    question_number: 47,
+    text: "Outro",
+    order_number: 11
+  },
+  {
+    question_number: 48,
+    text: "Não",
+    order_number: 1
+  },
+  {
+    question_number: 48,
+    text: "Sim, até R$ 5.000",
+    order_number: 2
+  },
+  {
+    question_number: 48,
+    text: "Sim, de R$ 5.001 a R$ 20.000",
+    order_number: 3
+  },
+  {
+    question_number: 48,
+    text: "Sim, de R$ 20.001 a R$ 50.000",
+    order_number: 4
+  },
+  {
+    question_number: 48,
+    text: "Sim, acima de R$ 50.000",
+    order_number: 5
+  },
+  {
+    question_number: 48,
+    text: "Não sei dizer",
+    order_number: 6
+  },
+  {
+    question_number: 49,
+    text: "Excelente",
+    order_number: 1
+  },
+  {
+    question_number: 49,
+    text: "Boa",
+    order_number: 2
+  },
+  {
+    question_number: 49,
+    text: "Regular",
+    order_number: 3
+  },
+  {
+    question_number: 49,
+    text: "Ruim",
+    order_number: 4
+  },
+  {
+    question_number: 49,
+    text: "Muito ruim",
+    order_number: 5
+  }
+];
