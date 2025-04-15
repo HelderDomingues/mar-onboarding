@@ -34,6 +34,12 @@ export const quizModulesData = [
     title: "Pessoas",
     description: "Neste módulo, vamos desenvolver sua equipe e cultura organizacional para atrair e reter talentos.",
     order_number: 6,
+  },
+  {
+    id: "e3f4g5h6-7890-abcd-ef12-3456789abcde",
+    title: "Perspectiva Financeira",
+    description: "Como estamos financeiramente?",
+    order_number: 7,
   }
 ];
 
@@ -384,11 +390,59 @@ export const quizQuestionsData = [
   },
   {
     order_number: 44,
-    text: "Você já participou de alguma consultoria antes?",
+    text: "Qual a sua expectativa de crescimento da receita (faturamento) da sua empresa para os próximos 12 meses?",
     type: "radio",
     required: true,
-    hint: "Selecione se você já participou de alguma consultoria antes",
-    module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
+    hint: "Selecione a opção que melhor representa suas expectativas de crescimento",
+    module_id: "e3f4g5h6-7890-abcd-ef12-3456789abcde",
+  },
+  {
+    order_number: 45,
+    text: "Quais são as suas principais metas financeiras para os próximos 12 meses?",
+    type: "checkbox",
+    required: true,
+    hint: "Você pode marcar mais de uma opção",
+    module_id: "e3f4g5h6-7890-abcd-ef12-3456789abcde",
+  },
+  {
+    order_number: 46,
+    text: "Sua empresa possui um planejamento financeiro (orçamento) para os próximos 12 meses?",
+    type: "radio",
+    required: true,
+    hint: "Selecione a opção que melhor descreve o planejamento financeiro da sua empresa",
+    module_id: "e3f4g5h6-7890-abcd-ef12-3456789abcde",
+  },
+  {
+    order_number: 47,
+    text: "Quais indicadores financeiros você acompanha para saber como está a saúde financeira da sua empresa?",
+    type: "checkbox",
+    required: true,
+    hint: "Você pode marcar mais de uma opção",
+    module_id: "e3f4g5h6-7890-abcd-ef12-3456789abcde",
+  },
+  {
+    order_number: 48,
+    text: "Sua empresa planeja fazer algum investimento importante (em equipamentos, tecnologia, reformas, etc.) nos próximos 12 meses? Se sim, qual o valor aproximado?",
+    type: "radio",
+    required: true,
+    hint: "Selecione a faixa de investimento planejada",
+    module_id: "e3f4g5h6-7890-abcd-ef12-3456789abcde",
+  },
+  {
+    order_number: 49,
+    text: "Como você avalia a situação financeira atual da sua empresa?",
+    type: "radio",
+    required: true,
+    hint: "Selecione a opção que melhor descreve a situação financeira atual da sua empresa",
+    module_id: "e3f4g5h6-7890-abcd-ef12-3456789abcde",
+  },
+  {
+    order_number: 50,
+    text: "Pensando na parte financeira da sua empresa, qual é a sua maior prioridade ou o problema mais urgente que precisa ser resolvido nos próximos 12 meses?",
+    type: "textarea",
+    required: true,
+    hint: "Descreva detalhadamente sua prioridade ou problema financeiro mais urgente",
+    module_id: "e3f4g5h6-7890-abcd-ef12-3456789abcde",
   }
 ];
 
@@ -650,12 +704,52 @@ export const quizOptionsData = [
   },
   {
     question_number: 44,
-    text: "Sim",
-    order_number: 1,
+    text: "Diminuir",
+    order_number: 1
   },
   {
     question_number: 44,
-    text: "Não",
-    order_number: 2,
-  }
-];
+    text: "Manter igual",
+    order_number: 2
+  },
+  {
+    question_number: 44,
+    text: "Aumentar até 5%",
+    order_number: 3
+  },
+  {
+    question_number: 44,
+    text: "Aumentar de 6% a 15%",
+    order_number: 4
+  },
+  {
+    question_number: 44,
+    text: "Aumentar acima de 15%",
+    order_number: 5
+  },
+  {
+    question_number: 44,
+    text: "Não sei dizer",
+    order_number: 6
+  },
+  {
+    question_number: 45,
+    text: "Aumentar a margem de lucro (diferença entre o preço de venda e o custo)",
+    order_number: 1
+  },
+  {
+    question_number: 45,
+    text: "Reduzir os custos da empresa",
+    order_number: 2
+  },
+  {
+    question_number: 45,
+    text: "Aumentar o retorno sobre o investimento (o quanto o dinheiro investido está rendendo)",
+    order_number: 3
+  },
+  {
+    question_number: 45,
+    text: "Melhorar o fluxo de caixa (o dinheiro que entra e sai da empresa)",
+    order_number: 4
+  },
+  {
