@@ -31,6 +31,7 @@ import {
   SidebarGroupLabel,
   SidebarTrigger
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import { logger } from "@/utils/logger";
 import { addLogEntry } from "@/utils/projectLog";
 
@@ -218,7 +219,7 @@ export function AdminSidebar() {
             </button>
           </div>
           
-          <SidebarTrigger>
+          <SidebarTrigger asChild>
             <Button variant="outline" size="sm" className="w-full justify-between">
               <span>Ocultar Sidebar</span>
               <PanelLeftClose className="ml-2 h-4 w-4" />
@@ -229,45 +230,3 @@ export function AdminSidebar() {
     </Sidebar>
   );
 }
-
-// Componente de Button para uso interno
-const Button = ({ 
-  children, 
-  variant = "default", 
-  size = "default", 
-  className = "", 
-  ...props 
-}) => {
-  const getVariantClasses = () => {
-    switch (variant) {
-      case "default":
-        return "bg-primary text-primary-foreground hover:bg-primary/90";
-      case "outline":
-        return "border border-input bg-background hover:bg-accent hover:text-accent-foreground";
-      default:
-        return "";
-    }
-  };
-  
-  const getSizeClasses = () => {
-    switch (size) {
-      case "sm":
-        return "h-8 rounded-md px-3 text-xs";
-      case "default":
-        return "h-9 px-4 py-2 rounded-md";
-      case "lg":
-        return "h-10 rounded-md px-8";
-      default:
-        return "";
-    }
-  };
-  
-  return (
-    <button 
-      className={`inline-flex items-center justify-center font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none ${getVariantClasses()} ${getSizeClasses()} ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-};

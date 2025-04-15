@@ -1,10 +1,11 @@
 
-import React, { useEffect } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import React from "react";
+import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { logger } from "@/utils/logger";
 import { addLogEntry } from "@/utils/projectLog";
-import { SidebarProvider } from "@/components/ui/sidebar";
 
 /**
  * Componente de rota para páginas administrativas
@@ -12,27 +13,34 @@ import { SidebarProvider } from "@/components/ui/sidebar";
  */
 const AdminRoute = () => {
   const { user, isAuthenticated, isAdmin, isLoading } = useAuth();
+  const location = useLocation();
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isLoading) {
       // Registrar tentativa de acesso à área administrativa
       addLogEntry('auth', 'Verificação de acesso administrativo', {
         userId: user?.id || 'não autenticado',
         isAdmin: isAdmin || false,
-        isAuthenticated: isAuthenticated || false
+        isAuthenticated: isAuthenticated || false,
+        path: location.pathname
       }, user?.id);
       
       logger.info('Verificação de acesso administrativo', {
         tag: 'Admin',
         userId: user?.id || 'não autenticado',
-        isAdmin: isAdmin || false
+        isAdmin: isAdmin || false,
+        path: location.pathname
       });
     }
-  }, [user, isAuthenticated, isAdmin, isLoading]);
+  }, [user, isAuthenticated, isAdmin, isLoading, location.pathname]);
 
   // Enquanto carregando, mostrar nada
   if (isLoading) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   // Se não estiver autenticado, redirecionar para login
@@ -56,9 +64,15 @@ const AdminRoute = () => {
 
   // Se for administrador, permitir acesso
   addLogEntry('auth', 'Acesso administrativo concedido', {}, user?.id);
+  
   return (
     <SidebarProvider>
-      <Outlet />
+      <div className="flex min-h-screen w-full bg-background">
+        <AdminSidebar />
+        <div className="flex-1 p-6 overflow-auto">
+          <Outlet />
+        </div>
+      </div>
     </SidebarProvider>
   );
 };
