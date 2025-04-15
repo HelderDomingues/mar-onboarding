@@ -99,18 +99,25 @@ export const seedQuizData = async (): Promise<boolean> => {
     
     // Associar IDs de módulos às perguntas
     const questionsToInsert = quizQuestionsData.map(question => {
-      const moduleNumber = question.module_number;
+      // Correção: Usando order_number do módulo em vez de module_number que não existe
+      const moduleNumber = question.order_number <= 8 ? 1 : 
+                          question.order_number <= 15 ? 2 :
+                          question.order_number <= 22 ? 3 :
+                          question.order_number <= 28 ? 4 :
+                          question.order_number <= 33 ? 5 :
+                          question.order_number <= 38 ? 6 : 7;
+      
       const moduleId = moduleMap.get(moduleNumber);
       
       if (!moduleId) {
-        logger.error(`Módulo não encontrado para a pergunta com número de módulo ${moduleNumber}`, {
+        logger.error(`Módulo não encontrado para a pergunta com número de ordem ${question.order_number}`, {
           tag: 'Admin'
         });
       }
       
       return {
         ...question,
-        module_id: moduleId
+        module_id: moduleId || question.module_id // Usar o ID mapeado ou manter o original
       };
     });
     
@@ -133,7 +140,7 @@ export const seedQuizData = async (): Promise<boolean> => {
       tag: 'Admin'
     });
     
-    // Criar um mapa de perguntas por número global (1-52)
+    // Criar um mapa de perguntas por número global (1-50)
     const questionMap = new Map();
     questionsData?.forEach(question => {
       // A ordem global da pergunta seria o question_number
@@ -186,8 +193,8 @@ export const seedQuizData = async (): Promise<boolean> => {
     
     const questionCount = totalQuestions?.length || 0;
     
-    if (questionCount !== 52) {
-      logger.error(`Erro: Número incorreto de perguntas após inserção. Esperado: 52, Encontrado: ${questionCount}`, {
+    if (questionCount !== 50) {
+      logger.error(`Erro: Número incorreto de perguntas após inserção. Esperado: 50, Encontrado: ${questionCount}`, {
         tag: 'Admin'
       });
       return false;

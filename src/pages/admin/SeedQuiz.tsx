@@ -179,7 +179,7 @@ const SeedQuiz = () => {
                     </p>
                     <ul className="list-disc pl-5 space-y-1">
                       <li>Insere ou atualiza os módulos do questionário</li>
-                      <li>Insere ou atualiza as 56 perguntas em seus respectivos módulos</li>
+                      <li>Insere ou atualiza as 50 perguntas em seus respectivos módulos</li>
                       <li>Configura todas as opções de resposta para cada pergunta</li>
                       <li>Associa corretamente os módulos e as perguntas</li>
                     </ul>

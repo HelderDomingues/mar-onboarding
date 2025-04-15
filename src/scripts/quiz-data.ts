@@ -1,4 +1,3 @@
-
 export const quizModulesData = [
   {
     id: "f36c994b-cb94-497a-b49b-a94990195a5b",
@@ -41,12 +40,6 @@ export const quizModulesData = [
     title: "Jurídico",
     description: "Neste módulo, vamos garantir a conformidade legal e proteger seus ativos.",
     order_number: 7,
-  },
-  {
-    id: "544a07b1-06f3-48b6-a0cd-f6c67a9b03d8", // ID do módulo fornecido
-    title: "Objetivos e Desafios",
-    description: "Neste módulo, vamos explorar seus objetivos de curto e longo prazo, bem como os principais desafios que sua empresa enfrenta.",
-    order_number: 8,
   }
 ];
 
@@ -450,54 +443,6 @@ export const quizQuestionsData = [
     required: true,
     hint: "Selecione se você já participou de alguma consultoria antes",
     module_id: "f36c994b-cb94-497a-b49b-a94990195a5b",
-  },
-  {
-    order_number: 51,
-    text: "Quais são os objetivos da sua empresa para os próximos 12 meses?",
-    type: "checkbox",
-    required: true,
-    hint: "Selecione todos os objetivos que sua empresa pretende alcançar no próximo ano",
-    module_id: "544a07b1-06f3-48b6-a0cd-f6c67a9b03d8",
-  },
-  {
-    order_number: 52,
-    text: "Quais são os objetivos da sua empresa para os próximos 3-5 anos?",
-    type: "checkbox",
-    required: true,
-    hint: "Selecione os objetivos de médio e longo prazo que sua empresa pretende alcançar",
-    module_id: "544a07b1-06f3-48b6-a0cd-f6c67a9b03d8",
-  },
-  {
-    order_number: 53,
-    text: "Quais são os principais desafios que sua empresa enfrenta atualmente?",
-    type: "checkbox",
-    required: true,
-    hint: "Selecione todos os desafios relevantes que sua empresa está enfrentando no momento",
-    module_id: "544a07b1-06f3-48b6-a0cd-f6c67a9b03d8",
-  },
-  {
-    order_number: 54,
-    text: "Dentre os desafios selecionados acima, qual você considera mais urgente resolver?",
-    type: "textarea",
-    required: true,
-    hint: "Escolha apenas um dos desafios que você selecionou na pergunta anterior",
-    module_id: "544a07b1-06f3-48b6-a0cd-f6c67a9b03d8",
-  },
-  {
-    order_number: 55,
-    text: "Como líder, quais são seus principais desafios pessoais na gestão do negócio?",
-    type: "checkbox",
-    required: true,
-    hint: "Selecione todos os desafios pessoais que você enfrenta como gestor(a) do seu negócio",
-    module_id: "544a07b1-06f3-48b6-a0cd-f6c67a9b03d8",
-  },
-  {
-    order_number: 56,
-    text: "Como esses desafios pessoais impactam o desenvolvimento do seu negócio?",
-    type: "textarea",
-    required: true,
-    hint: "Descreva como os desafios pessoais selecionados afetam o crescimento e operação da sua empresa",
-    module_id: "544a07b1-06f3-48b6-a0cd-f6c67a9b03d8",
   }
 ];
 
