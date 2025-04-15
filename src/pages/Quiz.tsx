@@ -179,7 +179,7 @@ const Quiz = () => {
         const userSubmission = submissionData as unknown as QuizSubmission;
         setSubmission(userSubmission);
         
-        const quizCompleted = userSubmission.completed === true || userSubmission.is_complete === true;
+        const quizCompleted = userSubmission.completed === true;
         
         if (quizCompleted && !showAdmin && !forceMode && location.pathname === '/quiz' && !location.search) {
           navigate('/quiz/view-answers');
