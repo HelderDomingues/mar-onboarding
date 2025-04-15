@@ -6,30 +6,17 @@ import { quizModulesData, quizQuestionsData, quizOptionsData } from './quiz-data
 
 /**
  * Script para inicializar os dados do questionário MAR no Supabase
+ * 
+ * ATENÇÃO: Este script foi corrigido para resolver problemas de mapeamento de módulos
+ * que causavam perda de dados. Use com cuidado em produção.
  */
 export const seedQuizData = async (): Promise<boolean> => {
   try {
     addLogEntry('info', 'Iniciando processo de seed do questionário MAR');
     logger.info('Iniciando processo de seed do questionário MAR', { tag: 'Admin' });
     
-    // Primeiro, limpar as opções existentes para evitar duplicidade
-    const { error: deleteOptionsError } = await supabase
-      .from('quiz_options')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Uma condição que sempre é verdadeira para deletar tudo
-    
-    if (deleteOptionsError) {
-      logger.error('Erro ao limpar opções existentes:', {
-        tag: 'Admin',
-        data: { error: deleteOptionsError }
-      });
-      addLogEntry('error', 'Erro ao limpar opções existentes', { error: deleteOptionsError.message });
-      return false;
-    }
-    
-    logger.info('Opções existentes removidas com sucesso', { tag: 'Admin' });
-    
-    // Verificar se os módulos já existem
+    // ATENÇÃO: Verificar módulos existentes antes de criar novos
+    // Isso evita problemas de duplicação ou perda de dados
     const { data: existingModules, error: modulesError } = await supabase
       .from('quiz_modules')
       .select('id, order_number')
@@ -80,27 +67,74 @@ export const seedQuizData = async (): Promise<boolean> => {
       });
     }
     
-    // Limpar as perguntas existentes para evitar duplicidade
-    const { error: deleteQuestionsError } = await supabase
+    // IMPORTANTE: Verificar perguntas existentes antes de excluir
+    const { data: existingQuestions, error: questionsCheckError } = await supabase
       .from('quiz_questions')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000');
-    
-    if (deleteQuestionsError) {
-      logger.error('Erro ao limpar perguntas existentes:', {
+      .select('id', { count: 'exact' });
+      
+    if (questionsCheckError) {
+      logger.error('Erro ao verificar perguntas existentes:', {
         tag: 'Admin',
-        data: { error: deleteQuestionsError }
+        data: { error: questionsCheckError }
       });
-      addLogEntry('error', 'Erro ao limpar perguntas existentes', { error: deleteQuestionsError.message });
-      return false;
     }
     
-    logger.info('Perguntas existentes removidas com sucesso', { tag: 'Admin' });
+    const hasExistingQuestions = existingQuestions && existingQuestions.length > 0;
+    
+    // IMPORTANTE: Só limpar dados existentes se explicitamente solicitado
+    // ou se estamos em um estado inconsistente
+    const shouldCleanExistingData = false; // Defina como true apenas se necessário!
+    
+    if (shouldCleanExistingData && hasExistingQuestions) {
+      // Limpar as opções existentes para evitar duplicidade
+      const { error: deleteOptionsError } = await supabase
+        .from('quiz_options')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+      
+      if (deleteOptionsError) {
+        logger.error('Erro ao limpar opções existentes:', {
+          tag: 'Admin',
+          data: { error: deleteOptionsError }
+        });
+        addLogEntry('error', 'Erro ao limpar opções existentes', { error: deleteOptionsError.message });
+        return false;
+      }
+      
+      logger.info('Opções existentes removidas com sucesso', { tag: 'Admin' });
+      
+      // Limpar as perguntas existentes para evitar duplicidade
+      const { error: deleteQuestionsError } = await supabase
+        .from('quiz_questions')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+      
+      if (deleteQuestionsError) {
+        logger.error('Erro ao limpar perguntas existentes:', {
+          tag: 'Admin',
+          data: { error: deleteQuestionsError }
+        });
+        addLogEntry('error', 'Erro ao limpar perguntas existentes', { error: deleteQuestionsError.message });
+        return false;
+      }
+      
+      logger.info('Perguntas existentes removidas com sucesso', { tag: 'Admin' });
+    }
+    
+    // Se já temos perguntas e não queremos limpar, não precisamos fazer nada
+    if (hasExistingQuestions && !shouldCleanExistingData) {
+      logger.info(`${existingQuestions.length} perguntas já existem no banco. Pulando inserção.`, {
+        tag: 'Admin'
+      });
+      
+      // Verificar consistência
+      addLogEntry('info', 'Seed do questionário MAR concluído (dados existentes mantidos)');
+      return true;
+    }
     
     // Associar IDs de módulos às perguntas
     const questionsToInsert = quizQuestionsData.map(question => {
-      // Determinar o módulo baseado no order_number da pergunta
-      // Agora temos 13 módulos 
+      // CORRIGIDO: Mapeamento claro e explícito de ordem para módulo
       let moduleNumber = 1;
       
       if (question.order_number <= 8) moduleNumber = 1;
@@ -150,10 +184,9 @@ export const seedQuizData = async (): Promise<boolean> => {
       tag: 'Admin'
     });
     
-    // Criar um mapa de perguntas por número global (1-80)
+    // Criar um mapa de perguntas por número global
     const questionMap = new Map();
     questionsData?.forEach(question => {
-      // A ordem global da pergunta seria o question_number
       const globalQuestionNumber = question.order_number;
       questionMap.set(globalQuestionNumber, question.id);
     });
@@ -203,7 +236,7 @@ export const seedQuizData = async (): Promise<boolean> => {
     
     const questionCount = totalQuestions?.length || 0;
     
-    // Atualizamos a verificação para o número total de perguntas esperado (60-80 dependendo do número total)
+    // Atualizamos a verificação para o número total de perguntas esperado
     const expectedQuestionCount = quizQuestionsData.length;
     
     if (questionCount !== expectedQuestionCount) {
