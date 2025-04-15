@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabaseAdmin } from "@/integrations/supabase/client";
@@ -67,7 +66,7 @@ interface QuizSubmission {
   started_at: string;
   completed_at: string | null;
   webhook_processed: boolean | null;
-  is_complete: boolean;
+  completed: boolean;
 }
 
 const QuizResponses = () => {
@@ -126,7 +125,7 @@ const QuizResponses = () => {
       // Converter 'completed' para 'is_complete' para compatibilidade com a interface atual
       const formattedData = data?.map(item => ({
         ...item,
-        is_complete: item.completed
+        completed: item.completed
       }));
       
       setSubmissions(formattedData as unknown as QuizSubmission[]);
@@ -175,7 +174,7 @@ const QuizResponses = () => {
         s.user_email,
         new Date(s.started_at).toLocaleString('pt-BR'),
         s.completed_at ? new Date(s.completed_at).toLocaleString('pt-BR') : 'N/A',
-        s.is_complete ? 'Completo' : 'Incompleto',
+        s.completed ? 'Completo' : 'Incompleto',
         s.webhook_processed ? 'Sim' : 'Não'
       ]);
       
@@ -510,7 +509,7 @@ const QuizResponses = () => {
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => triggerWebhook(submission.id)}
-          disabled={processingWebhook === submission.id || !submission.is_complete}
+          disabled={processingWebhook === submission.id || !submission.completed}
         >
           <Send className={`h-4 w-4 mr-2 ${processingWebhook === submission.id ? 'animate-pulse' : ''}`} />
           {processingWebhook === submission.id ? 'Enviando...' : 'Enviar para webhook'}
@@ -538,7 +537,7 @@ const QuizResponses = () => {
         {new Date(submission.started_at).toLocaleString('pt-BR')}
       </TableCell>
       <TableCell>
-        {submission.is_complete ? (
+        {submission.completed ? (
           <Badge variant="outline" className="bg-green-100 border-green-300 text-green-800">
             Completo
           </Badge>
