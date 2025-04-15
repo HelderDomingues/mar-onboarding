@@ -1,3 +1,4 @@
+
 /**
  * Dados das perguntas do questionário MAR
  */
@@ -129,7 +130,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione a opção que melhor descreve o seu processo de vendas atual",
-    module_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    module_id: "a1b2c3d4-e5f6-4a90-b2c4-567890abcdef",
   },
   {
     order_number: 17,
@@ -137,7 +138,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione o tamanho da sua equipe de vendas",
-    module_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    module_id: "a1b2c3d4-e5f6-4a90-b2c4-567890abcdef",
   },
   {
     order_number: 18,
@@ -145,7 +146,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione o ticket médio de vendas da sua empresa",
-    module_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    module_id: "a1b2c3d4-e5f6-4a90-b2c4-567890abcdef",
   },
   {
     order_number: 19,
@@ -153,7 +154,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione o tempo médio de fechamento de uma venda",
-    module_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    module_id: "a1b2c3d4-e5f6-4a90-b2c4-567890abcdef",
   },
   {
     order_number: 20,
@@ -161,7 +162,7 @@ export const quizQuestionsData = [
     type: "checkbox",
     required: true,
     hint: "Selecione as principais fontes de leads da sua empresa",
-    module_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    module_id: "a1b2c3d4-e5f6-4a90-b2c4-567890abcdef",
   },
   {
     order_number: 21,
@@ -169,7 +170,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione a taxa de conversão de leads em clientes",
-    module_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    module_id: "a1b2c3d4-e5f6-4a90-b2c4-567890abcdef",
   },
   {
     order_number: 22,
@@ -177,7 +178,7 @@ export const quizQuestionsData = [
     type: "textarea",
     required: true,
     hint: "Descreva qual a sua principal dificuldade em relação às vendas da sua empresa",
-    module_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    module_id: "a1b2c3d4-e5f6-4a90-b2c4-567890abcdef",
   },
   {
     order_number: 23,
@@ -185,7 +186,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione a opção que melhor descreve a saúde financeira da sua empresa",
-    module_id: "b8a9d123-4567-890a-bcde-f01234567890",
+    module_id: "b8a9d123-4567-490a-bcde-f01234567890",
   },
   {
     order_number: 24,
@@ -193,7 +194,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione o regime tributário da sua empresa",
-    module_id: "b8a9d123-4567-890a-bcde-f01234567890",
+    module_id: "b8a9d123-4567-490a-bcde-f01234567890",
   },
   {
     order_number: 25,
@@ -201,7 +202,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione se sua empresa possui um sistema de gestão financeira",
-    module_id: "b8a9d123-4567-890a-bcde-f01234567890",
+    module_id: "b8a9d123-4567-490a-bcde-f01234567890",
   },
   {
     order_number: 26,
@@ -209,7 +210,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione a frequência com que você acompanha o fluxo de caixa da sua empresa",
-    module_id: "b8a9d123-4567-890a-bcde-f01234567890",
+    module_id: "b8a9d123-4567-490a-bcde-f01234567890",
   },
   {
     order_number: 27,
@@ -217,7 +218,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione se sua empresa possui um planejamento financeiro",
-    module_id: "b8a9d123-4567-890a-bcde-f01234567890",
+    module_id: "b8a9d123-4567-490a-bcde-f01234567890",
   },
   {
     order_number: 28,
@@ -225,7 +226,7 @@ export const quizQuestionsData = [
     type: "textarea",
     required: true,
     hint: "Descreva qual a sua principal dificuldade em relação às finanças da sua empresa",
-    module_id: "b8a9d123-4567-890a-bcde-f01234567890",
+    module_id: "b8a9d123-4567-490a-bcde-f01234567890",
   },
   {
     order_number: 29,
@@ -233,7 +234,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione a opção que melhor descreve a eficiência dos processos operacionais da sua empresa",
-    module_id: "c5d6e7f8-90ab-cdef-1234-567890abcdef",
+    module_id: "c5d6e7f8-90ab-4def-1234-567890abcdef",
   },
   {
     order_number: 30,
@@ -241,7 +242,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione se sua empresa utiliza alguma ferramenta de gestão de projetos",
-    module_id: "c5d6e7f8-90ab-cdef-1234-567890abcdef",
+    module_id: "c5d6e7f8-90ab-4def-1234-567890abcdef",
   },
   {
     order_number: 31,
@@ -249,7 +250,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione se sua empresa possui um sistema de controle de qualidade",
-    module_id: "c5d6e7f8-90ab-cdef-1234-567890abcdef",
+    module_id: "c5d6e7f8-90ab-4def-1234-567890abcdef",
   },
   {
     order_number: 32,
@@ -257,7 +258,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione a opção que melhor descreve a capacidade da sua empresa de se adaptar a mudanças no mercado",
-    module_id: "c5d6e7f8-90ab-cdef-1234-567890abcdef",
+    module_id: "c5d6e7f8-90ab-4def-1234-567890abcdef",
   },
   {
     order_number: 33,
@@ -265,7 +266,7 @@ export const quizQuestionsData = [
     type: "textarea",
     required: true,
     hint: "Descreva qual a sua principal dificuldade em relação aos processos operacionais da sua empresa",
-    module_id: "c5d6e7f8-90ab-cdef-1234-567890abcdef",
+    module_id: "c5d6e7f8-90ab-4def-1234-567890abcdef",
   },
   {
     order_number: 34,
@@ -273,7 +274,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione a opção que melhor descreve o clima organizacional da sua empresa",
-    module_id: "d2e3f4g5-6789-0abc-def1-23456789abcd",
+    module_id: "d2e3f4g5-6789-4abc-def1-23456789abcd",
   },
   {
     order_number: 35,
@@ -281,7 +282,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione se sua empresa possui um plano de carreira para os funcionários",
-    module_id: "d2e3f4g5-6789-0abc-def1-23456789abcd",
+    module_id: "d2e3f4g5-6789-4abc-def1-23456789abcd",
   },
   {
     order_number: 36,
@@ -289,7 +290,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione se sua empresa oferece treinamentos para os funcionários",
-    module_id: "d2e3f4g5-6789-0abc-def1-23456789abcd",
+    module_id: "d2e3f4g5-6789-4abc-def1-23456789abcd",
   },
   {
     order_number: 37,
@@ -297,7 +298,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione a opção que melhor descreve o nível de engajamento dos seus funcionários",
-    module_id: "d2e3f4g5-6789-0abc-def1-23456789abcd",
+    module_id: "d2e3f4g5-6789-4abc-def1-23456789abcd",
   },
   {
     order_number: 38,
@@ -305,7 +306,7 @@ export const quizQuestionsData = [
     type: "textarea",
     required: true,
     hint: "Descreva qual a sua principal dificuldade em relação à gestão de pessoas na sua empresa",
-    module_id: "d2e3f4g5-6789-0abc-def1-23456789abcd",
+    module_id: "d2e3f4g5-6789-4abc-def1-23456789abcd",
   },
   {
     order_number: 39,
@@ -353,7 +354,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione a opção que melhor representa suas expectativas de crescimento",
-    module_id: "e3f4g5h6-7890-abcd-ef12-3456789abcde",
+    module_id: "e3f4g5h6-7890-4bcd-ef12-3456789abcde",
   },
   {
     order_number: 45,
@@ -361,7 +362,7 @@ export const quizQuestionsData = [
     type: "checkbox",
     required: true,
     hint: "Você pode marcar mais de uma opção",
-    module_id: "e3f4g5h6-7890-abcd-ef12-3456789abcde",
+    module_id: "e3f4g5h6-7890-4bcd-ef12-3456789abcde",
   },
   {
     order_number: 46,
@@ -369,7 +370,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione a opção que melhor descreve o planejamento financeiro da sua empresa",
-    module_id: "e3f4g5h6-7890-abcd-ef12-3456789abcde",
+    module_id: "e3f4g5h6-7890-4bcd-ef12-3456789abcde",
   },
   {
     order_number: 47,
@@ -377,7 +378,7 @@ export const quizQuestionsData = [
     type: "checkbox",
     required: true,
     hint: "Você pode marcar mais de uma opção",
-    module_id: "e3f4g5h6-7890-abcd-ef12-3456789abcde",
+    module_id: "e3f4g5h6-7890-4bcd-ef12-3456789abcde",
   },
   {
     order_number: 48,
@@ -385,7 +386,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione a faixa de investimento planejada",
-    module_id: "e3f4g5h6-7890-abcd-ef12-3456789abcde",
+    module_id: "e3f4g5h6-7890-4bcd-ef12-3456789abcde",
   },
   {
     order_number: 49,
@@ -393,7 +394,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione a opção que melhor descreve a situação financeira atual da sua empresa",
-    module_id: "e3f4g5h6-7890-abcd-ef12-3456789abcde",
+    module_id: "e3f4g5h6-7890-4bcd-ef12-3456789abcde",
   },
   {
     order_number: 50,
@@ -401,7 +402,7 @@ export const quizQuestionsData = [
     type: "textarea",
     required: true,
     hint: "Descreva detalhadamente sua prioridade ou problema financeiro mais urgente",
-    module_id: "e3f4g5h6-7890-abcd-ef12-3456789abcde",
+    module_id: "e3f4g5h6-7890-4bcd-ef12-3456789abcde",
   },
   
   // Módulo 8: Perspectiva de Processos Internos
@@ -411,7 +412,7 @@ export const quizQuestionsData = [
     type: "textarea",
     required: true,
     hint: "Liste os processos mais importantes (exemplos: processo de vendas, produção, atendimento ao cliente, etc.)",
-    module_id: "f4g5h6i7-8901-bcde-f123-456789abcdef",
+    module_id: "f4g5h6i7-8901-4cde-f123-456789abcdef",
   },
   {
     order_number: 52,
@@ -419,7 +420,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione a opção que melhor descreve como sua empresa organiza seus processos",
-    module_id: "f4g5h6i7-8901-bcde-f123-456789abcdef",
+    module_id: "f4g5h6i7-8901-4cde-f123-456789abcdef",
   },
   {
     order_number: 53,
@@ -427,7 +428,7 @@ export const quizQuestionsData = [
     type: "checkbox",
     required: true,
     hint: "Marque todas as opções que se aplicam",
-    module_id: "f4g5h6i7-8901-bcde-f123-456789abcdef",
+    module_id: "f4g5h6i7-8901-4cde-f123-456789abcdef",
   },
   {
     order_number: 54,
@@ -435,7 +436,7 @@ export const quizQuestionsData = [
     type: "textarea",
     required: true,
     hint: "Descreva as mudanças planejadas para os processos de trabalho",
-    module_id: "f4g5h6i7-8901-bcde-f123-456789abcdef",
+    module_id: "f4g5h6i7-8901-4cde-f123-456789abcdef",
   },
   {
     order_number: 55,
@@ -443,7 +444,7 @@ export const quizQuestionsData = [
     type: "textarea",
     required: true,
     hint: "Descreva os procedimentos de garantia de qualidade da sua empresa",
-    module_id: "f4g5h6i7-8901-bcde-f123-456789abcdef",
+    module_id: "f4g5h6i7-8901-4cde-f123-456789abcdef",
   },
   {
     order_number: 56,
@@ -451,7 +452,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione a opção que melhor descreve as ferramentas utilizadas",
-    module_id: "f4g5h6i7-8901-bcde-f123-456789abcdef",
+    module_id: "f4g5h6i7-8901-4cde-f123-456789abcdef",
   },
   {
     order_number: 57,
@@ -459,7 +460,7 @@ export const quizQuestionsData = [
     type: "textarea",
     required: true,
     hint: "Descreva detalhadamente sua prioridade ou problema relacionado aos processos internos",
-    module_id: "f4g5h6i7-8901-bcde-f123-456789abcdef",
+    module_id: "f4g5h6i7-8901-4cde-f123-456789abcdef",
   },
   
   // Módulo 9: Perspectiva de inovação, aprendizado e crescimento
@@ -469,7 +470,7 @@ export const quizQuestionsData = [
     type: "checkbox",
     required: true,
     hint: "Você pode marcar mais de uma opção",
-    module_id: "g5h6i7j8-9012-cdef-g234-56789abcdefg",
+    module_id: "a5b6c7d8-9012-4def-g234-56789abcdefg",
   },
   {
     order_number: 59,
@@ -477,7 +478,7 @@ export const quizQuestionsData = [
     type: "checkbox",
     required: true,
     hint: "Você pode marcar mais de uma opção",
-    module_id: "g5h6i7j8-9012-cdef-g234-56789abcdefg",
+    module_id: "a5b6c7d8-9012-4def-g234-56789abcdefg",
   },
   {
     order_number: 60,
@@ -485,7 +486,7 @@ export const quizQuestionsData = [
     type: "radio",
     required: true,
     hint: "Selecione a opção que melhor descreve a situação da sua empresa",
-    module_id: "g5h6i7j8-9012-cdef-g234-56789abcdefg",
+    module_id: "a5b6c7d8-9012-4def-g234-56789abcdefg",
   },
   
   // Módulo 10: Clientes e Perspectiva de Mercado
@@ -493,7 +494,7 @@ export const quizQuestionsData = [
     id: "7fac6bba-5cdc-433f-86d9-ad4b5566c84b",
     text: "Sua empresa oferece oportunidades para que seus clientes dêem feedback?",
     type: "radio",
-    module_id: "", // Será preenchido dinamicamente no seed
+    module_id: "b6c7d8e9-0123-4efg-h345-6789abcdefgh", 
     order_number: 61,
     required: true
   },
@@ -501,7 +502,7 @@ export const quizQuestionsData = [
     id: "8abc7ccb-6ded-544f-97ea-be5c6677d95c",
     text: "Como sua empresa monitora a satisfação dos clientes?",
     type: "checkbox",
-    module_id: "", // Será preenchido dinamicamente no seed
+    module_id: "b6c7d8e9-0123-4efg-h345-6789abcdefgh",
     order_number: 62,
     required: true
   },
@@ -509,7 +510,7 @@ export const quizQuestionsData = [
     id: "9bcd8ddc-7efe-655f-a8fb-cf6d7788ea6d",
     text: "Quais estratégias sua empresa utiliza para fidelizar clientes?",
     type: "checkbox",
-    module_id: "", // Será preenchido dinamicamente no seed
+    module_id: "b6c7d8e9-0123-4efg-h345-6789abcdefgh",
     order_number: 63,
     required: true
   },
@@ -517,7 +518,7 @@ export const quizQuestionsData = [
     id: "acde9eed-8fgf-766f-b9gc-dg7e889ffb7e",
     text: "Sua empresa tem um processo definido para lidar com reclamações de clientes?",
     type: "radio",
-    module_id: "", // Será preenchido dinamicamente no seed
+    module_id: "b6c7d8e9-0123-4efg-h345-6789abcdefgh",
     order_number: 64,
     required: true
   },
@@ -525,7 +526,7 @@ export const quizQuestionsData = [
     id: "bdef0ffe-9hgh-877g-cahd-eh8f990ggc8f",
     text: "Qual é o nível de retenção de clientes da sua empresa?",
     type: "radio",
-    module_id: "", // Será preenchido dinamicamente no seed
+    module_id: "b6c7d8e9-0123-4efg-h345-6789abcdefgh",
     order_number: 65,
     required: true
   }
