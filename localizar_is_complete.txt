@@ -1,0 +1,169 @@
+
+# Ocorrências de "is_complete" no código do projeto MAR - Crie Valor Consultoria
+
+## Arquivos analisados: todos os arquivos do projeto
+## Data da análise: 15/04/2025
+
+### 1. src/types/quiz.ts (linha 20)
+```typescript
+  // Garantir compatibilidade com o banco de dados
+  is_complete?: boolean; // Vai ser usado no lugar de 'completed' em alguns lugares
+```
+
+### 2. src/pages/admin/QuizResponses.tsx (linha 24)
+```typescript
+interface QuizSubmission {
+  id: string;
+  user_id: string;
+  user_name: string | null;
+  user_email: string;
+  started_at: string;
+  completed_at: string | null;
+  webhook_processed: boolean | null;
+  is_complete: boolean;
+}
+```
+
+### 3. src/pages/admin/QuizResponses.tsx (linha 82)
+```typescript
+if (statusFilter === 'complete') {
+  query = query.eq('is_complete', true);
+} else if (statusFilter === 'incomplete') {
+  query = query.eq('is_complete', false);
+}
+```
+
+### 4. src/pages/admin/QuizResponses.tsx (linha 322)
+```typescript
+{submission.is_complete ? (
+  <Badge variant="outline" className="bg-green-100 border-green-300 text-green-800">
+    Completo
+  </Badge>
+) : (
+  <Badge variant="outline" className="bg-yellow-100 border-yellow-300 text-yellow-800">
+    Em andamento
+  </Badge>
+)}
+```
+
+### 5. src/pages/admin/QuizResponses.tsx (linha 350)
+```typescript
+disabled={processingWebhook === submission.id || !submission.is_complete}
+```
+
+### 6. src/pages/admin/QuizResponses.tsx (linha 376)
+```typescript
+const row = [
+  // ...outras colunas
+  s.is_complete ? 'Completo' : 'Incompleto',
+  // ...outras colunas
+];
+```
+
+### 7. supabase/functions/complete_quiz.sql (no banco de dados)
+```sql
+-- Função que consulta o estado de is_complete e se necessário atualiza para true
+CREATE OR REPLACE FUNCTION complete_quiz(user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  -- Verificar se existe submissão para o usuário
+  IF NOT EXISTS (SELECT 1 FROM quiz_submissions WHERE user_id = $1) THEN
+    RETURN FALSE;
+  END IF;
+  
+  -- Atualizar o estado de conclusão se ainda não estiver completo
+  UPDATE quiz_submissions 
+  SET is_complete = TRUE,
+      completed_at = NOW(),
+      completed = TRUE
+  WHERE user_id = $1 
+    AND (is_complete = FALSE OR is_complete IS NULL);
+    
+  RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+### 8. src/utils/supabaseUtils.ts (linha 35)
+```typescript
+// Verificando se o campo is_complete existe no objeto data
+if (data && typeof data.is_complete !== 'undefined') {
+  return data.is_complete;
+} else if (data && typeof data.completed !== 'undefined') {
+  return data.completed;
+}
+```
+
+### 9. supabase/migrations/20240304123456_add_is_complete_field.sql (migração SQL)
+```sql
+-- Adiciona o campo is_complete à tabela quiz_submissions como alias de completed
+ALTER TABLE quiz_submissions 
+ADD COLUMN IF NOT EXISTS is_complete BOOLEAN DEFAULT FALSE;
+
+-- Criar trigger para manter sincronizados os campos is_complete e completed
+CREATE OR REPLACE FUNCTION sync_completion_status()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'UPDATE' THEN
+    IF NEW.is_complete IS DISTINCT FROM OLD.is_complete THEN
+      NEW.completed := NEW.is_complete;
+    ELSIF NEW.completed IS DISTINCT FROM OLD.completed THEN
+      NEW.is_complete := NEW.completed;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER sync_completion_fields
+BEFORE UPDATE ON quiz_submissions
+FOR EACH ROW
+EXECUTE FUNCTION sync_completion_status();
+```
+
+### 10. src/components/quiz/QuizComplete.tsx (linha 45)
+```typescript
+// Verificar se o questionário já foi concluído
+const { data: submission } = await supabase
+  .from('quiz_submissions')
+  .select('is_complete, completed')
+  .eq('user_id', userId)
+  .maybeSingle();
+
+// Se já estiver marcado como completo em qualquer um dos campos, retornar
+if (submission?.is_complete || submission?.completed) {
+  return {
+    success: true,
+    message: 'Questionário já estava marcado como concluído'
+  };
+}
+```
+
+### 11. src/components/admin/AdminDashboard.tsx (linha 112)
+```typescript
+// Contar submissões completas
+const { data: completedSubmissions, error: completedError } = await supabase
+  .from('quiz_submissions')
+  .select('count', { count: 'exact', head: true })
+  .eq('is_complete', true);
+```
+
+## Informações Adicionais
+
+O campo `is_complete` é usado como alternativa ao campo `completed` em algumas partes do código e do banco de dados. 
+A análise sugere que ambos os campos estão sendo mantidos sincronizados através de um trigger no banco de dados,
+mas há inconsistência no uso desses campos em diferentes partes da aplicação.
+
+Existem também ocorrências indiretas onde o campo é referenciado em nomes de variáveis, comentários ou textos explicativos:
+
+- Em arquivos de log e documentação
+- Em nomes de funções e variáveis relacionadas à conclusão do questionário
+- Em comentários explicativos sobre o funcionamento do sistema
+
+## Conclusão
+
+O sistema utiliza dois campos distintos para representar o mesmo conceito (conclusão do questionário):
+1. `completed` - Nome original do campo
+2. `is_complete` - Nome alternativo introduzido posteriormente
+
+Esta duplicidade causa confusão no código e aumenta a complexidade de manutenção.
