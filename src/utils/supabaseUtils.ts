@@ -1,3 +1,4 @@
+
 import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/database.types';
 import type { QuizSubmission } from '@/types/quiz';
@@ -140,32 +141,80 @@ export const completeQuizManually = async (userId: string): Promise<OperationRes
   try {
     logger.info('Iniciando processo para completar questionário', {
       tag: 'Quiz',
-      data: { userId, action: 'completeQuizManually' }
+      data: { userId, action: 'completeQuizManually', timestamp: new Date().toISOString() }
     });
     
     // Passo 1: Obter o email do usuário da sessão atual (essencial para completar o questionário)
     const { data: userSession, error: sessionError } = await supabase.auth.getUser();
     
     if (sessionError) {
-      throw {
+      const error: SystemError = {
         message: "Erro ao obter dados da sessão do usuário",
         code: "SESSION_ERROR",
         details: sessionError.message,
         origin: 'supabase',
         context: 'completeQuizManually.getUserSession'
       };
+      logError(error, 'Quiz');
+      throw error;
     }
     
     const userEmail = userSession?.user?.email;
     
+    logger.info('Informações da sessão obtidas', {
+      tag: 'Quiz',
+      data: { 
+        userId, 
+        hasEmail: !!userEmail,
+        sessionUserId: userSession?.user?.id,
+        timestamp: new Date().toISOString()
+      }
+    });
+    
     if (!userEmail) {
-      throw {
-        message: "Email do usuário não encontrado na sessão",
-        code: "EMAIL_NOT_FOUND",
-        details: "O email do usuário é obrigatório para concluir o questionário",
-        origin: 'client',
-        context: 'completeQuizManually.getUserEmail'
-      };
+      // Tentativa adicional: buscar email do perfil do usuário
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_email')
+        .eq('id', userId)
+        .maybeSingle();
+        
+      if (profileError) {
+        logger.warn('Erro ao buscar email do perfil do usuário', {
+          tag: 'Quiz',
+          data: { userId, error: profileError }
+        });
+      } else if (profile?.user_email) {
+        logger.info('Email obtido do perfil do usuário', {
+          tag: 'Quiz',
+          data: { userId, email: profile.user_email }
+        });
+        // Continuar com o email do perfil
+      } else {
+        // Última tentativa: buscar direto da tabela auth.users via função RPC
+        const { data: authUser, error: authError } = await supabase
+          .rpc('get_user_email', { p_user_id: userId });
+          
+        if (authError || !authUser) {
+          logger.error('Falha em todas as tentativas de obter email do usuário', {
+            tag: 'Quiz',
+            data: { userId, authError }
+          });
+          
+          throw {
+            message: "Email do usuário não encontrado em nenhuma fonte",
+            code: "EMAIL_NOT_FOUND",
+            details: "O email do usuário é obrigatório para concluir o questionário",
+            origin: 'client',
+            context: 'completeQuizManually.getUserEmail'
+          };
+        }
+        
+        logger.info('Email obtido da tabela auth.users', {
+          tag: 'Quiz',
+          data: { userId, hasEmail: !!authUser }
+        });
+      }
     }
     
     // Passo 2: Buscar informações completas do perfil para ter o nome do usuário
@@ -185,11 +234,33 @@ export const completeQuizManually = async (userId: string): Promise<OperationRes
     
     const userName = userProfile?.full_name || null;
     
-    // Passo 3: Usar a função complete_quiz do PostgreSQL via RPC
+    // Passo 3: Verificar se o usuário já respondeu todas as perguntas
+    const { data: answers, error: answersError } = await supabase
+      .from('quiz_answers')
+      .select('id')
+      .eq('user_id', userId);
+      
+    if (answersError) {
+      logger.warn('Erro ao verificar respostas existentes', {
+        tag: 'Quiz',
+        data: { userId, error: answersError }
+      });
+    } else {
+      logger.info('Verificação de respostas: usuário respondeu perguntas', {
+        tag: 'Quiz',
+        data: { userId, totalRespostas: answers?.length || 0 }
+      });
+    }
+    
+    // Passo 4: Usar a função complete_quiz do PostgreSQL via RPC
     // Esta função está configurada como SECURITY DEFINER e tem todas as validações necessárias
     logger.info('Chamando função RPC complete_quiz para finalizar questionário', {
       tag: 'Quiz',
-      data: { userId, userEmail, userName }
+      data: { 
+        userId, 
+        userEmail: userEmail || "não disponível", 
+        userName: userName || "não disponível" 
+      }
     });
     
     const { data: rpcResult, error: rpcError } = await supabase.rpc('complete_quiz', {
@@ -198,37 +269,88 @@ export const completeQuizManually = async (userId: string): Promise<OperationRes
     
     // Se houve erro na chamada RPC, registrar e retornar
     if (rpcError) {
-      throw {
+      const formattedError: SystemError = {
         message: "Erro ao completar questionário via RPC",
         code: rpcError.code,
         details: rpcError.message,
         origin: 'supabase',
         context: 'completeQuizManually.rpcCall'
       };
+      
+      logError(formattedError, 'Quiz');
+      throw formattedError;
     }
     
-    // Se a RPC retornou false, algo deu errado
+    // Se a RPC retornou false, algo deu errado internamente
     if (rpcResult === false) {
-      throw {
+      const error: SystemError = {
         message: "Falha ao completar questionário",
         code: "RPC_RETURNED_FALSE",
         details: "A função RPC retornou false indicando falha interna",
         origin: 'supabase',
         context: 'completeQuizManually.rpcResult'
       };
+      
+      logError(error, 'Quiz');
+      throw error;
     }
     
-    // Passo 4: Registrar sucesso e retornar
+    // Passo 5: Obter a última submissão para processar webhook
+    const { data: latestSubmission, error: submissionError } = await supabase
+      .from('quiz_submissions')
+      .select('id')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+      
+    if (submissionError) {
+      logger.warn('Erro ao obter ID da última submissão para webhook', {
+        tag: 'Quiz',
+        data: { userId, error: submissionError }
+      });
+    } else if (latestSubmission?.id) {
+      logger.info('Iniciando processamento de webhook em segundo plano', {
+        tag: 'Quiz',
+        data: { userId, submissionId: latestSubmission.id }
+      });
+      
+      // Processar webhook em segundo plano para não bloquear o usuário
+      setTimeout(async () => {
+        try {
+          const webhookResult = await sendQuizDataToWebhook(userId, latestSubmission.id);
+          logger.info('Processamento de webhook concluído', {
+            tag: 'Quiz',
+            data: { userId, success: webhookResult }
+          });
+        } catch (webhookError) {
+          logger.error('Erro no processamento assíncrono do webhook', {
+            tag: 'Quiz',
+            data: { userId, error: webhookError }
+          });
+        }
+      }, 500);
+    }
+    
+    // Passo 6: Registrar sucesso e retornar
     logger.info('Questionário completado com sucesso via RPC', {
       tag: 'Quiz',
-      data: { userId, userEmail }
+      data: { 
+        userId, 
+        timestamp: new Date().toISOString(),
+        method: 'rpc'
+      }
     });
     
     return { 
       success: true, 
       method: 'rpc',
       message: 'Questionário concluído com sucesso',
-      data: { userId, timestamp: new Date().toISOString() }
+      data: { 
+        userId, 
+        timestamp: new Date().toISOString(),
+        webhookInProgress: !!latestSubmission?.id
+      }
     };
   } catch (error: any) {
     // Tratamento de erros unificado

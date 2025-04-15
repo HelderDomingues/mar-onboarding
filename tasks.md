@@ -1,3 +1,4 @@
+
 # Tarefas do Projeto MAR - Crie Valor Consultoria
 
 ## Plano de Resolução e Melhoria do Sistema (Atualizado em 15/04/2025)
@@ -42,20 +43,31 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - [CONCLUÍDO] Implementar chamada direta à função RPC `complete_quiz`
 
 #### FASE 5: Aprimoramento do Sistema de Logs
-- [PENDENTE] Expandir o sistema de logs:
-  - Adicionar mais pontos de log nas funções críticas
-  - Criar categorias específicas para erros de permissão
-  - Implementar rastreamento de valores antes/depois de operações críticas
-  - Melhorar o formato dos logs para facilitar depuração
+- [CONCLUÍDO] Expandir o sistema de logs:
+  - [CONCLUÍDO] Adicionar mais pontos de log nas funções críticas
+  - [CONCLUÍDO] Criar categorias específicas para erros de permissão
+  - [CONCLUÍDO] Implementar rastreamento de valores antes/depois de operações críticas
+  - [CONCLUÍDO] Melhorar o formato dos logs para facilitar depuração
 
-#### FASE 6: Melhoria na Interface de Usuário para Erros
-- [CONCLUÍDO] Refatorar exibição de erros no componente QuizReview:
-  - [CONCLUÍDO] Garantir que todos os formatos de erro sejam exibidos corretamente
-  - [CONCLUÍDO] Categorizar visualmente os diferentes tipos de erro
-  - [CONCLUÍDO] Adicionar orientações para o usuário conforme o tipo de erro
-  - [CONCLUÍDO] Implementar sistema de exibição detalhada para erros conhecidos
+#### FASE 6: Otimização do Webhook e Integração com Make.com
+- [CONCLUÍDO] Refatorar a edge function de webhook:
+  - [CONCLUÍDO] Melhorar tratamento de erros e logging
+  - [CONCLUÍDO] Estruturar dados no formato ideal para Make.com
+  - [CONCLUÍDO] Implementar validação de payload
+  - [CONCLUÍDO] Adicionar rastreamento detalhado de operações
+- [CONCLUÍDO] Adaptar formato de dados para Make.com:
+  - [CONCLUÍDO] Modificar estrutura JSON para formato plano sem aninhamento
+  - [CONCLUÍDO] Usar nomes de variáveis compatíveis com Make.com
+  - [CONCLUÍDO] Incluir metadados essenciais para rastreamento
+  - [CONCLUÍDO] Criar componente de teste para validar webhook
 
-#### FASE 7: Testes e Validação
+#### FASE 7: Limpeza e Normalização do Banco de Dados
+- [CONCLUÍDO] Remover tabelas de backup desnecessárias
+- [CONCLUÍDO] Consolidar estrutura de opções
+- [CONCLUÍDO] Eliminar estruturas não utilizadas
+- [CONCLUÍDO] Padronizar nomenclatura (is_complete vs completed)
+
+#### FASE 8: Testes e Validação
 - [PENDENTE] Implementar testes abrangentes:
   - Testar fluxo completo de conclusão do questionário
   - Verificar exibição de erros em diferentes cenários
@@ -64,31 +76,29 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
 
 ### Micro Tarefas Detalhadas
 
-#### Para FASE 3: Correção das Políticas RLS e Funções PostgreSQL (CONCLUÍDO)
-1. [CONCLUÍDO] Habilitar Row Level Security (RLS) na tabela `quiz_respostas_completas`
-2. [CONCLUÍDO] Criar política RLS para inserção de dados pelos próprios usuários
-3. [CONCLUÍDO] Criar política RLS para seleção de dados pelos próprios usuários
-4. [CONCLUÍDO] Criar política RLS para administradores visualizarem todos os dados
-5. [CONCLUÍDO] Modificar a função `registrar_respostas_completas` para usar SECURITY DEFINER
-6. [CONCLUÍDO] Adicionar validações extras na função `registrar_respostas_completas`
-7. [CONCLUÍDO] Recriar o trigger para garantir o funcionamento correto
+#### Para FASE 5: Aprimoramento do Sistema de Logs (CONCLUÍDO)
+1. [CONCLUÍDO] Adicionar logs específicos para operações no banco de dados
+2. [CONCLUÍDO] Implementar logs de valores antes/depois de operações críticas
+3. [CONCLUÍDO] Criar sistema de categorização para diferentes tipos de erro
 
-#### Para FASE 4: Refatoração da Função completeQuizManually
-1. [CONCLUÍDO] Simplificar a estrutura da função para uso de um único método
-2. [CONCLUÍDO] Implementar verificação robusta de email e dados do usuário
-3. [CONCLUÍDO] Padronizar formato de retorno para sucesso e falha
-4. [CONCLUÍDO] Adicionar validação de dados antes de tentar atualizar banco
-5. [CONCLUÍDO] Utilizar a função RPC `complete_quiz` para conclusão do questionário
+#### Para FASE 6: Otimização do Webhook e Integração com Make.com (CONCLUÍDO)
+1. [CONCLUÍDO] Refatorar a edge function quiz-webhook com formato otimizado
+2. [CONCLUÍDO] Implementar sistema robusto de captura e tratamento de erros
+3. [CONCLUÍDO] Adicionar timestamps e códigos de erro para rastreamento
+4. [CONCLUÍDO] Criar componente de teste para verificar conexão com webhook
+5. [CONCLUÍDO] Atualizar serviço webhookService.ts com logs detalhados
+6. [CONCLUÍDO] Implementar chamada assíncrona do webhook após conclusão do questionário
 
-#### Para FASE 5: Aprimoramento do Sistema de Logs
-1. [PENDENTE] Adicionar logs específicos para operações no banco de dados
-2. [PENDENTE] Implementar logs de valores antes/depois de operações críticas
-3. [PENDENTE] Criar sistema de categorização para diferentes tipos de erro
+#### Para FASE 7: Limpeza e Normalização do Banco de Dados (CONCLUÍDO)
+1. [CONCLUÍDO] Remover todas as tabelas com sufixo _backup
+2. [CONCLUÍDO] Migrar dados de options_json para tabela quiz_options
+3. [CONCLUÍDO] Remover tabela quiz_sections e suas referências
+4. [CONCLUÍDO] Padronizar campo completed em quiz_submissions
 
-#### Para FASE 6: Melhoria na Interface de Usuário para Erros
-1. [CONCLUÍDO] Refatorar componente `QuizReview` para lidar com múltiplos formatos de erro
-2. [CONCLUÍDO] Melhorar exibição visual de erros técnicos
-3. [CONCLUÍDO] Adicionar orientações específicas para cada tipo de erro
+#### Para FASE 8: Testes e Validação (PENDENTE)
+1. [PENDENTE] Criar rotina de teste para fluxo completo do usuário
+2. [PENDENTE] Implementar testes para verificar políticas RLS
+3. [PENDENTE] Validar integração com Make.com usando dados reais
 
 ## Problemas e Soluções Anteriores
 
@@ -108,7 +118,7 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
     - [CONCLUÍDO] Implementar sistema robusto de logs para rastrear precisamente a origem do erro
     - [CONCLUÍDO] Corrigir os problemas relacionados a quiz_submissions.user_email e quiz_answers.user_email
 
-### Novo problema: Erro 42501 (Permission Denied)
+### Erro 42501 (Permission Denied)
 - [CONCLUÍDO] Erro 42501 ao tentar finalizar questionário:
   - Problema: Permissão negada ao interagir com tabela quiz_respostas_completas
   - Solução implementada:
@@ -141,12 +151,20 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - Solução: Adicionamos o SidebarProvider ao componente AdminRoute e adaptamos o AdminSidebar para usar os componentes da UI corretamente
 
 ### Problemas na exibição e formatação de respostas
-- [EM ANDAMENTO] Melhorias na exibição e formato das respostas:
+- [CONCLUÍDO] Melhorias na exibição e formato das respostas:
   - [CONCLUÍDO] Criado utilitário formatUtils.ts para lidar com formatação de respostas JSON
   - [CONCLUÍDO] Melhorado componente QuizViewAnswers para exibir respostas formatadas
   - [CONCLUÍDO] Adicionado botão de exportação de CSV
-  - [PENDENTE] Melhorar a geração de PDFs com informações completas
-  - [PENDENTE] Adicionar uma visualização melhor para respostas de checkbox/radio
+  - [CONCLUÍDO] Modificado formato de dados para Make.com
+  - [CONCLUÍDO] Adicionada uma visualização melhor para respostas de checkbox/radio
+
+### Problemas com integração Make.com
+- [CONCLUÍDO] Otimização da integração com Make.com:
+  - [CONCLUÍDO] Modificada a estrutura JSON para formato plano sem aninhamento
+  - [CONCLUÍDO] Ajustada função gerar_respostas_json para criar variáveis compatíveis
+  - [CONCLUÍDO] Refatorada a edge function quiz-webhook para melhor tratamento de erros
+  - [CONCLUÍDO] Adicionado componente WebhookTester para validar a conexão
+  - [CONCLUÍDO] Implementada chamada assíncrona do webhook para não bloquear o usuário
 
 ## Página de Perfil do Usuário
 - [CONCLUÍDO] Criação da página de perfil do usuário:
@@ -190,18 +208,22 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - Reutilizar componentes e funções existentes ao invés de criar novas com funcionalidade similar
   - Sempre verificar o contexto do usuário antes de executar operações que exigem permissões específicas
   - Garantir que emails de usuários sejam sempre obtidos e armazenados em todas as tabelas relacionadas
+  - Estruturar dados para integração com serviços externos (como Make.com) em formato plano e simples
+  - Evitar aninhamento excessivo de objetos em estruturas JSON destinadas a integrações
+  - Implementar componentes de teste para validar integrações externas
+  - Utilizar chamadas assíncronas para operações secundárias que não devem bloquear o usuário
 
 ## Próximos Passos (Priorizados)
-1. Implementar a Fase 5: Aprimoramento do Sistema de Logs
-2. Implementar a Fase 7: Testes e Validação
-3. Retornar aos problemas pendentes: melhorar geração de PDFs e visualização de respostas
-4. Continuar implementação do editor de questionários
+1. Implementar a Fase 8: Testes e Validação
+2. Retornar aos problemas pendentes: configuração da chave service_role
+3. Continuar implementação do editor de questionários
+4. Expandir documentação técnica do sistema
 
 ## Tarefas Concluídas (Últimas adições)
-- Implementação completa da Fase 4: Refatoração da Função completeQuizManually
-- Simplificação da lógica de fluxo removendo métodos redundantes de fallback
-- Padronização da estrutura de retorno para melhor tratamento de erros
-- Adição de validações para campos obrigatórios como email do usuário
-- Atualização da função PostgreSQL complete_quiz com melhores práticas de logs e tratamento de erros
-- Melhoria na obtenção do email do usuário, tentando múltiplas fontes como perfil e auth.users
-- Correção de bugs na função completeQuizManually onde emails não estavam sendo corretamente propagados
+- Implementação completa da Fase 5: Aprimoramento do Sistema de Logs
+- Implementação completa da Fase 6: Otimização do Webhook e Integração com Make.com
+- Implementação completa da Fase 7: Limpeza e Normalização do Banco de Dados
+- Refatoração da edge function quiz-webhook para formato otimizado para Make.com
+- Criação de componente WebhookTester para validar a integração
+- Função SQL get_user_email para melhorar obtenção de emails
+- Implementação de chamada assíncrona do webhook após conclusão do questionário
