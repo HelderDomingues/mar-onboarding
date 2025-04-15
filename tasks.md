@@ -1,6 +1,6 @@
 # Sistema MAR - Crie Valor Consultoria
 
-## Contextualização do Projeto
+## Contextualização do Projeto - ATENÇÃO: ESTE HEADER NÃO DEVE SER ALTERADO, EXCLUIDO OU SUBSTITUIDO. DEVE CONSTAR EM TODAS AS INSTANCIAS/ATUALIZAÇÕES DO ARQUIVO. 
 
 O Sistema MAR é uma plataforma revolucionária de diagnóstico empresarial que democratiza o acesso a ferramentas estratégicas de alto nível. Mais do que um simples questionário de 52 perguntas, o MAR representa um ecossistema completo de análise que:
 
