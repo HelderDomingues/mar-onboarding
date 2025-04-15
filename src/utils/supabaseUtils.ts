@@ -122,8 +122,15 @@ interface CompleteQuizResult extends OperationResult {
   method?: 'rpc' | 'direct_update' | 'manual_update';
 }
 
-// Completa o questionário manualmente para o usuário
+/**
+ * Completa o questionário para o usuário atual
+ * Função refatorada para melhor tratamento de erros e garantir uso correto do email
+ * 
+ * @param userId ID do usuário para completar o questionário
+ * @returns Resultado da operação com detalhes adicionais
+ */
 export const completeQuizManually = async (userId: string): Promise<CompleteQuizResult> => {
+  // Validação inicial do ID do usuário
   if (!userId) {
     const error: SystemError = {
       message: 'ID de usuário não fornecido',
@@ -132,213 +139,125 @@ export const completeQuizManually = async (userId: string): Promise<CompleteQuiz
       context: 'completeQuizManually'
     };
     logError(error, 'Quiz');
-    return { success: false, error };
+    return { success: false, error, message: 'ID de usuário não fornecido' };
   }
   
   try {
-    logger.info('Iniciando processo para completar questionário manualmente', {
+    logger.info('Iniciando processo para completar questionário', {
       tag: 'Quiz',
-      data: { userId }
+      data: { userId, action: 'completeQuizManually' }
     });
     
-    // Método alternativo via update direto - usando diretamente como primeira opção
-    try {
-      logger.info('Tentando completar questionário via atualização direta', {
-        tag: 'Quiz',
-        data: { userId, method: 'direct_update' }
-      });
-      
-      // Verificamos primeiro se o registro existe
-      const { data: existingSubmission, error: checkError } = await supabase
-        .from('quiz_submissions')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
-        
-      if (checkError) {
-        const formattedError = parseSupabaseError(checkError, 'completeQuizManually.checkExisting');
-        logError(formattedError, 'Quiz');
-        throw formattedError;
-      }
-      
-      const now = new Date().toISOString();
-      
-      // Obtém o email do usuário da sessão atual
-      const { data: userSession } = await supabase.auth.getUser();
-      const userEmail = userSession?.user?.email;
-      
-      if (!userEmail) {
-        const error: SystemError = {
-          message: "Email do usuário não encontrado na sessão",
-          code: "EMAIL_NOT_FOUND",
-          details: "O email do usuário é obrigatório para concluir o questionário",
-          origin: 'client',
-          context: 'completeQuizManually.getUserEmail'
-        };
-        logError(error, 'Quiz');
-        throw error;
-      }
-      
-      let updateResult;
-      
-      if (existingSubmission) {
-        // Atualiza submissão existente sem usar o campo email diretamente
-        updateResult = await supabase
-          .from('quiz_submissions')
-          .update({
-            completed: true,
-            completed_at: now,
-            last_active: now,
-            user_email: userEmail // Usamos user_email em vez de email
-          })
-          .eq('user_id', userId);
-      } else {
-        // Cria nova submissão
-        updateResult = await supabase
-          .from('quiz_submissions')
-          .insert({
-            user_id: userId,
-            user_email: userEmail, // Usamos user_email em vez de email
-            completed: true,
-            completed_at: now,
-            started_at: now,
-            last_active: now,
-            current_module: 8 // Assume que completou todos os módulos
-          });
-      }
-      
-      if (updateResult.error) {
-        const formattedError = parseSupabaseError(updateResult.error, 'completeQuizManually.directUpdate');
-        logError(formattedError, 'Quiz');
-        
-        throw formattedError;
-      }
-      
-      logger.info('Questionário completado com sucesso (método direto)', {
-        tag: 'Quiz',
-        data: { userId }
-      });
-      
-      return { 
-        success: true, 
-        method: 'direct_update',
-        message: 'Questionário concluído com sucesso' 
+    // Passo 1: Obter o email do usuário da sessão atual (essencial para completar o questionário)
+    const { data: userSession, error: sessionError } = await supabase.auth.getUser();
+    
+    if (sessionError) {
+      throw {
+        message: "Erro ao obter dados da sessão do usuário",
+        code: "SESSION_ERROR",
+        details: sessionError.message,
+        origin: 'supabase',
+        context: 'completeQuizManually.getUserSession'
       };
-    } catch (directError: any) {
-      const formattedDirectError = directError.code 
-        ? directError // Já está formatado
-        : formatError(directError, 'completeQuizManually.directUpdate');
-      
-      logError(formattedDirectError, 'Quiz');
-      
-      // Tenta o método manual como fallback - ajustado para trabalhar com userEmail
-      try {
-        logger.info('Tentando completar questionário via chamada manual direta (fallback)', {
-          tag: 'Quiz',
-          data: { userId, method: 'manual_update' }
-        });
-        
-        // Obtém o email do usuário da sessão atual
-        const { data: userSession } = await supabase.auth.getUser();
-        const userEmail = userSession?.user?.email;
-        
-        if (!userEmail) {
-          const error: SystemError = {
-            message: "Email do usuário não encontrado na sessão",
-            code: "EMAIL_NOT_FOUND",
-            details: "O email do usuário é obrigatório para concluir o questionário",
-            origin: 'client',
-            context: 'completeQuizManually.fallback.getUserEmail'
-          };
-          throw error;
-        }
-        
-        // Usa transações básicas
-        const now = new Date().toISOString();
-        
-        const { data: existingSubmission } = await supabase
-          .from('quiz_submissions')
-          .select('id')
-          .eq('user_id', userId)
-          .maybeSingle();
-          
-        let manualResult;
-        
-        if (existingSubmission) {
-          manualResult = await supabase
-            .from('quiz_submissions')
-            .update({
-              completed: true,
-              completed_at: now,
-              last_active: now,
-              user_email: userEmail // Usamos user_email em vez de email
-            })
-            .eq('id', existingSubmission.id);
-        } else {
-          manualResult = await supabase
-            .from('quiz_submissions')
-            .insert({
-              user_id: userId,
-              user_email: userEmail, // Usamos user_email em vez de email
-              completed: true,
-              completed_at: now,
-              started_at: now,
-              last_active: now,
-              current_module: 8
-            });
-        }
-        
-        if (manualResult.error) {
-          const formattedError = parseSupabaseError(manualResult.error, 'completeQuizManually.fallback');
-          throw formattedError;
-        }
-        
-        logger.info('Questionário completado com sucesso via método manual (fallback)', {
-          tag: 'Quiz',
-          data: { userId }
-        });
-        
-        return { 
-          success: true, 
-          method: 'manual_update',
-          message: 'Questionário concluído com sucesso (método alternativo)'
-        };
-      } catch (manualError: any) {
-        // Formatar erro manual se ainda não estiver formatado
-        const formattedManualError = manualError.code 
-          ? manualError 
-          : formatError(manualError, 'completeQuizManually.fallback');
-        
-        // Ambos os métodos falharam
-        const combinedError: SystemError = {
-          message: "Falha ao completar questionário após múltiplas tentativas",
-          code: formattedManualError.code || formattedDirectError.code,
-          details: {
-            directError: formattedDirectError,
-            manualError: formattedManualError
-          },
-          hint: formattedManualError.hint || formattedDirectError.hint,
-          origin: 'multiple',
-          context: 'completeQuizManually.allMethods'
-        };
-        
-        logError(combinedError, 'Quiz');
-        
-        return { 
-          success: false,
-          error: combinedError,
-          message: 'Não foi possível completar o questionário após várias tentativas'
-        };
-      }
     }
+    
+    const userEmail = userSession?.user?.email;
+    
+    if (!userEmail) {
+      throw {
+        message: "Email do usuário não encontrado na sessão",
+        code: "EMAIL_NOT_FOUND",
+        details: "O email do usuário é obrigatório para concluir o questionário",
+        origin: 'client',
+        context: 'completeQuizManually.getUserEmail'
+      };
+    }
+    
+    // Passo 2: Verificar se já existe uma submissão para o usuário
+    const { data: existingSubmission, error: checkError } = await supabase
+      .from('quiz_submissions')
+      .select('id, user_email, completed')
+      .eq('user_id', userId)
+      .maybeSingle();
+      
+    if (checkError) {
+      throw parseSupabaseError(checkError, 'completeQuizManually.checkExisting');
+    }
+    
+    const now = new Date().toISOString();
+    let updateResult;
+    
+    // Passo 3: Atualizar ou criar submissão com o email correto
+    if (existingSubmission) {
+      // Se já existe submissão, apenas atualizamos
+      logger.info('Atualizando submissão existente para completar questionário', {
+        tag: 'Quiz',
+        data: { 
+          submissionId: existingSubmission.id,
+          previousCompleted: existingSubmission.completed,
+          userEmail: userEmail
+        }
+      });
+      
+      updateResult = await supabase
+        .from('quiz_submissions')
+        .update({
+          completed: true,
+          completed_at: now,
+          last_active: now,
+          user_email: userEmail, // Garantimos que o email esteja presente
+          webhook_processed: false // Marcamos para processamento de webhook
+        })
+        .eq('id', existingSubmission.id);
+    } else {
+      // Se não existe, criamos nova submissão
+      logger.info('Criando nova submissão para completar questionário', {
+        tag: 'Quiz',
+        data: { userId, userEmail }
+      });
+      
+      updateResult = await supabase
+        .from('quiz_submissions')
+        .insert({
+          user_id: userId,
+          user_email: userEmail,
+          completed: true,
+          completed_at: now,
+          started_at: now,
+          last_active: now,
+          current_module: 8, // Assume que completou todos os módulos
+          webhook_processed: false
+        });
+    }
+    
+    // Passo 4: Verificar se a atualização foi bem-sucedida
+    if (updateResult.error) {
+      throw parseSupabaseError(updateResult.error, 'completeQuizManually.updateSubmission');
+    }
+    
+    logger.info('Questionário completado com sucesso', {
+      tag: 'Quiz',
+      data: { userId, userEmail }
+    });
+    
+    return { 
+      success: true, 
+      method: existingSubmission ? 'direct_update' : 'manual_update',
+      message: 'Questionário concluído com sucesso',
+      data: { userId, timestamp: now }
+    };
   } catch (error: any) {
-    const formattedError = formatError(error, 'completeQuizManually');
+    // Tratamento de erros unificado
+    const formattedError = error.code 
+      ? error // Já está no formato SystemError
+      : formatError(error, 'completeQuizManually');
+    
     logError(formattedError, 'Quiz');
     
     return { 
       success: false, 
       error: formattedError,
-      message: 'Erro ao completar questionário: ' + formattedError.message
+      message: `Erro ao completar questionário: ${formattedError.message}`
     };
   }
 };
