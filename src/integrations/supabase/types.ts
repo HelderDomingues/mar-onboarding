@@ -244,8 +244,10 @@ export type Database = {
           created_at: string
           hint: string | null
           id: string
+          max_options: number | null
           module_id: string
           order_number: number
+          prefix: string | null
           required: boolean | null
           text: string
           type: string
@@ -254,8 +256,10 @@ export type Database = {
           created_at?: string
           hint?: string | null
           id?: string
+          max_options?: number | null
           module_id: string
           order_number: number
+          prefix?: string | null
           required?: boolean | null
           text: string
           type: string
@@ -264,8 +268,10 @@ export type Database = {
           created_at?: string
           hint?: string | null
           id?: string
+          max_options?: number | null
           module_id?: string
           order_number?: number
+          prefix?: string | null
           required?: boolean | null
           text?: string
           type?: string
