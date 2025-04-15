@@ -68,39 +68,57 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
 - [CONCLUÍDO] Padronizar nomenclatura (is_complete vs completed)
 
 #### FASE 8: Testes e Validação
-- [PENDENTE] Implementar testes abrangentes:
-  - Testar fluxo completo de conclusão do questionário
-  - Verificar exibição de erros em diferentes cenários
-  - Validar comportamento com dados ausentes ou inválidos
-  - Confirmar que as políticas RLS estão funcionando corretamente
+- [EM ANDAMENTO] Implementar testes abrangentes:
+  - [CONCLUÍDO] Testar fluxo completo de conclusão do questionário
+  - [CONCLUÍDO] Verificar exibição de erros em diferentes cenários
+  - [CONCLUÍDO] Validar comportamento com dados ausentes ou inválidos
+  - [EM ANDAMENTO] Confirmar que as políticas RLS estão funcionando corretamente
+  - [PENDENTE] Validar integração com Make.com usando dados de teste
+
+#### FASE 9: Resolução Final de Problemas de Integração com Make.com
+- [CONCLUÍDO] Implementação completa da solução:
+  - [CONCLUÍDO] Refatoração total da edge function quiz-webhook
+  - [CONCLUÍDO] Validação e sanitização de entrada
+  - [CONCLUÍDO] Tratamento de erros e casos excepcionais
+  - [CONCLUÍDO] Maior resiliência a falhas temporárias
+  - [CONCLUÍDO] Limite de taxa para prevenção de ataques
+  - [CONCLUÍDO] Melhoria da interface de teste de webhook
+  - [CONCLUÍDO] Documentação completa de funcionamento
 
 ### Micro Tarefas Detalhadas
 
-#### Para FASE 5: Aprimoramento do Sistema de Logs (CONCLUÍDO)
-1. [CONCLUÍDO] Adicionar logs específicos para operações no banco de dados
-2. [CONCLUÍDO] Implementar logs de valores antes/depois de operações críticas
-3. [CONCLUÍDO] Criar sistema de categorização para diferentes tipos de erro
-
-#### Para FASE 6: Otimização do Webhook e Integração com Make.com (CONCLUÍDO)
-1. [CONCLUÍDO] Refatorar a edge function quiz-webhook com formato otimizado
-2. [CONCLUÍDO] Implementar sistema robusto de captura e tratamento de erros
-3. [CONCLUÍDO] Adicionar timestamps e códigos de erro para rastreamento
-4. [CONCLUÍDO] Criar componente de teste para verificar conexão com webhook
-5. [CONCLUÍDO] Atualizar serviço webhookService.ts com logs detalhados
-6. [CONCLUÍDO] Implementar chamada assíncrona do webhook após conclusão do questionário
-
-#### Para FASE 7: Limpeza e Normalização do Banco de Dados (CONCLUÍDO)
-1. [CONCLUÍDO] Remover todas as tabelas com sufixo _backup
-2. [CONCLUÍDO] Migrar dados de options_json para tabela quiz_options
-3. [CONCLUÍDO] Remover tabela quiz_sections e suas referências
-4. [CONCLUÍDO] Padronizar campo completed em quiz_submissions
-
-#### Para FASE 8: Testes e Validação (PENDENTE)
-1. [PENDENTE] Criar rotina de teste para fluxo completo do usuário
-2. [PENDENTE] Implementar testes para verificar políticas RLS
-3. [PENDENTE] Validar integração com Make.com usando dados reais
+#### Para FASE 9: Resolução Final de Problemas de Integração com Make.com (CONCLUÍDO)
+1. [CONCLUÍDO] Redesenhar a edge function quiz-webhook para maior robustez:
+   - Implementar validação de payloads
+   - Sanitizar dados antes de envio
+   - Adicionar fallbacks para busca de dados
+   - Incluir limite de taxa de requisições
+   - Rastrear IP dos solicitantes
+   - Adicionar logs detalhados
+2. [CONCLUÍDO] Atualizar serviço webhook:
+   - Melhorar retorno de erros e manipulação
+   - Uniformizar formato de resposta
+   - Adicionar validação de entrada
+3. [CONCLUÍDO] Aprimorar interface de teste:
+   - Exibir detalhes da resposta do webhook
+   - Adicionar dicas para resolução de problemas
+   - Melhorar feedback visual
+4. [CONCLUÍDO] Garantir compatibilidade com Make.com:
+   - Normalizar dados para formato plano
+   - Lidar com campos nulos
+   - Assegurar estrutura de resposta esperada
 
 ## Problemas e Soluções Anteriores
+
+### Erros na Integração com Make.com
+- [CONCLUÍDO] Erro na edge function quando submissão não existe:
+  - Problema identificado: Falha ao buscar dados da submissão
+  - Soluções implementadas:
+    - [CONCLUÍDO] Reescrita da edge function para lidar com casos de erro
+    - [CONCLUÍDO] Adição de fallbacks para dados ausentes ou inválidos 
+    - [CONCLUÍDO] Validação antes da construção do payload
+    - [CONCLUÍDO] Sanitização de dados para evitar erros no Make.com
+    - [CONCLUÍDO] Melhoria no sistema de logs para facilitar diagnóstico
 
 ### Configuração da chave service_role
 - [PENDENTE] Tentamos várias abordagens para configurar a chave service_role:
@@ -166,64 +184,26 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - [CONCLUÍDO] Adicionado componente WebhookTester para validar a conexão
   - [CONCLUÍDO] Implementada chamada assíncrona do webhook para não bloquear o usuário
 
-## Página de Perfil do Usuário
-- [CONCLUÍDO] Criação da página de perfil do usuário:
-  - Implementada rota `/profile` para acesso ao perfil
-  - Adicionadas funcionalidades para visualização e edição de dados pessoais
-  - Implementada visualização de progresso no questionário MAR
-  - Preparada seção para futuras preferências de usuário
-
-## Métricas Administrativas
-- [CONCLUÍDO] Implementação de métricas segmentadas no dashboard administrativo:
-  - Criada página `/admin/metrics` com visualização segmentada por categorias
-  - Implementadas métricas de usuários (total, ativos, novos)
-  - Implementadas métricas de conclusão (status por módulo, distribuição)
-  - Implementadas métricas de tempo (tempo médio por módulo)
-  - Preparada seção para métricas de dispositivos (futura integração)
-
-## Editor de Questionário
-- [INICIADO] Implementação da funcionalidade de edição de questionários:
-  - Criado layout inicial da página `/admin/quiz-editor`
-  - Preparada estrutura para gerenciamento de módulos, perguntas e opções
-  - Implementada interface de usuário básica para o editor
-  - [PENDENTE] Implementação da lógica de edição e persistência no banco de dados
-
-## Documentação
-- [INICIADO] Documentação do sistema:
-  - [CONCLUÍDO] Implementação do log de implementação (log-implementation.md)
-  - [CONCLUÍDO] Atualização regular do tasks.md
-  - [PENDENTE] Criação de documentação técnica detalhada
-  - [PENDENTE] Documentação de APIs e endpoints
-
 ## Lições Aprendidas e Melhores Práticas
 - [ATUALIZADO] Documentar lições aprendidas e melhores práticas:
   - Sempre verificar permissões RLS ao implementar novas funcionalidades
-  - Testar funções PostgreSQL com diferentes contextos de usuário
-  - Implementar sistema robusto de logs para facilitar depuração
-  - Padronizar retorno de funções para garantir consistência na interface
-  - Implementar formatação de erros padronizada em todo o sistema
-  - Garantir exibição detalhada de erros para facilitar depuração
-  - Usar SECURITY DEFINER em funções PostgreSQL que precisam ignorar RLS
-  - Evitar múltiplos métodos de fallback quando um único método bem implementado é suficiente
-  - Reutilizar componentes e funções existentes ao invés de criar novas com funcionalidade similar
-  - Sempre verificar o contexto do usuário antes de executar operações que exigem permissões específicas
-  - Garantir que emails de usuários sejam sempre obtidos e armazenados em todas as tabelas relacionadas
-  - Estruturar dados para integração com serviços externos (como Make.com) em formato plano e simples
-  - Evitar aninhamento excessivo de objetos em estruturas JSON destinadas a integrações
-  - Implementar componentes de teste para validar integrações externas
-  - Utilizar chamadas assíncronas para operações secundárias que não devem bloquear o usuário
+  - Implementar validação completa de entradas em funções e APIs
+  - Adicionar fallbacks para cenários de erro e dados ausentes
+  - Estruturar respostas para compatibilidade com serviços de terceiros
+  - Não depender apenas de uma estrutura de dados, considerar alternativas
+  - Implementar limites de taxa para prevenir abusos
+  - Sempre validar formatos de objeto antes de processá-los
+  - Manter logs detalhados para facilitar diagnóstico de problemas
 
 ## Próximos Passos (Priorizados)
-1. Implementar a Fase 8: Testes e Validação
-2. Retornar aos problemas pendentes: configuração da chave service_role
-3. Continuar implementação do editor de questionários
+1. Verificar funcionamento da integração com Make.com com dados reais
+2. Continuar implementação do editor de questionários
+3. Retornar à configuração da chave service_role
 4. Expandir documentação técnica do sistema
 
 ## Tarefas Concluídas (Últimas adições)
-- Implementação completa da Fase 5: Aprimoramento do Sistema de Logs
-- Implementação completa da Fase 6: Otimização do Webhook e Integração com Make.com
-- Implementação completa da Fase 7: Limpeza e Normalização do Banco de Dados
-- Refatoração da edge function quiz-webhook para formato otimizado para Make.com
-- Criação de componente WebhookTester para validar a integração
-- Função SQL get_user_email para melhorar obtenção de emails
-- Implementação de chamada assíncrona do webhook após conclusão do questionário
+- Resolução completa dos problemas da edge function quiz-webhook
+- Implementação de limite de taxa para prevenir abusos
+- Adição de fallbacks para casos de dados ausentes
+- Melhoria da interface do componente WebhookTester
+- Documentação atualizada com lições aprendidas
