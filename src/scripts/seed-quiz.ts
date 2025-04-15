@@ -101,14 +101,17 @@ export const seedQuizData = async (): Promise<boolean> => {
     const questionsToInsert = quizQuestionsData.map(question => {
       // Determinar o módulo baseado no order_number da pergunta
       // Agora temos 9 módulos e 60 perguntas
-      const moduleNumber = question.order_number <= 8 ? 1 : 
-                          question.order_number <= 15 ? 2 :
-                          question.order_number <= 22 ? 3 :
-                          question.order_number <= 28 ? 4 :
-                          question.order_number <= 33 ? 5 :
-                          question.order_number <= 43 ? 6 : 
-                          question.order_number <= 50 ? 7 : 
-                          question.order_number <= 57 ? 8 : 9;
+      let moduleNumber = 1;
+      
+      if (question.order_number <= 8) moduleNumber = 1;
+      else if (question.order_number <= 15) moduleNumber = 2;
+      else if (question.order_number <= 22) moduleNumber = 3;
+      else if (question.order_number <= 28) moduleNumber = 4;
+      else if (question.order_number <= 33) moduleNumber = 5;
+      else if (question.order_number <= 43) moduleNumber = 6; 
+      else if (question.order_number <= 50) moduleNumber = 7; 
+      else if (question.order_number <= 57) moduleNumber = 8; 
+      else moduleNumber = 9;
       
       const moduleId = moduleMap.get(moduleNumber);
       
