@@ -12,11 +12,28 @@ export const seedQuizData = async (): Promise<boolean> => {
     addLogEntry('info', 'Iniciando processo de seed do questionário MAR');
     logger.info('Iniciando processo de seed do questionário MAR', { tag: 'Admin' });
     
-    // Verificar se já existem dados, para evitar duplicação
+    // Primeiro, limpar as opções existentes para evitar duplicidade
+    const { error: deleteOptionsError } = await supabase
+      .from('quiz_options')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Uma condição que sempre é verdadeira para deletar tudo
+    
+    if (deleteOptionsError) {
+      logger.error('Erro ao limpar opções existentes:', {
+        tag: 'Admin',
+        data: { error: deleteOptionsError }
+      });
+      addLogEntry('error', 'Erro ao limpar opções existentes', { error: deleteOptionsError.message });
+      return false;
+    }
+    
+    logger.info('Opções existentes removidas com sucesso', { tag: 'Admin' });
+    
+    // Verificar se os módulos já existem
     const { data: existingModules, error: modulesError } = await supabase
       .from('quiz_modules')
-      .select('id')
-      .limit(1);
+      .select('id, order_number')
+      .order('order_number');
       
     if (modulesError) {
       logger.error('Erro ao verificar módulos existentes:', {
@@ -26,43 +43,70 @@ export const seedQuizData = async (): Promise<boolean> => {
       return false;
     }
     
-    // Se já existem módulos, não duplicar dados
+    // Criar um mapa de módulos por número de ordem
+    const moduleMap = new Map();
+    
+    // Se os módulos já existem, usá-los
     if (existingModules && existingModules.length > 0) {
-      logger.info('Dados do questionário já estão carregados no Supabase', {
+      existingModules.forEach(module => {
+        moduleMap.set(module.order_number, module.id);
+      });
+      logger.info(`${existingModules.length} módulos existentes mapeados`, {
         tag: 'Admin'
       });
-      addLogEntry('info', 'Dados do questionário já estão carregados no Supabase');
-      return true;
+    } else {
+      // Se não existem módulos, criar novos
+      const { data: modulesData, error: insertModulesError } = await supabase
+        .from('quiz_modules')
+        .insert(quizModulesData)
+        .select();
+        
+      if (insertModulesError) {
+        logger.error('Erro ao inserir módulos:', {
+          tag: 'Admin',
+          data: { error: insertModulesError }
+        });
+        addLogEntry('error', 'Erro ao inserir módulos', { error: insertModulesError.message });
+        return false;
+      }
+      
+      logger.info(`${modulesData?.length || 0} módulos inseridos com sucesso`, {
+        tag: 'Admin'
+      });
+      
+      // Mapear os módulos recém-criados
+      modulesData?.forEach(module => {
+        moduleMap.set(module.order_number, module.id);
+      });
     }
     
-    // Inserir módulos
-    const { data: modulesData, error: insertModulesError } = await supabase
-      .from('quiz_modules')
-      .insert(quizModulesData)
-      .select();
-      
-    if (insertModulesError) {
-      logger.error('Erro ao inserir módulos:', {
+    // Limpar as perguntas existentes para evitar duplicidade
+    const { error: deleteQuestionsError } = await supabase
+      .from('quiz_questions')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+    
+    if (deleteQuestionsError) {
+      logger.error('Erro ao limpar perguntas existentes:', {
         tag: 'Admin',
-        data: { error: insertModulesError }
+        data: { error: deleteQuestionsError }
       });
-      addLogEntry('error', 'Erro ao inserir módulos', { error: insertModulesError.message });
+      addLogEntry('error', 'Erro ao limpar perguntas existentes', { error: deleteQuestionsError.message });
       return false;
     }
     
-    logger.info(`${modulesData?.length || 0} módulos inseridos com sucesso`, {
-      tag: 'Admin'
-    });
+    logger.info('Perguntas existentes removidas com sucesso', { tag: 'Admin' });
     
     // Associar IDs de módulos às perguntas
-    const moduleMap = new Map();
-    modulesData?.forEach(module => {
-      moduleMap.set(module.order_number, module.id);
-    });
-    
     const questionsToInsert = quizQuestionsData.map(question => {
-      const moduleNumber = parseInt(question.module_id.replace('module_', ''));
+      const moduleNumber = question.module_number;
       const moduleId = moduleMap.get(moduleNumber);
+      
+      if (!moduleId) {
+        logger.error(`Módulo não encontrado para a pergunta com número de módulo ${moduleNumber}`, {
+          tag: 'Admin'
+        });
+      }
       
       return {
         ...question,
@@ -89,23 +133,21 @@ export const seedQuizData = async (): Promise<boolean> => {
       tag: 'Admin'
     });
     
-    // Associar IDs de perguntas às opções
+    // Criar um mapa de perguntas por número global (1-52)
     const questionMap = new Map();
     questionsData?.forEach(question => {
-      // Buscamos a pergunta correspondente no array original
-      const originalQuestionModule = question.module_id;
-      const originalQuestionOrder = question.order_number;
-      
-      // Criamos uma chave para reconhecer a questão pelo formato usado nas opções
-      const questionKey = `question_${moduleMap.get(originalQuestionOrder)}_${originalQuestionOrder}`;
-      questionMap.set(questionKey, question.id);
+      // A ordem global da pergunta seria o question_number
+      const globalQuestionNumber = question.order_number;
+      questionMap.set(globalQuestionNumber, question.id);
     });
     
+    // Associar IDs de perguntas às opções
     const optionsToInsert = quizOptionsData
-      .filter(option => questionMap.has(option.question_id))
+      .filter(option => questionMap.has(option.question_number))
       .map(option => ({
-        ...option,
-        question_id: questionMap.get(option.question_id)
+        text: option.text,
+        question_id: questionMap.get(option.question_number),
+        order_number: option.order_number
       }));
     
     // Inserir opções
@@ -129,8 +171,37 @@ export const seedQuizData = async (): Promise<boolean> => {
       });
     }
     
+    // Verificar se a inserção foi bem-sucedida
+    const { data: totalQuestions, error: countError } = await supabase
+      .from('quiz_questions')
+      .select('id', { count: 'exact' });
+      
+    if (countError) {
+      logger.error('Erro ao contar perguntas:', {
+        tag: 'Admin',
+        data: { error: countError }
+      });
+      return false;
+    }
+    
+    const questionCount = totalQuestions?.length || 0;
+    
+    if (questionCount !== 52) {
+      logger.error(`Erro: Número incorreto de perguntas após inserção. Esperado: 52, Encontrado: ${questionCount}`, {
+        tag: 'Admin'
+      });
+      return false;
+    }
+    
     addLogEntry('info', 'Seed do questionário MAR concluído com sucesso');
-    logger.info('Seed do questionário MAR concluído com sucesso', { tag: 'Admin' });
+    logger.info('Seed do questionário MAR concluído com sucesso', { 
+      tag: 'Admin',
+      data: {
+        modules: moduleMap.size,
+        questions: questionCount,
+        options: optionsToInsert.length
+      }
+    });
     return true;
   } catch (error) {
     logger.error('Erro ao executar seed do questionário:', {

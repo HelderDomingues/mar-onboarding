@@ -103,39 +103,30 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - [PENDENTE] Eliminar funções duplicadas ou obsoletas
   - [PENDENTE] Padronizar abordagens para operações comuns
 
+#### FASE 11: Correção da Implementação do Questionário MAR [NOVA]
+- [EM ANDAMENTO] Implementar corretamente o questionário MAR:
+  - [EM ANDAMENTO] Limpar dados existentes do questionário (apenas dados de teste)
+  - [EM ANDAMENTO] Corrigir o script seed-quiz.ts para mapear corretamente as questões
+  - [EM ANDAMENTO] Inserir EXATAMENTE as 52 perguntas fornecidas, sem alterações
+  - [EM ANDAMENTO] Inserir TODAS as opções de resposta conforme o questionário original
+  - [EM ANDAMENTO] Configurar corretamente todos os tipos de perguntas (text, radio, checkbox, etc.)
+  - [PENDENTE] Testar a exibição e funcionamento correto do questionário
+
 ### Micro Tarefas Detalhadas
 
-#### Para FASE 7: Limpeza e Normalização do Banco de Dados (EM ANDAMENTO)
-1. [EM ANDAMENTO] Script para remoção de tabelas de backup:
-   - Criar script SQL para remover tabelas com sufixo _backup
-   - Verificar dependências entre tabelas antes da remoção
-   - Executar em ambiente de teste antes da produção
-   - Confirmar que não há impacto em funcionalidades existentes
-2. [PENDENTE] Consolidação de estrutura de dados:
-   - Mapear todos os campos inconsistentes (is_complete vs completed)
-   - Criar plano de migração com mínimo impacto
-   - Atualizar referências no código após mudanças de schema
-3. [PENDENTE] Eliminação de colunas redundantes:
-   - Identificar campos duplicados entre tabelas
-   - Consolidar em uma única fonte de verdade
-   - Atualizar consultas SQL para usar estrutura simplificada
+#### Para FASE 11: Correção da Implementação do Questionário MAR
+1. [EM ANDAMENTO] Correção do Script de Seed do Questionário:
+   - Remoção das opções existentes (são apenas dados de teste)
+   - Uso das perguntas exatas fornecidas no questionário MAR
+   - Implementação precisa de todas as opções de resposta
+   - Correção da lógica de mapeamento entre questões e opções
+   - Testes de validação após a execução do script
 
-#### Para FASE 10: Refatoração e Modularização de Código [NOVA]
-1. [EM ANDAMENTO] Refatoração do Código de Webhook:
-   - Extrair funções de utilidade (validação, tratamento de erro, formatação)
-   - Criar interfaces TypeScript para melhor tipagem
-   - Melhorar documentação e comentários de código
-   - Implementar mecanismos de proteção adicionais
-2. [PENDENTE] Limpeza do código TypeScript:
-   - Identificar e remover imports não utilizados
-   - Eliminar código morto e funções obsoletas
-   - Padronizar nomenclatura e estilos de código
-   - Garantir que interfaces e tipos estejam atualizados
-3. [PENDENTE] Melhorias de usabilidade:
-   - Identificar pontos de confusão na interface
-   - Melhorar feedback ao usuário durante operações
-   - Padronizar componentes de exibição de erros
-   - Adicionar dicas contextuais em áreas complexas
+2. [PENDENTE] Validação da Implementação:
+   - Verificar se todas as 52 perguntas foram implementadas corretamente
+   - Confirmar que todas as opções de resposta estão disponíveis
+   - Testar o fluxo completo do questionário com as perguntas corretas
+   - Validar o armazenamento correto das respostas no banco de dados
 
 ## Problemas e Soluções Anteriores
 
@@ -225,14 +216,16 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - Manter logs detalhados para facilitar diagnóstico de problemas
   - Executar limpezas periódicas do banco de dados e código
   - Validar mudanças de forma incremental antes de marcar como concluídas
+  - Usar EXATAMENTE os dados fornecidos pelo cliente sem modificações
 
 ## Próximos Passos (Priorizados)
-1. [ATUALIZADO] Limpeza das tabelas _backup e normalização do banco de dados
-2. Refatoração de arquivos grandes em componentes menores
-3. Verificar funcionamento da integração com Make.com com dados reais
-4. Continuar implementação do editor de questionários
-5. Retornar à configuração da chave service_role
-6. Expandir documentação técnica do sistema
+1. [NOVO] Implementar corretamente o questionário MAR com todas as 52 perguntas e opções de resposta EXATAMENTE como fornecidas
+2. [ATUALIZADO] Limpeza das tabelas _backup e normalização do banco de dados
+3. Refatoração de arquivos grandes em componentes menores
+4. Verificar funcionamento da integração com Make.com com dados reais
+5. Continuar implementação do editor de questionários
+6. Retornar à configuração da chave service_role
+7. Expandir documentação técnica do sistema
 
 ## Tarefas Concluídas (Últimas adições)
 - Resolução completa dos problemas da edge function quiz-webhook
