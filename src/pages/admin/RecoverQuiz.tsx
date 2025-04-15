@@ -15,9 +15,11 @@ const RecoverQuiz = () => {
   const [result, setResult] = useState<{
     success: boolean;
     message: string;
-    modules?: number;
-    questions?: number;
-    options?: number;
+    data?: {
+      modules?: number;
+      questions?: number;
+      options?: number;
+    };
   } | null>(null);
 
   const handleRecoverQuiz = async () => {
