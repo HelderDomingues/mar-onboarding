@@ -4,8 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -174,194 +172,187 @@ const SettingsPage = () => {
   }
   
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen">
-        <AdminSidebar />
-        <SidebarInset className="p-6 bg-gray-50">
-          <div className="container max-w-7xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-2xl font-bold">Configurações do Sistema</h1>
-                <p className="text-muted-foreground mt-1">
-                  Gerencie as configurações gerais e comportamento do sistema.
-                </p>
-              </div>
-            </div>
-            
-            <Tabs defaultValue="general" className="space-y-4">
-              <TabsList className="grid w-full md:w-[400px] grid-cols-2">
-                <TabsTrigger value="general">Geral</TabsTrigger>
-                <TabsTrigger value="notifications">Notificações</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="general">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Configurações Gerais</CardTitle>
-                    <CardDescription>
-                      Configure os parâmetros básicos do sistema.
-                    </CardDescription>
-                  </CardHeader>
-                  <Form {...generalForm}>
-                    <form onSubmit={generalForm.handleSubmit(onGeneralSubmit)}>
-                      <CardContent className="space-y-4">
-                        <FormField
-                          control={generalForm.control}
-                          name="site_name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nome do Site</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Nome do site" {...field} />
-                              </FormControl>
-                              <FormDescription>
-                                Este nome será exibido no título do sistema.
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={generalForm.control}
-                          name="contact_email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email de Contato</FormLabel>
-                              <FormControl>
-                                <Input placeholder="contato@exemplo.com.br" {...field} />
-                              </FormControl>
-                              <FormDescription>
-                                Email para contato exibido no sistema.
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={generalForm.control}
-                          name="quiz_enabled"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                              <div className="space-y-0.5">
-                                <FormLabel className="text-base">
-                                  Habilitar Questionário
-                                </FormLabel>
-                                <FormDescription>
-                                  Quando ativado, os usuários podem acessar o questionário MAR.
-                                </FormDescription>
-                              </div>
-                              <FormControl>
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </CardContent>
-                      <CardFooter className="flex justify-end border-t pt-5">
-                        <Button type="submit" className="flex items-center gap-2">
-                          <Save className="h-4 w-4" />
-                          Salvar Configurações
-                        </Button>
-                      </CardFooter>
-                    </form>
-                  </Form>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="notifications">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Configurações de Notificações</CardTitle>
-                    <CardDescription>
-                      Configure como o sistema notificará eventos importantes.
-                    </CardDescription>
-                  </CardHeader>
-                  <Form {...notificationsForm}>
-                    <form onSubmit={notificationsForm.handleSubmit(onNotificationsSubmit)}>
-                      <CardContent className="space-y-4">
-                        <FormField
-                          control={notificationsForm.control}
-                          name="notification_email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email para Notificações</FormLabel>
-                              <FormControl>
-                                <Input placeholder="notificacoes@exemplo.com.br" {...field} />
-                              </FormControl>
-                              <FormDescription>
-                                Email para onde serão enviadas as notificações do sistema.
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={notificationsForm.control}
-                          name="user_signup_notification"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                              <div className="space-y-0.5">
-                                <FormLabel className="text-base">
-                                  Notificar Novos Registros
-                                </FormLabel>
-                                <FormDescription>
-                                  Receber notificação quando um novo usuário se cadastrar.
-                                </FormDescription>
-                              </div>
-                              <FormControl>
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={notificationsForm.control}
-                          name="quiz_completion_notification"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                              <div className="space-y-0.5">
-                                <FormLabel className="text-base">
-                                  Notificar Conclusões de Questionário
-                                </FormLabel>
-                                <FormDescription>
-                                  Receber notificação quando um usuário concluir o questionário MAR.
-                                </FormDescription>
-                              </div>
-                              <FormControl>
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </CardContent>
-                      <CardFooter className="flex justify-end border-t pt-5">
-                        <Button type="submit" className="flex items-center gap-2">
-                          <Save className="h-4 w-4" />
-                          Salvar Notificações
-                        </Button>
-                      </CardFooter>
-                    </form>
-                  </Form>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </SidebarInset>
+    <div className="container max-w-7xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Configurações do Sistema</h1>
+          <p className="text-muted-foreground mt-1">
+            Gerencie as configurações gerais e comportamento do sistema.
+          </p>
+        </div>
       </div>
-    </SidebarProvider>
+      
+      <Tabs defaultValue="general" className="space-y-4">
+        <TabsList className="grid w-full md:w-[400px] grid-cols-2">
+          <TabsTrigger value="general">Geral</TabsTrigger>
+          <TabsTrigger value="notifications">Notificações</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="general">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações Gerais</CardTitle>
+              <CardDescription>
+                Configure os parâmetros básicos do sistema.
+              </CardDescription>
+            </CardHeader>
+            <Form {...generalForm}>
+              <form onSubmit={generalForm.handleSubmit(onGeneralSubmit)}>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={generalForm.control}
+                    name="site_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome do Site</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nome do site" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Este nome será exibido no título do sistema.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={generalForm.control}
+                    name="contact_email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email de Contato</FormLabel>
+                        <FormControl>
+                          <Input placeholder="contato@exemplo.com.br" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Email para contato exibido no sistema.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={generalForm.control}
+                    name="quiz_enabled"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">
+                            Habilitar Questionário
+                          </FormLabel>
+                          <FormDescription>
+                            Quando ativado, os usuários podem acessar o questionário MAR.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+                <CardFooter className="flex justify-end border-t pt-5">
+                  <Button type="submit" className="flex items-center gap-2">
+                    <Save className="h-4 w-4" />
+                    Salvar Configurações
+                  </Button>
+                </CardFooter>
+              </form>
+            </Form>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="notifications">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Notificações</CardTitle>
+              <CardDescription>
+                Configure como o sistema notificará eventos importantes.
+              </CardDescription>
+            </CardHeader>
+            <Form {...notificationsForm}>
+              <form onSubmit={notificationsForm.handleSubmit(onNotificationsSubmit)}>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={notificationsForm.control}
+                    name="notification_email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email para Notificações</FormLabel>
+                        <FormControl>
+                          <Input placeholder="notificacoes@exemplo.com.br" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Email para onde serão enviadas as notificações do sistema.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={notificationsForm.control}
+                    name="user_signup_notification"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">
+                            Notificar Novos Registros
+                          </FormLabel>
+                          <FormDescription>
+                            Receber notificação quando um novo usuário se cadastrar.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={notificationsForm.control}
+                    name="quiz_completion_notification"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">
+                            Notificar Conclusões de Questionário
+                          </FormLabel>
+                          <FormDescription>
+                            Receber notificação quando um usuário concluir o questionário MAR.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+                <CardFooter className="flex justify-end border-t pt-5">
+                  <Button type="submit" className="flex items-center gap-2">
+                    <Save className="h-4 w-4" />
+                    Salvar Notificações
+                  </Button>
+                </CardFooter>
+              </form>
+            </Form>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

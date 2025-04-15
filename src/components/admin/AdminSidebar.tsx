@@ -219,12 +219,15 @@ export function AdminSidebar() {
             </button>
           </div>
           
-          <SidebarTrigger asChild>
-            <Button variant="outline" size="sm" className="w-full justify-between">
-              <span>Ocultar Sidebar</span>
-              <PanelLeftClose className="ml-2 h-4 w-4" />
-            </Button>
-          </SidebarTrigger>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full justify-between"
+            onClick={() => document.querySelector('[data-sidebar="trigger"]')?.click()}
+          >
+            <span>Ocultar Sidebar</span>
+            <PanelLeftClose className="ml-2 h-4 w-4" />
+          </Button>
         </div>
       </SidebarFooter>
     </Sidebar>
