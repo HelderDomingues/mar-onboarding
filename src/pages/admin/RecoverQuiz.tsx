@@ -1,228 +1,279 @@
 
-import React, { useState } from "react";
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { recoverQuizData } from "@/scripts/quiz-recovery";
-import { forceQuizRecovery } from "@/scripts/force-quiz-recovery";
-import { Loader2, AlertCircle, CheckCircle, RotateCcw, Wrench } from "lucide-react";
+import { Loader2, AlertCircle, Database, RefreshCw, CheckCircle } from "lucide-react";
+import { ForceRecoveryButton } from "@/components/admin/ForceRecoveryButton";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { supabase } from "@/integrations/supabase/client";
 
-const RecoverQuiz = () => {
+const RecoverQuizPage = () => {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isForceLoading, setIsForceLoading] = useState(false);
-  const [result, setResult] = useState<{
-    success: boolean;
-    message: string;
-    data?: {
-      modules?: number;
-      questions?: number;
-      options?: number;
-    };
-  } | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [checkResult, setCheckResult] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState("recovery");
 
-  const handleRecoverQuiz = async () => {
+  const checkConnection = async () => {
     try {
-      setIsLoading(true);
-      setResult(null);
+      setChecking(true);
+      setCheckResult(null);
       
-      const result = await recoverQuizData();
+      // Verificar conexão com Supabase
+      const { data, error, connected } = await supabase
+        .from('quiz_modules')
+        .select('count', { count: 'exact', head: true });
+        
+      if (error) {
+        console.error("Erro na conexão:", error);
+        setCheckResult({
+          success: false,
+          message: `Falha na conexão: ${error.message}`,
+          details: error
+        });
+        
+        toast({
+          title: "Erro na conexão",
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
       
-      setResult(result);
+      // Verificar contagem de dados
+      const { count: modulesCount } = await supabase
+        .from('quiz_modules')
+        .select('*', { count: 'exact', head: true });
+        
+      const { count: questionsCount } = await supabase
+        .from('quiz_questions')
+        .select('*', { count: 'exact', head: true });
+        
+      const { count: optionsCount } = await supabase
+        .from('quiz_options')
+        .select('*', { count: 'exact', head: true });
+      
+      setCheckResult({
+        success: true,
+        message: "Conexão bem-sucedida!",
+        data: {
+          modules: modulesCount || 0,
+          questions: questionsCount || 0, 
+          options: optionsCount || 0
+        }
+      });
+      
       toast({
-        title: result.success ? "Sucesso" : "Erro",
-        description: result.message,
-        variant: result.success ? "default" : "destructive"
+        title: "Conexão verificada",
+        description: "Conexão com o banco de dados está funcionando corretamente.",
       });
     } catch (error) {
-      console.error("Erro ao executar recuperação:", error);
-      setResult({
+      console.error("Erro ao verificar conexão:", error);
+      setCheckResult({
         success: false,
-        message: `Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+        message: `Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+        error
       });
+      
       toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao recuperar os dados do questionário.",
+        title: "Erro ao verificar conexão",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
         variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+      setChecking(false);
     }
   };
 
-  const handleForceRecovery = async () => {
-    try {
-      setIsForceLoading(true);
-      setResult(null);
-      
-      const result = await forceQuizRecovery();
-      
-      setResult(result);
+  const handleRecoveryComplete = (result: any) => {
+    if (result.success) {
       toast({
-        title: result.success ? "Sucesso" : "Erro",
+        title: "Recuperação concluída",
+        description: `Dados recuperados: ${result.data?.modules || 0} módulos, ${result.data?.questions || 0} questões, ${result.data?.options || 0} opções.`,
+      });
+    } else {
+      toast({
+        title: "Falha na recuperação",
         description: result.message,
-        variant: result.success ? "default" : "destructive"
-      });
-    } catch (error) {
-      console.error("Erro ao executar recuperação forçada:", error);
-      setResult({
-        success: false,
-        message: `Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
-      });
-      toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao recuperar forçadamente os dados do questionário.",
         variant: "destructive"
       });
-    } finally {
-      setIsForceLoading(false);
     }
+    
+    // Após recuperação, verificar estado do banco
+    checkConnection();
   };
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-background font-sans">
+      <div className="flex min-h-screen bg-background">
         <AdminSidebar />
         
-        <div className="flex-1">
-          <div className="container mx-auto py-6 space-y-6">
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h1 className="text-2xl font-bold">Recuperação do Questionário MAR</h1>
-                <p className="text-muted-foreground">
-                  Recupere os dados do questionário MAR após perda ou corrupção
-                </p>
-              </div>
-            </div>
+        <div className="flex-1 p-8">
+          <div className="container mx-auto">
+            <h1 className="text-3xl font-bold mb-6">Centro de Recuperação do Questionário</h1>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <RotateCcw className="h-5 w-5 text-primary" />
-                    Recuperação de Dados
-                  </CardTitle>
-                  <CardDescription>
-                    Execute a recuperação dos dados do questionário MAR para restaurar perguntas e opções perdidas
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">                  
-                  {result && (
-                    <Alert variant={result.success ? "default" : "destructive"}>
-                      {result.success ? (
-                        <CheckCircle className="h-4 w-4" />
-                      ) : (
-                        <AlertCircle className="h-4 w-4" />
-                      )}
-                      <AlertTitle>
-                        {result.success ? "Recuperação concluída" : "Erro"}
-                      </AlertTitle>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid grid-cols-2 mb-6">
+                <TabsTrigger value="recovery">Recuperação</TabsTrigger>
+                <TabsTrigger value="diagnostics">Diagnóstico</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="recovery">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <RefreshCw className="w-5 h-5" />
+                      Recuperação Forçada do Questionário
+                    </CardTitle>
+                    <CardDescription>
+                      Esta operação limpará e recriará completamente todos os dados do questionário MAR.
+                      Use apenas em caso de dados corrompidos ou inconsistentes.
+                    </CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent>
+                    <Alert className="mb-6">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Atenção</AlertTitle>
                       <AlertDescription>
-                        {result.message}
-                        
-                        {result.success && result.data && (
-                          <div className="mt-2 text-xs">
-                            <p>Módulos: {result.data.modules}</p>
-                            <p>Perguntas: {result.data.questions}</p>
-                            <p>Opções: {result.data.options}</p>
-                          </div>
-                        )}
+                        Esta operação remove todos os dados existentes do questionário antes de inserir novos.
+                        As respostas dos usuários serão preservadas, mas podem ficar desalinhadas se a estrutura das perguntas mudar.
                       </AlertDescription>
                     </Alert>
-                  )}
+                    
+                    {checkResult && (
+                      <div className="mb-6 p-4 border rounded-md">
+                        <h3 className="font-medium mb-2">Estado atual do banco de dados:</h3>
+                        <div className="text-sm">
+                          <p>Módulos: {checkResult.data?.modules || 0}</p>
+                          <p>Questões: {checkResult.data?.questions || 0}</p>
+                          <p>Opções: {checkResult.data?.options || 0}</p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
                   
-                  <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-                    <Button 
-                      onClick={handleForceRecovery}
-                      disabled={isForceLoading || isLoading}
-                      className="bg-red-700 hover:bg-red-800"
+                  <CardFooter className="flex justify-between">
+                    <Button
+                      variant="outline"
+                      onClick={checkConnection}
+                      disabled={checking}
                     >
-                      {isForceLoading ? (
+                      {checking ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Executando...
+                          Verificando...
                         </>
                       ) : (
                         <>
-                          <Wrench className="mr-2 h-4 w-4" />
-                          Recuperação Forçada (Recomendado)
+                          <Database className="mr-2 h-4 w-4" />
+                          Verificar Banco de Dados
                         </>
                       )}
                     </Button>
                     
+                    <ForceRecoveryButton
+                      onComplete={handleRecoveryComplete}
+                      variant="destructive"
+                    />
+                  </CardFooter>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="diagnostics">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Database className="w-5 h-5" />
+                      Diagnóstico da Conexão
+                    </CardTitle>
+                    <CardDescription>
+                      Verifique se a conexão com o banco de dados está funcionando corretamente
+                      e se os dados do questionário estão presentes.
+                    </CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent>
+                    {checkResult ? (
+                      <div className={`p-4 border rounded-md ${checkResult.success ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                        <div className="flex items-start gap-3">
+                          {checkResult.success ? (
+                            <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                          ) : (
+                            <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+                          )}
+                          
+                          <div>
+                            <h3 className="font-medium mb-1">
+                              {checkResult.success ? 'Conexão estabelecida' : 'Falha na conexão'}
+                            </h3>
+                            <p className="text-sm mb-3">{checkResult.message}</p>
+                            
+                            {checkResult.success ? (
+                              <div className="bg-white p-3 rounded border text-sm">
+                                <p className="font-medium mb-1">Contagem de registros:</p>
+                                <ul className="space-y-1 pl-2">
+                                  <li>Módulos: {checkResult.data?.modules || 0}</li>
+                                  <li>Questões: {checkResult.data?.questions || 0}</li>
+                                  <li>Opções: {checkResult.data?.options || 0}</li>
+                                </ul>
+                                
+                                {(checkResult.data?.modules === 0 || 
+                                  checkResult.data?.questions === 0 || 
+                                  checkResult.data?.options === 0) && (
+                                  <Alert className="mt-3 bg-amber-50">
+                                    <AlertCircle className="h-4 w-4 text-amber-500" />
+                                    <AlertTitle>Dados insuficientes</AlertTitle>
+                                    <AlertDescription>
+                                      Alguns dados estão faltando. Recomendamos executar a recuperação forçada.
+                                    </AlertDescription>
+                                  </Alert>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="bg-white p-3 rounded border text-sm">
+                                <p className="font-medium mb-1">Detalhes do erro:</p>
+                                <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto max-h-40">
+                                  {JSON.stringify(checkResult.details || checkResult.error, null, 2)}
+                                </pre>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <Database className="h-12 w-12 text-gray-300 mb-3" />
+                        <p className="text-muted-foreground">Clique no botão abaixo para verificar a conexão</p>
+                      </div>
+                    )}
+                  </CardContent>
+                  
+                  <CardFooter>
                     <Button 
-                      onClick={handleRecoverQuiz}
-                      disabled={isLoading || isForceLoading}
-                      className="bg-blue-700 hover:bg-blue-800"
+                      onClick={checkConnection}
+                      disabled={checking}
+                      className="w-full"
                     >
-                      {isLoading ? (
+                      {checking ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Executando...
+                          Verificando conexão...
                         </>
                       ) : (
                         <>
-                          <RotateCcw className="mr-2 h-4 w-4" />
-                          Recuperação Padrão
+                          <Database className="mr-2 h-4 w-4" />
+                          Verificar Conexão com o Banco de Dados
                         </>
                       )}
                     </Button>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Instruções</CardTitle>
-                  <CardDescription>
-                    Informações sobre o processo de recuperação do questionário MAR
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="rounded-md bg-blue-50 p-4 text-sm text-blue-900">
-                    <h3 className="font-medium mb-2">O que esta página faz?</h3>
-                    <p className="mb-2">
-                      Esta página executa o script de recuperação do questionário MAR, que:
-                    </p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li>Verifica e corrige os módulos do questionário</li>
-                      <li>Recupera as perguntas perdidas ou inconsistentes</li>
-                      <li>Restaura as opções de resposta para cada pergunta</li>
-                      <li>Garante a consistência entre módulos, perguntas e opções</li>
-                    </ul>
-                  </div>
-                  
-                  <div className="rounded-md bg-red-50 p-4 text-sm text-red-900">
-                    <h3 className="font-medium mb-2">Recuperação Forçada (Recomendada)</h3>
-                    <p>
-                      Este método <strong>limpa completamente</strong> todos os dados existentes e insere novos dados
-                      do zero. É o método mais confiável para resolver problemas persistentes.
-                      Use esta opção se o método padrão não estiver funcionando.
-                    </p>
-                  </div>
-                  
-                  <div className="rounded-md bg-yellow-50 p-4 text-sm text-yellow-900">
-                    <h3 className="font-medium mb-2">Recuperação Padrão</h3>
-                    <p>
-                      Este método tenta preservar os dados existentes sempre que possível,
-                      corrigindo apenas as inconsistências encontradas. É menos invasivo, 
-                      mas pode não resolver todos os problemas.
-                    </p>
-                  </div>
-                  
-                  <div className="rounded-md bg-green-50 p-4 text-sm text-green-900">
-                    <h3 className="font-medium mb-2">Após a execução</h3>
-                    <p>
-                      Após a recuperação com sucesso, você pode verificar os dados restaurados no
-                      <strong> Editor do Questionário</strong>.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  </CardFooter>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
@@ -230,4 +281,4 @@ const RecoverQuiz = () => {
   );
 };
 
-export default RecoverQuiz;
+export default RecoverQuizPage;

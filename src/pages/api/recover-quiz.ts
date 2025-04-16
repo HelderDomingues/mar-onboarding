@@ -39,13 +39,13 @@ export default async function handler(req: any, res: any) {
   
   try {
     const { logger } = await import('@/utils/logger');
-    const { runRecovery } = await import('@/scripts/run-recovery');
+    const { forceQuizRecovery } = await import('@/scripts/force-quiz-recovery');
     
     logger.info('Iniciando recuperação do questionário via API', {
       tag: 'ApiRecovery'
     });
     
-    const result = await runRecovery();
+    const result = await forceQuizRecovery();
     
     logger.info('Recuperação via API concluída', {
       tag: 'ApiRecovery',
