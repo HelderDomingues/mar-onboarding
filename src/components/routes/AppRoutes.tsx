@@ -49,9 +49,10 @@ const AppRoutes = () => {
       <Route path="/faq" element={<ProtectedRoute component={FAQ} />} />
       <Route path="/diagnostico" element={<ProtectedRoute component={DiagnosticoSistema} />} />
       <Route path="/quiz-test" element={<QuizTest />} />
+      <Route path="/test-connection" element={<TestConnectionPage />} />
 
       {/* Admin routes */}
-      <Route path="/admin" element={<AdminRoute />}>
+      <Route path="/admin/*" element={<AdminRoute />}>
         <Route path="users" element={<Users />} />
         <Route path="users/new" element={<NewUser />} />
         <Route path="users/import" element={<ImportUsers />} />
@@ -65,8 +66,6 @@ const AppRoutes = () => {
         <Route path="logs" element={<SystemLog />} />
         <Route path="reports" element={<Reports />} />
       </Route>
-
-      <Route path="/test-connection" element={<ProtectedRoute component={TestConnectionPage} />} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>

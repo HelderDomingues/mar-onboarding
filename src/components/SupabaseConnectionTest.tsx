@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, CheckCircle, XCircle, Database } from 'lucide-react';
-import { checkSupabaseConnection } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { addLogEntry } from '@/utils/projectLog';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function SupabaseConnectionTest() {
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
     connected: boolean;
@@ -22,19 +24,72 @@ export default function SupabaseConnectionTest() {
       
       addLogEntry('info', 'Testando conexão com Supabase');
       
-      const connectionResult = await checkSupabaseConnection();
-      setResult(connectionResult);
+      // Verificar conexão com Supabase
+      const { data, error } = await supabase
+        .from('quiz_modules')
+        .select('count', { count: 'exact', head: true });
+        
+      if (error) {
+        setResult({
+          connected: false,
+          error: `Erro de conexão: ${error.message}`
+        });
+        
+        toast({
+          title: "Falha na conexão",
+          description: error.message,
+          variant: "destructive"
+        });
+        
+        addLogEntry('error', 'Falha ao testar conexão com Supabase', { error: error.message });
+        return;
+      }
       
-      addLogEntry(
-        connectionResult.connected ? 'info' : 'error',
-        `Teste de conexão: ${connectionResult.connected ? 'Sucesso' : 'Falha'}`,
-        connectionResult.connected ? undefined : { error: connectionResult.error }
-      );
+      // Verificar contagem de dados
+      const { count: modulesCount } = await supabase
+        .from('quiz_modules')
+        .select('*', { count: 'exact', head: true });
+        
+      const { count: questionsCount } = await supabase
+        .from('quiz_questions')
+        .select('*', { count: 'exact', head: true });
+        
+      const { count: optionsCount } = await supabase
+        .from('quiz_options')
+        .select('*', { count: 'exact', head: true });
+      
+      setResult({
+        connected: true,
+        message: "Conexão bem-sucedida!",
+        data: {
+          modules: modulesCount || 0,
+          questions: questionsCount || 0, 
+          options: optionsCount || 0
+        }
+      });
+      
+      toast({
+        title: "Conexão verificada",
+        description: "Conexão com o banco de dados está funcionando corretamente.",
+      });
+      
+      addLogEntry('info', 'Teste de conexão com Supabase: Sucesso', {
+        modules: modulesCount || 0,
+        questions: questionsCount || 0, 
+        options: optionsCount || 0
+      });
     } catch (error) {
       console.error('Erro ao testar conexão:', error);
+      
       setResult({
         connected: false,
         error: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
+      
+      toast({
+        title: "Erro ao verificar conexão",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive"
       });
       
       addLogEntry('error', 'Exceção ao testar conexão com Supabase', {
@@ -42,6 +97,89 @@ export default function SupabaseConnectionTest() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleInitializeQuiz = async () => {
+    try {
+      setLoading(true);
+      
+      toast({
+        title: "Inicializando questionário",
+        description: "Aguarde enquanto configuramos os dados básicos...",
+      });
+      
+      addLogEntry('info', 'Inicializando questionário pelo componente de teste');
+      
+      // Limpar dados existentes primeiro
+      await limparDadosQuiz();
+      
+      // Executar seed com dados limpos
+      const { seedQuizData } = await import('@/scripts/seed-quiz');
+      const success = await seedQuizData();
+      
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Questionário inicializado com sucesso!",
+        });
+        
+        // Atualizar o resultado do teste
+        testConnection();
+      } else {
+        toast({
+          title: "Falha",
+          description: "Não foi possível inicializar o questionário.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao inicializar questionário:', error);
+      
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive"
+      });
+      
+      addLogEntry('error', 'Erro ao inicializar questionário', {
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Função para limpar dados do questionário
+  const limparDadosQuiz = async () => {
+    try {
+      addLogEntry('info', 'Limpando dados existentes do questionário');
+      
+      // Limpar opções
+      await supabase
+        .from('quiz_options')
+        .delete()
+        .gt('id', '00000000-0000-0000-0000-000000000000');
+      
+      // Limpar perguntas
+      await supabase
+        .from('quiz_questions')
+        .delete()
+        .gt('id', '00000000-0000-0000-0000-000000000000');
+      
+      // Limpar módulos
+      await supabase
+        .from('quiz_modules')
+        .delete()
+        .gt('id', '00000000-0000-0000-0000-000000000000');
+      
+      addLogEntry('info', 'Dados do questionário limpos com sucesso');
+      return true;
+    } catch (error) {
+      addLogEntry('error', 'Erro ao limpar dados do questionário', {
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
+      return false;
     }
   };
 
@@ -80,10 +218,21 @@ export default function SupabaseConnectionTest() {
             
             {result.connected && result.data && (
               <div className="mt-4 p-3 bg-gray-50 rounded-md border text-sm">
-                <p className="font-medium mb-1">Resposta do servidor:</p>
-                <pre className="text-xs bg-white p-2 rounded overflow-auto max-h-32">
-                  {JSON.stringify(result.data, null, 2)}
-                </pre>
+                <p className="font-medium mb-1">Estado do questionário:</p>
+                <ul className="space-y-1 pl-2">
+                  <li>Módulos: {result.data.modules || 0}</li>
+                  <li>Questões: {result.data.questions || 0}</li>
+                  <li>Opções: {result.data.options || 0}</li>
+                </ul>
+                
+                {(result.data.modules === 0 || 
+                  result.data.questions === 0 || 
+                  result.data.options === 0) && (
+                  <div className="mt-3 p-3 bg-amber-50 rounded-md text-amber-800 text-sm">
+                    <p className="font-medium">Dados insuficientes</p>
+                    <p className="mt-1">O questionário não possui dados ou está incompleto. Clique em "Inicializar Questionário" abaixo para configurar o básico.</p>
+                  </div>
+                )}
               </div>
             )}
           </>
@@ -99,7 +248,7 @@ export default function SupabaseConnectionTest() {
         )}
       </CardContent>
       
-      <CardFooter>
+      <CardFooter className="flex flex-col gap-2">
         <Button
           onClick={testConnection}
           disabled={loading}
@@ -108,7 +257,7 @@ export default function SupabaseConnectionTest() {
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Testando conexão...
+              Verificando conexão...
             </>
           ) : (
             <>
@@ -117,6 +266,27 @@ export default function SupabaseConnectionTest() {
             </>
           )}
         </Button>
+        
+        {result && result.connected && (result.data?.modules === 0 || result.data?.questions === 0) && (
+          <Button
+            onClick={handleInitializeQuiz}
+            disabled={loading}
+            variant="secondary"
+            className="w-full mt-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Inicializando...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Inicializar Questionário
+              </>
+            )}
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

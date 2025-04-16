@@ -6,9 +6,14 @@
  * sem necessidade de interação com botões na interface.
  * 
  * Exemplo de uso:
- * GET /api/recover-quiz?key=your_secret_key
+ * GET /api/recover-quiz?key=recover-quiz-mar
  */
-export default async function handler(req: any, res: any) {
+import { supabase } from '@/integrations/supabase/client';
+import { seedQuizData } from '@/scripts/seed-quiz';
+import { logger } from '@/utils/logger';
+import { addLogEntry } from '@/utils/projectLog';
+
+export default async function handler(req, res) {
   // Verificar método
   if (req.method !== 'GET') {
     return res.status(405).json({ 
@@ -19,10 +24,9 @@ export default async function handler(req: any, res: any) {
   
   // Verificar chave de segurança básica
   const { key } = req.query;
-  const securityKey = import.meta.env.VITE_QUIZ_RECOVERY_KEY || 'recover-quiz-mar';
+  const securityKey = 'recover-quiz-mar';
   
   if (key !== securityKey) {
-    const { logger } = await import('@/utils/logger');
     logger.warn('Tentativa de recuperação com chave inválida', {
       tag: 'ApiRecovery',
       data: {
@@ -38,23 +42,33 @@ export default async function handler(req: any, res: any) {
   }
   
   try {
-    const { logger } = await import('@/utils/logger');
-    const { forceQuizRecovery } = await import('@/scripts/force-quiz-recovery');
-    
     logger.info('Iniciando recuperação do questionário via API', {
       tag: 'ApiRecovery'
     });
     
-    const result = await forceQuizRecovery();
+    addLogEntry('info', 'Iniciando recuperação do questionário via API');
+    
+    // Limpar dados existentes primeiro
+    await limparDadosQuiz();
+    
+    // Executar seed com dados limpos
+    const success = await seedQuizData();
+    
+    const result = {
+      success: success,
+      message: success ? 'Questionário recuperado com sucesso' : 'Falha ao recuperar questionário',
+      timestamp: new Date().toISOString()
+    };
     
     logger.info('Recuperação via API concluída', {
       tag: 'ApiRecovery',
       data: result
     });
     
-    return res.status(result.success ? 200 : 500).json(result);
+    addLogEntry('info', 'Recuperação via API concluída', { resultado: result });
+    
+    return res.status(success ? 200 : 500).json(result);
   } catch (error) {
-    const { logger } = await import('@/utils/logger');
     const errorMessage = error instanceof Error ? error.message : String(error);
     
     logger.error('Erro na API de recuperação', {
@@ -62,9 +76,54 @@ export default async function handler(req: any, res: any) {
       data: { error }
     });
     
+    addLogEntry('error', 'Erro na API de recuperação', { error: errorMessage });
+    
     return res.status(500).json({
       success: false,
       message: `Erro ao processar a recuperação: ${errorMessage}`
     });
+  }
+}
+
+// Função para limpar todos os dados do questionário
+async function limparDadosQuiz() {
+  try {
+    logger.info('Limpando dados existentes do questionário', { tag: 'ApiRecovery' });
+    
+    // Limpar opções
+    const { error: deleteOptionsError } = await supabase
+      .from('quiz_options')
+      .delete()
+      .gt('id', '00000000-0000-0000-0000-000000000000');
+      
+    if (deleteOptionsError) {
+      logger.error('Erro ao limpar opções', { tag: 'ApiRecovery', error: deleteOptionsError });
+    }
+    
+    // Limpar perguntas
+    const { error: deleteQuestionsError } = await supabase
+      .from('quiz_questions')
+      .delete()
+      .gt('id', '00000000-0000-0000-0000-000000000000');
+      
+    if (deleteQuestionsError) {
+      logger.error('Erro ao limpar perguntas', { tag: 'ApiRecovery', error: deleteQuestionsError });
+    }
+    
+    // Limpar módulos
+    const { error: deleteModulesError } = await supabase
+      .from('quiz_modules')
+      .delete()
+      .gt('id', '00000000-0000-0000-0000-000000000000');
+      
+    if (deleteModulesError) {
+      logger.error('Erro ao limpar módulos', { tag: 'ApiRecovery', error: deleteModulesError });
+    }
+    
+    logger.info('Dados do questionário limpos com sucesso', { tag: 'ApiRecovery' });
+    return true;
+  } catch (error) {
+    logger.error('Erro ao limpar dados do questionário', { tag: 'ApiRecovery', error });
+    return false;
   }
 }

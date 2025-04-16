@@ -1,197 +1,223 @@
 
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { 
-  ChevronRight, 
-  Users, 
-  Settings as SettingsIcon, 
-  LayoutDashboard, 
-  HelpCircle, 
-  FileBarChart2, 
-  ListChecks, 
-  FileEdit,
-  Database,
-  BarChart,
-  BookOpen,
-  PanelLeftClose,
-  ShieldAlert,
-  LogOut
-} from "lucide-react";
+import React from 'react';
+import { NavLink } from 'react-router-dom';
 import { 
   Sidebar, 
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
-  SidebarMenu, 
-  SidebarMenuItem, 
-  SidebarMenuButton, 
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
   SidebarGroup,
-  SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarTrigger,
-  useSidebar
-} from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { logger } from "@/utils/logger";
-import { addLogEntry } from "@/utils/projectLog";
+  SidebarGroupContent,
+  SidebarFooter
+} from '@/components/ui/sidebar';
+import {
+  Users,
+  Database,
+  FileText,
+  Settings,
+  Home,
+  BarChart2,
+  FileCheck,
+  Book,
+  Calendar,
+  ListChecks,
+  LogOut
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 
-export function AdminSidebar() {
-  const location = useLocation();
-  const { user, logout } = useAuth();
-  const { toggleSidebar } = useSidebar();
+export const AdminSidebar = () => {
+  const { signOut } = useAuth();
   
-  const currentRoute = location.pathname;
-  
-  const handleLogout = async () => {
+  const handleSignOut = async () => {
     try {
-      logger.info('Iniciando logout a partir da sidebar', { tag: 'Admin' });
-      addLogEntry('auth', 'Solicitação de logout via AdminSidebar');
-      await logout();
+      await signOut();
     } catch (error) {
-      logger.error('Erro durante logout a partir da sidebar', { 
-        tag: 'Admin', 
-        data: error 
-      });
+      console.error('Erro ao sair:', error);
     }
   };
   
   return (
-    <Sidebar className="fixed left-0 top-0 bottom-0 w-64 border-r bg-card text-card-foreground">
-      <SidebarHeader className="sticky top-0 z-10 border-b bg-background px-6 py-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white">
-            <span className="font-semibold">CV</span>
-          </div>
-          <div className="font-medium">
-            <div className="text-lg font-semibold">Crie Valor</div>
-            <div className="text-xs text-muted-foreground">Painel Administrativo</div>
+    <Sidebar>
+      <SidebarHeader>
+        <div className="flex items-center p-4">
+          <img 
+            src="/logo-crie-valor.png" 
+            alt="Crie Valor" 
+            className="h-8 mr-2" 
+          />
+          <div>
+            <h2 className="text-lg font-semibold">Sistema MAR</h2>
+            <p className="text-xs text-muted-foreground">Painel Administrativo</p>
           </div>
         </div>
       </SidebarHeader>
       
-      <SidebarContent className="px-4 py-6">
+      <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Navegação</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className="bg-sidebar text-foreground">
-                  <Link 
-                    to="/admin/users" 
-                    className={`${currentRoute === '/admin/users' ? 'bg-accent/60 text-accent-foreground font-medium' : ''}`}
-                  >
-                    <LayoutDashboard className="h-4 w-4" />
+                <SidebarMenuButton asChild>
+                  <NavLink to="/dashboard" className={({ isActive }) => 
+                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                  }>
+                    <Home className="w-4 h-4 mr-2" />
                     <span>Dashboard</span>
-                  </Link>
+                  </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className="bg-sidebar text-foreground">
-                  <Link 
-                    to="/admin/users" 
-                    className={`${currentRoute === '/admin/users' ? 'bg-accent/60 text-accent-foreground font-medium' : ''}`}
-                  >
-                    <Users className="h-4 w-4" />
+                <SidebarMenuButton asChild>
+                  <NavLink to="/test-connection" className={({ isActive }) => 
+                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                  }>
+                    <Database className="w-4 h-4 mr-2" />
+                    <span>Teste de Conexão</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarGroup>
+          <SidebarGroupLabel>Gerenciamento</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/admin/users" className={({ isActive }) => 
+                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                  }>
+                    <Users className="w-4 h-4 mr-2" />
                     <span>Usuários</span>
-                  </Link>
+                  </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className="bg-sidebar text-foreground">
-                  <Link 
-                    to="/admin/quiz-responses" 
-                    className={`${currentRoute === '/admin/quiz-responses' ? 'bg-accent/60 text-accent-foreground font-medium' : ''}`}
-                  >
-                    <ListChecks className="h-4 w-4" />
-                    <span>Questionários</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className="bg-sidebar text-foreground">
-                  <Link 
-                    to="/admin/quiz-editor" 
-                    className={`${currentRoute === '/admin/quiz-editor' ? 'bg-accent/60 text-accent-foreground font-medium' : ''}`}
-                  >
-                    <FileEdit className="h-4 w-4" />
-                    <span>Editor de Questionário</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className="bg-sidebar text-foreground">
-                  <Link 
-                    to="/admin/seed-quiz" 
-                    className={`${currentRoute === '/admin/seed-quiz' ? 'bg-accent/60 text-accent-foreground font-medium' : ''}`}
-                  >
-                    <Database className="h-4 w-4" />
-                    <span>Configurar Questionário</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className="bg-sidebar text-foreground">
-                  <Link 
-                    to="/admin/reports" 
-                    className={`${currentRoute === '/admin/reports' ? 'bg-accent/60 text-accent-foreground font-medium' : ''}`}
-                  >
-                    <FileBarChart2 className="h-4 w-4" />
-                    <span>Relatórios e Análises</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className="bg-sidebar text-foreground">
-                  <Link 
-                    to="/admin/materials" 
-                    className={`${currentRoute === '/admin/materials' ? 'bg-accent/60 text-accent-foreground font-medium' : ''}`}
-                  >
-                    <BookOpen className="h-4 w-4" />
+                <SidebarMenuButton asChild>
+                  <NavLink to="/admin/materials" className={({ isActive }) => 
+                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                  }>
+                    <Book className="w-4 h-4 mr-2" />
                     <span>Materiais</span>
-                  </Link>
+                  </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className="bg-sidebar text-foreground">
-                  <Link 
-                    to="/admin/metrics" 
-                    className={`${currentRoute === '/admin/metrics' ? 'bg-accent/60 text-accent-foreground font-medium' : ''}`}
-                  >
-                    <BarChart className="h-4 w-4" />
+                <SidebarMenuButton asChild>
+                  <NavLink to="/admin/quiz-responses" className={({ isActive }) => 
+                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                  }>
+                    <FileCheck className="w-4 h-4 mr-2" />
+                    <span>Respostas do Questionário</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarGroup>
+          <SidebarGroupLabel>Questionário</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/admin/quiz-editor" className={({ isActive }) => 
+                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                  }>
+                    <FileText className="w-4 h-4 mr-2" />
+                    <span>Editor de Questionário</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/admin/seed-quiz" className={({ isActive }) => 
+                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                  }>
+                    <Database className="w-4 h-4 mr-2" />
+                    <span>Inicializar Questionário</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/admin/recover-quiz" className={({ isActive }) => 
+                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                  }>
+                    <ListChecks className="w-4 h-4 mr-2" />
+                    <span>Recuperar Questionário</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarGroup>
+          <SidebarGroupLabel>Relatórios</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/admin/reports" className={({ isActive }) => 
+                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                  }>
+                    <Calendar className="w-4 h-4 mr-2" />
+                    <span>Relatórios</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/admin/metrics" className={({ isActive }) => 
+                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                  }>
+                    <BarChart2 className="w-4 h-4 mr-2" />
                     <span>Métricas</span>
-                  </Link>
+                  </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className="bg-sidebar text-foreground">
-                  <Link 
-                    to="/admin/settings" 
-                    className={`${currentRoute === '/admin/settings' ? 'bg-accent/60 text-accent-foreground font-medium' : ''}`}
-                  >
-                    <SettingsIcon className="h-4 w-4" />
+                <SidebarMenuButton asChild>
+                  <NavLink to="/admin/logs" className={({ isActive }) => 
+                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                  }>
+                    <FileText className="w-4 h-4 mr-2" />
+                    <span>Logs do Sistema</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarGroup>
+          <SidebarGroupLabel>Sistema</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/admin/settings" className={({ isActive }) => 
+                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                  }>
+                    <Settings className="w-4 h-4 mr-2" />
                     <span>Configurações</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className="bg-sidebar text-foreground">
-                  <Link 
-                    to="/admin/logs" 
-                    className={`${currentRoute === '/admin/logs' ? 'bg-accent/60 text-accent-foreground font-medium' : ''}`}
-                  >
-                    <ShieldAlert className="h-4 w-4" />
-                    <span>Logs</span>
-                  </Link>
+                  </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -199,39 +225,18 @@ export function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter className="border-t py-4 px-6">
-        <div className="flex flex-col space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center">
-                <span className="text-xs font-medium text-primary">
-                  {user?.email ? user.email.substring(0, 2).toUpperCase() : 'AD'}
-                </span>
-              </div>
-              <div className="text-sm font-medium">
-                {user?.email ? user.email : 'Administrador'}
-              </div>
-            </div>
-            <button 
-              onClick={handleLogout}
-              className="text-destructive hover:text-destructive/80"
-              title="Sair"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full justify-between"
-            onClick={toggleSidebar}
+      <SidebarFooter>
+        <div className="p-4">
+          <Button
+            variant="outline"
+            className="w-full justify-start"
+            onClick={handleSignOut}
           >
-            <span>Ocultar Sidebar</span>
-            <PanelLeftClose className="ml-2 h-4 w-4" />
+            <LogOut className="w-4 h-4 mr-2" />
+            <span>Sair</span>
           </Button>
         </div>
       </SidebarFooter>
     </Sidebar>
   );
-}
+};
