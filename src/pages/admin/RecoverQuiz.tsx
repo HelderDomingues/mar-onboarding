@@ -7,11 +7,13 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { recoverQuizData } from "@/scripts/quiz-recovery";
-import { Loader2, AlertCircle, CheckCircle, RotateCcw } from "lucide-react";
+import { forceQuizRecovery } from "@/scripts/force-quiz-recovery";
+import { Loader2, AlertCircle, CheckCircle, RotateCcw, Tool } from "lucide-react";
 
 const RecoverQuiz = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isForceLoading, setIsForceLoading] = useState(false);
   const [result, setResult] = useState<{
     success: boolean;
     message: string;
@@ -48,6 +50,35 @@ const RecoverQuiz = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleForceRecovery = async () => {
+    try {
+      setIsForceLoading(true);
+      setResult(null);
+      
+      const result = await forceQuizRecovery();
+      
+      setResult(result);
+      toast({
+        title: result.success ? "Sucesso" : "Erro",
+        description: result.message,
+        variant: result.success ? "default" : "destructive"
+      });
+    } catch (error) {
+      console.error("Erro ao executar recuperação forçada:", error);
+      setResult({
+        success: false,
+        message: `Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      });
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao recuperar forçadamente os dados do questionário.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsForceLoading(false);
     }
   };
 
@@ -103,10 +134,28 @@ const RecoverQuiz = () => {
                     </Alert>
                   )}
                   
-                  <div className="flex justify-end">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                    <Button 
+                      onClick={handleForceRecovery}
+                      disabled={isForceLoading || isLoading}
+                      className="bg-red-700 hover:bg-red-800"
+                    >
+                      {isForceLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Executando...
+                        </>
+                      ) : (
+                        <>
+                          <Tool className="mr-2 h-4 w-4" />
+                          Recuperação Forçada (Recomendado)
+                        </>
+                      )}
+                    </Button>
+                    
                     <Button 
                       onClick={handleRecoverQuiz}
-                      disabled={isLoading}
+                      disabled={isLoading || isForceLoading}
                       className="bg-blue-700 hover:bg-blue-800"
                     >
                       {isLoading ? (
@@ -117,7 +166,7 @@ const RecoverQuiz = () => {
                       ) : (
                         <>
                           <RotateCcw className="mr-2 h-4 w-4" />
-                          Recuperar Dados do Questionário
+                          Recuperação Padrão
                         </>
                       )}
                     </Button>
@@ -146,12 +195,21 @@ const RecoverQuiz = () => {
                     </ul>
                   </div>
                   
-                  <div className="rounded-md bg-yellow-50 p-4 text-sm text-yellow-900">
-                    <h3 className="font-medium mb-2">Atenção</h3>
+                  <div className="rounded-md bg-red-50 p-4 text-sm text-red-900">
+                    <h3 className="font-medium mb-2">Recuperação Forçada (Recomendada)</h3>
                     <p>
-                      Este processo foi projetado para recuperar dados após problemas como o ocorrido
-                      com o script de seed original. Ele procura manter os IDs existentes sempre que possível
-                      e preservar as relações entre os dados.
+                      Este método <strong>limpa completamente</strong> todos os dados existentes e insere novos dados
+                      do zero. É o método mais confiável para resolver problemas persistentes.
+                      Use esta opção se o método padrão não estiver funcionando.
+                    </p>
+                  </div>
+                  
+                  <div className="rounded-md bg-yellow-50 p-4 text-sm text-yellow-900">
+                    <h3 className="font-medium mb-2">Recuperação Padrão</h3>
+                    <p>
+                      Este método tenta preservar os dados existentes sempre que possível,
+                      corrigindo apenas as inconsistências encontradas. É menos invasivo, 
+                      mas pode não resolver todos os problemas.
                     </p>
                   </div>
                   
