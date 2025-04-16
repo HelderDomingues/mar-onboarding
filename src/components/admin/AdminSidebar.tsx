@@ -30,11 +30,11 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 
 export const AdminSidebar = () => {
-  const { signOut } = useAuth();
+  const { logout } = useAuth();
   
   const handleSignOut = async () => {
     try {
-      await signOut();
+      await logout();
     } catch (error) {
       console.error('Erro ao sair:', error);
     }

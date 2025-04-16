@@ -15,6 +15,7 @@ export default function SupabaseConnectionTest() {
     connected: boolean;
     error?: string;
     data?: any;
+    message?: string; // Adicionando a propriedade message ao tipo
   } | null>(null);
 
   const testConnection = async () => {
