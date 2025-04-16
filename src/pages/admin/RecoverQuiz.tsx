@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { recoverQuizData } from "@/scripts/quiz-recovery";
 import { forceQuizRecovery } from "@/scripts/force-quiz-recovery";
-import { Loader2, AlertCircle, CheckCircle, RotateCcw, Tool } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, RotateCcw, Wrench } from "lucide-react";
 
 const RecoverQuiz = () => {
   const { toast } = useToast();
@@ -147,7 +147,7 @@ const RecoverQuiz = () => {
                         </>
                       ) : (
                         <>
-                          <Tool className="mr-2 h-4 w-4" />
+                          <Wrench className="mr-2 h-4 w-4" />
                           Recuperação Forçada (Recomendado)
                         </>
                       )}

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { forceQuizRecovery } from '@/scripts/force-quiz-recovery';
-import { Loader2, Tool } from 'lucide-react';
+import { Loader2, Wrench } from 'lucide-react';
 
 interface ForceRecoveryButtonProps {
   onComplete?: (result: {
@@ -79,7 +79,7 @@ export const ForceRecoveryButton: React.FC<ForceRecoveryButtonProps> = ({
         </>
       ) : (
         <>
-          <Tool className="mr-2 h-4 w-4" />
+          <Wrench className="mr-2 h-4 w-4" />
           Recuperar Questionário
         </>
       )}

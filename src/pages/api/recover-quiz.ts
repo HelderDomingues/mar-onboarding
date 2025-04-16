@@ -1,5 +1,5 @@
 
-import { NextApiRequest, NextApiResponse } from 'next';
+import { Request, Response } from 'express';
 import { runRecovery } from '@/scripts/run-recovery';
 import { logger } from '@/utils/logger';
 
@@ -12,7 +12,7 @@ import { logger } from '@/utils/logger';
  * Exemplo de uso:
  * GET /api/recover-quiz?key=your_secret_key
  */
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: Request, res: Response) {
   // Verificar método
   if (req.method !== 'GET') {
     return res.status(405).json({ 
@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   
   // Verificar chave de segurança básica
   const { key } = req.query;
-  const securityKey = process.env.QUIZ_RECOVERY_KEY || 'recover-quiz-mar';
+  const securityKey = import.meta.env.VITE_QUIZ_RECOVERY_KEY || 'recover-quiz-mar';
   
   if (key !== securityKey) {
     logger.warn('Tentativa de recuperação com chave inválida', {
