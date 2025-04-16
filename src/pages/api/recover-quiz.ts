@@ -1,8 +1,4 @@
 
-import { Request, Response } from 'express';
-import { runRecovery } from '@/scripts/run-recovery';
-import { logger } from '@/utils/logger';
-
 /**
  * API para executar a recuperação forçada do questionário MAR
  * 
@@ -12,7 +8,7 @@ import { logger } from '@/utils/logger';
  * Exemplo de uso:
  * GET /api/recover-quiz?key=your_secret_key
  */
-export default async function handler(req: Request, res: Response) {
+export default async function handler(req: any, res: any) {
   // Verificar método
   if (req.method !== 'GET') {
     return res.status(405).json({ 
@@ -26,10 +22,11 @@ export default async function handler(req: Request, res: Response) {
   const securityKey = import.meta.env.VITE_QUIZ_RECOVERY_KEY || 'recover-quiz-mar';
   
   if (key !== securityKey) {
+    const { logger } = await import('@/utils/logger');
     logger.warn('Tentativa de recuperação com chave inválida', {
       tag: 'ApiRecovery',
       data: {
-        ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+        ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
         userAgent: req.headers['user-agent']
       }
     });
@@ -41,6 +38,9 @@ export default async function handler(req: Request, res: Response) {
   }
   
   try {
+    const { logger } = await import('@/utils/logger');
+    const { runRecovery } = await import('@/scripts/run-recovery');
+    
     logger.info('Iniciando recuperação do questionário via API', {
       tag: 'ApiRecovery'
     });
@@ -54,6 +54,7 @@ export default async function handler(req: Request, res: Response) {
     
     return res.status(result.success ? 200 : 500).json(result);
   } catch (error) {
+    const { logger } = await import('@/utils/logger');
     const errorMessage = error instanceof Error ? error.message : String(error);
     
     logger.error('Erro na API de recuperação', {
