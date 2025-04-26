@@ -1,60 +1,24 @@
 
-export interface QuizSubmission {
-  id: string;
-  user_id: string;
-  current_module: number;
-  completed: boolean;
-  started_at: string;
-  completed_at: string | null;
-  contact_preference?: string | null;
-  contact_consent?: boolean;
-  
-  // Campos adicionais
-  user_email?: string;
-  user_name?: string;
-  webhook_processed?: boolean;
-  
-  // Novos campos para análise
-  modules_completed?: number[];
-  last_question_id?: string;
-  sessions?: number; // Número de sessões para completar o questionário
-  total_time_spent?: number; // Tempo total gasto em segundos
-  device_info?: string; // Informações do dispositivo usado
-  last_active?: string; // Última atividade no questionário
-}
-
-export type QuestionType = 'text' | 'textarea' | 'radio' | 'checkbox' | 'select' | 'email' | 'url' | 'instagram' | 'phone' | 'number';
+export type QuestionType = 'text' | 'textarea' | 'radio' | 'checkbox' | 'select' | 'number' | 'email' | 'url' | 'instagram';
 
 export interface QuizModule {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   order_number: number;
-  is_active: boolean;
   created_at?: string;
-  updated_at?: string;
 }
 
 export interface QuizQuestion {
   id: string;
   module_id: string;
-  text?: string;
-  question_text?: string; // Garantir que ambos text e question_text estejam disponíveis
-  type?: QuestionType;
-  question_type?: QuestionType;
+  text: string;
+  type: QuestionType;
   required: boolean;
-  hint?: string;
+  hint?: string | null;
   order_number: number;
   created_at?: string;
-  updated_at?: string;
-  options?: (QuizOption | string)[];
-  options_json?: string | any[];
-  validation?: string;
-  max_options?: number;
-  prefix?: string;
-  placeholder?: string;
-  module_number?: number;
-  module_title?: string;
+  options?: QuizOption[];
 }
 
 export interface QuizOption {
@@ -63,20 +27,24 @@ export interface QuizOption {
   text: string;
   order_number: number;
   created_at?: string;
-  updated_at?: string;
+}
+
+export interface QuizSubmission {
+  id: string;
+  user_id: string;
+  user_email: string;
+  current_module: number;
+  completed: boolean;
+  started_at: string;
+  completed_at?: string | null;
+  created_at?: string;
 }
 
 export interface QuizAnswer {
-  id?: string;
-  user_id: string;
+  id: string;
+  submission_id: string;
   question_id: string;
-  answer: string;
+  answer: string | null;
   created_at?: string;
   updated_at?: string;
-  question_text?: string;
-  module_id?: string;
-  module_number?: number;
-  module_title?: string;
-  question_type?: string;
-  user_email?: string;
 }
