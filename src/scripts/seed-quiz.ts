@@ -1,4 +1,3 @@
-
 /**
  * Script para inicializar o questionário MAR com segurança
  * Versão segura - Implementa backups antes de operações destrutivas e verificações
@@ -112,10 +111,15 @@ export const seedQuizData = async (): Promise<boolean> => {
     
     for (const questionData of quizQuestionsData) {
       // Obter o ID do módulo correspondente
-      const moduleId = moduleMap[questionData.module_number];
+      // Aqui corrigimos a referência para usar a propriedade correta
+      const moduleOrderNumber = questionData.module_id ? 
+        modules.find(m => m.id === questionData.module_id)?.order_number : 
+        questionData.order_number;
+        
+      const moduleId = moduleMap[moduleOrderNumber];
       
       if (!moduleId) {
-        logger.warn(`Pulando pergunta: módulo #${questionData.module_number} não encontrado`, { tag: 'Seed' });
+        logger.warn(`Pulando pergunta: módulo #${moduleOrderNumber} não encontrado`, { tag: 'Seed' });
         continue;
       }
       
@@ -135,9 +139,9 @@ export const seedQuizData = async (): Promise<boolean> => {
             text: questionData.text,
             type: questionData.type,
             required: questionData.required,
-            hint: questionData.hint,
-            max_options: questionData.max_options,
-            prefix: questionData.prefix
+            // Usamos operador opcional para evitar erros quando as propriedades não existem
+            max_options: questionData.max_options || null,
+            prefix: questionData.prefix || null
           })
           .eq('id', existingQuestion.id);
         
@@ -149,7 +153,7 @@ export const seedQuizData = async (): Promise<boolean> => {
           continue;
         }
         
-        logger.info(`Pergunta #${questionData.order_number} do módulo #${questionData.module_number} atualizada`, { 
+        logger.info(`Pergunta #${questionData.order_number} do módulo #${moduleOrderNumber} atualizada`, { 
           tag: 'Seed' 
         });
       } else {
@@ -170,7 +174,7 @@ export const seedQuizData = async (): Promise<boolean> => {
         }
         
         insertedQuestions++;
-        logger.info(`Pergunta #${questionData.order_number} do módulo #${questionData.module_number} inserida`, { 
+        logger.info(`Pergunta #${questionData.order_number} do módulo #${moduleOrderNumber} inserida`, { 
           tag: 'Seed' 
         });
       }

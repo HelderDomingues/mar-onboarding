@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { SiteFooter } from '@/components/layout/SiteFooter';
@@ -8,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, CheckCircle, XCircle, AlertTriangle, Database, Backup, ArrowLeft } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, AlertTriangle, Database, ArrowDown, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { QuizStructureTest } from '@/components/quiz/QuizStructureTest';
 import { backupQuizTables, listAvailableBackups } from '@/utils/backupUtils';
@@ -400,7 +399,7 @@ const DiagnosticoSistema = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <Backup className="mr-2 h-5 w-5" />
+                    <ArrowDown className="mr-2 h-5 w-5" />
                     Gerenciamento de Backups
                   </CardTitle>
                   <CardDescription>
@@ -431,7 +430,7 @@ const DiagnosticoSistema = () => {
                       </>
                     ) : (
                       <>
-                        <Backup className="mr-2 h-4 w-4" />
+                        <ArrowDown className="mr-2 h-4 w-4" />
                         Criar Backup Completo Agora
                       </>
                     )}

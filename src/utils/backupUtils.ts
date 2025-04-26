@@ -1,4 +1,3 @@
-
 /**
  * Utilitários para gerenciamento de backups do questionário MAR
  * Estas funções garantem que operações destrutivas sejam sempre precedidas de backups
