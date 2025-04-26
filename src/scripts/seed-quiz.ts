@@ -1,201 +1,378 @@
 
+/**
+ * Script para inicializar o questionário MAR com segurança
+ * Versão segura - Implementa backups antes de operações destrutivas e verificações
+ */
+
 import { supabase } from '@/integrations/supabase/client';
+import { quizModulesData, quizQuestionsData, quizOptionsData } from './quiz-data';
 import { logger } from '@/utils/logger';
 import { addLogEntry } from '@/utils/projectLog';
+import { backupQuizTables } from '@/utils/backupUtils';
 
 /**
- * Script para inicializar os dados do questionário MAR no Supabase
- * Versão simplificada que não utiliza UUIDs fixos para evitar conflitos
+ * Inicializa o questionário MAR de forma segura e incremental
+ * @returns Promise<boolean> indicando sucesso ou falha
  */
 export const seedQuizData = async (): Promise<boolean> => {
   try {
-    addLogEntry('info', 'Iniciando processo de seed do questionário MAR');
-    logger.info('Iniciando processo de seed do questionário MAR', { tag: 'Admin' });
+    logger.info('Iniciando seed de dados do questionário MAR', { tag: 'Seed' });
+    addLogEntry('info', 'Iniciando seed de dados do questionário MAR');
     
-    // Definir módulos do questionário
-    const modules = [
-      { title: "Informações Pessoais", description: "Neste módulo, coletaremos algumas informações básicas sobre você para personalizar sua experiência.", order_number: 1 },
-      { title: "Marketing", description: "Neste módulo, vamos avaliar suas estratégias e táticas de marketing atuais.", order_number: 2 },
-      { title: "Vendas", description: "Neste módulo, vamos analisar seu processo de vendas e identificar oportunidades de melhoria.", order_number: 3 },
-      { title: "Financeiro", description: "Neste módulo, vamos examinar suas finanças e contabilidade para garantir a saúde financeira da sua empresa.", order_number: 4 },
-      { title: "Operações", description: "Neste módulo, vamos otimizar seus processos operacionais para aumentar a eficiência e reduzir custos.", order_number: 5 },
-      { title: "Pessoas", description: "Neste módulo, vamos desenvolver sua equipe e cultura organizacional para atrair e reter talentos.", order_number: 6 },
-      { title: "Perspectiva Financeira", description: "Como estamos financeiramente?", order_number: 7 },
-      { title: "Perspectiva de Processos Internos", description: "Como fazemos o nosso trabalho?", order_number: 8 },
-      { title: "Perspectiva de inovação, aprendizado e crescimento", description: "Como aprendemos e melhoramos?", order_number: 9 },
-      { title: "Clientes e Perspectiva de Mercado", description: "Como nossos clientes nos enxergam?", order_number: 10 },
-      { title: "Prioridades e Ações", description: "O que devemos priorizar em nossa empresa?", order_number: 11 },
-      { title: "Acompanhamento e Medição", description: "Como acompanhamos nosso progresso?", order_number: 12 },
-      { title: "Observações Finais", description: "Comentários adicionais e conclusão", order_number: 13 }
-    ];
+    // Fazer backup do estado atual antes de qualquer operação
+    await backupQuizTables('pre_seed_questionario');
     
-    // Inserir módulos
-    const { data: modulesData, error: insertModulesError } = await supabase
+    // Verificar se já existem dados
+    const { count: modulesCount } = await supabase
       .from('quiz_modules')
-      .insert(modules)
-      .select();
+      .select('*', { count: 'exact', head: true });
       
-    if (insertModulesError) {
-      logger.error('Erro ao inserir módulos:', {
-        tag: 'Admin',
-        data: { error: insertModulesError }
-      });
-      addLogEntry('error', 'Erro ao inserir módulos', { error: insertModulesError.message });
-      return false;
-    }
-    
-    logger.info(`${modulesData?.length || 0} módulos inseridos com sucesso`, {
-      tag: 'Admin'
-    });
-    
-    // Mapear IDs dos módulos inseridos
-    const moduleMap = new Map();
-    modulesData?.forEach(module => {
-      moduleMap.set(module.order_number, module.id);
-    });
-    
-    // Definir perguntas do questionário (versão simplificada para teste)
-    const questions = [
-      { text: "Qual é o seu nome?", type: "text", required: true, order_number: 1, module_id: moduleMap.get(1), hint: "Digite seu nome completo" },
-      { text: "Qual é o seu email?", type: "email", required: true, order_number: 2, module_id: moduleMap.get(1), hint: "Digite seu email profissional" },
-      { text: "Quantos funcionários sua empresa possui?", type: "radio", required: true, order_number: 3, module_id: moduleMap.get(1), hint: "Selecione a faixa que melhor representa sua empresa" },
-      { text: "Em qual setor sua empresa atua?", type: "radio", required: true, order_number: 4, module_id: moduleMap.get(1), hint: "Selecione o setor principal" },
-      { text: "Descreva brevemente sua empresa", type: "textarea", required: false, order_number: 5, module_id: moduleMap.get(1), hint: "Uma breve descrição do seu negócio" },
-      
-      { text: "Qual é o seu orçamento de marketing anual?", type: "radio", required: true, order_number: 1, module_id: moduleMap.get(2), hint: "Selecione a faixa que melhor representa seu orçamento" },
-      { text: "Quais canais de marketing você utiliza?", type: "checkbox", required: true, order_number: 2, module_id: moduleMap.get(2), hint: "Selecione todos os canais que você utiliza" },
-      { text: "Como você mede o retorno sobre investimento (ROI) do marketing?", type: "radio", required: true, order_number: 3, module_id: moduleMap.get(2), hint: "Selecione a opção mais próxima da sua realidade" },
-      
-      { text: "Qual é o seu ciclo médio de vendas?", type: "radio", required: true, order_number: 1, module_id: moduleMap.get(3), hint: "Selecione a opção mais próxima da sua realidade" },
-      { text: "Qual é a sua taxa de conversão de leads para clientes?", type: "radio", required: true, order_number: 2, module_id: moduleMap.get(3), hint: "Selecione a faixa que melhor representa sua taxa de conversão" },
-      { text: "Quais ferramentas você usa para gerenciar vendas?", type: "checkbox", required: true, order_number: 3, module_id: moduleMap.get(3), hint: "Selecione todas as ferramentas que você utiliza" }
-    ];
-    
-    // Inserir perguntas
-    const { data: questionsData, error: insertQuestionsError } = await supabase
+    const { count: questionsCount } = await supabase
       .from('quiz_questions')
-      .insert(questions)
-      .select();
+      .select('*', { count: 'exact', head: true });
       
-    if (insertQuestionsError) {
-      logger.error('Erro ao inserir perguntas:', {
-        tag: 'Admin',
-        data: { error: insertQuestionsError }
-      });
-      addLogEntry('error', 'Erro ao inserir perguntas', { error: insertQuestionsError.message });
+    const { count: optionsCount } = await supabase
+      .from('quiz_options')
+      .select('*', { count: 'exact', head: true });
+      
+    // Log do estado atual
+    logger.info('Estado atual do questionário:', { 
+      tag: 'Seed',
+      data: { modulesCount, questionsCount, optionsCount }
+    });
+    
+    // Processo de inserção por etapas - Módulos primeiro
+    let insertedModules = 0;
+    
+    for (const moduleData of quizModulesData) {
+      // Verificar se já existe um módulo com este order_number
+      const { data: existingModule } = await supabase
+        .from('quiz_modules')
+        .select('*')
+        .eq('order_number', moduleData.order_number)
+        .maybeSingle();
+      
+      if (existingModule) {
+        // Atualizar módulo existente
+        const { error: updateError } = await supabase
+          .from('quiz_modules')
+          .update({
+            title: moduleData.title,
+            description: moduleData.description
+          })
+          .eq('order_number', moduleData.order_number);
+        
+        if (updateError) {
+          logger.error(`Erro ao atualizar módulo #${moduleData.order_number}:`, {
+            tag: 'Seed',
+            data: { error: updateError }
+          });
+          continue;
+        }
+        
+        logger.info(`Módulo #${moduleData.order_number} atualizado com sucesso`, { tag: 'Seed' });
+      } else {
+        // Inserir novo módulo
+        const { error: insertError } = await supabase
+          .from('quiz_modules')
+          .insert(moduleData);
+        
+        if (insertError) {
+          logger.error(`Erro ao inserir módulo #${moduleData.order_number}:`, {
+            tag: 'Seed',
+            data: { error: insertError }
+          });
+          continue;
+        }
+        
+        insertedModules++;
+        logger.info(`Módulo #${moduleData.order_number} inserido com sucesso`, { tag: 'Seed' });
+      }
+    }
+    
+    // Buscar os módulos após a atualização/inserção para referência
+    const { data: modules } = await supabase
+      .from('quiz_modules')
+      .select('*')
+      .order('order_number');
+      
+    if (!modules || modules.length === 0) {
+      logger.error('Falha ao buscar módulos após inserção', { tag: 'Seed' });
       return false;
     }
     
-    logger.info(`${questionsData?.length || 0} perguntas inseridas com sucesso`, {
-      tag: 'Admin'
+    // Construir mapa de módulos para referência rápida
+    const moduleMap = {};
+    modules.forEach(module => {
+      moduleMap[module.order_number] = module.id;
     });
     
-    // Mapear perguntas por texto para adicionar opções
-    const questionMap = new Map();
-    questionsData?.forEach(question => {
-      questionMap.set(question.text, question.id);
-    });
+    // Processo de inserção - Perguntas
+    let insertedQuestions = 0;
     
-    // Definir opções para perguntas de múltipla escolha
-    const options = [
-      // Pergunta sobre número de funcionários
-      { question_id: questionMap.get("Quantos funcionários sua empresa possui?"), text: "1-10 funcionários", order_number: 1 },
-      { question_id: questionMap.get("Quantos funcionários sua empresa possui?"), text: "11-50 funcionários", order_number: 2 },
-      { question_id: questionMap.get("Quantos funcionários sua empresa possui?"), text: "51-200 funcionários", order_number: 3 },
-      { question_id: questionMap.get("Quantos funcionários sua empresa possui?"), text: "Mais de 200 funcionários", order_number: 4 },
+    for (const questionData of quizQuestionsData) {
+      // Obter o ID do módulo correspondente
+      const moduleId = moduleMap[questionData.module_number];
       
-      // Pergunta sobre setor
-      { question_id: questionMap.get("Em qual setor sua empresa atua?"), text: "Tecnologia", order_number: 1 },
-      { question_id: questionMap.get("Em qual setor sua empresa atua?"), text: "Saúde", order_number: 2 },
-      { question_id: questionMap.get("Em qual setor sua empresa atua?"), text: "Educação", order_number: 3 },
-      { question_id: questionMap.get("Em qual setor sua empresa atua?"), text: "Varejo", order_number: 4 },
-      { question_id: questionMap.get("Em qual setor sua empresa atua?"), text: "Finanças", order_number: 5 },
-      { question_id: questionMap.get("Em qual setor sua empresa atua?"), text: "Outro", order_number: 6 },
-      
-      // Pergunta sobre orçamento de marketing
-      { question_id: questionMap.get("Qual é o seu orçamento de marketing anual?"), text: "Menos de R$ 10.000", order_number: 1 },
-      { question_id: questionMap.get("Qual é o seu orçamento de marketing anual?"), text: "R$ 10.000 - R$ 50.000", order_number: 2 },
-      { question_id: questionMap.get("Qual é o seu orçamento de marketing anual?"), text: "R$ 50.000 - R$ 200.000", order_number: 3 },
-      { question_id: questionMap.get("Qual é o seu orçamento de marketing anual?"), text: "Mais de R$ 200.000", order_number: 4 },
-      
-      // Pergunta sobre canais de marketing
-      { question_id: questionMap.get("Quais canais de marketing você utiliza?"), text: "Mídias sociais", order_number: 1 },
-      { question_id: questionMap.get("Quais canais de marketing você utiliza?"), text: "Email marketing", order_number: 2 },
-      { question_id: questionMap.get("Quais canais de marketing você utiliza?"), text: "SEO/SEM", order_number: 3 },
-      { question_id: questionMap.get("Quais canais de marketing você utiliza?"), text: "Publicidade paga", order_number: 4 },
-      { question_id: questionMap.get("Quais canais de marketing você utiliza?"), text: "Marketing de conteúdo", order_number: 5 },
-      { question_id: questionMap.get("Quais canais de marketing você utiliza?"), text: "Eventos", order_number: 6 },
-      
-      // Pergunta sobre ROI de marketing
-      { question_id: questionMap.get("Como você mede o retorno sobre investimento (ROI) do marketing?"), text: "Não medimos formalmente", order_number: 1 },
-      { question_id: questionMap.get("Como você mede o retorno sobre investimento (ROI) do marketing?"), text: "Métricas básicas (cliques, visualizações)", order_number: 2 },
-      { question_id: questionMap.get("Como você mede o retorno sobre investimento (ROI) do marketing?"), text: "Atribuição de receita a campanhas", order_number: 3 },
-      { question_id: questionMap.get("Como você mede o retorno sobre investimento (ROI) do marketing?"), text: "Sistema completo de analytics", order_number: 4 },
-      
-      // Pergunta sobre ciclo de vendas
-      { question_id: questionMap.get("Qual é o seu ciclo médio de vendas?"), text: "Menos de 1 semana", order_number: 1 },
-      { question_id: questionMap.get("Qual é o seu ciclo médio de vendas?"), text: "1-4 semanas", order_number: 2 },
-      { question_id: questionMap.get("Qual é o seu ciclo médio de vendas?"), text: "1-3 meses", order_number: 3 },
-      { question_id: questionMap.get("Qual é o seu ciclo médio de vendas?"), text: "Mais de 3 meses", order_number: 4 },
-      
-      // Pergunta sobre taxa de conversão
-      { question_id: questionMap.get("Qual é a sua taxa de conversão de leads para clientes?"), text: "Menos de 5%", order_number: 1 },
-      { question_id: questionMap.get("Qual é a sua taxa de conversão de leads para clientes?"), text: "5-15%", order_number: 2 },
-      { question_id: questionMap.get("Qual é a sua taxa de conversão de leads para clientes?"), text: "15-30%", order_number: 3 },
-      { question_id: questionMap.get("Qual é a sua taxa de conversão de leads para clientes?"), text: "Mais de 30%", order_number: 4 },
-      
-      // Pergunta sobre ferramentas de vendas
-      { question_id: questionMap.get("Quais ferramentas você usa para gerenciar vendas?"), text: "CRM", order_number: 1 },
-      { question_id: questionMap.get("Quais ferramentas você usa para gerenciar vendas?"), text: "Planilhas", order_number: 2 },
-      { question_id: questionMap.get("Quais ferramentas você usa para gerenciar vendas?"), text: "Software de automação de vendas", order_number: 3 },
-      { question_id: questionMap.get("Quais ferramentas você usa para gerenciar vendas?"), text: "Ferramentas de email", order_number: 4 },
-      { question_id: questionMap.get("Quais ferramentas você usa para gerenciar vendas?"), text: "Software de proposta", order_number: 5 }
-    ];
-    
-    // Filtrar opções para perguntas existentes
-    const validOptions = options.filter(option => option.question_id);
-    
-    if (validOptions.length > 0) {
-      // Inserir opções
-      const { data: optionsData, error: insertOptionsError } = await supabase
-        .from('quiz_options')
-        .insert(validOptions)
-        .select();
-        
-      if (insertOptionsError) {
-        logger.error('Erro ao inserir opções:', {
-          tag: 'Admin',
-          data: { error: insertOptionsError }
-        });
-        addLogEntry('error', 'Erro ao inserir opções', { error: insertOptionsError.message });
-        return false;
+      if (!moduleId) {
+        logger.warn(`Pulando pergunta: módulo #${questionData.module_number} não encontrado`, { tag: 'Seed' });
+        continue;
       }
       
-      logger.info(`${optionsData?.length || 0} opções inseridas com sucesso`, {
-        tag: 'Admin'
-      });
+      // Verificar se já existe uma pergunta com o mesmo módulo e número de ordem
+      const { data: existingQuestion } = await supabase
+        .from('quiz_questions')
+        .select('*')
+        .eq('module_id', moduleId)
+        .eq('order_number', questionData.order_number)
+        .maybeSingle();
+      
+      if (existingQuestion) {
+        // Atualizar pergunta existente
+        const { error: updateError } = await supabase
+          .from('quiz_questions')
+          .update({
+            text: questionData.text,
+            type: questionData.type,
+            required: questionData.required,
+            hint: questionData.hint,
+            max_options: questionData.max_options,
+            prefix: questionData.prefix
+          })
+          .eq('id', existingQuestion.id);
+        
+        if (updateError) {
+          logger.error(`Erro ao atualizar pergunta:`, {
+            tag: 'Seed',
+            data: { error: updateError, questionData }
+          });
+          continue;
+        }
+        
+        logger.info(`Pergunta #${questionData.order_number} do módulo #${questionData.module_number} atualizada`, { 
+          tag: 'Seed' 
+        });
+      } else {
+        // Inserir nova pergunta
+        const { error: insertError } = await supabase
+          .from('quiz_questions')
+          .insert({
+            ...questionData,
+            module_id: moduleId
+          });
+        
+        if (insertError) {
+          logger.error(`Erro ao inserir pergunta:`, {
+            tag: 'Seed',
+            data: { error: insertError, questionData }
+          });
+          continue;
+        }
+        
+        insertedQuestions++;
+        logger.info(`Pergunta #${questionData.order_number} do módulo #${questionData.module_number} inserida`, { 
+          tag: 'Seed' 
+        });
+      }
     }
     
-    addLogEntry('info', 'Seed do questionário MAR concluído com sucesso');
-    logger.info('Seed do questionário MAR concluído com sucesso', { 
-      tag: 'Admin',
-      data: {
-        modules: modulesData?.length || 0,
-        questions: questionsData?.length || 0,
-        options: validOptions.length
-      }
+    // Buscar as perguntas após a atualização/inserção
+    const { data: questions } = await supabase
+      .from('quiz_questions')
+      .select('*')
+      .order('module_id, order_number');
+      
+    // Construir mapa de perguntas para referência rápida
+    const questionMap = {};
+    questions.forEach(question => {
+      // Criar uma chave composta para identificar a pergunta
+      const key = `${question.module_id}_${question.order_number}`;
+      questionMap[key] = question.id;
     });
+    
+    // Processo de inserção - Opções
+    let insertedOptions = 0;
+    
+    for (const optionData of quizOptionsData) {
+      // Encontrar o módulo correspondente à pergunta
+      const moduleForQuestion = modules.find(m => m.order_number === optionData.question_number);
+      
+      if (!moduleForQuestion) {
+        logger.warn(`Pulando opção: módulo para pergunta #${optionData.question_number} não encontrado`, { tag: 'Seed' });
+        continue;
+      }
+      
+      // Criar chave para buscar o ID da pergunta
+      const questionKey = `${moduleForQuestion.id}_${optionData.question_number}`;
+      const questionId = questionMap[questionKey];
+      
+      if (!questionId) {
+        logger.warn(`Pulando opção: pergunta #${optionData.question_number} não encontrada`, { tag: 'Seed' });
+        continue;
+      }
+      
+      // Verificar se já existe uma opção com a mesma ordem para esta pergunta
+      const { data: existingOption } = await supabase
+        .from('quiz_options')
+        .select('*')
+        .eq('question_id', questionId)
+        .eq('order_number', optionData.order_number)
+        .maybeSingle();
+      
+      if (existingOption) {
+        // Atualizar opção existente
+        const { error: updateError } = await supabase
+          .from('quiz_options')
+          .update({
+            text: optionData.text
+          })
+          .eq('id', existingOption.id);
+        
+        if (updateError) {
+          logger.error(`Erro ao atualizar opção:`, {
+            tag: 'Seed',
+            data: { error: updateError, optionData }
+          });
+          continue;
+        }
+        
+        logger.info(`Opção #${optionData.order_number} da pergunta #${optionData.question_number} atualizada`, { 
+          tag: 'Seed' 
+        });
+      } else {
+        // Inserir nova opção
+        const { error: insertError } = await supabase
+          .from('quiz_options')
+          .insert({
+            question_id: questionId,
+            text: optionData.text,
+            order_number: optionData.order_number
+          });
+        
+        if (insertError) {
+          logger.error(`Erro ao inserir opção:`, {
+            tag: 'Seed',
+            data: { error: insertError, optionData }
+          });
+          continue;
+        }
+        
+        insertedOptions++;
+        logger.info(`Opção #${optionData.order_number} da pergunta #${optionData.question_number} inserida`, { 
+          tag: 'Seed' 
+        });
+      }
+    }
+    
+    // Resultado final
+    const result = {
+      success: true,
+      modulesInserted: insertedModules,
+      questionsInserted: insertedQuestions,
+      optionsInserted: insertedOptions,
+      modulesTotal: modules.length,
+      questionsTotal: questions.length
+    };
+    
+    logger.info('Seed do questionário MAR concluído com sucesso', { 
+      tag: 'Seed',
+      data: result
+    });
+    
+    addLogEntry('info', 'Seed do questionário MAR concluído com sucesso', result);
     
     return true;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error('Erro ao executar seed do questionário:', {
-      tag: 'Admin',
+    logger.error('Erro durante seed do questionário MAR:', {
+      tag: 'Seed',
       data: { error }
     });
-    addLogEntry('error', 'Erro ao executar seed do questionário', { error: errorMessage });
+    
+    addLogEntry('error', 'Erro durante seed do questionário MAR', {
+      erro: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+    
     return false;
   }
 };
 
-export default seedQuizData;
+/**
+ * Verifica a consistência do questionário
+ * @returns Promise<{success: boolean, data: any}>
+ */
+export const verifyQuizConsistency = async (): Promise<{success: boolean, data: any}> => {
+  try {
+    logger.info('Verificando consistência do questionário', { tag: 'Seed' });
+    
+    // Verificar contagem de dados
+    const { count: modulesCount } = await supabase
+      .from('quiz_modules')
+      .select('*', { count: 'exact', head: true });
+      
+    const { count: questionsCount } = await supabase
+      .from('quiz_questions')
+      .select('*', { count: 'exact', head: true });
+      
+    const { count: optionsCount } = await supabase
+      .from('quiz_options')
+      .select('*', { count: 'exact', head: true });
+    
+    // Verificar se há pelo menos um módulo, uma pergunta e uma opção
+    const hasBasicData = modulesCount > 0 && questionsCount > 0 && optionsCount > 0;
+    
+    // Verificar se todas as perguntas têm um módulo válido
+    const { data: invalidQuestions, error: questionError } = await supabase
+      .from('quiz_questions')
+      .select('id')
+      .not('module_id', 'in', `(select id from quiz_modules)`);
+      
+    const hasInvalidQuestions = invalidQuestions && invalidQuestions.length > 0;
+    
+    // Verificar se todas as opções têm uma pergunta válida
+    const { data: invalidOptions, error: optionError } = await supabase
+      .from('quiz_options')
+      .select('id')
+      .not('question_id', 'in', `(select id from quiz_questions)`);
+      
+    const hasInvalidOptions = invalidOptions && invalidOptions.length > 0;
+    
+    // Obter tipos de perguntas para verificar diversidade
+    const { data: questionTypes } = await supabase
+      .from('quiz_questions')
+      .select('type')
+      .is('type', 'not.null');
+      
+    const uniqueTypes = questionTypes ? [...new Set(questionTypes.map(q => q.type))] : [];
+    
+    const result = {
+      success: hasBasicData && !hasInvalidQuestions && !hasInvalidOptions,
+      data: {
+        modules: modulesCount,
+        questions: questionsCount,
+        options: optionsCount,
+        hasInvalidQuestions,
+        hasInvalidOptions,
+        questionTypes: uniqueTypes
+      }
+    };
+    
+    logger.info('Verificação de consistência concluída', { 
+      tag: 'Seed',
+      data: result
+    });
+    
+    return result;
+  } catch (error) {
+    logger.error('Erro ao verificar consistência do questionário:', {
+      tag: 'Seed',
+      data: { error }
+    });
+    
+    return {
+      success: false,
+      data: {
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      }
+    };
+  }
+};

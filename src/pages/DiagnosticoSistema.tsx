@@ -1,168 +1,557 @@
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
-import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { SiteFooter } from '@/components/layout/SiteFooter';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import ConnectionStatus from '@/components/debug/ConnectionStatus';
-import SecurityPolicyTester from '@/components/debug/SecurityPolicyTester';
-import ConnectionTester from '@/components/debug/ConnectionTester';
-import { testSupabaseConnection } from '@/utils/supabaseUtils';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, CheckCircle, XCircle, AlertTriangle, Database, Backup, ArrowLeft } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { QuizStructureTest } from '@/components/quiz/QuizStructureTest';
+import { backupQuizTables, listAvailableBackups } from '@/utils/backupUtils';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/components/ui/use-toast';
+import { addLogEntry } from '@/utils/projectLog';
 
 const DiagnosticoSistema = () => {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
-  
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/');
-    } else if (!isAdmin) {
-      navigate('/dashboard');
-    }
-  }, [isAuthenticated, isAdmin, navigate]);
-  
-  // Teste simples para verificar se podemos acessar dados
-  const [testResult, setTestResult] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const runConnectionTest = async () => {
-    setIsLoading(true);
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [systemStatus, setSystemStatus] = useState<any>(null);
+  const [backups, setBackups] = useState<{ [key: string]: string[] }>({});
+
+  // Verificar status do sistema
+  const checkSystemStatus = async () => {
     try {
-      const result = await testSupabaseConnection();
-      setTestResult(result);
-    } catch (error: any) {
-      setTestResult({
-        success: false,
-        message: error.message || 'Erro desconhecido'
+      setLoading(true);
+      
+      // Verificar conexão com Supabase
+      const { data: dbData, error: dbError } = await supabase.from('quiz_modules').select('count', { count: 'exact', head: true });
+      
+      // Verificar tabelas do questionário
+      const { count: modulesCount } = await supabase.from('quiz_modules').select('*', { count: 'exact', head: true });
+      const { count: questionsCount } = await supabase.from('quiz_questions').select('*', { count: 'exact', head: true });
+      const { count: optionsCount } = await supabase.from('quiz_options').select('*', { count: 'exact', head: true });
+      const { count: submissionsCount } = await supabase.from('quiz_submissions').select('*', { count: 'exact', head: true });
+      const { count: answersCount } = await supabase.from('quiz_answers').select('*', { count: 'exact', head: true });
+      
+      // Verificar status dos backups
+      await loadBackups();
+      
+      setSystemStatus({
+        dbConnection: !dbError,
+        questionario: {
+          modules: modulesCount || 0,
+          questions: questionsCount || 0,
+          options: optionsCount || 0,
+          submissions: submissionsCount || 0,
+          answers: answersCount || 0
+        },
+        timestamp: new Date().toISOString()
+      });
+      
+      addLogEntry('info', 'Diagnóstico do sistema executado', {
+        dbConnection: !dbError,
+        questionario: {
+          modules: modulesCount || 0,
+          questions: questionsCount || 0,
+          options: optionsCount || 0,
+          submissions: submissionsCount || 0,
+          answers: answersCount || 0
+        }
+      });
+      
+    } catch (error) {
+      console.error('Erro ao verificar status do sistema:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível verificar o status do sistema",
       });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
   
+  // Carregar backups disponíveis
+  const loadBackups = async () => {
+    try {
+      const quizTables = [
+        'quiz_modules',
+        'quiz_questions',
+        'quiz_options',
+        'quiz_submissions',
+        'quiz_answers'
+      ];
+      
+      const backupResults = {};
+      
+      for (const table of quizTables) {
+        const tableBackups = await listAvailableBackups(table);
+        backupResults[table] = tableBackups;
+      }
+      
+      setBackups(backupResults);
+    } catch (error) {
+      console.error('Erro ao carregar backups:', error);
+    }
+  };
+  
+  // Criar backup completo
+  const handleBackupSystem = async () => {
+    try {
+      setBackupLoading(true);
+      toast({
+        title: "Criando backup",
+        description: "Aguarde enquanto fazemos backup das tabelas do questionário...",
+      });
+      
+      const success = await backupQuizTables('backup_manual_pagina_diagnostico');
+      
+      if (success) {
+        toast({
+          title: "Backup concluído",
+          description: "Backup de todas as tabelas do questionário foi criado com sucesso.",
+        });
+        
+        // Recarregar lista de backups
+        await loadBackups();
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erro no backup",
+          description: "Não foi possível criar backup de todas as tabelas. Verifique os logs.",
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao criar backup:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível criar o backup do sistema",
+      });
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+  
+  // Carregar status inicial
   useEffect(() => {
-    // Executar o teste imediatamente quando o componente montar
-    runConnectionTest();
+    checkSystemStatus();
   }, []);
   
-  if (!isAuthenticated || !isAdmin) {
-    return null;
-  }
-  
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen">
-        <AdminSidebar />
-        <SidebarInset className="bg-gray-50">
-          <DashboardHeader isAdmin={true} />
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
+      <DashboardHeader isAdmin={isAdmin} />
+      
+      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Button
+          variant="ghost"
+          className="mb-4"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar
+        </Button>
+        
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Diagnóstico do Sistema</h1>
+          <p className="mt-2 text-lg text-gray-600">
+            Verifique o status do sistema e realize operações de manutenção.
+          </p>
+        </div>
+        
+        <Tabs defaultValue="status" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="status">Status do Sistema</TabsTrigger>
+            <TabsTrigger value="questionario">Questionário</TabsTrigger>
+            <TabsTrigger value="backups">Backups</TabsTrigger>
+            <TabsTrigger value="ferramentas">Ferramentas</TabsTrigger>
+          </TabsList>
           
-          <main className="container mx-auto px-4 py-6">
-            <div className="flex flex-col gap-2 mb-6">
-              <h1 className="text-2xl font-bold">Diagnóstico do Sistema</h1>
-              <p className="text-muted-foreground">
-                Ferramentas para diagnosticar e testar o funcionamento do Sistema MAR.
-              </p>
-            </div>
-            
-            <Tabs defaultValue="status">
-              <TabsList className="mb-4">
-                <TabsTrigger value="status">Status do Sistema</TabsTrigger>
-                <TabsTrigger value="security">Segurança</TabsTrigger>
-                <TabsTrigger value="advanced">Avançado</TabsTrigger>
-              </TabsList>
+          {/* Tab: Status do Sistema */}
+          <TabsContent value="status">
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Database className="mr-2 h-5 w-5" />
+                    Status da Conexão
+                  </CardTitle>
+                  <CardDescription>
+                    Verifica a conectividade com o banco de dados
+                  </CardDescription>
+                </CardHeader>
+                
+                <CardContent>
+                  {systemStatus ? (
+                    <Alert className={systemStatus.dbConnection ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}>
+                      {systemStatus.dbConnection ? (
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-600" />
+                      )}
+                      <AlertTitle>
+                        {systemStatus.dbConnection ? "Conexão estabelecida" : "Falha na conexão"}
+                      </AlertTitle>
+                      <AlertDescription>
+                        {systemStatus.dbConnection 
+                          ? "O sistema está conectado corretamente ao banco de dados."
+                          : "Não foi possível estabelecer conexão com o banco de dados."}
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                    </div>
+                  )}
+                </CardContent>
+                
+                <CardFooter>
+                  <Button 
+                    onClick={checkSystemStatus} 
+                    disabled={loading}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Verificando...
+                      </>
+                    ) : "Verificar Novamente"}
+                  </Button>
+                </CardFooter>
+              </Card>
               
-              <TabsContent value="status" className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <ConnectionStatus />
-                  
-                  <ConnectionTester />
-                  
-                  <Card className="shadow-sm md:col-span-2">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg">Informações do Sistema</CardTitle>
-                    </CardHeader>
-                    
-                    <CardContent className="space-y-3">
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="font-medium">URL do Supabase:</div>
-                        <div className="truncate">
-                          {'https://btzvozqajqknqfoymxpg.supabase.co'}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Database className="mr-2 h-5 w-5" />
+                    Status do Questionário
+                  </CardTitle>
+                  <CardDescription>
+                    Verifica a integridade dos dados do questionário
+                  </CardDescription>
+                </CardHeader>
+                
+                <CardContent>
+                  {systemStatus ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <p className="text-sm font-medium text-gray-500">Módulos</p>
+                          <p className="text-2xl font-bold">{systemStatus.questionario.modules}</p>
                         </div>
-                        
-                        <div className="font-medium">Ambiente:</div>
-                        <div>{process.env.NODE_ENV}</div>
-                        
-                        <div className="font-medium">Versão do App:</div>
-                        <div>1.0.0</div>
-                        
-                        <div className="font-medium">Data de Build:</div>
-                        <div>{new Date().toLocaleDateString('pt-BR')}</div>
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <p className="text-sm font-medium text-gray-500">Perguntas</p>
+                          <p className="text-2xl font-bold">{systemStatus.questionario.questions}</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <p className="text-sm font-medium text-gray-500">Opções</p>
+                          <p className="text-2xl font-bold">{systemStatus.questionario.options}</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <p className="text-sm font-medium text-gray-500">Submissões</p>
+                          <p className="text-2xl font-bold">{systemStatus.questionario.submissions}</p>
+                        </div>
                       </div>
-                    </CardContent>
-                    
-                    <CardFooter className="pt-0">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={runConnectionTest}
-                        disabled={isLoading}
-                      >
-                        {isLoading ? 'Testando...' : 'Testar Conexão'}
-                      </Button>
                       
-                      {testResult && (
-                        <div className="ml-4 text-sm">
-                          {testResult.success ? (
-                            <span className="text-green-600">✓ {testResult.message}</span>
+                      {(systemStatus.questionario.modules < 10 ||
+                       systemStatus.questionario.questions < 20 ||
+                       systemStatus.questionario.options < 30) && (
+                        <Alert className="bg-amber-50 border-amber-200">
+                          <AlertTriangle className="h-4 w-4 text-amber-600" />
+                          <AlertTitle>Dados possivelmente incompletos</AlertTitle>
+                          <AlertDescription>
+                            Os números sugerem que o questionário pode estar incompleto ou ausente.
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          {/* Tab: Questionário */}
+          <TabsContent value="questionario">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Estrutura do Questionário</CardTitle>
+                  <CardDescription>
+                    Verifica a estrutura e consistência dos dados do questionário
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <QuizStructureTest />
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Status das Tabelas do Questionário</CardTitle>
+                  <CardDescription>
+                    Informações detalhadas sobre as tabelas do questionário
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {systemStatus ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left py-3 px-4 font-medium">Tabela</th>
+                            <th className="text-center py-3 px-4 font-medium">Registros</th>
+                            <th className="text-center py-3 px-4 font-medium">Status</th>
+                            <th className="text-center py-3 px-4 font-medium">Backups</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr className="border-b">
+                            <td className="py-2 px-4">quiz_modules</td>
+                            <td className="py-2 px-4 text-center">{systemStatus.questionario.modules}</td>
+                            <td className="py-2 px-4 text-center">
+                              {systemStatus.questionario.modules > 0 ? (
+                                <Badge className="bg-green-500">OK</Badge>
+                              ) : (
+                                <Badge variant="destructive">Vazio</Badge>
+                              )}
+                            </td>
+                            <td className="py-2 px-4 text-center">
+                              {backups['quiz_modules']?.length || 0}
+                            </td>
+                          </tr>
+                          <tr className="border-b">
+                            <td className="py-2 px-4">quiz_questions</td>
+                            <td className="py-2 px-4 text-center">{systemStatus.questionario.questions}</td>
+                            <td className="py-2 px-4 text-center">
+                              {systemStatus.questionario.questions > 0 ? (
+                                <Badge className="bg-green-500">OK</Badge>
+                              ) : (
+                                <Badge variant="destructive">Vazio</Badge>
+                              )}
+                            </td>
+                            <td className="py-2 px-4 text-center">
+                              {backups['quiz_questions']?.length || 0}
+                            </td>
+                          </tr>
+                          <tr className="border-b">
+                            <td className="py-2 px-4">quiz_options</td>
+                            <td className="py-2 px-4 text-center">{systemStatus.questionario.options}</td>
+                            <td className="py-2 px-4 text-center">
+                              {systemStatus.questionario.options > 0 ? (
+                                <Badge className="bg-green-500">OK</Badge>
+                              ) : (
+                                <Badge variant="destructive">Vazio</Badge>
+                              )}
+                            </td>
+                            <td className="py-2 px-4 text-center">
+                              {backups['quiz_options']?.length || 0}
+                            </td>
+                          </tr>
+                          <tr className="border-b">
+                            <td className="py-2 px-4">quiz_submissions</td>
+                            <td className="py-2 px-4 text-center">{systemStatus.questionario.submissions}</td>
+                            <td className="py-2 px-4 text-center">
+                              <Badge className="bg-green-500">OK</Badge>
+                            </td>
+                            <td className="py-2 px-4 text-center">
+                              {backups['quiz_submissions']?.length || 0}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-4">quiz_answers</td>
+                            <td className="py-2 px-4 text-center">{systemStatus.questionario.answers}</td>
+                            <td className="py-2 px-4 text-center">
+                              <Badge className="bg-green-500">OK</Badge>
+                            </td>
+                            <td className="py-2 px-4 text-center">
+                              {backups['quiz_answers']?.length || 0}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          {/* Tab: Backups */}
+          <TabsContent value="backups">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Backup className="mr-2 h-5 w-5" />
+                    Gerenciamento de Backups
+                  </CardTitle>
+                  <CardDescription>
+                    Crie e gerencie backups do questionário
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-6">
+                    <Alert className="bg-blue-50 border-blue-200">
+                      <AlertTriangle className="h-4 w-4 text-blue-600" />
+                      <AlertTitle>Sobre backups</AlertTitle>
+                      <AlertDescription>
+                        Os backups são armazenados como tabelas no banco de dados. É recomendável criar um backup antes de
+                        realizar quaisquer alterações significativas no questionário.
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+                  
+                  <Button
+                    onClick={handleBackupSystem}
+                    disabled={backupLoading}
+                    className="w-full"
+                  >
+                    {backupLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Criando backup...
+                      </>
+                    ) : (
+                      <>
+                        <Backup className="mr-2 h-4 w-4" />
+                        Criar Backup Completo Agora
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Backups Disponíveis</CardTitle>
+                  <CardDescription>
+                    Visualize e gerencie os backups disponíveis no sistema
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {Object.keys(backups).length > 0 ? (
+                    <div className="space-y-4">
+                      {Object.entries(backups).map(([table, tableBackups]) => (
+                        <div key={table} className="border rounded-lg p-4">
+                          <h3 className="font-medium mb-2">{table}</h3>
+                          {tableBackups.length > 0 ? (
+                            <ul className="space-y-1 text-sm">
+                              {tableBackups.map((backup) => (
+                                <li key={backup} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                                  <span className="font-mono">{backup}</span>
+                                </li>
+                              ))}
+                            </ul>
                           ) : (
-                            <span className="text-red-600">✗ {testResult.message || testResult.error}</span>
+                            <p className="text-sm text-gray-500">Nenhum backup disponível</p>
                           )}
                         </div>
-                      )}
-                    </CardFooter>
-                  </Card>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="security">
-                <div className="space-y-6">
-                  <SecurityPolicyTester />
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="advanced">
-                <Card className="shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Ferramentas Avançadas</CardTitle>
-                  </CardHeader>
-                  
-                  <CardContent className="space-y-4">
-                    <div className="grid gap-4">
-                      <Button variant="outline" onClick={() => navigate('/system-log')}>
-                        Ver Logs do Sistema
-                      </Button>
-                      
-                      <Button variant="outline" onClick={() => navigate('/test-connection')}>
-                        Teste de Conexão Detalhado
-                      </Button>
+                      ))}
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </main>
+                  ) : (
+                    <div className="text-center py-6">
+                      {loading ? (
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                      ) : (
+                        <p className="text-gray-500">Nenhum backup encontrado no sistema</p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter>
+                  <Button 
+                    onClick={loadBackups} 
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Atualizar Lista
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+          </TabsContent>
           
-          <SiteFooter />
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+          {/* Tab: Ferramentas */}
+          <TabsContent value="ferramentas">
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Teste de Conexão</CardTitle>
+                  <CardDescription>
+                    Verificar conectividade com o Supabase
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button 
+                    onClick={() => navigate('/test-connection')}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Ir para Teste de Conexão
+                  </Button>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Logs do Sistema</CardTitle>
+                  <CardDescription>
+                    Visualize os logs de atividade do sistema
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button 
+                    onClick={() => navigate('/admin/logs')}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Ver Logs do Sistema
+                  </Button>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recuperação de Questionário</CardTitle>
+                  <CardDescription>
+                    Ferramentas para recuperação do questionário
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button 
+                    onClick={() => navigate('/admin/recover-quiz')}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Ir para Recuperação
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </main>
+      
+      <SiteFooter />
+    </div>
   );
 };
 

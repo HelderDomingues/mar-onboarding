@@ -4,42 +4,49 @@
 ## Problemas Identificados e Soluções
 
 ### 1. Problemas com scripts de recuperação e seed do questionário
-   - **Problema**: Scripts contendo UUIDs fixos causando conflitos no banco de dados
-   - **Solução**: Criar versão simplificada do script de seed sem UUIDs fixos (implementado)
+   - **Problema**: Scripts contendo abordagem de "delete e insert" causando perda de dados
+   - **Solução**: Criar abordagem incremental para seed e recuperação, com backup automático antes de operações destrutivas
 
-### 2. API de recuperação do questionário com problemas
-   - **Problema**: Implementação incorreta do endpoint `/api/recover-quiz`
-   - **Solução**: Refatorar completamente a API para limpar dados e executar o seed (implementado)
+### 2. API de recuperação do questionário com falhas
+   - **Problema**: Implementação com potencial de perda de dados
+   - **Solução**: Reconstruir API com verificações de segurança e backups automáticos
 
-### 3. Sidebar do admin desconfigurada
-   - **Problema**: Componente incorretamente implementado e rotas mal definidas
-   - **Solução**: Recriar completamente o componente AdminSidebar e corrigir AdminRoute (implementado)
+### 3. Interface administrativa com problemas
+   - **Problema**: Sidebar desconfigurado e outros elementos com falhas
+   - **Solução**: Reconstruir componentes UI com abordagem mais modular e estável
 
-### 4. Problemas na página de teste de conexão
-   - **Problema**: Falta de funcionalidade para inicializar o questionário
-   - **Solução**: Adicionar botão para inicialização do questionário diretamente da página (implementado)
+### 4. Módulos e perguntas incompletos
+   - **Problema**: Sistema esperava 13 módulos, apenas 8 presentes, perguntas e opções incompletas
+   - **Solução**: Reconstrução incremental do questionário, módulo por módulo, com validações
 
-## Próximos Passos
+## Próximas Etapas
 
-### Fase 1: Teste e estabilização (Atual)
-- [x] Corrigir API de recuperação
-- [x] Implementar script de seed simplificado
-- [x] Corrigir sidebar administrativa
-- [x] Adicionar inicialização do questionário na página de teste de conexão
+### Fase 1: Estabilização (Atual)
+- [x] Corrigir erros de TypeScript pendentes (propriedade message e método signOut)
+- [ ] Implementar sistema seguro de backup antes de qualquer operação destrutiva
+- [ ] Verificar e corrigir problemas de autenticação e navegação
+- [ ] Criar mecanismo incremental para gerenciamento do questionário
 
-### Fase 2: Melhorias de usabilidade
-- [ ] Implementar página de diagnóstico de sistema mais completa
-- [ ] Melhorar feedback visual durante carregamentos e operações de recuperação
-- [ ] Implementar mecanismo de backup/restore dos dados do questionário
+### Fase 2: Reconstrução do Questionário
+- [ ] Estruturar definitivamente os 13 módulos e suas descrições
+- [ ] Implementar sistema de verificação de consistência do questionário
+- [ ] Reconstruir as perguntas módulo por módulo, mantendo verificações de integridade
+- [ ] Revisar e testar todo o fluxo de preenchimento do questionário
 
-### Fase 3: Funcionalidades avançadas
-- [ ] Implementar validação de consistência dos dados do questionário
-- [ ] Adicionar histórico de recuperações e alterações no questionário
-- [ ] Implementar sistema de versionamento para o questionário
+### Fase 3: Melhorias de Interface e UX
+- [ ] Reconstruir sidebar administrativo com abordagem modular
+- [ ] Implementar interface minimalista e moderna para o questionário
+- [ ] Adicionar feedback visual durante operações de carregamento e salvamento
+- [ ] Aprimorar a experiência de preenchimento do questionário para o cliente
+
+### Fase 4: Recursos Avançados
+- [ ] Implementar exportação de respostas em PDF e planilha
+- [ ] Adicionar dashboard para visualização de métricas
+- [ ] Implementar sistema de sugestões baseado nas respostas
 
 ## Notas Importantes
 
-- A nova abordagem de seed não utiliza IDs fixos (UUIDs), melhorando a compatibilidade
-- A página `/test-connection` agora permite inicializar o questionário diretamente
-- Para recuperação de emergência, a URL `/api/recover-quiz?key=recover-quiz-mar` está disponível
-- A sidebar admin foi completamente refeita utilizando o componente Shadcn/UI corretamente
+- Todas as operações destrutivas devem ter confirmação explícita e backup automático
+- Priorizar a experiência do usuário e a estabilidade do sistema
+- Adotar abordagem incremental em todas as implementações
+- Manter registros detalhados (logs) de todas as operações críticas do sistema
