@@ -1,3 +1,4 @@
+
 /**
  * Script para inicializar o questionário MAR com segurança
  * Versão segura - Implementa backups antes de operações destrutivas e verificações
@@ -133,16 +134,20 @@ export const seedQuizData = async (): Promise<boolean> => {
       
       if (existingQuestion) {
         // Atualizar pergunta existente
+        const updateData: any = {
+          text: questionData.text,
+          type: questionData.type,
+          required: questionData.required,
+        };
+        
+        // Adicionar campos opcionais apenas se existirem no questionData
+        if ('hint' in questionData) updateData.hint = questionData.hint;
+        if ('max_options' in questionData) updateData.max_options = questionData.max_options;
+        if ('prefix' in questionData) updateData.prefix = questionData.prefix;
+        
         const { error: updateError } = await supabase
           .from('quiz_questions')
-          .update({
-            text: questionData.text,
-            type: questionData.type,
-            required: questionData.required,
-            // Usamos operador opcional para evitar erros quando as propriedades não existem
-            max_options: questionData.max_options || null,
-            prefix: questionData.prefix || null
-          })
+          .update(updateData)
           .eq('id', existingQuestion.id);
         
         if (updateError) {

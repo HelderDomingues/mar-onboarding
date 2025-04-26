@@ -120,12 +120,12 @@ export const backupQuizTables = async (reason: string = 'backup_completo'): Prom
       
       return true;
     } else {
-      logger.warn('Backup completo das tabelas do questionário finalizado com falhas', {
+      logger.info('Backup completo das tabelas do questionário finalizado com falhas', {
         tag: 'Backup',
         data: { results }
       });
       
-      addLogEntry('warn', 'Backup completo das tabelas do questionário finalizado com falhas');
+      addLogEntry('warning', 'Backup completo das tabelas do questionário finalizado com falhas');
       
       return false;
     }
