@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -101,25 +102,27 @@ const Quiz = () => {
         setModules(fetchedModules);
         
         if (fetchedModules.length > 0) {
-          const initialQuestions = await fetchQuestions(fetchedModules[0].id);
-          setQuestions(initialQuestions);
-        }
+          const fetchedQuestions = await fetchQuestions(fetchedModules[0].id);
+          setQuestions(fetchedQuestions);
         
-        // Carregar submissão existente
-        if (user?.id) {
-          const submission = await fetchSubmission(user.id);
-          if (submission) {
-            setSubmissionId(submission.id);
-            setAnswers(prev => {
-              const initialAnswers = {};
-              initialQuestions.forEach(question => {
-                const answer = submission.answers?.find(a => a.question_id === question.id);
-                if (answer) {
-                  initialAnswers[question.id] = answer.answer;
-                }
-              });
-              return initialAnswers;
-            });
+          // Carregar submissão existente
+          if (user?.id) {
+            const submission = await fetchSubmission(user.id);
+            if (submission) {
+              setSubmissionId(submission.id);
+              
+              // Verificar se a submission tem uma propriedade answers antes de usá-la
+              if (submission.answers) {
+                const initialAnswers = {};
+                fetchedQuestions.forEach(question => {
+                  const answer = submission.answers.find(a => a.question_id === question.id);
+                  if (answer) {
+                    initialAnswers[question.id] = answer.answer;
+                  }
+                });
+                setAnswers(initialAnswers);
+              }
+            }
           }
         }
       } catch (error: any) {

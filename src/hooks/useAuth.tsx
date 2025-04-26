@@ -1,5 +1,5 @@
-
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import * as React from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { addLogEntry } from "@/utils/projectLog";
@@ -17,7 +17,7 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [authState, setAuthState] = useState<AuthState>({
+  const [authState, setAuthState] = React.useState<AuthState>({
     user: null,
     session: null,
     isLoading: true,
@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [processAuthChange]);
 
   // Configurar listener de autenticação uma vez durante a montagem
-  useEffect(() => {
+  React.useEffect(() => {
     addLogEntry('auth', 'Configurando listener de autenticação');
     logger.info('Configurando listener de autenticação', { tag: 'Auth' });
     
