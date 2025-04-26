@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,6 +56,14 @@ export function QuizReview({
   
   const getOptionValue = (option: any): string => {
     return typeof option === 'string' ? option : option.id;
+  };
+  
+  const getQuestionText = (question: QuizQuestion): string => {
+    return question.text || question.question_text || ""; 
+  };
+  
+  const getQuestionType = (question: QuizQuestion): string => {
+    return question.type || question.question_type || "text";
   };
   
   useEffect(() => {
@@ -272,7 +279,7 @@ export function QuizReview({
   const renderEditField = (question: QuizQuestion) => {
     const questionId = question.id;
     const answer = editedAnswers[questionId];
-    const questionType = question.type || question.question_type || 'text';
+    const questionType = getQuestionType(question);
     
     switch (questionType) {
       case 'text':
@@ -319,154 +326,153 @@ export function QuizReview({
     }
   };
   
-  // Renderização do componente
   return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-6">
-      {!confirmed ? <>
-          <Card className="quiz-card">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold flex items-center gap-2">
-                <ThumbsUp className="h-6 w-6 text-[hsl(var(--quiz-accent))]" />
-                Revisão do Questionário MAR
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-6 text-[hsl(var(--quiz-text))]">
-                Por favor, revise suas respostas abaixo para confirmar que estão corretas. 
-                Você pode editar qualquer resposta clicando no botão de edição.
-              </p>
-              
-              <div className="space-y-8">
-                {questionsByModule.map((moduleData, moduleIndex) => <div key={moduleData.module.id} className="border border-[hsl(var(--quiz-border))] rounded-lg p-4">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-[hsl(var(--quiz-text))]">
-                      <Badge variant="outline" className="quiz-module-badge">
-                        Módulo {moduleIndex + 1}
-                      </Badge>
-                      {moduleData.module.title}
-                    </h3>
-                    
-                    <div className="space-y-4">
-                      {moduleData.questions.map((question, questionIndex) => {
-                  const questionId = question.id;
-                  const isEditing = editingQuestionId === questionId;
-                  const answer = editedAnswers[questionId];
-                  return <div key={questionId} className="border-t border-[hsl(var(--quiz-border))] pt-3">
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <p className="font-medium text-[hsl(var(--quiz-text))]">
-                                  {question.text || question.question_text}
-                                </p>
-                                
-                                {isEditing ? <div className="mt-2 space-y-3">
-                                    {renderEditField(question)}
-                                    
-                                    <div className="flex gap-2 justify-end mt-3">
-                                      <Button variant="outline" size="sm" onClick={handleCancelEdit} className="text-zinc-950">
-                                        Cancelar
-                                      </Button>
-                                      <Button size="sm" onClick={() => handleSaveEdit(questionId)}>
-                                        Salvar
-                                      </Button>
-                                    </div>
-                                  </div> : <p className="text-[hsl(var(--quiz-text))] opacity-80 mt-1 break-words">
-                                    {formatJsonAnswer(answer)}
-                                  </p>}
-                              </div>
+    {!confirmed ? <>
+      <Card className="quiz-card">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold flex items-center gap-2">
+            <ThumbsUp className="h-6 w-6 text-[hsl(var(--quiz-accent))]" />
+            Revisão do Questionário MAR
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-6 text-[hsl(var(--quiz-text))]">
+            Por favor, revise suas respostas abaixo para confirmar que estão corretas. 
+            Você pode editar qualquer resposta clicando no botão de edição.
+          </p>
+          
+          <div className="space-y-8">
+            {questionsByModule.map((moduleData, moduleIndex) => <div key={moduleData.module.id} className="border border-[hsl(var(--quiz-border))] rounded-lg p-4">
+                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-[hsl(var(--quiz-text))]">
+                  <Badge variant="outline" className="quiz-module-badge">
+                    Módulo {moduleIndex + 1}
+                  </Badge>
+                  {moduleData.module.title}
+                </h3>
+                
+                <div className="space-y-4">
+                  {moduleData.questions.map((question, questionIndex) => {
+                    const questionId = question.id;
+                    const isEditing = editingQuestionId === questionId;
+                    const answer = editedAnswers[questionId];
+                    return <div key={questionId} className="border-t border-[hsl(var(--quiz-border))] pt-3">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <p className="font-medium text-[hsl(var(--quiz-text))]">
+                                {getQuestionText(question)}
+                              </p>
                               
-                              {!isEditing && <Button variant="outline" size="sm" onClick={() => handleEditClick(questionId)} className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-slate-800">
-                                  <Edit className="h-4 w-4 mr-1" /> Editar
-                                </Button>}
+                              {isEditing ? <div className="mt-2 space-y-3">
+                                  {renderEditField(question)}
+                                  
+                                  <div className="flex gap-2 justify-end mt-3">
+                                    <Button variant="outline" size="sm" onClick={handleCancelEdit} className="text-zinc-950">
+                                      Cancelar
+                                    </Button>
+                                    <Button size="sm" onClick={() => handleSaveEdit(questionId)}>
+                                      Salvar
+                                    </Button>
+                                  </div>
+                                </div> : <p className="text-[hsl(var(--quiz-text))] opacity-80 mt-1 break-words">
+                                  {formatJsonAnswer(answer)}
+                                </p>}
                             </div>
-                          </div>;
-                })}
-                    </div>
-                  </div>)}
-              </div>
-              
-              <div className="mt-8 p-4 border border-[hsl(var(--quiz-border))] rounded-lg bg-slate-800">
-                <div className="flex items-start gap-2 mb-4">
-                  <FileCheck className="h-5 w-5 mt-1 text-[hsl(var(--quiz-accent))]" />
-                  <div>
-                    <h4 className="font-semibold text-[hsl(var(--quiz-text))]">Termo de Validação</h4>
-                    <p className="text-sm text-[hsl(var(--quiz-text))] opacity-90">
-                      Para finalizar o questionário, por favor leia e concorde com os termos abaixo.
-                    </p>
-                  </div>
+                            
+                            {!isEditing && <Button variant="outline" size="sm" onClick={() => handleEditClick(questionId)} className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-slate-800">
+                                <Edit className="h-4 w-4 mr-1" /> Editar
+                              </Button>}
+                          </div>
+                        </div>;
+                  })}
                 </div>
-                
-                <div className="p-3 bg-slate-700 rounded border border-slate-600 text-sm mb-4">
-                  <p className="text-[hsl(var(--quiz-text))]">
-                    Declaro que as informações fornecidas neste questionário são verdadeiras e
-                    condizem com a realidade atual da minha empresa/negócio.
-                    Compreendo que estas informações serão utilizadas pela Crie Valor para análise
-                    e diagnóstico, e que a precisão destas informações é fundamental para o sucesso do trabalho.
-                  </p>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Checkbox id="agreement" checked={agreedToTerms} onCheckedChange={handleTermsChange} className="border-white" />
-                  <label htmlFor="agreement" className="text-sm font-medium leading-none cursor-pointer text-white">
-                    Concordo com os termos acima e confirmo a veracidade das informações
-                  </label>
-                </div>
-                
-                <div className="flex items-center gap-2 mt-4 text-sm text-[hsl(var(--quiz-text))] opacity-80">
-                  <Calendar className="h-4 w-4" />
-                  <span className="bg-zinc-600 hover:bg-zinc-500 text-slate-50 text-sm">Data de validação: {currentDate}</span>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between pt-6 border-t border-[hsl(var(--quiz-border))]">
-              <Button variant="outline" onClick={() => onEdit(modules.length - 1, questions.filter(q => q.module_id === modules[modules.length - 1].id).length - 1)} className="border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-slate-800">
-                <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
-              </Button>
-              <Button onClick={handleCompleteQuiz} disabled={!agreedToTerms || isSubmitting} className="quiz-btn bg-lime-600 hover:bg-lime-500">
-                {isSubmitting ? 'Processando...' : 'Confirmar Respostas'} <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-        </> : <Card className="quiz-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white text-base font-normal">
-              <CheckCircle className="h-6 w-6 text-green-500" />
-              Respostas Confirmadas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4 text-center text-[hsl(var(--quiz-text))]">
-              Suas respostas foram validadas com sucesso. Clique abaixo para concluir o questionário.
-            </p>
-            
-            {submissionError && <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Erro ao finalizar questionário</AlertTitle>
-                <AlertDescription>
-                  {submissionError}
-                </AlertDescription>
-              </Alert>}
-            
-            {errorDetails && <div className="mb-4 p-4 bg-red-900/30 border border-red-600/40 rounded-md text-sm text-white">
-                <h4 className="font-semibold text-red-200 mb-2">Detalhes técnicos do erro:</h4>
-                <div className="space-y-2 text-xs font-mono bg-black/30 p-3 rounded overflow-auto max-h-48">
-                  {errorDetails.origin && <p><strong>Origem:</strong> {errorDetails.origin}</p>}
-                  {errorDetails.message && <p><strong>Mensagem:</strong> {errorDetails.message}</p>}
-                  {errorDetails.code && <p><strong>Código:</strong> {errorDetails.code}</p>}
-                  {errorDetails.hint && <p><strong>Dica:</strong> {errorDetails.hint}</p>}
-                  {errorDetails.details && <p><strong>Detalhes:</strong> {typeof errorDetails.details === 'object' ? JSON.stringify(errorDetails.details, null, 2) : errorDetails.details}</p>}
-                  {errorDetails.context && <p><strong>Contexto:</strong> {errorDetails.context}</p>}
-                  {!errorDetails.message && !errorDetails.origin && <pre className="whitespace-pre-wrap text-slate-100">
-                      {JSON.stringify(errorDetails, null, 2)}
-                    </pre>}
-                </div>
-                <p className="mt-3 text-xs text-red-200">
-                  Por favor capture uma screenshot desta mensagem e envie para o suporte técnico.
+              </div>)}
+          </div>
+          
+          <div className="mt-8 p-4 border border-[hsl(var(--quiz-border))] rounded-lg bg-slate-800">
+            <div className="flex items-start gap-2 mb-4">
+              <FileCheck className="h-5 w-5 mt-1 text-[hsl(var(--quiz-accent))]" />
+              <div>
+                <h4 className="font-semibold text-[hsl(var(--quiz-text))]">Termo de Validação</h4>
+                <p className="text-sm text-[hsl(var(--quiz-text))] opacity-90">
+                  Para finalizar o questionário, por favor leia e concorde com os termos abaixo.
                 </p>
-              </div>}
-          </CardContent>
-          <CardFooter className="flex justify-center">
-            <Button onClick={handleFinalizeQuiz} disabled={isSubmitting} className="quiz-btn">
-              {isSubmitting ? 'Processando...' : 'Finalizar Questionário'}
-            </Button>
-          </CardFooter>
-        </Card>}
-    </div>;
+              </div>
+            </div>
+            
+            <div className="p-3 bg-slate-700 rounded border border-slate-600 text-sm mb-4">
+              <p className="text-[hsl(var(--quiz-text))]">
+                Declaro que as informações fornecidas neste questionário são verdadeiras e
+                condizem com a realidade atual da minha empresa/negócio.
+                Compreendo que estas informações serão utilizadas pela Crie Valor para análise
+                e diagnóstico, e que a precisão destas informações é fundamental para o sucesso do trabalho.
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Checkbox id="agreement" checked={agreedToTerms} onCheckedChange={handleTermsChange} className="border-white" />
+              <label htmlFor="agreement" className="text-sm font-medium leading-none cursor-pointer text-white">
+                Concordo com os termos acima e confirmo a veracidade das informações
+              </label>
+            </div>
+            
+            <div className="flex items-center gap-2 mt-4 text-sm text-[hsl(var(--quiz-text))] opacity-80">
+              <Calendar className="h-4 w-4" />
+              <span className="bg-zinc-600 hover:bg-zinc-500 text-slate-50 text-sm">Data de validação: {currentDate}</span>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="flex justify-between pt-6 border-t border-[hsl(var(--quiz-border))]">
+          <Button variant="outline" onClick={() => onEdit(modules.length - 1, questions.filter(q => q.module_id === modules[modules.length - 1].id).length - 1)} className="border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-slate-800">
+            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
+          </Button>
+          <Button onClick={handleCompleteQuiz} disabled={!agreedToTerms || isSubmitting} className="quiz-btn bg-lime-600 hover:bg-lime-500">
+            {isSubmitting ? 'Processando...' : 'Confirmar Respostas'} <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </CardFooter>
+      </Card>
+    </> : <Card className="quiz-card">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-white text-base font-normal">
+          <CheckCircle className="h-6 w-6 text-green-500" />
+          Respostas Confirmadas
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="mb-4 text-center text-[hsl(var(--quiz-text))]">
+          Suas respostas foram validadas com sucesso. Clique abaixo para concluir o questionário.
+        </p>
+        
+        {submissionError && <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Erro ao finalizar questionário</AlertTitle>
+            <AlertDescription>
+              {submissionError}
+            </AlertDescription>
+          </Alert>}
+        
+        {errorDetails && <div className="mb-4 p-4 bg-red-900/30 border border-red-600/40 rounded-md text-sm text-white">
+            <h4 className="font-semibold text-red-200 mb-2">Detalhes técnicos do erro:</h4>
+            <div className="space-y-2 text-xs font-mono bg-black/30 p-3 rounded overflow-auto max-h-48">
+              {errorDetails.origin && <p><strong>Origem:</strong> {errorDetails.origin}</p>}
+              {errorDetails.message && <p><strong>Mensagem:</strong> {errorDetails.message}</p>}
+              {errorDetails.code && <p><strong>Código:</strong> {errorDetails.code}</p>}
+              {errorDetails.hint && <p><strong>Dica:</strong> {errorDetails.hint}</p>}
+              {errorDetails.details && <p><strong>Detalhes:</strong> {typeof errorDetails.details === 'object' ? JSON.stringify(errorDetails.details, null, 2) : errorDetails.details}</p>}
+              {errorDetails.context && <p><strong>Contexto:</strong> {errorDetails.context}</p>}
+              {!errorDetails.message && !errorDetails.origin && <pre className="whitespace-pre-wrap text-slate-100">
+                  {JSON.stringify(errorDetails, null, 2)}
+                </pre>}
+            </div>
+            <p className="mt-3 text-xs text-red-200">
+              Por favor capture uma screenshot desta mensagem e envie para o suporte técnico.
+            </p>
+          </div>}
+      </CardContent>
+      <CardFooter className="flex justify-center">
+        <Button onClick={handleFinalizeQuiz} disabled={isSubmitting} className="quiz-btn">
+          {isSubmitting ? 'Processando...' : 'Finalizar Questionário'}
+        </Button>
+      </CardFooter>
+    </Card>}
+  </div>;
 }

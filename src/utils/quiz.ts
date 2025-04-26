@@ -13,21 +13,41 @@ export async function fetchModules(): Promise<QuizModule[]> {
 }
 
 export async function fetchQuestions(moduleId: string): Promise<QuizQuestion[]> {
-  const { data, error } = await supabase
+  const { data: questions, error: questionsError } = await supabase
     .from('quiz_questions')
-    .select(`
-      *,
-      quiz_options (*)
-    `)
+    .select('*')
     .eq('module_id', moduleId)
     .order('order_number');
     
-  if (error) throw error;
+  if (questionsError) throw questionsError;
   
-  return data?.map(question => ({
-    ...question,
-    options: question.quiz_options
+  // Mapeia os campos para manter compatibilidade
+  const mappedQuestions = questions?.map(q => ({
+    ...q,
+    question_text: q.text,
+    question_type: q.type
   })) || [];
+  
+  // Buscar opções para essas questões
+  const questionIds = mappedQuestions.map(q => q.id);
+  
+  if (questionIds.length === 0) {
+    return [];
+  }
+  
+  const { data: options, error: optionsError } = await supabase
+    .from('quiz_options')
+    .select('*')
+    .in('question_id', questionIds)
+    .order('order_number');
+    
+  if (optionsError) throw optionsError;
+  
+  // Associa as opções às perguntas
+  return mappedQuestions.map(question => ({
+    ...question,
+    options: options?.filter(opt => opt.question_id === question.id) || []
+  }));
 }
 
 export async function fetchSubmission(userId: string): Promise<QuizSubmission | null> {

@@ -88,6 +88,10 @@ export function QuestionCard({
     }
   };
 
+  const getQuestionType = (question: Question): QuestionType => {
+    return question.type || 'text';
+  };
+
   useEffect(() => {
     setSelectedOption('');
     setTextAnswer('');
@@ -155,6 +159,9 @@ export function QuestionCard({
     if (!question.required && (textAnswer === '' || selectedOption === '' || checkedOptions.length === 0)) {
       return true;
     }
+    
+    const questionType = getQuestionType(question);
+    
     if (question.validation) {
       switch (question.validation) {
         case 'email':
@@ -182,7 +189,8 @@ export function QuestionCard({
           break;
       }
     }
-    switch (question.type) {
+    
+    switch (questionType) {
       case 'radio':
         if (selectedOption === '') {
           setValidationError("Selecione uma opção.");

@@ -7,6 +7,7 @@ import { QuizReview } from "@/components/quiz/QuizReview";
 import { ArrowRight, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { logger } from "@/utils/logger";
+
 interface QuizContentProps {
   currentModule: QuizModule;
   moduleQuestions: QuizQuestion[];
@@ -28,6 +29,7 @@ interface QuizContentProps {
   allQuestions: QuizQuestion[];
   isAdmin: boolean;
 }
+
 export function QuizContent({
   currentModule,
   moduleQuestions,
@@ -50,6 +52,7 @@ export function QuizContent({
   const [fadeIn, setFadeIn] = useState(true);
   const timeMetricRef = useRef<any>(null);
   const questionStartTimeRef = useRef<number>(0);
+
   useEffect(() => {
     if (currentModule?.id) {
       if (timeMetricRef.current?.moduleId && timeMetricRef.current.moduleId !== currentModule.id) {
@@ -64,6 +67,7 @@ export function QuizContent({
       }
     };
   }, [currentModule?.id]);
+
   useEffect(() => {
     if (moduleQuestions && moduleQuestions.length > 0 && !showReview) {
       const currentQuestion = moduleQuestions[currentQuestionIndex];
@@ -80,11 +84,13 @@ export function QuizContent({
       }
     }
   }, [currentQuestionIndex, currentModuleIndex, moduleQuestions, showReview, allQuestions, allModules]);
+
   useEffect(() => {
     setFadeIn(false);
     const timer = setTimeout(() => setFadeIn(true), 50);
     return () => clearTimeout(timer);
   }, [currentQuestionIndex, currentModuleIndex]);
+
   const handleAnswer = (questionId: string, answer: string | string[]) => {
     if (currentModule?.id && questionStartTimeRef.current > 0) {
       const questionDuration = performance.now() - questionStartTimeRef.current;
@@ -93,6 +99,7 @@ export function QuizContent({
     }
     onAnswer(questionId, answer);
   };
+
   const handleReviewComplete = () => {
     if (timeMetricRef.current?.moduleId) {
       const finalMetric = logger.endModuleTimer(timeMetricRef.current);
@@ -105,6 +112,7 @@ export function QuizContent({
     }
     onReviewComplete();
   };
+
   const renderQuestion = () => {
     if (!moduleQuestions || moduleQuestions.length === 0) {
       return <div className="text-center p-6 bg-slate-700 rounded-lg">
@@ -119,11 +127,10 @@ export function QuizContent({
     }
     const currentAnswer = currentAnswers[currentQuestion.id];
 
-    // Mapeamento cuidadoso entre QuizQuestion e Question
     const mappedQuestion: Question = {
       id: currentQuestion.id,
-      text: currentQuestion.text || currentQuestion.question_text || "",
-      type: (currentQuestion.type || currentQuestion.question_type || "text") as CardQuestionType,
+      text: currentQuestion.text || "",
+      type: (currentQuestion.type || "text") as CardQuestionType,
       options: currentQuestion.options || [],
       required: currentQuestion.required !== undefined ? currentQuestion.required : true,
       hint: currentQuestion.hint,
@@ -132,39 +139,42 @@ export function QuizContent({
       validation: currentQuestion.validation,
       placeholder: currentQuestion.placeholder
     };
+
     return <div className={`transition-opacity duration-300 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
-        <QuestionCard question={mappedQuestion} onAnswer={handleAnswer} onNext={onNext} onPrev={onPrev} isFirst={currentQuestionIndex === 0 && currentModuleIndex === 0} isLast={currentQuestionIndex === moduleQuestions.length - 1 && currentModuleIndex === totalModules - 1} currentAnswer={currentAnswer} />
-      </div>;
+      <QuestionCard question={mappedQuestion} onAnswer={handleAnswer} onNext={onNext} onPrev={onPrev} isFirst={currentQuestionIndex === 0 && currentModuleIndex === 0} isLast={currentQuestionIndex === moduleQuestions.length - 1 && currentModuleIndex === totalModules - 1} currentAnswer={currentAnswer} />
+    </div>;
   };
+
   const renderModuleProgress = () => {
     const totalQuestionsInModule = moduleQuestions.length;
     return <QuizProgress currentStep={currentQuestionIndex + 1} totalSteps={totalQuestionsInModule} currentModule={currentModuleIndex + 1} totalModules={totalModules} />;
   };
+
   const renderModuleNavigation = () => {
     return;
   };
+
   const renderReview = () => {
     return <QuizReview modules={allModules} questions={allQuestions} answers={currentAnswers} onComplete={handleReviewComplete} onEdit={onEditQuestion} />;
   };
+
   return <div className="w-full flex flex-col items-center">
-      {isAdmin && <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4 w-full max-w-3xl" role="alert">
-          <strong className="font-bold">Modo Administrador Ativado!</strong>
-          <span className="block sm:inline"> Você está visualizando o questionário como administrador.</span>
-        </div>}
-      
-      {!showReview && <div className="w-full max-w-3xl mb-6">
-          <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">{currentModule.title}</h1>
-            
-          </div>
-          <p className="text-slate-300">{currentModule.description}</p>
-          
-          {renderModuleProgress()}
-        </div>}
-      
-      {showReview ? renderReview() : <>
-          {renderQuestion()}
-          {renderModuleNavigation()}
-        </>}
-    </div>;
+    {isAdmin && <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4 w-full max-w-3xl" role="alert">
+        <strong className="font-bold">Modo Administrador Ativado!</strong>
+        <span className="block sm:inline"> Você está visualizando o questionário como administrador.</span>
+      </div>}
+
+    {!showReview && <div className="w-full max-w-3xl mb-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">{currentModule.title}</h1>
+        </div>
+        <p className="text-slate-300">{currentModule.description}</p>
+        {renderModuleProgress()}
+      </div>}
+
+    {showReview ? renderReview() : <>
+        {renderQuestion()}
+        {renderModuleNavigation()}
+      </>}
+  </div>;
 }

@@ -314,48 +314,28 @@ const Quiz = () => {
       });
       
       const questionInfo = questions.find(q => q.id === questionId);
-      
-      let normalizedAnswer: string;
-      
-      if (Array.isArray(answer)) {
-        normalizedAnswer = answer.join(', ');
-      } else if (typeof answer === 'object') {
-        normalizedAnswer = JSON.stringify(answer);
-      } else {
-        normalizedAnswer = answer;
+      if (!questionInfo) {
+        throw new Error('Pergunta não encontrada');
       }
       
-      const {
-        error
-      } = await supabase.from('quiz_answers').upsert([{
-        user_id: user.id,
-        question_id: questionId,
-        answer: normalizedAnswer,
-        question_text: questionInfo?.question_text || questionInfo?.text || '',
-        user_email: user.email,
-        module_id: questionInfo?.module_id,
-        module_number: questionInfo?.module_number,
-        module_title: questionInfo?.module_title,
-        question_type: questionInfo?.question_type
-      }], {
-        onConflict: 'user_id,question_id'
+      const result = await saveQuizAnswer(user.id, questionId, answer, {
+        question_text: questionInfo.text,
+        module_id: questionInfo.module_id,
+        type: questionInfo.type
       });
       
-      if (error) throw error;
+      if (!result.success) {
+        throw result.error;
+      }
       
       logger.info('Resposta salva com sucesso', {
         tag: 'Quiz',
-        data: {
-          questionId
-        }
+        data: { questionId }
       });
     } catch (error: any) {
       logger.error('Erro ao salvar resposta', {
         tag: 'Quiz',
-        data: {
-          questionId,
-          error
-        }
+        data: { questionId, error }
       });
       toast({
         title: "Erro ao salvar resposta",

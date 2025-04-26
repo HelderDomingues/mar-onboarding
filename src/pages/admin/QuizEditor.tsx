@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
@@ -62,12 +61,10 @@ const QuizEditor = () => {
     fetchQuizData();
   }, []);
 
-  // Função para obter as opções associadas a uma pergunta
   const getQuestionOptions = (questionId: string) => {
     return options.filter(option => option.question_id === questionId);
   };
 
-  // Função para obter o módulo de uma pergunta
   const getQuestionModule = (moduleId: string) => {
     return modules.find(module => module.id === moduleId);
   };
@@ -203,7 +200,7 @@ const QuizEditor = () => {
                                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${question.required ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
                                               {question.required ? 'Obrigatório' : 'Opcional'}
                                             </span>
-                                            {question.max_options && (
+                                            {question.max_options !== undefined && (
                                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                                 Máx: {question.max_options}
                                               </span>

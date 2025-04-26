@@ -19,6 +19,16 @@ export interface QuizQuestion {
   order_number: number;
   created_at?: string;
   options?: QuizOption[];
+  
+  // Campos adicionais para compatibilidade com componentes existentes
+  question_text?: string;  // Alias para text
+  question_type?: string;  // Alias para type
+  max_options?: number;    // Opcional para questões de checkbox
+  prefix?: string;         // Para campos como instagram e url
+  validation?: string;     // Validação adicional
+  placeholder?: string;    // Texto de placeholder
+  module_number?: number;  // Para indexação
+  module_title?: string;   // Para exibição
 }
 
 export interface QuizOption {
