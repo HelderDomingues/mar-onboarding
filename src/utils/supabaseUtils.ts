@@ -1,6 +1,7 @@
 
 import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
+import { QuizAnswer, QuizQuestion } from '@/types/quiz';
 
 /**
  * Verifica se o questionário está completo para um usuário

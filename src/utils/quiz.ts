@@ -51,7 +51,8 @@ export async function fetchQuestions(moduleId: string): Promise<QuizQuestion[]> 
 }
 
 export async function fetchSubmission(userId: string): Promise<QuizSubmission | null> {
-  const { data, error } = await supabase
+  // Primeiro, buscar a submissão
+  const { data: submission, error } = await supabase
     .from('quiz_submissions')
     .select('*')
     .eq('user_id', userId)
@@ -60,7 +61,23 @@ export async function fetchSubmission(userId: string): Promise<QuizSubmission | 
     .maybeSingle();
     
   if (error) throw error;
-  return data;
+  
+  // Se não encontrou submissão, retorna null
+  if (!submission) return null;
+  
+  // Buscar as respostas para essa submissão
+  const { data: answers, error: answersError } = await supabase
+    .from('quiz_answers')
+    .select('*')
+    .eq('submission_id', submission.id);
+    
+  if (answersError) throw answersError;
+  
+  // Retornar a submissão com as respostas
+  return {
+    ...submission,
+    answers: answers || []
+  };
 }
 
 export async function saveAnswer(

@@ -1,52 +1,53 @@
 
-# Sistema MAR - Tarefas de Desenvolvimento
+# Tarefas do Projeto Sistema MAR
 
-## Problemas Identificados e Soluções
+## Concluídas
 
-### 1. Problemas com scripts de recuperação e seed do questionário
-   - **Problema**: Scripts contendo abordagem de "delete e insert" causando perda de dados
-   - **Solução**: Criar abordagem incremental para seed e recuperação, com backup automático antes de operações destrutivas
+- [x] Configuração inicial do projeto React com Supabase
+- [x] Implementação da autenticação básica (login/logout)
+- [x] Criação de estrutura de roteamento
+- [x] Implementação de controle de acesso baseado em funções (RBAC)
+- [x] Criação de página de dashboard para usuários autenticados
+- [x] Implementação do questionário MAR com múltiplos módulos
+- [x] Integração com o Supabase para armazenamento de respostas
+- [x] Correção de erro em useAuth.tsx (importação de React)
+- [x] Correção de erro em Quiz.tsx (verificação de arrays)
+- [x] Correção dos tipos de quiz.ts (adição de propriedade answers)
+- [x] Implementação do sistema administrativo básico
 
-### 2. API de recuperação do questionário com falhas
-   - **Problema**: Implementação com potencial de perda de dados
-   - **Solução**: Reconstruir API com verificações de segurança e backups automáticos
+## Em Andamento
 
-### 3. Interface administrativa com problemas
-   - **Problema**: Sidebar desconfigurado e outros elementos com falhas
-   - **Solução**: Reconstruir componentes UI com abordagem mais modular e estável
+- [ ] Aprimorar download de relatório em PDF das respostas
+- [ ] Implementar exportação de dados em formato CSV
+- [ ] Melhorar a página de análise de respostas
+- [ ] Testando a aplicação em diferentes cenários
 
-### 4. Módulos e perguntas incompletos
-   - **Problema**: Sistema esperava 13 módulos, apenas 8 presentes, perguntas e opções incompletas
-   - **Solução**: Reconstrução incremental do questionário, módulo por módulo, com validações
+## A Fazer
 
-## Próximas Etapas
+- [ ] Configurar webhooks para notificações externas
+- [ ] Implementar sistema completo de materiais para usuários
+- [ ] Adicionar visualização detalhada do progresso do usuário
+- [ ] Expandir funcionalidades do painel administrativo
+- [ ] Implementar backup automático de dados
+- [ ] Implementar sistema de convites por e-mail
+- [ ] Configurar pipeline de deploy contínuo
 
-### Fase 1: Estabilização (Atual)
-- [x] Corrigir erros de TypeScript pendentes (propriedade message e método signOut)
-- [ ] Implementar sistema seguro de backup antes de qualquer operação destrutiva
-- [ ] Verificar e corrigir problemas de autenticação e navegação
-- [ ] Criar mecanismo incremental para gerenciamento do questionário
+## Problemas Conhecidos
 
-### Fase 2: Reconstrução do Questionário
-- [ ] Estruturar definitivamente os 13 módulos e suas descrições
-- [ ] Implementar sistema de verificação de consistência do questionário
-- [ ] Reconstruir as perguntas módulo por módulo, mantendo verificações de integridade
-- [ ] Revisar e testar todo o fluxo de preenchimento do questionário
+1. **Configuração da chave service_role**: Problemas persistentes ao configurar a chave de service_role. Após várias tentativas de correção, incluindo renomeação de colunas e atualização de funções no banco de dados, o problema persiste quando o botão de salvar configuração é clicado.
 
-### Fase 3: Melhorias de Interface e UX
-- [ ] Reconstruir sidebar administrativo com abordagem modular
-- [ ] Implementar interface minimalista e moderna para o questionário
-- [ ] Adicionar feedback visual durante operações de carregamento e salvamento
-- [ ] Aprimorar a experiência de preenchimento do questionário para o cliente
+2. **Links quebrados no dashboard administrativo**: Vários botões e links no dashboard administrativo estão levando a páginas 404. É necessário revisar todos os links e criar as páginas necessárias.
 
-### Fase 4: Recursos Avançados
-- [ ] Implementar exportação de respostas em PDF e planilha
-- [ ] Adicionar dashboard para visualização de métricas
-- [ ] Implementar sistema de sugestões baseado nas respostas
+## Notas Técnicas
 
-## Notas Importantes
+- O sistema usa React 18 com hooks personalizados para gerenciamento de estado
+- Supabase é utilizado como backend as a service (BaaS)
+- Shadcn/UI para componentes de interface
+- Tailwind CSS para estilização
+- Integração com jsPDF para geração de relatórios em PDF
 
-- Todas as operações destrutivas devem ter confirmação explícita e backup automático
-- Priorizar a experiência do usuário e a estabilidade do sistema
-- Adotar abordagem incremental em todas as implementações
-- Manter registros detalhados (logs) de todas as operações críticas do sistema
+## Próximos Passos
+
+1. Resolver problemas conhecidos
+2. Completar tarefas em andamento
+3. Iniciar as tarefas pendentes de acordo com a prioridade

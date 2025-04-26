@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -112,10 +111,10 @@ const Quiz = () => {
               setSubmissionId(submission.id);
               
               // Verificar se a submission tem uma propriedade answers antes de usá-la
-              if (submission.answers) {
-                const initialAnswers = {};
+              if (submission.answers && Array.isArray(submission.answers)) {
+                const initialAnswers: Record<string, string | string[]> = {};
                 fetchedQuestions.forEach(question => {
-                  const answer = submission.answers.find(a => a.question_id === question.id);
+                  const answer = submission.answers?.find(a => a.question_id === question.id);
                   if (answer) {
                     initialAnswers[question.id] = answer.answer;
                   }
@@ -171,7 +170,7 @@ const Quiz = () => {
     };
     
     loadQuestions();
-  }, [currentModule]);
+  }, [currentModule, toast]);
   
   const handleNextModule = () => {
     if (currentModuleIndex < modules.length - 1) {
