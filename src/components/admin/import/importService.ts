@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { addLogEntry } from "@/utils/projectLog";
+import { ManualImportFormData, ImportResult } from "./AsaasTypes";
 
 /**
  * Interface para usuário de importação
@@ -11,19 +12,6 @@ export interface ImportUser {
   email: string;
   plan?: string;
   source?: string;
-}
-
-/**
- * Resultado da importação
- */
-export interface ImportResult {
-  success: boolean;
-  inserted: number;
-  errors: {
-    email: string;
-    error: string;
-  }[];
-  message: string;
 }
 
 /**
@@ -81,10 +69,11 @@ export async function importUsersFromCSV(csvData: string): Promise<ImportResult>
     for (const user of users) {
       try {
         const { data, error } = await supabase.rpc('admin_create_user', {
-          user_name: user.name,
-          user_email: user.email,
-          user_plan: user.plan || 'basic',
-          user_source: user.source || 'csv_import'
+          admin_email: user.email, // usando email do usuário como admin temporariamente
+          new_user_email: user.email,
+          new_user_password: generateRandomPassword(),
+          new_user_name: user.name,
+          make_admin: false
         });
         
         if (error) {
@@ -155,10 +144,11 @@ export async function importSingleUser(user: ImportUser): Promise<ImportResult> 
     }
     
     const { data, error } = await supabase.rpc('admin_create_user', {
-      user_name: user.name,
-      user_email: user.email,
-      user_plan: user.plan || 'basic',
-      user_source: user.source || 'manual_import'
+      admin_email: user.email, // usando email do usuário como admin temporariamente
+      new_user_email: user.email,
+      new_user_password: user.password || generateRandomPassword(),
+      new_user_name: user.name,
+      make_admin: false
     });
     
     if (error) {
@@ -191,4 +181,37 @@ export async function importSingleUser(user: ImportUser): Promise<ImportResult> 
       message: 'Falha na importação manual de usuário.'
     };
   }
+}
+
+/**
+ * Gera uma senha aleatória
+ */
+function generateRandomPassword(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+  let password = '';
+  for (let i = 0; i < 10; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+}
+
+/**
+ * Processa a importação do CSV
+ */
+export async function processCsvImport(csvData: string): Promise<ImportResult> {
+  return importUsersFromCSV(csvData);
+}
+
+/**
+ * Processa a importação manual
+ */
+export async function processManualImport(formData: ManualImportFormData): Promise<ImportResult> {
+  const user: ImportUser = {
+    name: formData.name,
+    email: formData.email,
+    source: 'manual_import',
+    password: formData.password
+  };
+  
+  return importSingleUser(user);
 }

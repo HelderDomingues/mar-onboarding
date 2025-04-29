@@ -44,30 +44,24 @@ export async function forceQuizRecovery(): Promise<{
       // Verifica os dados inseridos usando supabaseAdmin se disponível para evitar problemas de RLS
       const client = supabaseAdmin || supabase;
       
-      // Usar diretamente o cliente Supabase com .from() - sem await antes
-      const { data: modulesData, error: modulesError } = await client
-        .from('quiz_modules')
-        .select('*');
-        
-      const { data: questionsData, error: questionsError } = await client
-        .from('quiz_questions')
-        .select('*');
-        
-      const { data: optionsData, error: optionsError } = await client
-        .from('quiz_options')
-        .select('*');
+      // Usar o cliente Supabase corretamente
+      const modulesResponse = await client.from('quiz_modules').select('*');
+      const questionsResponse = await client.from('quiz_questions').select('*');
+      const optionsResponse = await client.from('quiz_options').select('*');
       
       // Verificar erros nas consultas
-      if (modulesError || questionsError || optionsError) {
+      if (modulesResponse.error || questionsResponse.error || optionsResponse.error) {
         logger.error('Erro ao verificar contagem de dados após seed:', { 
-          modulesError, questionsError, optionsError,
+          modulesError: modulesResponse.error, 
+          questionsError: questionsResponse.error, 
+          optionsError: optionsResponse.error,
           tag: 'RecoveryForce'
         });
       }
       
-      const modulesCount = modulesData?.length || 0;
-      const questionsCount = questionsData?.length || 0;
-      const optionsCount = optionsData?.length || 0;
+      const modulesCount = modulesResponse.data?.length || 0;
+      const questionsCount = questionsResponse.data?.length || 0;
+      const optionsCount = optionsResponse.data?.length || 0;
       
       const result = {
         success: true,

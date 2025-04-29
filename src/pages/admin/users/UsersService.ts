@@ -3,6 +3,7 @@ import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { addLogEntry } from "@/utils/projectLog";
 import { logger } from "@/utils/logger";
 import type { UserProfile, ConfigResult } from "@/types/admin";
+import { ServiceRoleConfig } from "@/config/serviceRole";
 
 // Função para obter emails dos usuários usando client admin
 export async function getUserEmails() {
@@ -198,5 +199,5 @@ export const setupEmailAccessService = async (serviceRoleKey: string): Promise<C
   }
 };
 
-// Re-exportar a função do ServiceRoleConfig
+// Re-exportar a classe ServiceRoleConfig
 export { ServiceRoleConfig } from '@/config/serviceRole';
