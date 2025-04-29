@@ -4,12 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { addLogEntry } from "@/utils/projectLog";
 import { useToast } from "@/components/ui/use-toast";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { UsersTableView } from "@/components/admin/UsersTableView";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserSearch } from "./users/UserSearch";
 import { ServiceRoleSetup } from "./users/ServiceRoleSetup";
+import { UsersTableView } from "@/components/admin/UsersTableView";
 import { fetchUserProfiles, toggleAdminRole, setupEmailAccessService } from "./users/UsersService";
 import type { UserProfile, ConfigResult } from "@/types/admin";
 
@@ -160,65 +158,58 @@ const UsersPage = () => {
   }
   
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen">
-        <AdminSidebar />
-        <SidebarInset className="p-6 bg-gray-50">
-          <div className="container max-w-7xl mx-auto">
-            <div className="flex flex-col gap-2 mb-6">
-              <h1 className="text-2xl font-bold">Gerenciamento de Usuários</h1>
-              <p className="text-muted-foreground">
-                Gerencie usuários, permissões e acesso ao sistema.
-              </p>
-            </div>
-            
-            <UserSearch 
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              handleAddUser={handleAddUser}
-              fetchUsers={fetchUsers}
-              isLoading={isLoading}
-            />
-            
-            <Card className="shadow-sm">
-              <CardHeader className="pb-3 border-b">
-                <CardTitle>Usuários do Sistema</CardTitle>
-                <CardDescription>
-                  Total de {users.length} usuários registrados
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <ServiceRoleSetup 
-                  error={error}
-                  setupEmailAccess={setupEmailAccess}
-                  handleConfigureEmailAccess={handleConfigureEmailAccess}
-                  handleCancelConfig={handleCancelConfig}
-                  isConfiguring={isConfiguring}
-                  serviceRoleKey={serviceRoleKey}
-                  setServiceRoleKey={setServiceRoleKey}
-                  configResult={configResult}
-                  showConfigForm={showConfigForm}
-                />
-                
-                <UsersTableView
-                  users={filteredUsers}
-                  isLoading={isLoading}
-                  searchQuery={searchQuery}
-                  onToggleAdmin={handleToggleAdmin}
-                  onSendEmail={handleSendEmail}
-                />
-              </CardContent>
-              <CardFooter className="flex justify-between border-t py-4 px-6 text-muted-foreground text-sm">
-                <p>Atualizado em {new Date().toLocaleDateString('pt-BR')}</p>
-                <div className="text-amber-600 font-medium text-xs">
-                  {error ? "Acesso limitado aos dados dos usuários" : "Última atualização: " + new Date().toLocaleTimeString('pt-BR')}
-                </div>
-              </CardFooter>
-            </Card>
-          </div>
-        </SidebarInset>
+    <div className="container max-w-7xl mx-auto p-6">
+      <div className="flex flex-col gap-2 mb-6">
+        <h1 className="text-2xl font-bold">Gerenciamento de Usuários</h1>
+        <p className="text-muted-foreground">
+          Gerencie usuários, permissões e acesso ao sistema.
+        </p>
       </div>
-    </SidebarProvider>
+      
+      <UserSearch 
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        handleAddUser={handleAddUser}
+        fetchUsers={fetchUsers}
+        isLoading={isLoading}
+      />
+      
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3 border-b">
+          <CardTitle>Usuários do Sistema</CardTitle>
+          <CardDescription>
+            Total de {users.length} usuários registrados
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <ServiceRoleSetup 
+            error={error}
+            setupEmailAccess={setupEmailAccess}
+            handleConfigureEmailAccess={handleConfigureEmailAccess}
+            handleCancelConfig={handleCancelConfig}
+            isConfiguring={isConfiguring}
+            serviceRoleKey={serviceRoleKey}
+            setServiceRoleKey={setServiceRoleKey}
+            configResult={configResult}
+            showConfigForm={showConfigForm}
+          />
+          
+          <UsersTableView
+            users={filteredUsers}
+            isLoading={isLoading}
+            searchQuery={searchQuery}
+            onToggleAdmin={handleToggleAdmin}
+            onSendEmail={handleSendEmail}
+          />
+        </CardContent>
+        <CardFooter className="flex justify-between border-t py-4 px-6 text-muted-foreground text-sm">
+          <p>Atualizado em {new Date().toLocaleDateString('pt-BR')}</p>
+          <div className="text-amber-600 font-medium text-xs">
+            {error ? "Acesso limitado aos dados dos usuários" : "Última atualização: " + new Date().toLocaleTimeString('pt-BR')}
+          </div>
+        </CardFooter>
+      </Card>
+    </div>
   );
 };
 

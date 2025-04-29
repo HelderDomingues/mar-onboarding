@@ -179,60 +179,6 @@ export type Database = {
           },
         ]
       }
-      quiz_answers_backup_20250426: {
-        Row: {
-          answer: string | null
-          answered_at: string | null
-          created_at: string | null
-          id: string | null
-          module_id: string | null
-          module_number: number | null
-          module_title: string | null
-          question_id: string | null
-          question_text: string | null
-          question_type: string | null
-          time_spent: number | null
-          updated_at: string | null
-          user_email: string | null
-          user_id: string | null
-          user_name: string | null
-        }
-        Insert: {
-          answer?: string | null
-          answered_at?: string | null
-          created_at?: string | null
-          id?: string | null
-          module_id?: string | null
-          module_number?: number | null
-          module_title?: string | null
-          question_id?: string | null
-          question_text?: string | null
-          question_type?: string | null
-          time_spent?: number | null
-          updated_at?: string | null
-          user_email?: string | null
-          user_id?: string | null
-          user_name?: string | null
-        }
-        Update: {
-          answer?: string | null
-          answered_at?: string | null
-          created_at?: string | null
-          id?: string | null
-          module_id?: string | null
-          module_number?: number | null
-          module_title?: string | null
-          question_id?: string | null
-          question_text?: string | null
-          question_type?: string | null
-          time_spent?: number | null
-          updated_at?: string | null
-          user_email?: string | null
-          user_id?: string | null
-          user_name?: string | null
-        }
-        Relationships: []
-      }
       quiz_modules: {
         Row: {
           created_at: string
@@ -254,30 +200,6 @@ export type Database = {
           id?: string
           order_number?: number
           title?: string
-        }
-        Relationships: []
-      }
-      quiz_modules_backup_20250426: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: string | null
-          order_number: number | null
-          title: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: string | null
-          order_number?: number | null
-          title?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: string | null
-          order_number?: number | null
-          title?: string | null
         }
         Relationships: []
       }
@@ -312,30 +234,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      quiz_options_backup_20250426: {
-        Row: {
-          created_at: string | null
-          id: string | null
-          order_number: number | null
-          question_id: string | null
-          text: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string | null
-          order_number?: number | null
-          question_id?: string | null
-          text?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string | null
-          order_number?: number | null
-          question_id?: string | null
-          text?: string | null
-        }
-        Relationships: []
       }
       quiz_questions: {
         Row: {
@@ -377,45 +275,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      quiz_questions_backup_20250426: {
-        Row: {
-          created_at: string | null
-          hint: string | null
-          id: string | null
-          max_options: number | null
-          module_id: string | null
-          order_number: number | null
-          prefix: string | null
-          required: boolean | null
-          text: string | null
-          type: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          hint?: string | null
-          id?: string | null
-          max_options?: number | null
-          module_id?: string | null
-          order_number?: number | null
-          prefix?: string | null
-          required?: boolean | null
-          text?: string | null
-          type?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          hint?: string | null
-          id?: string | null
-          max_options?: number | null
-          module_id?: string | null
-          order_number?: number | null
-          prefix?: string | null
-          required?: boolean | null
-          text?: string | null
-          type?: string | null
-        }
-        Relationships: []
       }
       quiz_respostas_completas: {
         Row: {
@@ -480,54 +339,6 @@ export type Database = {
           started_at?: string
           user_email?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      quiz_submissions_backup_20250426: {
-        Row: {
-          completed: boolean | null
-          completed_at: string | null
-          current_module: number | null
-          device_info: string | null
-          id: string | null
-          last_active: string | null
-          modules_completed: number[] | null
-          started_at: string | null
-          total_time_spent: number | null
-          user_email: string | null
-          user_id: string | null
-          user_name: string | null
-          webhook_processed: boolean | null
-        }
-        Insert: {
-          completed?: boolean | null
-          completed_at?: string | null
-          current_module?: number | null
-          device_info?: string | null
-          id?: string | null
-          last_active?: string | null
-          modules_completed?: number[] | null
-          started_at?: string | null
-          total_time_spent?: number | null
-          user_email?: string | null
-          user_id?: string | null
-          user_name?: string | null
-          webhook_processed?: boolean | null
-        }
-        Update: {
-          completed?: boolean | null
-          completed_at?: string | null
-          current_module?: number | null
-          device_info?: string | null
-          id?: string | null
-          last_active?: string | null
-          modules_completed?: number[] | null
-          started_at?: string | null
-          total_time_spent?: number | null
-          user_email?: string | null
-          user_id?: string | null
-          user_name?: string | null
-          webhook_processed?: boolean | null
         }
         Relationships: []
       }

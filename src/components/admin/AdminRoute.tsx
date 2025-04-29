@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from "./AdminSidebar";
@@ -11,7 +11,7 @@ import { addLogEntry } from "@/utils/projectLog";
  * Componente de rota para páginas administrativas
  * Apenas usuários com função de administrador podem acessar
  */
-export const AdminRoute = () => {
+const AdminRoute = () => {
   const { user, isAuthenticated, isAdmin, isLoading } = useAuth();
   const location = useLocation();
 
@@ -66,10 +66,10 @@ export const AdminRoute = () => {
   addLogEntry('auth', 'Acesso administrativo concedido', {}, user?.id);
   
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex min-h-screen w-full bg-background">
         <AdminSidebar />
-        <div className="flex-1 p-6 overflow-auto">
+        <div className="flex-1">
           <Outlet />
         </div>
       </div>

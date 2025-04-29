@@ -41,11 +41,11 @@ export const AdminSidebar = () => {
   };
   
   return (
-    <Sidebar>
+    <Sidebar variant="sidebar" collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center p-4">
           <img 
-            src="/logo-crie-valor.png" 
+            src="/lovable-uploads/e109ec41-0f89-456d-8081-f73393ed4fd5.png" 
             alt="Crie Valor" 
             className="h-8 mr-2" 
           />
@@ -64,7 +64,7 @@ export const AdminSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink to="/dashboard" className={({ isActive }) => 
-                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                    isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"
                   }>
                     <Home className="w-4 h-4 mr-2" />
                     <span>Dashboard</span>
@@ -75,7 +75,7 @@ export const AdminSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink to="/test-connection" className={({ isActive }) => 
-                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                    isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"
                   }>
                     <Database className="w-4 h-4 mr-2" />
                     <span>Teste de Conexão</span>
@@ -93,7 +93,7 @@ export const AdminSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/users" className={({ isActive }) => 
-                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                    isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"
                   }>
                     <Users className="w-4 h-4 mr-2" />
                     <span>Usuários</span>
@@ -104,7 +104,7 @@ export const AdminSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/materials" className={({ isActive }) => 
-                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                    isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"
                   }>
                     <Book className="w-4 h-4 mr-2" />
                     <span>Materiais</span>
@@ -115,7 +115,7 @@ export const AdminSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/quiz-responses" className={({ isActive }) => 
-                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                    isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"
                   }>
                     <FileCheck className="w-4 h-4 mr-2" />
                     <span>Respostas do Questionário</span>
@@ -133,7 +133,7 @@ export const AdminSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/quiz-editor" className={({ isActive }) => 
-                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                    isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"
                   }>
                     <FileText className="w-4 h-4 mr-2" />
                     <span>Editor de Questionário</span>
@@ -144,7 +144,7 @@ export const AdminSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/seed-quiz" className={({ isActive }) => 
-                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                    isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"
                   }>
                     <Database className="w-4 h-4 mr-2" />
                     <span>Inicializar Questionário</span>
@@ -155,7 +155,7 @@ export const AdminSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/recover-quiz" className={({ isActive }) => 
-                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                    isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"
                   }>
                     <ListChecks className="w-4 h-4 mr-2" />
                     <span>Recuperar Questionário</span>
@@ -173,7 +173,7 @@ export const AdminSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/reports" className={({ isActive }) => 
-                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                    isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"
                   }>
                     <Calendar className="w-4 h-4 mr-2" />
                     <span>Relatórios</span>
@@ -184,7 +184,7 @@ export const AdminSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/metrics" className={({ isActive }) => 
-                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                    isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"
                   }>
                     <BarChart2 className="w-4 h-4 mr-2" />
                     <span>Métricas</span>
@@ -195,7 +195,7 @@ export const AdminSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/logs" className={({ isActive }) => 
-                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                    isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"
                   }>
                     <FileText className="w-4 h-4 mr-2" />
                     <span>Logs do Sistema</span>
@@ -213,7 +213,7 @@ export const AdminSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/settings" className={({ isActive }) => 
-                    isActive ? "text-primary font-medium" : "text-muted-foreground"
+                    isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"
                   }>
                     <Settings className="w-4 h-4 mr-2" />
                     <span>Configurações</span>
@@ -240,3 +240,5 @@ export const AdminSidebar = () => {
     </Sidebar>
   );
 };
+
+export default AdminSidebar;
