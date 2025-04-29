@@ -1,9 +1,79 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { getUserEmails, configureEmailAccess } from "@/integrations/supabase/client";
+import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
 import { addLogEntry } from "@/utils/projectLog";
 import { logger } from "@/utils/logger";
 import type { UserProfile, ConfigResult } from "@/types/admin";
+
+// Função para obter emails dos usuários usando client admin
+export async function getUserEmails() {
+  try {
+    if (!supabaseAdmin) {
+      throw new Error('Acesso admin não configurado');
+    }
+    
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers();
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data.users.map(user => ({
+      user_id: user.id,
+      user_email: user.email
+    }));
+  } catch (error) {
+    console.error('Erro ao buscar emails dos usuários:', error);
+    return [];
+  }
+}
+
+// Função para configurar acesso aos emails
+export async function configureEmailAccess(serviceRoleKey: string): Promise<ConfigResult> {
+  try {
+    // Validações básicas da chave
+    if (!serviceRoleKey || serviceRoleKey.trim().length < 20) {
+      return {
+        success: false,
+        message: "Chave inválida, muito curta",
+        detalhes: "A chave service_role deve ter pelo menos 20 caracteres"
+      };
+    }
+    
+    if (!serviceRoleKey.startsWith('eyJ')) {
+      return {
+        success: false,
+        message: "Formato de chave inválido",
+        detalhes: "A chave service_role deve começar com 'eyJ'"
+      };
+    }
+    
+    // Tenta salvar a chave
+    const saved = ServiceRoleConfig.set(serviceRoleKey);
+    
+    if (!saved) {
+      return {
+        success: false,
+        message: "Não foi possível salvar a chave",
+        detalhes: "Erro ao salvar no armazenamento local"
+      };
+    }
+    
+    // Recarrega a página para inicializar o cliente admin
+    window.location.reload();
+    
+    return {
+      success: true,
+      message: "Chave configurada com sucesso"
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Erro ao configurar chave",
+      detalhes: error.message || "Erro desconhecido",
+      codigo: error.code
+    };
+  }
+}
 
 export const fetchUserProfiles = async (userId: string | undefined) => {
   if (!userId) {
@@ -127,3 +197,6 @@ export const setupEmailAccessService = async (serviceRoleKey: string): Promise<C
     };
   }
 };
+
+// Re-exportar a função do ServiceRoleConfig
+export { ServiceRoleConfig } from '@/config/serviceRole';

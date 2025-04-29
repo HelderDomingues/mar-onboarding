@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -8,9 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertCircle, RefreshCw } from 'lucide-react';
-
-// Importando a chave anônima do arquivo onde está definida
-import { SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 
 /**
  * Componente para testar as políticas de segurança (RLS) das tabelas
@@ -23,8 +20,12 @@ const SecurityPolicyTester: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
-  const tables = ['profiles', 'quiz_questions', 'quiz_submissions', 'materials', 'user_roles'];
-  const operations = ['select', 'insert', 'update', 'delete', 'rpc'];
+  // Lista de tabelas disponíveis com tipagem segura
+  const tables = ['profiles', 'quiz_questions', 'quiz_submissions', 'materials', 'user_roles'] as const;
+  type TableName = typeof tables[number];
+  
+  const operations = ['select', 'insert', 'update', 'delete', 'rpc'] as const;
+  type OperationType = typeof operations[number];
   
   const testSecurityPolicy = async () => {
     setIsLoading(true);
@@ -47,29 +48,35 @@ const SecurityPolicyTester: React.FC = () => {
         // Testar uma função RPC específica (is_admin)
         response = await supabase.rpc('is_admin');
       } else {
-        switch (operation) {
+        switch (operation as OperationType) {
           case 'select':
             response = await supabase
-              .from(table)
+              .from(table as TableName)
               .select('*')
               .limit(10);
             break;
-          case 'insert':
+          case 'insert': {
+            // Gerar um objeto de dados adequado para a tabela atual
+            const mockData = generateMockData(table as TableName);
             response = await supabase
-              .from(table)
-              .insert([{ id: userId || 'test-id', name: 'Test User' }])
+              .from(table as TableName)
+              .insert([mockData])
               .select();
             break;
-          case 'update':
+          }
+          case 'update': {
+            // Gerar um objeto de dados para atualização
+            const updateData = generateUpdateData(table as TableName);
             response = await supabase
-              .from(table)
-              .update({ name: 'Updated User' })
+              .from(table as TableName)
+              .update(updateData)
               .eq('id', userId || 'test-id')
               .select();
             break;
+          }
           case 'delete':
             response = await supabase
-              .from(table)
+              .from(table as TableName)
               .delete()
               .eq('id', userId || 'test-id')
               .select();
@@ -80,10 +87,11 @@ const SecurityPolicyTester: React.FC = () => {
       }
       
       if (userId && operation === 'select') {
+        const userIdField = table === 'profiles' ? 'id' : 'user_id';
         response = await supabase
-          .from(table)
+          .from(table as TableName)
           .select('*')
-          .eq('user_id', userId);
+          .eq(userIdField, userId);
       }
       
       const { data, error } = response;
@@ -100,6 +108,63 @@ const SecurityPolicyTester: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  // Função para gerar dados de teste apropriados para cada tabela
+  const generateMockData = (tableName: TableName) => {
+    const mockId = crypto.randomUUID();
+    
+    switch (tableName) {
+      case 'profiles':
+        return { 
+          id: userId || mockId, 
+          full_name: 'Usuário de Teste', 
+          user_email: 'teste@exemplo.com' 
+        };
+      case 'materials':
+        return { 
+          title: 'Material de Teste', 
+          file_url: 'https://example.com/test.pdf' 
+        };
+      case 'quiz_questions':
+        return { 
+          module_id: mockId,
+          text: 'Pergunta de teste?', 
+          type: 'text',
+          order_number: 1 
+        };
+      case 'quiz_submissions':
+        return { 
+          user_id: userId || mockId, 
+          user_email: 'teste@exemplo.com' 
+        };
+      case 'user_roles':
+        return { 
+          user_id: userId || mockId, 
+          role: 'user',
+          user_email: 'teste@exemplo.com'
+        };
+      default:
+        return { id: mockId };
+    }
+  };
+
+  // Função para gerar dados de atualização apropriados para cada tabela
+  const generateUpdateData = (tableName: TableName) => {
+    switch (tableName) {
+      case 'profiles':
+        return { full_name: 'Nome Atualizado' };
+      case 'materials':
+        return { title: 'Material Atualizado' };
+      case 'quiz_questions':
+        return { text: 'Pergunta atualizada?' };
+      case 'quiz_submissions':
+        return { completed: true };
+      case 'user_roles':
+        return { role: 'admin' };
+      default:
+        return { updated: true };
+    }
+  };
   
   return (
     <Card className="shadow-sm">
@@ -113,13 +178,13 @@ const SecurityPolicyTester: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium leading-none pb-1">Tabela</label>
-            <Select onValueChange={setTable} defaultValue={table}>
+            <Select onValueChange={(value) => setTable(value)} defaultValue={table}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione uma tabela" />
               </SelectTrigger>
               <SelectContent>
-                {tables.map(table => (
-                  <SelectItem key={table} value={table}>{table}</SelectItem>
+                {tables.map(tableOption => (
+                  <SelectItem key={tableOption} value={tableOption}>{tableOption}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -127,13 +192,13 @@ const SecurityPolicyTester: React.FC = () => {
           
           <div>
             <label className="block text-sm font-medium leading-none pb-1">Operação</label>
-            <Select onValueChange={setOperation} defaultValue={operation}>
+            <Select onValueChange={(value) => setOperation(value)} defaultValue={operation}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione uma operação" />
               </SelectTrigger>
               <SelectContent>
-                {operations.map(operation => (
-                  <SelectItem key={operation} value={operation}>{operation}</SelectItem>
+                {operations.map(op => (
+                  <SelectItem key={op} value={op}>{op}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

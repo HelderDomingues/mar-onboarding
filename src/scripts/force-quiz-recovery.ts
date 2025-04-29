@@ -44,6 +44,7 @@ export async function forceQuizRecovery(): Promise<{
       // Verifica os dados inseridos usando supabaseAdmin se disponível para evitar problemas de RLS
       const client = supabaseAdmin || supabase;
       
+      // Usar diretamente o cliente Supabase com .from() - sem await antes
       const { data: modulesData, error: modulesError } = await client
         .from('quiz_modules')
         .select('*');

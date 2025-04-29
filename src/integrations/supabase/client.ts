@@ -7,6 +7,9 @@ import { ServiceRoleConfig } from '@/config/serviceRole';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
+// Exportar a chave anônima para uso em componentes específicos (como testes de segurança)
+export const SUPABASE_ANON_KEY = supabaseAnonKey;
+
 // Cliente padrão com a chave anônima para uso no frontend
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
