@@ -2,5 +2,5 @@
 // Arquivo de barril (barrel file) para manter compatibilidade
 
 export * from "./sidebar/index";
-export { default as AdminSidebar } from "./sidebar/AdminSidebar";
 
+// Não importamos o AdminSidebar aqui, pois ele está em outro diretório

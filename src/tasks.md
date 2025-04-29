@@ -16,6 +16,7 @@
 - [x] Implementação do sistema administrativo básico
 - [x] Configuração de políticas de segurança (RLS) para tabelas de backup
 - [x] Correção da exibição do sidebar na interface administrativa
+- [x] Correção de erro de importação do AdminSidebar
 
 ## Em Andamento
 
@@ -56,4 +57,5 @@
 - **29/04/2025**: Correção da exibição do sidebar administrativo, ajustando o layout e a estrutura dos componentes
 - **29/04/2025**: Adicionado políticas de segurança RLS para tabelas de backup
 - **29/04/2025**: Melhorada a experiência de navegação na área administrativa
+- **29/04/2025**: Correção de erro de importação do AdminSidebar para garantir consistência entre arquivos
 

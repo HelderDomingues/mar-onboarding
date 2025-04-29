@@ -3,7 +3,7 @@ import React from "react";
 import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { AdminSidebar } from "./AdminSidebar";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { logger } from "@/utils/logger";
 import { addLogEntry } from "@/utils/projectLog";
 
@@ -69,7 +69,7 @@ const AdminRoute = () => {
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full bg-background">
         <AdminSidebar />
-        <div className="flex-1">
+        <div className="flex-1 p-6 overflow-auto">
           <Outlet />
         </div>
       </div>

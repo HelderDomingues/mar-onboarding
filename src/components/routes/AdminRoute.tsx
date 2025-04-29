@@ -66,7 +66,7 @@ const AdminRoute = () => {
   addLogEntry('auth', 'Acesso administrativo concedido', {}, user?.id);
   
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full bg-background">
         <AdminSidebar />
         <div className="flex-1 p-6 overflow-auto">
