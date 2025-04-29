@@ -18,22 +18,22 @@ type ConfigResult = {
   codigo?: string;
 };
 
-interface ServiceRoleConfigProps {
-  onConfigure: (key: string) => Promise<void>;
-  onCancel: () => void;
-  isConfiguring: boolean;
-  serviceRoleKey: string;
-  setServiceRoleKey: (key: string) => void;
-  configResult: ConfigResult | null;
+export interface ServiceRoleConfigProps {
+  onConfigure?: (key: string) => Promise<void>;
+  onCancel?: () => void;
+  isConfiguring?: boolean;
+  serviceRoleKey?: string;
+  setServiceRoleKey?: (key: string) => void;
+  configResult?: ConfigResult | null;
 }
 
 export const ServiceRoleConfig = ({
-  onConfigure,
-  onCancel,
-  isConfiguring,
-  serviceRoleKey,
-  setServiceRoleKey,
-  configResult
+  onConfigure = async () => {},
+  onCancel = () => {},
+  isConfiguring = false,
+  serviceRoleKey = '',
+  setServiceRoleKey = () => {},
+  configResult = null
 }: ServiceRoleConfigProps) => {
   return (
     <div className="p-4 bg-blue-50 border-l-4 border-blue-500">
@@ -114,3 +114,5 @@ export const ServiceRoleConfig = ({
     </div>
   );
 };
+
+export default ServiceRoleConfig;

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ServiceRoleConfig from '@/components/admin/ServiceRoleConfig';
 import { WebhookConfig } from '@/components/admin/WebhookConfig';
@@ -10,6 +10,34 @@ import { Separator } from '@/components/ui/separator';
 
 export default function SettingsPage() {
   const { isAdmin } = useAuth();
+  const [serviceRoleKey, setServiceRoleKey] = useState('');
+  const [isConfiguring, setIsConfiguring] = useState(false);
+  const [configResult, setConfigResult] = useState(null);
+
+  const handleConfigure = async (key: string) => {
+    setIsConfiguring(true);
+    try {
+      // Simular configuração
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setConfigResult({
+        success: true,
+        message: "Chave configurada com sucesso. Você agora pode acessar os emails dos usuários."
+      });
+    } catch (error) {
+      setConfigResult({
+        success: false,
+        message: "Ocorreu um erro ao configurar a chave.",
+        detalhes: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    } finally {
+      setIsConfiguring(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setServiceRoleKey('');
+    setConfigResult(null);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
@@ -33,7 +61,14 @@ export default function SettingsPage() {
           
           <TabsContent value="chaves" className="space-y-4">
             <div className="grid gap-6">
-              <ServiceRoleConfig />
+              <ServiceRoleConfig 
+                serviceRoleKey={serviceRoleKey}
+                setServiceRoleKey={setServiceRoleKey}
+                onConfigure={handleConfigure}
+                onCancel={handleCancel}
+                isConfiguring={isConfiguring}
+                configResult={configResult}
+              />
             </div>
           </TabsContent>
           

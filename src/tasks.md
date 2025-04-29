@@ -19,13 +19,15 @@
 - [x] Correção de erro de importação do AdminSidebar
 - [x] Eliminação de arquivos duplicados (AdminRoute.tsx)
 - [x] Implementação das funções RPC para backup de tabelas
+- [x] Correção de erro de importação AdminRoute em AppRoutes.tsx
+- [x] Correção de problema de exportação do ServiceRoleConfig
+- [x] Implementação de funcionalidade básica de webhook para Make.com
 
 ## Em Andamento
 
 - [ ] Aprimorar download de relatório em PDF das respostas
 - [ ] Implementar exportação de dados em formato CSV
 - [ ] Melhorar a página de análise de respostas
-- [ ] Implementar funcionalidade de webhook para Make.com
 
 ## A Fazer
 
@@ -64,4 +66,4 @@
 - **29/04/2025**: Correção de erro de importação do AdminSidebar para garantir consistência entre arquivos
 - **29/04/2025**: Implementação das funções RPC para backup e restauração de tabelas
 - **29/04/2025**: Eliminação de arquivos duplicados para melhorar a manutenção do código
-
+- **29/04/2025**: Correção de erros de importação e exportação de componentes

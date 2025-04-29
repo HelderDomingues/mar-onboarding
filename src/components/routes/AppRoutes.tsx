@@ -2,7 +2,7 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/routes/ProtectedRoute";
-import AdminRoute from "@/components/admin/AdminRoute";
+import AdminRoute from "@/components/routes/AdminRoute";
 
 import Dashboard from "@/pages/Dashboard";
 import Quiz from "@/pages/Quiz";
