@@ -385,6 +385,14 @@ export type Database = {
         Args: { user_id: string }
         Returns: boolean
       }
+      create_table_backup: {
+        Args: {
+          source_table: string
+          target_table: string
+          backup_reason?: string
+        }
+        Returns: boolean
+      }
       gerar_respostas_json: {
         Args: { p_user_id: string }
         Returns: Json
@@ -408,6 +416,14 @@ export type Database = {
       }
       is_quiz_complete: {
         Args: { p_user_id: string }
+        Returns: boolean
+      }
+      list_table_backups: {
+        Args: { table_name_pattern: string }
+        Returns: string[]
+      }
+      restore_table_from_backup: {
+        Args: { backup_table: string; target_table: string }
         Returns: boolean
       }
       update_user_quiz_progress: {

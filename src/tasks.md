@@ -17,12 +17,15 @@
 - [x] Configuração de políticas de segurança (RLS) para tabelas de backup
 - [x] Correção da exibição do sidebar na interface administrativa
 - [x] Correção de erro de importação do AdminSidebar
+- [x] Eliminação de arquivos duplicados (AdminRoute.tsx)
+- [x] Implementação das funções RPC para backup de tabelas
 
 ## Em Andamento
 
 - [ ] Aprimorar download de relatório em PDF das respostas
 - [ ] Implementar exportação de dados em formato CSV
 - [ ] Melhorar a página de análise de respostas
+- [ ] Implementar funcionalidade de webhook para Make.com
 
 ## A Fazer
 
@@ -49,8 +52,9 @@
 ## Próximos Passos
 
 1. Resolver problemas conhecidos
-2. Completar tarefas em andamento
-3. Iniciar as tarefas pendentes de acordo com a prioridade
+2. Implementar a funcionalidade de webhook para Make.com
+3. Completar tarefas em andamento
+4. Iniciar as tarefas pendentes de acordo com a prioridade
 
 ## Melhorias Realizadas
 
@@ -58,4 +62,6 @@
 - **29/04/2025**: Adicionado políticas de segurança RLS para tabelas de backup
 - **29/04/2025**: Melhorada a experiência de navegação na área administrativa
 - **29/04/2025**: Correção de erro de importação do AdminSidebar para garantir consistência entre arquivos
+- **29/04/2025**: Implementação das funções RPC para backup e restauração de tabelas
+- **29/04/2025**: Eliminação de arquivos duplicados para melhorar a manutenção do código
 
