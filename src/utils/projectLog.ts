@@ -1,4 +1,3 @@
-
 /**
  * Sistema de Log do Projeto MAR - Crie Valor
  * 
@@ -10,7 +9,7 @@ import { logger } from './logger';
 import { supabase } from '@/integrations/supabase/client';
 
 // Interface para os logs
-export type LogType = 'error' | 'warning' | 'info' | 'build' | 'auth' | 'database' | 'admin' | 'navigation' | 'quiz' | 'validation';
+export type LogType = 'error' | 'warning' | 'info' | 'build' | 'auth' | 'database' | 'admin' | 'navigation' | 'quiz' | 'validation' | 'webhook';
 
 export interface LogEntry {
   timestamp: string;
@@ -72,6 +71,9 @@ export const addLogEntry = (
       break;
     case 'validation':
       logger.warn(message, { ...details, userId, context, category: 'validation' });
+      break;
+    case 'webhook':
+      logger.info(message, { ...details, userId, context, category: 'webhook' });
       break;
     default:
       logger.info(message, { ...details, userId, context });

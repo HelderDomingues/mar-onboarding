@@ -49,7 +49,7 @@ export async function configureMakeWebhookUrl(webhookUrl: string): Promise<{ suc
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
     logger.error('Erro ao configurar URL do webhook', { error: errorMessage });
-    addLogEntry('webhook', 'Erro ao configurar URL do webhook', { error: errorMessage });
+    addLogEntry('error', 'Erro ao configurar URL do webhook', { error: errorMessage });
     
     return {
       success: false,
@@ -120,7 +120,7 @@ export async function testMakeWebhookConnection(webhookUrl: string): Promise<{ s
       const responseText = await response.text();
       
       // Registrar erro no log do sistema
-      addLogEntry('webhook', 'Falha no teste de conexão com webhook', { 
+      addLogEntry('error', 'Falha no teste de conexão com webhook', { 
         webhookUrl, 
         statusCode: response.status, 
         response: responseText 
@@ -141,7 +141,7 @@ export async function testMakeWebhookConnection(webhookUrl: string): Promise<{ s
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
     
     // Registrar erro no log do sistema
-    addLogEntry('webhook', 'Erro ao testar conexão com webhook', { 
+    addLogEntry('error', 'Erro ao testar conexão com webhook', { 
       webhookUrl, 
       error: errorMessage 
     });

@@ -22,6 +22,7 @@
 - [x] Correção de erro de importação AdminRoute em AppRoutes.tsx
 - [x] Correção de problema de exportação do ServiceRoleConfig
 - [x] Implementação de funcionalidade básica de webhook para Make.com
+- [x] Adição do tipo 'webhook' ao LogType e correção de erros relacionados
 
 ## Em Andamento
 
@@ -67,3 +68,4 @@
 - **29/04/2025**: Implementação das funções RPC para backup e restauração de tabelas
 - **29/04/2025**: Eliminação de arquivos duplicados para melhorar a manutenção do código
 - **29/04/2025**: Correção de erros de importação e exportação de componentes
+- **29/04/2025**: Adição do tipo 'webhook' ao LogType e correção de erros relacionados aos logs de webhook
