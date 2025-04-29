@@ -38,41 +38,38 @@ export function QuizViewAnswers() {
         }
         setModules(modulesData || []);
 
-        // Buscar diretamente da tabela quiz_answers
+        // Buscar as perguntas primeiro para obter os textos
+        const {
+          data: questionsData,
+          error: questionsError
+        } = await supabase.from('quiz_questions').select('*');
+        if (questionsError) {
+          throw questionsError;
+        }
+
+        // Buscar respostas
         const {
           data: answersData,
           error: answersError
         } = await supabase.from('quiz_answers')
-          .select('question_id, question_text, answer, module_id, module_title, module_number')
+          .select('question_id, answer')
           .eq('user_id', user.id);
         if (answersError) {
           throw answersError;
         }
 
-        // Buscar submissão - MODIFICADO para evitar uso de .maybeSingle()
-        const {
-          data: submissionData,
-          error: submissionError
-        } = await supabase.from('quiz_submissions')
-          .select('*')
-          .eq('user_id', user.id)
-          .limit(1);
-          
-        if (submissionError) {
-          throw submissionError;
-        }
-
-        // Adicionar títulos de módulos às respostas, utilizando os dados obtidos
+        // Combinar respostas com textos de perguntas
         const processedAnswers = answersData.map(answer => {
-          // Se não tiver título ou número do módulo, buscar dos módulos carregados
-          if (!answer.module_title || !answer.module_number) {
-            const module = modulesData?.find(m => m.id === answer.module_id);
-            if (module) {
-              answer.module_title = module.title;
-              answer.module_number = module.order_number;
-            }
-          }
-          return answer;
+          const question = questionsData.find(q => q.id === answer.question_id);
+          const module = question ? modulesData.find(m => m.id === question.module_id) : null;
+          
+          return {
+            ...answer,
+            question_text: question?.text || 'Pergunta não encontrada',
+            module_id: question?.module_id,
+            module_title: module?.title,
+            module_number: module?.order_number
+          };
         });
         
         logger.info('Respostas do questionário carregadas', {

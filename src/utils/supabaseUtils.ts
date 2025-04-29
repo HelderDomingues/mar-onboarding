@@ -1,4 +1,3 @@
-
 import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
 import { QuizAnswer, QuizQuestion } from '@/types/quiz';
@@ -525,4 +524,19 @@ export async function sendQuizDataToWebhook(userId: string, submissionId: string
     });
     return false;
   }
+}
+
+/**
+ * Função para atualizar o progresso da submissão
+ */
+export async function updateSubmissionProgress(submissionId: string, currentModule: number): Promise<void> {
+  const { error } = await supabase
+    .from('quiz_submissions')
+    .update({
+      current_module: currentModule,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', submissionId);
+    
+  if (error) throw error;
 }

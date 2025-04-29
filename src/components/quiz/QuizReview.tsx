@@ -1,478 +1,326 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { QuizModule, QuizQuestion } from "@/types/quiz";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, CheckCircle, Edit, ThumbsUp, Calendar, FileCheck, ArrowLeft, AlertCircle } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useForm } from "react-hook-form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { completeQuizManually } from "@/utils/supabaseUtils";
+import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Download, File, ArrowRight } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { processQuizAnswersToSimplified } from "@/utils/supabaseUtils";
+import { downloadQuizPDF, downloadQuizCSV } from "@/utils/pdfGenerator";
 import { logger } from "@/utils/logger";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { formatJsonAnswer, normalizeAnswerToArray, prepareAnswerForStorage } from "@/utils/formatUtils";
-import { SystemError } from "@/types/errors";
-import { formatError, formatErrorForDisplay, formatTechnicalError } from "@/utils/errorUtils";
+import { formatJsonAnswer } from "@/utils/formatUtils";
 
-interface QuizReviewProps {
-  modules: QuizModule[];
-  questions: QuizQuestion[];
-  answers: Record<string, string | string[]>;
-  onComplete: () => void;
-  onEdit: (moduleIndex: number, questionIndex: number) => void;
-}
-
-export function QuizReview({
-  modules,
-  questions,
-  answers,
-  onComplete,
-  onEdit
-}: QuizReviewProps) {
-  const [confirmed, setConfirmed] = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [errorDetails, setErrorDetails] = useState<SystemError | null>(null);
-  const [editedAnswers, setEditedAnswers] = useState<Record<string, string | string[]>>({
-    ...answers
-  });
-  
+export function QuizReview() {
+  const { user } = useAuth();
   const { toast } = useToast();
-  
-  const form = useForm({
-    defaultValues: {
-      agreement: false
-    }
-  });
-  
-  const getOptionText = (option: any): string => {
-    return typeof option === 'string' ? option : option.text;
-  };
-  
-  const getOptionValue = (option: any): string => {
-    return typeof option === 'string' ? option : option.id;
-  };
-  
-  const getQuestionText = (question: QuizQuestion): string => {
-    return question.text || question.question_text || ""; 
-  };
-  
-  const getQuestionType = (question: QuizQuestion): string => {
-    return question.type || question.question_type || "text";
-  };
-  
+  const [answers, setAnswers] = useState<any[]>([]);
+  const [modules, setModules] = useState<any[]>([]);
+  const [submission, setSubmission] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
   useEffect(() => {
-    setEditedAnswers({
-      ...answers
-    });
-  }, [answers]);
-  
-  const currentDate = new Date().toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
-  
-  const questionsByModule = modules.map(module => ({
-    module,
-    questions: questions.filter(q => q.module_id === module.id)
-  }));
-  
-  const handleTermsChange = (checked: boolean) => {
-    setAgreedToTerms(checked);
-  };
-  
-  const handleEditClick = (questionId: string) => {
-    setEditingQuestionId(questionId);
-  };
-  
-  const handleSaveEdit = async (questionId: string) => {
-    try {
-      const answer = editedAnswers[questionId];
-      const {
-        data: {
-          session
+    const fetchData = async () => {
+      if (!user) return;
+      try {
+        setIsLoading(true);
+
+        // Buscar informações dos módulos primeiro
+        const {
+          data: modulesData,
+          error: modulesError
+        } = await supabase.from('quiz_modules').select('id, title, order_number').order('order_number');
+        if (modulesError) {
+          throw modulesError;
         }
-      } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
-      
-      if (!userId) {
-        throw formatError("Usuário não autenticado", "QuizReview.handleSaveEdit");
-      }
-      
-      const currentQuestion = questions.find(q => q.id === questionId);
-      if (!currentQuestion) {
-        throw formatError("Pergunta não encontrada", "QuizReview.handleSaveEdit");
-      }
-      
-      const isMultipleChoice = ['checkbox', 'radio'].includes(currentQuestion.type || '');
-      const answerValue = prepareAnswerForStorage(answer, isMultipleChoice);
-      
-      const {
-        error
-      } = await supabase.from('quiz_answers').upsert({
-        user_id: userId,
-        question_id: questionId,
-        answer: answerValue,
-        question_text: currentQuestion.question_text || currentQuestion.text,
-        module_id: currentQuestion.module_id,
-        user_email: session?.user?.email // Garantir que o email do usuário esteja sempre presente
-      }, {
-        onConflict: 'user_id,question_id'
-      });
-      
-      if (error) {
-        throw formatError(error, "QuizReview.handleSaveEdit.upsert");
-      }
-      
-      logger.info('Resposta atualizada com sucesso na revisão', {
-        tag: 'Quiz',
-        data: {
-          questionId,
-          userId
+        setModules(modulesData || []);
+
+        // Buscar diretamente da tabela quiz_answers
+        const {
+          data: answersData,
+          error: answersError
+        } = await supabase.from('quiz_answers')
+          .select('question_id, question_text, answer, module_id, module_title, module_number')
+          .eq('user_id', user.id);
+        if (answersError) {
+          throw answersError;
         }
-      });
-      
-      toast({
-        title: "Resposta atualizada",
-        description: "Sua resposta foi atualizada com sucesso."
-      });
-    } catch (error: any) {
-      const formattedError = formatError(error, "QuizReview.handleSaveEdit");
-      
-      logger.error("Erro ao salvar resposta:", {
-        tag: 'Quiz',
-        data: {
-          questionId,
-          error: formattedError
+
+        // Buscar submissão - MODIFICADO para evitar uso de .maybeSingle()
+        const {
+          data: submissionData,
+          error: submissionError
+        } = await supabase.from('quiz_submissions')
+          .select('*')
+          .eq('user_id', user.id)
+          .limit(1);
+          
+        if (submissionError) {
+          throw submissionError;
         }
-      });
-      
-      toast({
-        title: "Erro ao atualizar resposta",
-        description: formatErrorForDisplay(formattedError),
-        variant: "destructive"
-      });
-    }
-    
-    setEditingQuestionId(null);
-  };
-  
-  const handleCancelEdit = () => {
-    setEditingQuestionId(null);
-    setEditedAnswers({
-      ...answers
-    });
-  };
-  
-  const handleInputChange = (questionId: string, value: string | string[]) => {
-    setEditedAnswers(prev => ({
-      ...prev,
-      [questionId]: value
-    }));
-  };
-  
-  const handleCheckboxChange = (questionId: string, option: string, checked: boolean) => {
-    const currentAnswers = normalizeAnswerToArray(editedAnswers[questionId]);
-    let newAnswers: string[];
-    
-    if (checked) {
-      if (!currentAnswers.includes(option)) {
-        newAnswers = [...currentAnswers, option];
-      } else {
-        newAnswers = currentAnswers;
-      }
-    } else {
-      newAnswers = currentAnswers.filter(item => item !== option);
-    }
-    
-    setEditedAnswers(prev => ({
-      ...prev,
-      [questionId]: newAnswers
-    }));
-  };
-  
-  const handleCompleteQuiz = async () => {
-    if (isSubmitting) return;
-    
-    setIsSubmitting(true);
-    setSubmissionError(null);
-    setErrorDetails(null);
-    
-    try {
-      setConfirmed(true);
-    } catch (error) {
-      const formattedError = formatError(error, "QuizReview.handleCompleteQuiz");
-      
-      toast({
-        title: "Erro ao preparar finalização",
-        description: formatErrorForDisplay(formattedError),
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
-  const handleFinalizeQuiz = async () => {
-    if (isSubmitting) return;
-    
-    setIsSubmitting(true);
-    setSubmissionError(null);
-    setErrorDetails(null);
-    
-    try {
-      const userId = (await supabase.auth.getUser()).data.user?.id;
-      
-      if (!userId) {
-        throw formatError("Usuário não autenticado", "QuizReview.handleFinalizeQuiz");
-      }
-      
-      logger.info('Iniciando finalização do questionário', {
-        tag: 'Quiz',
-        userId
-      });
-      
-      const result = await completeQuizManually(userId);
-      
-      if (!result.success) {
-        throw result.error || formatError("Falha ao completar questionário", "QuizReview.handleFinalizeQuiz");
-      }
-      
-      logger.info('Questionário marcado como completo com sucesso', {
-        tag: 'Quiz',
-        data: {
-          userId,
-          method: result.method
-        }
-      });
-      
-      await onComplete();
-    } catch (error: any) {
-      const formattedError = formatError(error, "QuizReview.handleFinalizeQuiz");
-      
-      logger.error("Erro na finalização:", {
-        tag: 'Quiz',
-        data: formattedError
-      });
-      
-      setSubmissionError(formatErrorForDisplay(formattedError));
-      setErrorDetails(formattedError);
-      
-      toast({
-        title: "Erro ao finalizar questionário",
-        description: formatErrorForDisplay(formattedError),
-        variant: "destructive"
-      });
-      
-      setConfirmed(false);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
-  const renderEditField = (question: QuizQuestion) => {
-    const questionId = question.id;
-    const answer = editedAnswers[questionId];
-    const questionType = getQuestionType(question);
-    
-    switch (questionType) {
-      case 'text':
-      case 'email':
-      case 'number':
-      case 'url':
-      case 'instagram':
-        return <Input value={typeof answer === 'string' ? answer : ''} onChange={e => handleInputChange(questionId, e.target.value)} className="w-full text-slate-900" placeholder="Digite sua resposta aqui" type={questionType === 'number' ? 'number' : 'text'} />;
+
+        // Adicionar títulos de módulos às respostas, utilizando os dados obtidos
+        const processedAnswers = answersData.map(answer => {
+          // Se não tiver título ou número do módulo, buscar dos módulos carregados
+          if (!answer.module_title || !answer.module_number) {
+            const module = modulesData?.find(m => m.id === answer.module_id);
+            if (module) {
+              answer.module_title = module.title;
+              answer.module_number = module.order_number;
+            }
+          }
+          return answer;
+        });
         
-      case 'textarea':
-        return <Textarea value={typeof answer === 'string' ? answer : ''} onChange={e => handleInputChange(questionId, e.target.value)} className="w-full text-slate-900" placeholder="Digite sua resposta aqui" />;
-        
-      case 'checkbox':
-      case 'radio':
-        const questionOptions = question.options || [];
-        const options: string[] = [];
-        const optionTexts: Record<string, string> = {};
-        
-        questionOptions.forEach(opt => {
-          if (typeof opt === 'string') {
-            options.push(opt);
-            optionTexts[opt] = opt;
-          } else {
-            const optVal = getOptionValue(opt);
-            const optText = getOptionText(opt);
-            options.push(optVal);
-            optionTexts[optVal] = optText;
+        logger.info('Respostas do questionário carregadas', {
+          tag: 'Quiz',
+          data: {
+            userId: user.id,
+            answersCount: processedAnswers.length,
+            hasSubmission: submissionData && submissionData.length > 0
           }
         });
         
-        const selectedOptions = normalizeAnswerToArray(answer);
-        
-        return <div className="space-y-2">
-          {options.map(option => <div key={option} className="flex items-center space-x-2">
-              <Checkbox id={`${questionId}-${option}`} checked={selectedOptions.includes(option) || selectedOptions.includes(optionTexts[option])} onCheckedChange={checked => handleCheckboxChange(questionId, option, checked === true)} />
-              <label htmlFor={`${questionId}-${option}`} className="text-sm font-medium leading-none cursor-pointer text-slate-800">
-                {optionTexts[option] || option}
-              </label>
-            </div>)}
-        </div>;
-        
-      default:
-        return <Input value={typeof answer === 'string' ? answer : ''} onChange={e => handleInputChange(questionId, e.target.value)} className="w-full text-slate-900" placeholder="Digite sua resposta aqui" />;
+        setAnswers(processedAnswers);
+        // Usar o primeiro resultado se houver dados
+        setSubmission(submissionData && submissionData.length > 0 ? submissionData[0] : null);
+      } catch (error) {
+        console.error("Erro ao buscar respostas:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar suas respostas.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [user, toast]);
+
+  const saveAnswer = async (questionId: string, answer: string | null) => {
+    if (!user || !submission) return;
+    
+    try {
+      setIsSaving(true);
+      const { error } = await supabase
+        .from('quiz_answers')
+        .upsert({
+          submission_id: submission.id,
+          question_id: questionId,
+          answer,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'submission_id,question_id'
+        });
+      
+      if (error) throw error;
+      
+      // Atualizar o estado local
+      setAnswers(prev => ({
+        ...prev,
+        [questionId]: answer
+      }));
+      
+      logger.info('Resposta salva com sucesso', { 
+        tag: 'Quiz',
+        data: { questionId }
+      });
+    } catch (error: any) {
+      logger.error('Erro ao salvar resposta:', {
+        tag: 'Quiz',
+        data: { error, questionId }
+      });
+      
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar sua resposta. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
-  
-  return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-6">
-    {!confirmed ? <>
-      <Card className="quiz-card">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold flex items-center gap-2">
-            <ThumbsUp className="h-6 w-6 text-[hsl(var(--quiz-accent))]" />
-            Revisão do Questionário MAR
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-6 text-[hsl(var(--quiz-text))]">
-            Por favor, revise suas respostas abaixo para confirmar que estão corretas. 
-            Você pode editar qualquer resposta clicando no botão de edição.
-          </p>
-          
-          <div className="space-y-8">
-            {questionsByModule.map((moduleData, moduleIndex) => <div key={moduleData.module.id} className="border border-[hsl(var(--quiz-border))] rounded-lg p-4">
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-[hsl(var(--quiz-text))]">
-                  <Badge variant="outline" className="quiz-module-badge">
-                    Módulo {moduleIndex + 1}
-                  </Badge>
-                  {moduleData.module.title}
-                </h3>
-                
-                <div className="space-y-4">
-                  {moduleData.questions.map((question, questionIndex) => {
-                    const questionId = question.id;
-                    const isEditing = editingQuestionId === questionId;
-                    const answer = editedAnswers[questionId];
-                    return <div key={questionId} className="border-t border-[hsl(var(--quiz-border))] pt-3">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <p className="font-medium text-[hsl(var(--quiz-text))]">
-                                {getQuestionText(question)}
-                              </p>
-                              
-                              {isEditing ? <div className="mt-2 space-y-3">
-                                  {renderEditField(question)}
-                                  
-                                  <div className="flex gap-2 justify-end mt-3">
-                                    <Button variant="outline" size="sm" onClick={handleCancelEdit} className="text-zinc-950">
-                                      Cancelar
-                                    </Button>
-                                    <Button size="sm" onClick={() => handleSaveEdit(questionId)}>
-                                      Salvar
-                                    </Button>
-                                  </div>
-                                </div> : <p className="text-[hsl(var(--quiz-text))] opacity-80 mt-1 break-words">
-                                  {formatJsonAnswer(answer)}
-                                </p>}
-                            </div>
-                            
-                            {!isEditing && <Button variant="outline" size="sm" onClick={() => handleEditClick(questionId)} className="ml-2 border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-slate-800">
-                                <Edit className="h-4 w-4 mr-1" /> Editar
-                              </Button>}
-                          </div>
-                        </div>;
-                  })}
-                </div>
-              </div>)}
-          </div>
-          
-          <div className="mt-8 p-4 border border-[hsl(var(--quiz-border))] rounded-lg bg-slate-800">
-            <div className="flex items-start gap-2 mb-4">
-              <FileCheck className="h-5 w-5 mt-1 text-[hsl(var(--quiz-accent))]" />
-              <div>
-                <h4 className="font-semibold text-[hsl(var(--quiz-text))]">Termo de Validação</h4>
-                <p className="text-sm text-[hsl(var(--quiz-text))] opacity-90">
-                  Para finalizar o questionário, por favor leia e concorde com os termos abaixo.
-                </p>
-              </div>
-            </div>
-            
-            <div className="p-3 bg-slate-700 rounded border border-slate-600 text-sm mb-4">
-              <p className="text-[hsl(var(--quiz-text))]">
-                Declaro que as informações fornecidas neste questionário são verdadeiras e
-                condizem com a realidade atual da minha empresa/negócio.
-                Compreendo que estas informações serão utilizadas pela Crie Valor para análise
-                e diagnóstico, e que a precisão destas informações é fundamental para o sucesso do trabalho.
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Checkbox id="agreement" checked={agreedToTerms} onCheckedChange={handleTermsChange} className="border-white" />
-              <label htmlFor="agreement" className="text-sm font-medium leading-none cursor-pointer text-white">
-                Concordo com os termos acima e confirmo a veracidade das informações
-              </label>
-            </div>
-            
-            <div className="flex items-center gap-2 mt-4 text-sm text-[hsl(var(--quiz-text))] opacity-80">
-              <Calendar className="h-4 w-4" />
-              <span className="bg-zinc-600 hover:bg-zinc-500 text-slate-50 text-sm">Data de validação: {currentDate}</span>
-            </div>
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-between pt-6 border-t border-[hsl(var(--quiz-border))]">
-          <Button variant="outline" onClick={() => onEdit(modules.length - 1, questions.filter(q => q.module_id === modules[modules.length - 1].id).length - 1)} className="border-[hsl(var(--quiz-border))] text-[hsl(var(--quiz-text))] text-slate-800">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
+
+  const handleDownloadPDF = async () => {
+    if (!user || !user.id) return;
+    try {
+      setDownloading(true);
+      logger.info('Iniciando download do PDF de respostas', {
+        tag: 'Quiz',
+        data: {
+          userId: user.id
+        }
+      });
+      await downloadQuizPDF(user.id, user.email || 'usuário');
+      logger.info('PDF de respostas gerado e baixado com sucesso', {
+        tag: 'Quiz'
+      });
+    } catch (error) {
+      logger.error('Erro ao gerar PDF:', {
+        tag: 'Quiz',
+        data: {
+          error
+        }
+      });
+      toast({
+        title: "Erro ao gerar PDF",
+        description: "Não foi possível gerar o arquivo PDF.",
+        variant: "destructive"
+      });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleDownloadCSV = async () => {
+    if (!user || !user.id) return;
+    try {
+      setDownloading(true);
+      logger.info('Iniciando download do CSV de respostas', {
+        tag: 'Quiz',
+        data: {
+          userId: user.id
+        }
+      });
+      await downloadQuizCSV(user.id, user.email || 'usuário');
+      logger.info('CSV de respostas gerado e baixado com sucesso', {
+        tag: 'Quiz'
+      });
+    } catch (error) {
+      logger.error('Erro ao gerar CSV:', {
+        tag: 'Quiz',
+        data: {
+          error
+        }
+      });
+      toast({
+        title: "Erro ao gerar CSV",
+        description: "Não foi possível gerar o arquivo CSV.",
+        variant: "destructive"
+      });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="w-full max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <div className="space-y-4">
+          <Skeleton className="h-12 w-3/4" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      </div>;
+  }
+
+  if (!answers || answers.length === 0) {
+    return <div className="w-full max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <div className="text-center py-10">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma resposta encontrada</h3>
+          <p className="text-gray-500 mb-6">Você ainda não completou o questionário MAR.</p>
+          <Button onClick={() => window.location.href = '/quiz'}>
+            Ir para o Questionário <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
-          <Button onClick={handleCompleteQuiz} disabled={!agreedToTerms || isSubmitting} className="quiz-btn bg-lime-600 hover:bg-lime-500">
-            {isSubmitting ? 'Processando...' : 'Confirmar Respostas'} <ArrowRight className="ml-2 h-4 w-4" />
+        </div>
+      </div>;
+  }
+
+  // Agrupar respostas por módulo
+  const modulePattern = /module_(\d+)/;
+  const answersByModule: Record<string, any[]> = {};
+  answers.forEach(answer => {
+    const moduleNum = answer.module_number;
+    if (moduleNum) {
+      if (!answersByModule[moduleNum]) {
+        answersByModule[moduleNum] = [];
+      }
+      answersByModule[moduleNum].push(answer);
+    } else {
+      const match = answer.question_id.match(modulePattern);
+      if (match) {
+        const moduleNum = match[1];
+        if (!answersByModule[moduleNum]) {
+          answersByModule[moduleNum] = [];
+        }
+        answersByModule[moduleNum].push(answer);
+      }
+    }
+  });
+
+  // Função auxiliar para buscar título do módulo
+  const getModuleTitle = (moduleNumber: string) => {
+    const moduleData = modules.find(m => m.order_number === parseInt(moduleNumber));
+    return moduleData?.title || '';
+  };
+
+  return (
+    <div className="w-full max-w-3xl mx-auto bg-white rounded-lg shadow-md overflow-hidden relative">
+      {/* Logo MAR no canto superior direito */}
+      <div className="absolute top-2 right-2 z-10">
+        <img 
+          src="/mar-logo.png" 
+          alt="Logo MAR" 
+          className="h-12 w-auto"
+        />
+      </div>
+
+      <Card>
+        <CardHeader className="bg-sky-900 rounded-lg">
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-xl font-bold text-slate-300">Confira Suas Respostas Aqui</CardTitle>
+            </div>
+            
+            {submission?.completed && <Badge variant="secondary" className="text-green-800 bg-lime-400">
+                Completado
+              </Badge>}
+          </div>
+        </CardHeader>
+        
+        <CardContent className="p-0">
+          <Accordion type="single" collapsible className="w-full divide-y">
+            {Object.keys(answersByModule).sort((a, b) => parseInt(a) - parseInt(b)).map(moduleKey => {
+              const moduleTitle = getModuleTitle(moduleKey);
+              return <AccordionItem value={`module-${moduleKey}`} key={moduleKey}>
+                  <AccordionTrigger className="px-6 py-4 hover:bg-muted/50">
+                    <span className="font-medium">
+                      Módulo {moduleKey}{moduleTitle ? ` - ${moduleTitle}` : ''}
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-6 py-2">
+                    <div className="space-y-4 my-2">
+                      {answersByModule[moduleKey].map((answer, index) => <div key={answer.question_id} className="border-b border-gray-100 pb-4 last:border-none">
+                          <p className="text-sm mb-2 font-semibold mx-[10px]">{answer.question_text}</p>
+                          <div className="p-3 rounded text-sm bg-sky-100">
+                            {formatJsonAnswer(answer.answer)}
+                          </div>
+                        </div>)}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>;
+            })}
+          </Accordion>
+        </CardContent>
+        
+        <CardFooter className="flex justify-between border-t p-6 rounded-lg bg-gray-500">
+          <Button onClick={handleDownloadPDF} disabled={downloading} className="text-slate-50 bg-red-700 hover:bg-red-600 text-center">
+            <File className="h-4 w-4 mr-2" />
+            Baixar PDF
+          </Button>
+          
+          <Button onClick={handleDownloadCSV} disabled={downloading} className="text-slate-50 bg-blue-700 hover:bg-blue-600">
+            <Download className="h-4 w-4 mr-2" />
+            Baixar CSV
           </Button>
         </CardFooter>
       </Card>
-    </> : <Card className="quiz-card">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-white text-base font-normal">
-          <CheckCircle className="h-6 w-6 text-green-500" />
-          Respostas Confirmadas
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="mb-4 text-center text-[hsl(var(--quiz-text))]">
-          Suas respostas foram validadas com sucesso. Clique abaixo para concluir o questionário.
-        </p>
-        
-        {submissionError && <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Erro ao finalizar questionário</AlertTitle>
-            <AlertDescription>
-              {submissionError}
-            </AlertDescription>
-          </Alert>}
-        
-        {errorDetails && <div className="mb-4 p-4 bg-red-900/30 border border-red-600/40 rounded-md text-sm text-white">
-            <h4 className="font-semibold text-red-200 mb-2">Detalhes técnicos do erro:</h4>
-            <div className="space-y-2 text-xs font-mono bg-black/30 p-3 rounded overflow-auto max-h-48">
-              {errorDetails.origin && <p><strong>Origem:</strong> {errorDetails.origin}</p>}
-              {errorDetails.message && <p><strong>Mensagem:</strong> {errorDetails.message}</p>}
-              {errorDetails.code && <p><strong>Código:</strong> {errorDetails.code}</p>}
-              {errorDetails.hint && <p><strong>Dica:</strong> {errorDetails.hint}</p>}
-              {errorDetails.details && <p><strong>Detalhes:</strong> {typeof errorDetails.details === 'object' ? JSON.stringify(errorDetails.details, null, 2) : errorDetails.details}</p>}
-              {errorDetails.context && <p><strong>Contexto:</strong> {errorDetails.context}</p>}
-              {!errorDetails.message && !errorDetails.origin && <pre className="whitespace-pre-wrap text-slate-100">
-                  {JSON.stringify(errorDetails, null, 2)}
-                </pre>}
-            </div>
-            <p className="mt-3 text-xs text-red-200">
-              Por favor capture uma screenshot desta mensagem e envie para o suporte técnico.
-            </p>
-          </div>}
-      </CardContent>
-      <CardFooter className="flex justify-center">
-        <Button onClick={handleFinalizeQuiz} disabled={isSubmitting} className="quiz-btn">
-          {isSubmitting ? 'Processando...' : 'Finalizar Questionário'}
-        </Button>
-      </CardFooter>
-    </Card>}
-  </div>;
+    </div>
+  );
 }

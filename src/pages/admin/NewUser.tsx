@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -81,21 +80,28 @@ const NewUserPage = () => {
         throw error;
       }
       
-      // Verificar resposta da função
-      if (!data.success) {
+      // Verificar resposta da função - corrigido para lidar com o tipo Json
+      const responseData = data as { 
+        success: boolean; 
+        message: string; 
+        error_code?: string;
+        user_id?: string;
+      };
+      
+      if (!responseData.success) {
         addLogEntry('error', 'Erro retornado pela função admin_create_user', {
-          message: data.message,
-          error_code: data.error_code,
+          message: responseData.message,
+          error_code: responseData.error_code,
           email
         }, user?.id);
         
-        throw new Error(data.message || "Ocorreu um erro ao criar o usuário");
+        throw new Error(responseData.message || "Ocorreu um erro ao criar o usuário");
       }
       
       addLogEntry('admin', 'Usuário criado com sucesso', {
         email,
         isAdmin: makeAdmin,
-        newUserId: data.user_id
+        newUserId: responseData.user_id
       }, user?.id);
       
       toast({

@@ -22,4 +22,5 @@ export interface ImportResult {
     error: string;
   }[];
   message: string;
+  failure?: string[]; // Campo adicionado para compatibilidade
 }

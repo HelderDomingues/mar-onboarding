@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { addLogEntry } from "@/utils/projectLog";
@@ -12,6 +11,7 @@ export interface ImportUser {
   email: string;
   plan?: string;
   source?: string;
+  password?: string; // Campo adicionado para resolver o erro
 }
 
 /**
@@ -103,7 +103,8 @@ export async function importUsersFromCSV(csvData: string): Promise<ImportResult>
       success: insertedCount > 0,
       inserted: insertedCount,
       errors: errors,
-      message: `${insertedCount} de ${users.length} usuários importados com sucesso.`
+      message: `${insertedCount} de ${users.length} usuários importados com sucesso.`,
+      failure: errors.map(err => `${err.email}: ${err.error}`)
     };
   } catch (error: any) {
     logger.error('Erro na importação de usuários:', { error });
@@ -112,7 +113,8 @@ export async function importUsersFromCSV(csvData: string): Promise<ImportResult>
       success: false,
       inserted: 0,
       errors: [{ email: 'sistema', error: error.message || 'Erro desconhecido' }],
-      message: 'Falha na importação. Por favor, verifique o formato do CSV.'
+      message: 'Falha na importação. Por favor, verifique o formato do CSV.',
+      failure: [error.message || 'Erro desconhecido']
     };
   }
 }
@@ -130,7 +132,8 @@ export async function importSingleUser(user: ImportUser): Promise<ImportResult> 
           email: user.email || 'Não fornecido',
           error: 'Nome e email são obrigatórios'
         }],
-        message: 'Nome e email são obrigatórios'
+        message: 'Nome e email são obrigatórios',
+        failure: ['Nome e email são obrigatórios']
       };
     }
     
@@ -169,7 +172,8 @@ export async function importSingleUser(user: ImportUser): Promise<ImportResult> 
       success: true,
       inserted: 1,
       errors: [],
-      message: `Usuário ${user.email} importado com sucesso!`
+      message: `Usuário ${user.email} importado com sucesso!`,
+      failure: []
     };
   } catch (error: any) {
     logger.error('Erro na importação manual de usuário:', { error });
@@ -178,7 +182,8 @@ export async function importSingleUser(user: ImportUser): Promise<ImportResult> 
       success: false,
       inserted: 0,
       errors: [{ email: user.email || 'Não fornecido', error: error.message || 'Erro desconhecido' }],
-      message: 'Falha na importação manual de usuário.'
+      message: 'Falha na importação manual de usuário.',
+      failure: [error.message || 'Erro desconhecido']
     };
   }
 }

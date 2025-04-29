@@ -60,6 +60,16 @@ export const generateQuizPDF = async (
       data: { userId, userName, adminMode, format }
     });
     
+    // Buscar as perguntas primeiro
+    const { data: questions, error: questionsError } = await supabase
+      .from('quiz_questions')
+      .select('*')
+      .order('order_number');
+    
+    if (questionsError) {
+      throw questionsError;
+    }
+    
     // Buscar as respostas do usuário
     const { data: answers, error: answersError } = await supabase
       .from('quiz_answers')
@@ -88,35 +98,35 @@ export const generateQuizPDF = async (
       throw modulesError;
     }
     
-    // Buscar perguntas
-    const { data: questions, error: questionsError } = await supabase
-      .from('quiz_questions')
-      .select('*')
-      .order('order_number');
+    // Buscar informações do usuário diretamente da auth.users
+    const { data: userData, error: userError } = await supabase.auth.getUser(userId);
     
-    if (questionsError) {
-      throw questionsError;
+    if (userError) {
+      throw userError;
     }
     
-    // Buscar informações do usuário
-    let userEmail = '';
-    if (adminMode) {
-      const { data: userProfile, error: userError } = await supabase
-        .from('profiles')
-        .select('email, full_name')
-        .eq('id', userId)
-        .single();
-      
-      if (!userError && userProfile) {
-        userEmail = userProfile.email || '';
-        if (!userName) {
-          userName = userProfile.full_name || 'Usuário';
-        }
-      }
-    } else {
-      // No modo não-admin, usar o email da resposta
-      userEmail = answers.length > 0 && answers[0].user_email ? answers[0].user_email : '';
-    }
+    const userEmail = userData?.user?.email || '';
+    
+    // Buscar perfil para o nome completo
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', userId)
+      .maybeSingle();
+    
+    const fullName = profileData?.full_name || userName || userEmail;
+    
+    // Combinar dados para o PDF
+    const enrichedAnswers = answers.map(answer => {
+      const question = questions.find(q => q.id === answer.question_id);
+      return {
+        ...answer,
+        question_text: question?.text || 'Pergunta não encontrada',
+        user_email: userEmail,
+        module_id: question?.module_id,
+        module_title: modules.find(m => m.id === question?.module_id)?.title
+      };
+    });
     
     // Inicializar o PDF
     const doc = new jsPDF({
@@ -140,7 +150,7 @@ export const generateQuizPDF = async (
     
     // Adicionar informações do usuário
     doc.setFontSize(12);
-    doc.text(`Usuário: ${userName || userEmail || 'Não identificado'}`, 20, 30);
+    doc.text(`Usuário: ${fullName || userEmail || 'Não identificado'}`, 20, 30);
     
     if (adminMode && userEmail) {
       doc.text(`Email: ${userEmail}`, 20, 36);
@@ -181,7 +191,7 @@ export const generateQuizPDF = async (
       answersMap.set(module.id, []);
     });
     
-    answers.forEach(answer => {
+    enrichedAnswers.forEach(answer => {
       const question = questionsMap.get(answer.question_id);
       if (question) {
         const moduleAnswers = answersMap.get(question.module_id) || [];

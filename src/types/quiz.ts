@@ -1,5 +1,5 @@
 
-export type QuestionType = 'text' | 'textarea' | 'radio' | 'checkbox' | 'select' | 'number' | 'email' | 'url' | 'instagram';
+export type QuestionType = 'text' | 'textarea' | 'radio' | 'checkbox' | 'select' | 'number' | 'email' | 'url' | 'instagram' | string;
 
 export interface QuizModule {
   id: string;
@@ -48,6 +48,7 @@ export interface QuizSubmission {
   started_at: string;
   completed_at?: string | null;
   created_at?: string;
+  total_time_spent?: number;  // Campo adicionado para resolver o erro
   
   // Add answers property to match usage in Quiz.tsx
   answers?: QuizAnswer[]; // New property
@@ -60,4 +61,9 @@ export interface QuizAnswer {
   answer: string | null;
   created_at?: string;
   updated_at?: string;
+  user_id?: string;        // Campo adicionado para resolver erros
+  question_text?: string;  // Campo adicionado para resolver erros
+  module_id?: string;      // Campo adicionado para resolver erros
+  module_title?: string;   // Campo adicionado para resolver erros
+  module_number?: number;  // Campo adicionado para resolver erros
 }
