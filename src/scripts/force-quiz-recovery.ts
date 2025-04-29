@@ -7,7 +7,7 @@ import { recoverQuizData } from './quiz-recovery';
 import { seedQuizData } from './seed-quiz';
 import { logger } from '@/utils/logger';
 import { addLogEntry } from '@/utils/projectLog';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 
 /**
  * Função de recuperação forçada que garante a existência dos dados do questionário
@@ -41,18 +41,20 @@ export async function forceQuizRecovery(): Promise<{
     const seedSuccess = await seedQuizData();
     
     if (seedSuccess) {
-      // Verifica os dados inseridos
-      const { data: modulesCount, error: modulesError } = await supabase
+      // Verifica os dados inseridos usando supabaseAdmin se disponível para evitar problemas de RLS
+      const client = supabaseAdmin || supabase;
+      
+      const { data: modulesData, error: modulesError } = await client
         .from('quiz_modules')
-        .select('id', { count: 'exact' });
+        .select('*');
         
-      const { data: questionsCount, error: questionsError } = await supabase
+      const { data: questionsData, error: questionsError } = await client
         .from('quiz_questions')
-        .select('id', { count: 'exact' });
+        .select('*');
         
-      const { data: optionsCount, error: optionsError } = await supabase
+      const { data: optionsData, error: optionsError } = await client
         .from('quiz_options')
-        .select('id', { count: 'exact' });
+        .select('*');
       
       // Verificar erros nas consultas
       if (modulesError || questionsError || optionsError) {
@@ -62,13 +64,17 @@ export async function forceQuizRecovery(): Promise<{
         });
       }
       
+      const modulesCount = modulesData?.length || 0;
+      const questionsCount = questionsData?.length || 0;
+      const optionsCount = optionsData?.length || 0;
+      
       const result = {
         success: true,
         message: 'Seed forçado do questionário concluído com sucesso',
         data: {
-          modules: modulesCount?.length || 0,
-          questions: questionsCount?.length || 0,
-          options: optionsCount?.length || 0
+          modules: modulesCount,
+          questions: questionsCount,
+          options: optionsCount
         }
       };
       

@@ -179,6 +179,60 @@ export type Database = {
           },
         ]
       }
+      "quiz_answers_backup_2025-04-29T18-12-42-205Z": {
+        Row: {
+          answer: string | null
+          created_at: string | null
+          id: string | null
+          question_id: string | null
+          submission_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          answer?: string | null
+          created_at?: string | null
+          id?: string | null
+          question_id?: string | null
+          submission_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          answer?: string | null
+          created_at?: string | null
+          id?: string | null
+          question_id?: string | null
+          submission_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      "quiz_answers_backup_2025-04-29T18-12-55-659Z": {
+        Row: {
+          answer: string | null
+          created_at: string | null
+          id: string | null
+          question_id: string | null
+          submission_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          answer?: string | null
+          created_at?: string | null
+          id?: string | null
+          question_id?: string | null
+          submission_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          answer?: string | null
+          created_at?: string | null
+          id?: string | null
+          question_id?: string | null
+          submission_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       quiz_modules: {
         Row: {
           created_at: string
@@ -200,6 +254,54 @@ export type Database = {
           id?: string
           order_number?: number
           title?: string
+        }
+        Relationships: []
+      }
+      "quiz_modules_backup_2025-04-29T18-12-42-201Z": {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string | null
+          order_number: number | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          order_number?: number | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          order_number?: number | null
+          title?: string | null
+        }
+        Relationships: []
+      }
+      "quiz_modules_backup_2025-04-29T18-12-55-649Z": {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string | null
+          order_number: number | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          order_number?: number | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          order_number?: number | null
+          title?: string | null
         }
         Relationships: []
       }
@@ -234,6 +336,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      "quiz_options_backup_2025-04-29T18-12-42-203Z": {
+        Row: {
+          created_at: string | null
+          id: string | null
+          order_number: number | null
+          question_id: string | null
+          text: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          order_number?: number | null
+          question_id?: string | null
+          text?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          order_number?: number | null
+          question_id?: string | null
+          text?: string | null
+        }
+        Relationships: []
+      }
+      "quiz_options_backup_2025-04-29T18-12-55-655Z": {
+        Row: {
+          created_at: string | null
+          id: string | null
+          order_number: number | null
+          question_id: string | null
+          text: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          order_number?: number | null
+          question_id?: string | null
+          text?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          order_number?: number | null
+          question_id?: string | null
+          text?: string | null
+        }
+        Relationships: []
       }
       quiz_questions: {
         Row: {
@@ -276,6 +426,72 @@ export type Database = {
           },
         ]
       }
+      "quiz_questions_backup_2025-04-29T18-12-42-202Z": {
+        Row: {
+          created_at: string | null
+          hint: string | null
+          id: string | null
+          module_id: string | null
+          order_number: number | null
+          required: boolean | null
+          text: string | null
+          type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          hint?: string | null
+          id?: string | null
+          module_id?: string | null
+          order_number?: number | null
+          required?: boolean | null
+          text?: string | null
+          type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          hint?: string | null
+          id?: string | null
+          module_id?: string | null
+          order_number?: number | null
+          required?: boolean | null
+          text?: string | null
+          type?: string | null
+        }
+        Relationships: []
+      }
+      "quiz_questions_backup_2025-04-29T18-12-55-651Z": {
+        Row: {
+          created_at: string | null
+          hint: string | null
+          id: string | null
+          module_id: string | null
+          order_number: number | null
+          required: boolean | null
+          text: string | null
+          type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          hint?: string | null
+          id?: string | null
+          module_id?: string | null
+          order_number?: number | null
+          required?: boolean | null
+          text?: string | null
+          type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          hint?: string | null
+          id?: string | null
+          module_id?: string | null
+          order_number?: number | null
+          required?: boolean | null
+          text?: string | null
+          type?: string | null
+        }
+        Relationships: []
+      }
       quiz_respostas_completas: {
         Row: {
           data_submissao: string
@@ -304,6 +520,72 @@ export type Database = {
           submission_id?: string
           user_email?: string
           user_id?: string
+          user_name?: string | null
+          webhook_processed?: boolean | null
+        }
+        Relationships: []
+      }
+      "quiz_respostas_completas_backup_2025-04-29T18-12-42-206Z": {
+        Row: {
+          data_submissao: string | null
+          id: string | null
+          respostas: Json | null
+          submission_id: string | null
+          user_email: string | null
+          user_id: string | null
+          user_name: string | null
+          webhook_processed: boolean | null
+        }
+        Insert: {
+          data_submissao?: string | null
+          id?: string | null
+          respostas?: Json | null
+          submission_id?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+          webhook_processed?: boolean | null
+        }
+        Update: {
+          data_submissao?: string | null
+          id?: string | null
+          respostas?: Json | null
+          submission_id?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+          webhook_processed?: boolean | null
+        }
+        Relationships: []
+      }
+      "quiz_respostas_completas_backup_2025-04-29T18-12-55-660Z": {
+        Row: {
+          data_submissao: string | null
+          id: string | null
+          respostas: Json | null
+          submission_id: string | null
+          user_email: string | null
+          user_id: string | null
+          user_name: string | null
+          webhook_processed: boolean | null
+        }
+        Insert: {
+          data_submissao?: string | null
+          id?: string | null
+          respostas?: Json | null
+          submission_id?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+          webhook_processed?: boolean | null
+        }
+        Update: {
+          data_submissao?: string | null
+          id?: string | null
+          respostas?: Json | null
+          submission_id?: string | null
+          user_email?: string | null
+          user_id?: string | null
           user_name?: string | null
           webhook_processed?: boolean | null
         }
@@ -339,6 +621,72 @@ export type Database = {
           started_at?: string
           user_email?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      "quiz_submissions_backup_2025-04-29T18-12-42-204Z": {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          current_module: number | null
+          id: string | null
+          started_at: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          current_module?: number | null
+          id?: string | null
+          started_at?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          current_module?: number | null
+          id?: string | null
+          started_at?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      "quiz_submissions_backup_2025-04-29T18-12-55-657Z": {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          current_module: number | null
+          id: string | null
+          started_at: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          current_module?: number | null
+          id?: string | null
+          started_at?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          current_module?: number | null
+          id?: string | null
+          started_at?: string | null
+          user_email?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

@@ -1,177 +1,201 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
-import { addLogEntry } from '@/utils/projectLog';
 
 /**
- * Testa a estrutura do Supabase para o questionário MAR
- * Verifica se todas as tabelas e dados básicos estão configurados corretamente
+ * Função para testar a estrutura do banco de dados Supabase para o questionário MAR
+ * Verifica se todas as tabelas e colunas necessárias existem
  */
 export async function testSupabaseStructure(): Promise<{
   success: boolean;
-  stage?: string;
   error?: string;
-  data?: any;
+  stage?: string;
   details?: any;
+  data?: {
+    modules?: number;
+    questions?: number;
+    options?: number;
+    questionTypes?: string[];
+    permissions?: string;
+  };
 }> {
   try {
-    addLogEntry('info', 'Iniciando teste de estrutura do Supabase');
+    logger.info('Iniciando teste de estrutura do Supabase para questionário MAR', {
+      tag: 'TestStructure'
+    });
     
-    // Teste 1: Verificar se as tabelas existem
-    try {
-      const { data: tableInfo, error: tableError } = await supabase.rpc('get_all_tables');
-      
-      if (tableError) {
-        return {
-          success: false,
-          stage: 'Verificação de tabelas',
-          error: tableError.message,
-          details: tableError
-        };
-      }
-      
-      // Verificar tabelas específicas do questionário
-      const requiredTables = ['quiz_modules', 'quiz_questions', 'quiz_options', 
-                             'quiz_submissions', 'quiz_answers'];
-      
-      const missingTables = requiredTables.filter(table => 
-        !tableInfo || !tableInfo.some((t: any) => t.table_name === table)
-      );
-      
-      if (missingTables.length > 0) {
-        return {
-          success: false,
-          stage: 'Verificação de tabelas',
-          error: `Tabelas necessárias não encontradas: ${missingTables.join(', ')}`,
-          details: { missingTables, tableInfo }
-        };
-      }
-    } catch (error) {
-      // Se a função RPC não existir, tentar uma abordagem alternativa
-      try {
-        for (const table of ['quiz_modules', 'quiz_questions', 'quiz_options']) {
-          const { count, error } = await supabase
-            .from(table)
-            .select('*', { count: 'exact', head: true });
-          
-          if (error) {
-            return {
-              success: false,
-              stage: `Verificação da tabela ${table}`,
-              error: error.message,
-              details: error
-            };
-          }
-        }
-      } catch (alternativeError) {
-        return {
-          success: false,
-          stage: 'Verificação alternativa de tabelas',
-          error: alternativeError instanceof Error ? alternativeError.message : 'Erro desconhecido',
-          details: alternativeError
-        };
-      }
+    // Definir cliente (tentar usar admin se possível)
+    const client = supabaseAdmin || supabase;
+    
+    // ETAPA 1: Verificar existência das tabelas principais
+    let stage = 'verificação de tabelas';
+    
+    const { data: tableInfo, error: tableError } = await client.rpc('get_tables_info');
+    
+    if (tableError) {
+      return {
+        success: false,
+        error: `Erro ao verificar tabelas: ${tableError.message}`,
+        stage,
+        details: { error: tableError }
+      };
     }
     
-    // Teste 2: Verificar se há dados nas tabelas principais
-    const { data: modules, error: modulesError } = await supabase
+    // Verificar se as tabelas necessárias existem
+    const requiredTables = ['quiz_modules', 'quiz_questions', 'quiz_options', 'quiz_submissions', 'quiz_answers'];
+    const missingTables = requiredTables.filter(tableName => 
+      !tableInfo || !tableInfo.some(t => t.table_name === tableName)
+    );
+    
+    if (missingTables.length > 0) {
+      return {
+        success: false,
+        error: `Tabelas ausentes: ${missingTables.join(', ')}`,
+        stage,
+        details: { missingTables, tableInfo }
+      };
+    }
+    
+    // ETAPA 2: Verificar dados nas tabelas
+    stage = 'verificação de dados';
+    
+    // Verificar módulos
+    const { data: modulesData, error: modulesError } = await client
       .from('quiz_modules')
-      .select('id, title')
-      .order('order_number');
+      .select('*');
       
     if (modulesError) {
       return {
         success: false,
-        stage: 'Verificação de dados dos módulos',
-        error: modulesError.message,
-        details: modulesError
+        error: `Erro ao verificar módulos: ${modulesError.message}`,
+        stage,
+        details: { error: modulesError }
       };
     }
     
-    if (!modules || modules.length === 0) {
-      return {
-        success: false,
-        stage: 'Verificação de dados dos módulos',
-        error: 'Nenhum módulo encontrado na tabela quiz_modules',
-        details: { modules }
-      };
-    }
-    
-    // Teste 3: Verificar perguntas
-    const { data: questions, error: questionsError } = await supabase
+    // Verificar perguntas
+    const { data: questionsData, error: questionsError } = await client
       .from('quiz_questions')
-      .select('id, text, type')
-      .order('order_number')
-      .limit(10);
+      .select('*');
       
     if (questionsError) {
       return {
         success: false,
-        stage: 'Verificação de dados das perguntas',
-        error: questionsError.message,
-        details: questionsError
+        error: `Erro ao verificar perguntas: ${questionsError.message}`,
+        stage,
+        details: { error: questionsError }
       };
     }
     
-    if (!questions || questions.length === 0) {
-      return {
-        success: false,
-        stage: 'Verificação de dados das perguntas',
-        error: 'Nenhuma pergunta encontrada na tabela quiz_questions',
-        details: { questions }
-      };
-    }
-    
-    // Teste 4: Verificar opções
-    const { data: options, error: optionsError } = await supabase
+    // Verificar opções
+    const { data: optionsData, error: optionsError } = await client
       .from('quiz_options')
-      .select('id, text')
-      .order('order_number')
-      .limit(10);
+      .select('*');
       
     if (optionsError) {
       return {
         success: false,
-        stage: 'Verificação de dados das opções',
-        error: optionsError.message,
-        details: optionsError
+        error: `Erro ao verificar opções: ${optionsError.message}`,
+        stage,
+        details: { error: optionsError }
       };
     }
     
-    if (!options || options.length === 0) {
-      return {
-        success: false,
-        stage: 'Verificação de dados das opções',
-        error: 'Nenhuma opção encontrada na tabela quiz_options',
-        details: { options }
-      };
+    // Verificar tipos de pergunta para diversidade
+    const questionTypes = questionsData ? [...new Set(questionsData.map(q => q.type))] : [];
+    
+    // ETAPA 3: Verificar permissões (políticas RLS)
+    stage = 'verificação de permissões';
+    
+    let permissions = 'não verificadas';
+    
+    try {
+      // Tentar buscar políticas RLS - isso só vai funcionar com acesso administrativo
+      const { data: policies, error: policiesError } = await client.rpc('get_policies');
+      
+      if (!policiesError && policies) {
+        const quizPolicies = policies.filter(p => 
+          p.tablename.startsWith('quiz_') && 
+          ['quiz_modules', 'quiz_questions', 'quiz_options', 'quiz_submissions', 'quiz_answers'].includes(p.tablename)
+        );
+        
+        permissions = quizPolicies.length > 0 ? 'políticas encontradas' : 'sem políticas';
+      }
+    } catch (policiesError) {
+      permissions = 'erro ao verificar';
+      logger.error('Erro ao verificar políticas RLS:', {
+        tag: 'TestStructure',
+        data: { error: policiesError }
+      });
     }
     
-    // Compilar informações sobre os tipos de perguntas para verificar diversidade
-    const questionTypes = Array.from(new Set(questions.map(q => q.type)));
-    
-    // Todos os testes passaram
+    // Se chegou até aqui, tudo está bem
     return {
       success: true,
       data: {
-        modules: modules.length,
-        questions: questions.length,
-        options: options.length,
-        questionTypes
+        modules: modulesData?.length || 0,
+        questions: questionsData?.length || 0,
+        options: optionsData?.length || 0,
+        questionTypes,
+        permissions
       }
     };
   } catch (error) {
-    addLogEntry('error', 'Erro ao testar estrutura do Supabase', {
-      erro: error instanceof Error ? error.message : 'Erro desconhecido'
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    logger.error('Erro ao testar estrutura do Supabase:', {
+      tag: 'TestStructure',
+      data: { error }
     });
     
     return {
       success: false,
-      stage: 'Verificação geral',
-      error: error instanceof Error ? error.message : 'Erro desconhecido',
-      details: error
+      error: `Erro geral: ${errorMessage}`,
+      details: { error }
     };
   }
 }
 
-export default testSupabaseStructure;
+/**
+ * RPCs necessárias no Supabase:
+ *
+ * - get_tables_info: 
+ * create or replace function get_tables_info()
+ * returns table (table_name text, row_count bigint)
+ * language plpgsql security definer
+ * as $$
+ * begin
+ *   return query
+ *   select 
+ *     table_name::text,
+ *     (select count(*) from information_schema.columns where table_schema = 'public' and table_name = t.table_name)::bigint as row_count
+ *   from 
+ *     information_schema.tables t
+ *   where 
+ *     table_schema = 'public'
+ *     and table_type = 'BASE TABLE';
+ * end;
+ * $$;
+ *
+ * - get_policies:
+ * create or replace function get_policies()
+ * returns table (tablename text, policyname text, permissive text, roles text[], cmd text, qual text, with_check text)
+ * language plpgsql security definer
+ * as $$
+ * begin
+ *   return query
+ *   select
+ *     p.tablename::text,
+ *     p.policyname::text,
+ *     p.permissive::text,
+ *     p.roles,
+ *     p.cmd::text,
+ *     p.qual::text,
+ *     p.with_check::text
+ *   from
+ *     pg_policies p
+ *   where
+ *     p.schemaname = 'public';
+ * end;
+ * $$;
+ */

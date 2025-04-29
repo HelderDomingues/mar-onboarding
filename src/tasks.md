@@ -25,6 +25,10 @@
 - [x] Adição do tipo 'webhook' ao LogType e correção de erros relacionados
 - [x] Criação de sistema de diagnóstico e ferramentas de recuperação
 - [x] Implementação de recuperação forçada para dados do questionário
+- [x] Correção do script de recuperação forçada (force-quiz-recovery.ts)
+- [x] Criação de página dedicada de diagnóstico (/diagnostico) para problemas
+- [x] Reescrita do script de inicialização para usar supabaseAdmin quando necessário
+- [x] Melhorias nas ferramentas de diagnóstico do sistema
 
 ## Em Andamento
 
@@ -42,9 +46,19 @@
 - [ ] Implementar sistema de convites por e-mail
 - [ ] Configurar pipeline de deploy contínuo
 
-## Problemas Conhecidos
+## Problemas Conhecidos e Solucionados
 
 1. **Configuração da chave service_role**: Problemas persistentes ao configurar a chave de service_role. Após várias tentativas de correção, incluindo renomeação de colunas e atualização de funções no banco de dados, o problema persiste quando o botão de salvar configuração é clicado.
+   - **Solução aplicada**: Modificado o script de seed para utilizar supabaseAdmin quando disponível.
+
+2. **Erro ao carregar dados do questionário**: Questões e opções não são exibidas no editor de questionário.
+   - **Solução aplicada**: Implementada recuperação forçada via `/diagnostico` e corrigidos problemas de permissões.
+
+3. **Erro na página de usuários**: A função get_users_with_emails não está disponível ou faltam permissões.
+   - **Solução sugerida**: Verificar e corrigir as políticas RLS para esta função.
+
+4. **Erros ao exibir métricas e relatórios**: Dados não são carregados nas páginas de métricas.
+   - **Solução em andamento**: Adicionar diagnóstico específico para estas funcionalidades.
 
 ## Notas Técnicas
 
@@ -56,10 +70,11 @@
 
 ## Próximos Passos
 
-1. Resolver problemas conhecidos
-2. Implementar a funcionalidade de webhook para Make.com
-3. Completar tarefas em andamento
-4. Iniciar as tarefas pendentes de acordo com a prioridade
+1. Utilizar a página de diagnóstico `/diagnostico` para identificar e resolver problemas
+2. Executar a recuperação forçada do questionário para garantir que todos os dados estejam presentes
+3. Verificar as permissões RLS para garantir o acesso adequado aos dados
+4. Implementar as funcionalidades de webhook para integração com Make.com
+5. Expandir funcionalidades de relatórios e exportação de dados
 
 ## Melhorias Realizadas
 
@@ -73,3 +88,6 @@
 - **29/04/2025**: Adição do tipo 'webhook' ao LogType e correção de erros relacionados aos logs de webhook
 - **29/04/2025**: Criação de sistema de diagnóstico de estrutura do banco de dados
 - **29/04/2025**: Implementação de ferramentas de recuperação forçada para dados do questionário
+- **29/04/2025**: Correção do script force-quiz-recovery.ts para remover chamadas from inexistentes
+- **29/04/2025**: Adição de página dedicada de diagnóstico para resolver problemas do sistema
+- **29/04/2025**: Reescrita do script de seed para usar supabaseAdmin quando necessário para evitar problemas de RLS
