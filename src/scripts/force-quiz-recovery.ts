@@ -7,6 +7,7 @@ import { recoverQuizData } from './quiz-recovery';
 import { seedQuizData } from './seed-quiz';
 import { logger } from '@/utils/logger';
 import { addLogEntry } from '@/utils/projectLog';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Função de recuperação forçada que garante a existência dos dados do questionário
@@ -41,17 +42,25 @@ export async function forceQuizRecovery(): Promise<{
     
     if (seedSuccess) {
       // Verifica os dados inseridos
-      const { data: modulesCount } = await await import('@/integrations/supabase/client').then(m => m.supabase)
+      const { data: modulesCount, error: modulesError } = await supabase
         .from('quiz_modules')
         .select('id', { count: 'exact' });
         
-      const { data: questionsCount } = await await import('@/integrations/supabase/client').then(m => m.supabase)
+      const { data: questionsCount, error: questionsError } = await supabase
         .from('quiz_questions')
         .select('id', { count: 'exact' });
         
-      const { data: optionsCount } = await await import('@/integrations/supabase/client').then(m => m.supabase)
+      const { data: optionsCount, error: optionsError } = await supabase
         .from('quiz_options')
         .select('id', { count: 'exact' });
+      
+      // Verificar erros nas consultas
+      if (modulesError || questionsError || optionsError) {
+        logger.error('Erro ao verificar contagem de dados após seed:', { 
+          modulesError, questionsError, optionsError,
+          tag: 'RecoveryForce'
+        });
+      }
       
       const result = {
         success: true,
