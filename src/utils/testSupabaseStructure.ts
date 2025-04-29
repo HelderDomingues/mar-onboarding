@@ -1,168 +1,177 @@
 
-/**
- * Utilitário para testar a estrutura do banco de dados Supabase
- * Verifica se as tabelas e estruturas necessárias estão presentes
- */
-
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
+import { addLogEntry } from '@/utils/projectLog';
 
 /**
- * Verifica a estrutura do banco de dados para o questionário MAR
- * @returns Promise<Object> Resultado do teste
+ * Testa a estrutura do Supabase para o questionário MAR
+ * Verifica se todas as tabelas e dados básicos estão configurados corretamente
  */
-export const testSupabaseStructure = async () => {
+export async function testSupabaseStructure(): Promise<{
+  success: boolean;
+  stage?: string;
+  error?: string;
+  data?: any;
+  details?: any;
+}> {
   try {
-    logger.info('Testando estrutura do Supabase para questionário MAR', { tag: 'Test' });
+    addLogEntry('info', 'Iniciando teste de estrutura do Supabase');
     
-    // Stage 1: Verificar existência das tabelas principais
-    logger.info('Etapa 1: Verificando tabelas principais', { tag: 'Test' });
-    
-    const requiredTables = [
-      'quiz_modules',
-      'quiz_questions',
-      'quiz_options',
-      'quiz_submissions',
-      'quiz_answers',
-      'profiles',
-      'user_roles'
-    ];
-    
-    // Utilizar a função RPC para verificar as tabelas
-    const { data: tablesData, error: tablesError } = await supabase.rpc('get_database_tables');
-    
-    if (tablesError) {
-      logger.error('Erro ao verificar tabelas:', { tag: 'Test', data: { error: tablesError } });
-      return {
-        success: false,
-        stage: 'Verificação de tabelas',
-        error: tablesError.message
-      };
-    }
-    
-    // Se a função RPC não estiver disponível, tentar método alternativo
-    if (!tablesData) {
-      // Tentar verificar cada tabela individualmente
-      for (const table of requiredTables) {
-        const { error } = await supabase.from(table).select('count', { count: 'exact', head: true });
-        
-        if (error && error.code === '42P01') { // Código para tabela não existente
-          logger.error(`Tabela ${table} não existe`, { tag: 'Test' });
-          return {
-            success: false,
-            stage: 'Verificação de tabelas',
-            error: `Tabela ${table} não existe`
-          };
-        }
-      }
-    } else {
-      // Verificar se todas as tabelas requeridas existem
-      const existingTables = tablesData.map(t => t.table_name);
+    // Teste 1: Verificar se as tabelas existem
+    try {
+      const { data: tableInfo, error: tableError } = await supabase.rpc('get_all_tables');
       
-      for (const table of requiredTables) {
-        if (!existingTables.includes(table)) {
-          logger.error(`Tabela ${table} não existe`, { tag: 'Test' });
-          return {
-            success: false,
-            stage: 'Verificação de tabelas',
-            error: `Tabela ${table} não existe`
-          };
+      if (tableError) {
+        return {
+          success: false,
+          stage: 'Verificação de tabelas',
+          error: tableError.message,
+          details: tableError
+        };
+      }
+      
+      // Verificar tabelas específicas do questionário
+      const requiredTables = ['quiz_modules', 'quiz_questions', 'quiz_options', 
+                             'quiz_submissions', 'quiz_answers'];
+      
+      const missingTables = requiredTables.filter(table => 
+        !tableInfo || !tableInfo.some((t: any) => t.table_name === table)
+      );
+      
+      if (missingTables.length > 0) {
+        return {
+          success: false,
+          stage: 'Verificação de tabelas',
+          error: `Tabelas necessárias não encontradas: ${missingTables.join(', ')}`,
+          details: { missingTables, tableInfo }
+        };
+      }
+    } catch (error) {
+      // Se a função RPC não existir, tentar uma abordagem alternativa
+      try {
+        for (const table of ['quiz_modules', 'quiz_questions', 'quiz_options']) {
+          const { count, error } = await supabase
+            .from(table)
+            .select('*', { count: 'exact', head: true });
+          
+          if (error) {
+            return {
+              success: false,
+              stage: `Verificação da tabela ${table}`,
+              error: error.message,
+              details: error
+            };
+          }
         }
+      } catch (alternativeError) {
+        return {
+          success: false,
+          stage: 'Verificação alternativa de tabelas',
+          error: alternativeError instanceof Error ? alternativeError.message : 'Erro desconhecido',
+          details: alternativeError
+        };
       }
     }
     
-    // Stage 2: Verificar contagem de dados nas tabelas principais
-    logger.info('Etapa 2: Verificando contagem de dados nas tabelas', { tag: 'Test' });
-    
-    const { count: modulesCount } = await supabase
+    // Teste 2: Verificar se há dados nas tabelas principais
+    const { data: modules, error: modulesError } = await supabase
       .from('quiz_modules')
-      .select('*', { count: 'exact', head: true });
+      .select('id, title')
+      .order('order_number');
       
-    const { count: questionsCount } = await supabase
-      .from('quiz_questions')
-      .select('*', { count: 'exact', head: true });
-      
-    const { count: optionsCount } = await supabase
-      .from('quiz_options')
-      .select('*', { count: 'exact', head: true });
-    
-    // Stage 3: Verificar estrutura das perguntas
-    logger.info('Etapa 3: Verificando tipos de perguntas', { tag: 'Test' });
-    
-    const { data: questionTypes } = await supabase
-      .from('quiz_questions')
-      .select('type')
-      .is('type', 'not.null');
-      
-    const uniqueTypes = questionTypes ? [...new Set(questionTypes.map(q => q.type))] : [];
-    
-    // Stage 4: Verificar integridade referencial
-    logger.info('Etapa 4: Verificando integridade referencial', { tag: 'Test' });
-    
-    // Verificar se todas as perguntas têm um módulo válido
-    const { data: invalidQuestions } = await supabase
-      .from('quiz_questions')
-      .select('id')
-      .not('module_id', 'in', `(select id from quiz_modules)`);
-      
-    const hasInvalidQuestions = invalidQuestions && invalidQuestions.length > 0;
-    
-    // Verificar se todas as opções têm uma pergunta válida
-    const { data: invalidOptions } = await supabase
-      .from('quiz_options')
-      .select('id')
-      .not('question_id', 'in', `(select id from quiz_questions)`);
-      
-    const hasInvalidOptions = invalidOptions && invalidOptions.length > 0;
-    
-    if (hasInvalidQuestions || hasInvalidOptions) {
-      logger.warn('Problemas de integridade referencial detectados', { 
-        tag: 'Test',
-        data: { hasInvalidQuestions, hasInvalidOptions }
-      });
-    }
-    
-    // Stage 5: Verificar funções de banco de dados necessárias
-    logger.info('Etapa 5: Verificando funções de banco de dados', { tag: 'Test' });
-    
-    const requiredFunctions = [
-      'complete_quiz',
-      'is_admin'
-    ];
-    
-    // Tentar chamar uma função simples para verificar existência
-    const { data: adminCheckResult, error: adminCheckError } = await supabase.rpc('is_admin');
-    
-    if (adminCheckError && adminCheckError.code === '42883') { // Código para função não existente
-      logger.error('Funções essenciais não existem', { tag: 'Test' });
+    if (modulesError) {
       return {
         success: false,
-        stage: 'Verificação de funções',
-        error: 'Funções essenciais não existem no banco de dados'
+        stage: 'Verificação de dados dos módulos',
+        error: modulesError.message,
+        details: modulesError
       };
     }
     
-    // Tudo ok - retornar resultado final
-    logger.info('Teste de estrutura concluído com sucesso', { tag: 'Test' });
+    if (!modules || modules.length === 0) {
+      return {
+        success: false,
+        stage: 'Verificação de dados dos módulos',
+        error: 'Nenhum módulo encontrado na tabela quiz_modules',
+        details: { modules }
+      };
+    }
     
+    // Teste 3: Verificar perguntas
+    const { data: questions, error: questionsError } = await supabase
+      .from('quiz_questions')
+      .select('id, text, type')
+      .order('order_number')
+      .limit(10);
+      
+    if (questionsError) {
+      return {
+        success: false,
+        stage: 'Verificação de dados das perguntas',
+        error: questionsError.message,
+        details: questionsError
+      };
+    }
+    
+    if (!questions || questions.length === 0) {
+      return {
+        success: false,
+        stage: 'Verificação de dados das perguntas',
+        error: 'Nenhuma pergunta encontrada na tabela quiz_questions',
+        details: { questions }
+      };
+    }
+    
+    // Teste 4: Verificar opções
+    const { data: options, error: optionsError } = await supabase
+      .from('quiz_options')
+      .select('id, text')
+      .order('order_number')
+      .limit(10);
+      
+    if (optionsError) {
+      return {
+        success: false,
+        stage: 'Verificação de dados das opções',
+        error: optionsError.message,
+        details: optionsError
+      };
+    }
+    
+    if (!options || options.length === 0) {
+      return {
+        success: false,
+        stage: 'Verificação de dados das opções',
+        error: 'Nenhuma opção encontrada na tabela quiz_options',
+        details: { options }
+      };
+    }
+    
+    // Compilar informações sobre os tipos de perguntas para verificar diversidade
+    const questionTypes = Array.from(new Set(questions.map(q => q.type)));
+    
+    // Todos os testes passaram
     return {
       success: true,
       data: {
-        modules: modulesCount || 0,
-        questions: questionsCount || 0,
-        options: optionsCount || 0,
-        questionTypes: uniqueTypes,
-        hasInvalidQuestions,
-        hasInvalidOptions
+        modules: modules.length,
+        questions: questions.length,
+        options: options.length,
+        questionTypes
       }
     };
   } catch (error) {
-    logger.error('Erro ao testar estrutura do Supabase:', { tag: 'Test', data: { error } });
+    addLogEntry('error', 'Erro ao testar estrutura do Supabase', {
+      erro: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+    
     return {
       success: false,
-      stage: 'Teste geral',
+      stage: 'Verificação geral',
       error: error instanceof Error ? error.message : 'Erro desconhecido',
       details: error
     };
   }
-};
+}
+
+export default testSupabaseStructure;

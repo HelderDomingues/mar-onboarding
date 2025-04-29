@@ -23,6 +23,8 @@
 - [x] Correção de problema de exportação do ServiceRoleConfig
 - [x] Implementação de funcionalidade básica de webhook para Make.com
 - [x] Adição do tipo 'webhook' ao LogType e correção de erros relacionados
+- [x] Criação de sistema de diagnóstico e ferramentas de recuperação
+- [x] Implementação de recuperação forçada para dados do questionário
 
 ## Em Andamento
 
@@ -69,3 +71,5 @@
 - **29/04/2025**: Eliminação de arquivos duplicados para melhorar a manutenção do código
 - **29/04/2025**: Correção de erros de importação e exportação de componentes
 - **29/04/2025**: Adição do tipo 'webhook' ao LogType e correção de erros relacionados aos logs de webhook
+- **29/04/2025**: Criação de sistema de diagnóstico de estrutura do banco de dados
+- **29/04/2025**: Implementação de ferramentas de recuperação forçada para dados do questionário
