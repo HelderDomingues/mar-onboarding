@@ -18,7 +18,7 @@ export function UserDashboard({
   submission
 }: UserDashboardProps) {
   const navigate = useNavigate();
-  const progress = submission ? submission.completed ? 100 : submission.current_module / 8 * 100 : 0;
+  const progress = submission ? submission.completed ? 100 : submission.current_module / 11 * 100 : 0;
 
   const getMainActionButton = () => {
     if (!submission) {
@@ -163,7 +163,7 @@ export function UserDashboard({
                   </div> : progress === 100 ? <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-2 text-sm text-amber-600">
                       <Clock className="h-4 w-4" />
-                      <span>Módulo 8 de 8 completo - Finalize seu questionário</span>
+                      <span>Módulo 11 de 11 completo - Finalize seu questionário</span>
                     </div>
                     <p className="text-slate-600">
                       Todas as perguntas foram respondidas! Agora você precisa revisar e validar suas respostas para concluir o questionário.
@@ -186,7 +186,7 @@ export function UserDashboard({
               </> : <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-2 text-sm text-slate-600">
                   <BookOpen className="h-4 w-4" />
-                  <span>50 questões distribuídas em 10 módulos rápidos.</span>
+                  <span>68 questões distribuídas em 11 módulos rápidos.</span>
                 </div>
                 <p className="text-slate-600">
                   O questionário MAR irá mapear seu nível atual e ajudá-lo a identificar oportunidades de crescimento.

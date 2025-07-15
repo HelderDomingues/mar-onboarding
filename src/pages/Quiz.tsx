@@ -285,6 +285,9 @@ const Quiz = () => {
         title: "Questionário completado",
         description: "Parabéns! Você completou o questionário.",
       });
+      
+      // Redirecionar para a página de sucesso
+      navigate('/quiz/success');
     } catch (error: any) {
       logger.error('Erro ao completar questionário', {
         tag: 'Quiz',

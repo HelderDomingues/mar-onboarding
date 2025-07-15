@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, File, ArrowRight } from "lucide-react";
@@ -48,18 +48,7 @@ export function QuizReview() {
           throw questionsError;
         }
 
-        // Buscar diretamente da tabela quiz_answers
-        const {
-          data: answersData,
-          error: answersError
-        } = await supabase.from('quiz_answers')
-          .select('*')
-          .eq('user_id', user.id);
-        if (answersError) {
-          throw answersError;
-        }
-
-        // Buscar submissão - MODIFICADO para evitar uso de .maybeSingle()
+        // Buscar diretamente da tabela quiz_answers usando submission_id
         const {
           data: submissionData,
           error: submissionError
@@ -70,6 +59,23 @@ export function QuizReview() {
           
         if (submissionError) {
           throw submissionError;
+        }
+
+        const currentSubmission = submissionData && submissionData.length > 0 ? submissionData[0] : null;
+        
+        // Buscar respostas apenas se houver submissão
+        let answersData: any[] = [];
+        if (currentSubmission) {
+          const {
+            data: fetchedAnswers,
+            error: answersError
+          } = await supabase.from('quiz_answers')
+            .select('*')
+            .eq('submission_id', currentSubmission.id);
+          if (answersError) {
+            throw answersError;
+          }
+          answersData = fetchedAnswers || [];
         }
 
         // Adicionar títulos de módulos às respostas, utilizando os dados obtidos
@@ -97,8 +103,7 @@ export function QuizReview() {
         });
         
         setAnswers(processedAnswers);
-        // Usar o primeiro resultado se houver dados
-        setSubmission(submissionData && submissionData.length > 0 ? submissionData[0] : null);
+        setSubmission(currentSubmission);
       } catch (error) {
         console.error("Erro ao buscar respostas:", error);
         toast({
@@ -320,15 +325,10 @@ export function QuizReview() {
           </Accordion>
         </CardContent>
         
-        <CardFooter className="flex justify-between border-t p-6 rounded-lg bg-gray-500">
+        <CardFooter className="flex justify-center border-t p-6 rounded-lg bg-gray-500">
           <Button onClick={handleDownloadPDF} disabled={downloading} className="text-slate-50 bg-red-700 hover:bg-red-600 text-center">
             <File className="h-4 w-4 mr-2" />
-            Baixar PDF
-          </Button>
-          
-          <Button onClick={handleDownloadCSV} disabled={downloading} className="text-slate-50 bg-blue-700 hover:bg-blue-600">
-            <Download className="h-4 w-4 mr-2" />
-            Baixar CSV
+            {downloading ? 'Gerando PDF...' : 'Baixar PDF'}
           </Button>
         </CardFooter>
       </Card>

@@ -19,6 +19,7 @@ import SystemLog from "@/pages/SystemLog";
 import DiagnosticoSistema from "@/pages/DiagnosticoSistema";
 import QuizTest from "@/pages/QuizTest";
 import Profile from "@/pages/Profile";
+import QuizSuccess from "@/pages/QuizSuccess";
 
 // Admin pages
 import ImportUsers from "@/pages/admin/ImportUsers";
@@ -43,6 +44,7 @@ const AppRoutes = () => {
       <Route path="/quiz" element={<ProtectedRoute component={Quiz} />} />
       <Route path="/quiz/review" element={<ProtectedRoute component={QuizReview} />} />
       <Route path="/quiz/view-answers" element={<ProtectedRoute component={QuizViewAnswers} />} />
+      <Route path="/quiz/success" element={<ProtectedRoute component={QuizSuccess} />} />
       <Route path="/quiz/diagnostic" element={<ProtectedRoute component={QuizDiagnostic} />} />
       <Route path="/materials" element={<ProtectedRoute component={Materials} />} />
       <Route path="/member" element={<ProtectedRoute component={MemberArea} />} />
