@@ -76,14 +76,23 @@ export function QuizViewAnswers() {
           tag: 'Quiz',
           data: {
             userId: user.id,
-            answersCount: processedAnswers.length,
-            hasSubmission: submissionData && submissionData.length > 0
+            answersCount: processedAnswers.length
           }
         });
         
         setAnswers(processedAnswers);
-        // Usar o primeiro resultado se houver dados
-        setSubmission(submissionData && submissionData.length > 0 ? submissionData[0] : null);
+        
+        // Buscar submission separadamente
+        const { data: submissionData } = await supabase
+          .from('quiz_submissions')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('completed', true)
+          .single();
+
+        if (submissionData) {
+          setSubmission(submissionData);
+        }
       } catch (error) {
         console.error("Erro ao buscar respostas:", error);
         toast({

@@ -96,7 +96,7 @@ const ProfilePage = () => {
           completionStatus: data.completed ? "Completo" : "Em progresso",
           currentModule: data.current_module || 0,
           completedAt: data.completed_at,
-          timeSpent: data.total_time_spent || 0
+          timeSpent: 0 // Field total_time_spent not available in current schema
         });
       }
     } catch (error: any) {

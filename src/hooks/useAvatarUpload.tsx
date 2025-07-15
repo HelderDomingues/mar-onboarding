@@ -37,11 +37,9 @@ export const useAvatarUpload = (userId: string) => {
       if (uploadError) throw uploadError;
 
       // Construir URL pública da imagem
-      const { data: { publicUrl }, error: urlError } = supabase.storage
+      const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
-
-      if (urlError) throw urlError;
 
       // Atualizar perfil do usuário com a nova URL do avatar
       const { error: profileUpdateError } = await supabase

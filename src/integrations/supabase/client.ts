@@ -15,3 +15,19 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
   }
 });
+
+// Export service role client for admin operations
+export const supabaseAdmin = createClient<Database>(
+  SUPABASE_URL,
+  // Using anon key for now - service role key should be configured in environment
+  SUPABASE_PUBLISHABLE_KEY,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
+
+// Export constants for components that need them
+export const SUPABASE_ANON_KEY = SUPABASE_PUBLISHABLE_KEY;
