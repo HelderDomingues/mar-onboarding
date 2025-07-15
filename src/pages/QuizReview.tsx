@@ -83,10 +83,26 @@ const QuizReviewPage = () => {
       let answersData: any[] = [];
       let answersError: any = null;
       
-      // Use type assertion to avoid recursion
-      const { data: answerData, error: answerError } = await (supabase as any).from('quiz_answers').select('*').eq('user_id', user.id);
-      answersData = answerData || [];
-      answersError = answerError;
+      // Buscar respostas através das submissões já que quiz_answers não tem user_id
+      const { data: submissionData, error: submissionError } = await supabase
+        .from('quiz_submissions')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (submissionError && submissionError.code !== 'PGRST116') {
+        throw formatError(submissionError, 'fetchQuizData.submission');
+      }
+
+      if (submissionData) {
+        const { data: answerData, error: answerError } = await supabase
+          .from('quiz_answers')
+          .select('*')
+          .eq('submission_id', submissionData.id);
+        answersData = answerData || [];
+        answersError = answerError;
+      }
 
       if (answersError) {
         throw formatError(answersError, 'fetchQuizData.answers');

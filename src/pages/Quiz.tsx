@@ -530,37 +530,13 @@ const Quiz = () => {
               
               <div className="flex items-center gap-2">
                 {currentModuleIndex === modules.length - 1 ? (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button 
-                        variant="destructive"
-                        disabled={isCompleting || isSubmitting}
-                      >
-                        Concluir Questionário
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Ao concluir, você não poderá mais alterar suas respostas.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isCompleting}>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleCompleteQuiz} disabled={isCompleting}>
-                          {isCompleting ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Concluindo...
-                            </>
-                          ) : (
-                            "Confirmar"
-                          )}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <Button 
+                    onClick={() => navigate('/quiz/review')}
+                    disabled={isSubmitting}
+                  >
+                    Revisar e Finalizar
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
                 ) : (
                   <Button
                     onClick={handleNextModule}
