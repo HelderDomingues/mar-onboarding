@@ -23,7 +23,7 @@ export default function QuizSuccess() {
         </CardHeader>
         
         <CardContent className="text-center px-6">
-          <p className="text-xl mb-4 text-foreground">
+          <p className="text-xl mb-4 text-primary dark:text-foreground">
             Você concluiu o Questionário MAR com sucesso!
           </p>
           
