@@ -27,7 +27,7 @@ export default function QuizSuccess() {
             Você concluiu o Questionário MAR com sucesso!
           </p>
           
-          <p className="text-muted-foreground mb-8">
+          <p className="text-primary dark:text-foreground mb-8">
             Agradecemos pelo tempo dedicado ao preenchimento do questionário. 
             Suas respostas são fundamentais para que possamos entender melhor o seu negócio 
             e desenvolver o MApa para Alto Rendimento ideal para o seu crescimento.
@@ -35,7 +35,7 @@ export default function QuizSuccess() {
           
           <div className="bg-muted rounded-lg p-6 border border-border">
             <h3 className="font-semibold text-lg mb-3 text-foreground">Próximos passos</h3>
-            <p className="mb-4 text-muted-foreground">
+            <p className="mb-4 text-primary dark:text-foreground">
               Nossa equipe irá analisar suas respostas e entraremos em contato em breve para 
               discutir os resultados e as próximas etapas do programa MAR.
             </p>
