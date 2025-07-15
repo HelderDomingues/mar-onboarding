@@ -44,6 +44,7 @@ import {
   isQuizComplete 
 } from '@/utils/quiz';
 import { saveQuizAnswer } from '@/utils/supabaseUtils';
+import { supabase } from '@/integrations/supabase/client';
 import { QuizModule, QuizQuestion } from '@/types/quiz';
 import { logger } from '@/utils/logger';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
@@ -189,25 +190,30 @@ const Quiz = () => {
     }
   };
   
-  const handleInputChange = (questionId: string, value: string) => {
+  const handleInputChange = async (questionId: string, value: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
+    // Salvar automaticamente quando houver mudança
+    await handleSaveAnswer(questionId, value);
   };
   
-  const handleCheckboxChange = (questionId: string, value: string) => {
+  const handleCheckboxChange = async (questionId: string, value: string) => {
+    let newAnswers: string[] = [];
+    
     setAnswers(prev => {
       const currentAnswers = prev[questionId] as string[] || [];
       if (currentAnswers.includes(value)) {
-        return {
-          ...prev,
-          [questionId]: currentAnswers.filter(item => item !== value)
-        };
+        newAnswers = currentAnswers.filter(item => item !== value);
       } else {
-        return {
-          ...prev,
-          [questionId]: [...currentAnswers, value]
-        };
+        newAnswers = [...currentAnswers, value];
       }
+      return {
+        ...prev,
+        [questionId]: newAnswers
+      };
     });
+    
+    // Salvar automaticamente após mudança
+    await handleSaveAnswer(questionId, newAnswers);
   };
   
   const handleCompleteQuiz = async () => {
@@ -247,8 +253,11 @@ const Quiz = () => {
     
     try {
       if (!user?.id) {
+        console.error("Usuario não identificado:", user);
         throw new Error("Usuário não identificado");
       }
+      
+      console.log("Tentando salvar resposta:", { userId: user.id, questionId, answer });
       
       // Buscar informações da questão
       const question = questions.find(q => q.id === questionId);
@@ -264,11 +273,38 @@ const Quiz = () => {
         module_title: question.module_title
       };
       
-      // Usar a função saveQuizAnswer do utils
-      const result = await saveQuizAnswer(user.id, questionId, answer, questionInfo);
-      
-      if (!result.success) {
-        throw new Error(result.error?.message || "Falha ao salvar resposta");
+      // Usar saveAnswer do utils/quiz.ts em vez de saveQuizAnswer
+      if (!submissionId) {
+        // Criar nova submissão primeiro
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) {
+          throw new Error("Usuário não autenticado");
+        }
+        
+        const { data: newSubmission, error: submissionError } = await supabase
+          .from('quiz_submissions')
+          .insert([{
+            user_id: user.id,
+            user_email: userData.user.email || '',
+            current_module: 1,
+            started_at: new Date().toISOString()
+          }])
+          .select()
+          .single();
+          
+        if (submissionError) {
+          console.error("Erro ao criar submissão:", submissionError);
+          throw submissionError;
+        }
+        
+        setSubmissionId(newSubmission.id);
+        console.log("Nova submissão criada:", newSubmission.id);
+        
+        // Agora salvar a resposta
+        await saveAnswer(newSubmission.id, questionId, typeof answer === 'string' ? answer : JSON.stringify(answer));
+      } else {
+        // Usar submissão existente
+        await saveAnswer(submissionId, questionId, typeof answer === 'string' ? answer : JSON.stringify(answer));
       }
       
       // Atualizar estado local das respostas
@@ -277,6 +313,7 @@ const Quiz = () => {
         [questionId]: answer
       }));
       
+      console.log("Resposta salva com sucesso!");
       logger.info('Resposta salva com sucesso', {
         tag: 'Quiz',
         data: { questionId, userId: user.id }
@@ -284,6 +321,7 @@ const Quiz = () => {
       
       return true;
     } catch (error: any) {
+      console.error("Erro detalhado ao salvar resposta:", error);
       logger.error('Erro ao salvar resposta', {
         tag: 'Quiz',
         data: { questionId, error }
@@ -416,7 +454,10 @@ const Quiz = () => {
               id={question.id}
               options={question.options || []}
               value={answer as string[] || []}
-              onChange={(value) => setAnswers(prev => ({ ...prev, [question.id]: value }))}
+              onChange={async (value) => {
+                setAnswers(prev => ({ ...prev, [question.id]: value }));
+                await handleSaveAnswer(question.id, value);
+              }}
               disabled={isSubmitting}
               hint={question.hint}
               maxOptions={maxOptions}
