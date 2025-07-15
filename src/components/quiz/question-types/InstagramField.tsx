@@ -12,6 +12,7 @@ interface InstagramFieldProps {
   required?: boolean;
   prefix?: string;
   error?: string | null;
+  disabled?: boolean;
 }
 
 export const InstagramField: React.FC<InstagramFieldProps> = ({
@@ -22,7 +23,8 @@ export const InstagramField: React.FC<InstagramFieldProps> = ({
   hint,
   required = false,
   prefix = "@",
-  error
+  error,
+  disabled = false
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value.replace(/^@/, ''); // Remove @ if user types it
@@ -37,6 +39,7 @@ export const InstagramField: React.FC<InstagramFieldProps> = ({
         value={value}
         onChange={handleChange}
         placeholder={placeholder}
+        disabled={disabled}
         className="w-full text-black bg-white" // Explicitly set text color to black
       />
       {hint && <p className="text-sm text-gray-500 mt-1">{hint}</p>}

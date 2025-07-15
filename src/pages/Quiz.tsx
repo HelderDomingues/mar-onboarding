@@ -16,6 +16,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioWithOther } from '@/components/quiz/question-types/RadioWithOther';
+import { CheckboxWithOther } from '@/components/quiz/question-types/CheckboxWithOther';
+import { InstagramField } from '@/components/quiz/question-types/InstagramField';
+import { UrlField } from '@/components/quiz/question-types/UrlField';
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -359,81 +363,58 @@ const Quiz = () => {
         return (
           <div className="grid gap-2">
             <Label htmlFor={question.id}>{question.text}</Label>
-            <div className="relative">
-              {question.prefix && (
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                  {question.prefix}
-                </div>
-              )}
-              <Input
-                type="url"
-                id={question.id}
-                className={question.prefix ? "pl-10" : ""}
-                value={answer as string}
-                onChange={(e) => handleInputChange(question.id, e.target.value)}
-                disabled={isSubmitting}
-                placeholder={question.placeholder || undefined}
-              />
-            </div>
+            <UrlField
+              id={question.id}
+              value={answer as string}
+              onChange={(value) => handleInputChange(question.id, value)}
+              disabled={isSubmitting}
+              hint={question.hint}
+              prefix="https://"
+              placeholder="exemplo.com.br"
+            />
           </div>
         );
       case 'instagram':
         return (
           <div className="grid gap-2">
             <Label htmlFor={question.id}>{question.text}</Label>
-            <div className="relative">
-              {question.prefix && (
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                  {question.prefix}
-                </div>
-              )}
-              <Input
-                type="text"
-                id={question.id}
-                className={question.prefix ? "pl-10" : ""}
-                value={answer as string}
-                onChange={(e) => handleInputChange(question.id, e.target.value)}
-                disabled={isSubmitting}
-                placeholder={question.placeholder || undefined}
-              />
-            </div>
+            <InstagramField
+              id={question.id}
+              value={answer as string}
+              onChange={(value) => handleInputChange(question.id, value)}
+              disabled={isSubmitting}
+              hint="Insira seu perfil SEM o @, ex: seuperfil"
+              prefix="@"
+            />
           </div>
         );
       case 'radio':
         return (
           <div className="grid gap-2">
             <Label htmlFor={question.id}>{question.text}</Label>
-            <RadioGroup defaultValue={answer as string} onValueChange={(value) => handleInputChange(question.id, value)}>
-              {question.options?.map((option) => (
-                <div key={option.id} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option.text} id={`${question.id}-${option.id}`} className="disabled:opacity-50" disabled={isSubmitting} />
-                  <Label htmlFor={`${question.id}-${option.id}`} className="cursor-pointer">
-                    {option.text}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
+            <RadioWithOther
+              id={question.id}
+              options={question.options || []}
+              value={answer as string}
+              onChange={(value) => handleInputChange(question.id, value)}
+              disabled={isSubmitting}
+              hint={question.hint}
+            />
           </div>
         );
       case 'checkbox':
         return (
           <div className="grid gap-2">
             <Label htmlFor={question.id}>{question.text}</Label>
-            {question.options?.map((option) => (
-              <div key={option.id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`${question.id}-${option.id}`}
-                  checked={(answer as string[])?.includes(option.text)}
-                  onCheckedChange={(checked) => {
-                    handleCheckboxChange(question.id, option.text);
-                  }}
-                  disabled={isSubmitting}
-                />
-                <Label htmlFor={`${question.id}-${option.id}`} className="cursor-pointer">
-                  {option.text}
-                </Label>
-              </div>
-            ))}
+            <CheckboxWithOther
+              id={question.id}
+              options={question.options || []}
+              value={answer as string[] || []}
+              onChange={(value) => setAnswers(prev => ({ ...prev, [question.id]: value }))}
+              disabled={isSubmitting}
+              hint={question.hint}
+              maxOptions={question.max_options}
+            />
           </div>
         );
       case 'select':

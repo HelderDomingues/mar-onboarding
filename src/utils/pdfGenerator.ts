@@ -71,12 +71,16 @@ export const generateQuizPDF = async (
     }
     
     // Buscar as respostas do usuário
-    const answersResponse = await supabase
+    const answersResult = await supabase
       .from('quiz_answers')
-      .select('*')
-      .eq('user_id', userId);
+      .select('*');
     
-    const { data: answers, error: answersError } = answersResponse;
+    const answers = answersResult.data?.filter(answer => 
+      (answer as any).submission_id && 
+      (answer as any).question_id && 
+      (answer as any).answer !== undefined
+    );
+    const answersError = answersResult.error;
     
     if (answersError) {
       throw answersError;
@@ -348,21 +352,30 @@ export const downloadQuizCSV = async (
   adminMode: boolean = false
 ): Promise<boolean> => {
   try {
-    // Buscar as respostas do usuário junto com as perguntas
-    const { data: answers, error: answersError } = await supabase
+    // Buscar as respostas do usuário
+    const answersResult = await supabase
       .from('quiz_answers')
-      .select(`
-        *,
-        quiz_questions!inner (
-          text,
-          order_number
-        )
-      `)
-      .eq('user_id', userId);
+      .select('*');
     
-    if (answersError || !answers || answers.length === 0) {
+    const userAnswers = answersResult.data?.filter((answer: any) => 
+      answer.submission_id && answer.question_id
+    );
+    
+    // Buscar as perguntas
+    const { data: questions } = await supabase
+      .from('quiz_questions')
+      .select('*')
+      .order('order_number');
+    
+    if (!userAnswers || userAnswers.length === 0 || !questions) {
       throw new Error('Nenhuma resposta encontrada');
     }
+    
+    // Combinar respostas com perguntas
+    const answers = userAnswers.map((answer: any) => ({
+      ...answer,
+      quiz_questions: questions.find((q: any) => q.id === answer.question_id)
+    }));
     
     // Preparar o conteúdo CSV
     let csvContent = "data:text/csv;charset=utf-8,";
