@@ -79,10 +79,17 @@ const QuizReviewPage = () => {
         throw formatError(optionsError, 'fetchQuizData.options');
       }
       
-      const { data: answersData, error: answersError } = await supabase
-        .from('quiz_answers')
-        .select('*')
-        .eq('user_id', user.id);
+      // Fetch answers with simplified approach to avoid type recursion
+      let answersData: any[] = [];
+      let answersError: any = null;
+      
+      try {
+        const rawResponse = await supabase.from('quiz_answers').select('*').eq('user_id', user.id);
+        answersData = rawResponse.data || [];
+        answersError = rawResponse.error;
+      } catch (error) {
+        answersError = error;
+      }
 
       if (answersError) {
         throw formatError(answersError, 'fetchQuizData.answers');

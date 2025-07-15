@@ -71,10 +71,12 @@ export const generateQuizPDF = async (
     }
     
     // Buscar as respostas do usuário
-    const { data: answers, error: answersError } = await supabase
+    const answersResponse = await supabase
       .from('quiz_answers')
       .select('*')
       .eq('user_id', userId);
+    
+    const { data: answers, error: answersError } = answersResponse;
     
     if (answersError) {
       throw answersError;

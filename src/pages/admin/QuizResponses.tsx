@@ -111,9 +111,18 @@ const QuizResponses = () => {
       } else if (statusFilter === 'incomplete') {
         query = query.eq('completed', false);
       } else if (statusFilter === 'processed') {
-        query = query.eq('webhook_processed', true);
+        // Build new query to avoid type recursion
+        query = supabaseAdmin
+          .from('quiz_submissions')
+          .select('id, user_id, user_name, user_email, started_at, completed_at, completed, webhook_processed')
+          .order('started_at', { ascending: false })
+          .eq('webhook_processed', true);
       } else if (statusFilter === 'unprocessed') {
-        query = query.eq('webhook_processed', false);
+        query = supabaseAdmin
+          .from('quiz_submissions')
+          .select('id, user_id, user_name, user_email, started_at, completed_at, completed, webhook_processed')
+          .order('started_at', { ascending: false })
+          .eq('webhook_processed', false);
       }
       
       const { data, error } = await query;
@@ -217,10 +226,11 @@ const QuizResponses = () => {
       
       if (submissionError) throw submissionError;
       
-      const { data: answers, error: answersError } = await supabaseAdmin
-        .from('quiz_answers')
-        .select('*')
-        .eq('user_id', submission.user_id);
+      // Simplified query to avoid type recursion
+      const answersQuery = supabaseAdmin.from('quiz_answers').select('*').eq('user_id', submission.user_id);
+      const answersResult = await answersQuery;
+      const answers = answersResult.data;
+      const answersError = answersResult.error;
       
       if (answersError) throw answersError;
       
