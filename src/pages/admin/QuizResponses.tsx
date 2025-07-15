@@ -243,7 +243,7 @@ const QuizResponses = () => {
         const question = questionMap.get(a.question_id) || {};
         return [
           a.question_id,
-          a.question_text || question.text || 'N/A',
+          question.text || 'N/A', // Use question.text instead of a.question_text
           question.module_id || 'N/A',
           question.type || 'N/A',
           a.answer || 'Sem resposta'

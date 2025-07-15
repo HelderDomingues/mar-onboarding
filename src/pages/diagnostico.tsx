@@ -164,12 +164,15 @@ const DiagnosticoPage = () => {
     try {
       const result = await testSupabaseStructure();
       
+      const success = result.results.connection && result.results.tables;
+      const issuesList = result.issues.join(', ');
+      
       toast({
-        title: result.success ? 'Teste concluído' : 'Falha no teste',
-        description: result.success 
-          ? `Estrutura verificada com sucesso: ${result.data?.modules || 0} módulos, ${result.data?.questions || 0} perguntas` 
-          : `Falha: ${result.error}`,
-        variant: result.success ? 'default' : 'destructive'
+        title: success ? 'Teste concluído' : 'Falha no teste',
+        description: success 
+          ? 'Estrutura verificada com sucesso' 
+          : `Falha: ${issuesList}`,
+        variant: success ? 'default' : 'destructive'
       });
       
       // Atualizar diagnóstico após o teste

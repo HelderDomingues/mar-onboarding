@@ -93,12 +93,15 @@ const RecoverQuiz = () => {
       const result = await testSupabaseStructure();
       setTestResult(result);
       
+      const success = result.results.connection && result.results.tables;
+      const issuesList = result.issues.join(', ');
+      
       toast({
-        title: result.success ? "Teste concluído" : "Falha no teste",
-        description: result.success 
+        title: success ? "Teste concluído" : "Falha no teste",
+        description: success 
           ? "Estrutura verificada com sucesso"
-          : `Falha: ${result.error}`,
-        variant: result.success ? "default" : "destructive"
+          : `Falha: ${issuesList}`,
+        variant: success ? "default" : "destructive"
       });
     } catch (error) {
       console.error("Erro ao testar estrutura:", error);

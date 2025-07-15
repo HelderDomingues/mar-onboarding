@@ -47,19 +47,24 @@ export function AdminRecoveryTools() {
     try {
       const testResult = await testSupabaseStructure();
       
+      const success = testResult.results.connection && testResult.results.tables;
+      const issueCount = testResult.issues.length;
+      
       setResult({
-        ...testResult,
-        message: testResult.success 
-          ? `Estrutura verificada com sucesso: ${testResult.data?.modules || 0} módulos, ${testResult.data?.questions || 0} perguntas` 
-          : `Falha: ${testResult.error}`
+        success,
+        data: { modules: 0, questions: 0 }, // Placeholder data
+        error: testResult.issues.join(', ') || null,
+        message: success 
+          ? `Estrutura verificada com sucesso. ${issueCount} problemas encontrados.` 
+          : `Falha na verificação: ${testResult.issues.join(', ')}`
       });
       
       toast({
-        title: testResult.success ? "Teste concluído" : "Falha no teste",
-        description: testResult.success 
-          ? `Estrutura verificada com sucesso: ${testResult.data?.modules || 0} módulos, ${testResult.data?.questions || 0} perguntas` 
-          : `Falha: ${testResult.error}`,
-        variant: testResult.success ? "default" : "destructive",
+        title: success ? "Teste concluído" : "Falha no teste",
+        description: success 
+          ? `Estrutura verificada. ${issueCount} problemas encontrados.` 
+          : `Falha: ${testResult.issues.join(', ')}`,
+        variant: success ? "default" : "destructive",
       });
     } catch (error) {
       console.error('Erro ao testar estrutura:', error);

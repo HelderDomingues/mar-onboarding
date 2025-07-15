@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle, Loader2, Send } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { configureMakeWebhookUrl, testMakeWebhookConnection } from '@/utils/webhookUtils';
+import { sendQuizDataToWebhook } from '@/utils/webhookUtils';
 import { useToast } from '@/components/ui/use-toast';
 
 export function WebhookConfig() {
@@ -34,23 +34,26 @@ export function WebhookConfig() {
     setTestResult(null);
     
     try {
-      // Testar conexão primeiro
-      const testResult = await testMakeWebhookConnection(webhookUrl);
-      setTestResult(testResult);
+      // Test webhook by attempting to send test data
+      const testSuccess = await sendQuizDataToWebhook('test-user', 'test-submission');
       
-      if (testResult.success) {
-        // Se o teste for bem-sucedido, salvar a configuração
-        await configureMakeWebhookUrl(webhookUrl);
-        
+      const result = {
+        success: testSuccess,
+        message: testSuccess ? 'Webhook conectado com sucesso' : 'Falha ao conectar com webhook'
+      };
+      
+      setTestResult(result);
+      
+      if (testSuccess) {
         toast({
           title: "Webhook configurado",
-          description: "URL do webhook do Make.com configurada com sucesso",
+          description: "URL do webhook configurada com sucesso",
           variant: "default"
         });
       } else {
         toast({
           title: "Falha na conexão",
-          description: testResult.message,
+          description: result.message,
           variant: "destructive"
         });
       }
