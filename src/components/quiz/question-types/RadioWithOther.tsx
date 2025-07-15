@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,7 @@ export const RadioWithOther: React.FC<RadioWithOtherProps> = ({
 }) => {
   const [otherText, setOtherText] = useState('');
   const [selectedValue, setSelectedValue] = useState(value);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Encontrar a opção "Outro" ou "Outros"
   const otherOption = options.find(option => 
@@ -59,13 +60,31 @@ export const RadioWithOther: React.FC<RadioWithOtherProps> = ({
 
   const handleOtherTextChange = (text: string) => {
     setOtherText(text);
-    if (otherOption && selectedValue === otherOption.text) {
-      // Sempre enviar o texto digitado, mesmo se estiver vazio
-      onChange(text.trim() ? text : otherOption.text);
+    
+    // Clear previous timeout
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
     }
+    
+    // Debounce the onChange call
+    debounceRef.current = setTimeout(() => {
+      if (otherOption && selectedValue === otherOption.text) {
+        // Sempre enviar o texto digitado, mesmo se estiver vazio
+        onChange(text.trim() ? text : otherOption.text);
+      }
+    }, 500);
   };
 
   const isOtherSelected = otherOption && selectedValue === otherOption.text;
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="grid gap-2">

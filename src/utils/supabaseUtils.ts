@@ -88,12 +88,16 @@ export async function completeQuizManually(userId: string) {
       
       return { success: true, method: 'direct_update' };
     } else {
+      // Buscar email do usuário antes de criar submissão
+      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+      const userEmail = userData?.user?.email || '';
+      
       // Caso não encontre submissão, cria uma já completa
       const { data: newSubmission, error: createError } = await supabaseAdmin
         .from('quiz_submissions')
         .insert([{
           user_id: userId,
-          user_email: '',
+          user_email: userEmail,
           current_module: 8,
           completed: true,
           completed_at: new Date().toISOString()

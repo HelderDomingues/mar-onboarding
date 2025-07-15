@@ -47,15 +47,32 @@ export function QuizViewAnswers() {
           throw questionsError;
         }
 
-        // Buscar respostas
+        // Buscar submissão do usuário
         const {
-          data: answersData,
-          error: answersError
-        } = await supabase.from('quiz_answers')
-          .select('question_id, answer')
-          .eq('user_id', user.id);
-        if (answersError) {
-          throw answersError;
+          data: submissionData,
+          error: submissionError
+        } = await supabase.from('quiz_submissions')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (submissionError) {
+          throw submissionError;
+        }
+        setSubmission(submissionData);
+
+        // Buscar respostas se houver submissão
+        let answersData = [];
+        if (submissionData) {
+          const {
+            data: answers,
+            error: answersError
+          } = await supabase.from('quiz_answers')
+            .select('question_id, answer')
+            .eq('submission_id', submissionData.id);
+          if (answersError) {
+            throw answersError;
+          }
+          answersData = answers || [];
         }
 
         // Combinar respostas com textos de perguntas
@@ -81,18 +98,6 @@ export function QuizViewAnswers() {
         });
         
         setAnswers(processedAnswers);
-        
-        // Buscar submission separadamente
-        const { data: submissionData } = await supabase
-          .from('quiz_submissions')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('completed', true)
-          .single();
-
-        if (submissionData) {
-          setSubmission(submissionData);
-        }
       } catch (error) {
         console.error("Erro ao buscar respostas:", error);
         toast({

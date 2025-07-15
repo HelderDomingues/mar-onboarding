@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,7 @@ export const CheckboxWithOther: React.FC<CheckboxWithOtherProps> = ({
   maxOptions
 }) => {
   const [otherText, setOtherText] = useState('');
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Encontrar a opção "Outro" ou "Outros"
   const otherOption = options.find(option => 
@@ -87,19 +88,36 @@ export const CheckboxWithOther: React.FC<CheckboxWithOtherProps> = ({
   const handleOtherTextChange = (text: string) => {
     setOtherText(text);
     
-    if (otherOption && isOtherSelected) {
-      const baseValues = predefinedValues.filter(v => v !== otherOption.text);
-      if (text.trim()) {
-        // Enviar o texto completo como um valor único, preservando espaços
-        onChange([...baseValues, text]);
-      } else {
-        // Se o texto estiver vazio, manter apenas valores predefinidos
-        onChange(baseValues);
-      }
+    // Clear previous timeout
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
     }
+    
+    // Debounce the onChange call
+    debounceRef.current = setTimeout(() => {
+      if (otherOption && isOtherSelected) {
+        const baseValues = predefinedValues.filter(v => v !== otherOption.text);
+        if (text.trim()) {
+          // Enviar o texto completo como um valor único, preservando espaços
+          onChange([...baseValues, text]);
+        } else {
+          // Se o texto estiver vazio, manter apenas valores predefinidos
+          onChange(baseValues);
+        }
+      }
+    }, 500);
   };
 
   const reachedMaxLimit = maxOptions && value.length >= maxOptions;
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="grid gap-2">

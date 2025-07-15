@@ -239,7 +239,11 @@ const QuizReviewPage = () => {
   };
 
   const handleEditQuestion = (moduleIndex: number, questionIndex: number) => {
-    navigate(`/quiz?module=${modules[moduleIndex].id}&question=${questions.filter(q => q.module_id === modules[moduleIndex].id)[questionIndex].id}`);
+    const moduleQuestions = questions.filter(q => q.module_id === modules[moduleIndex].id);
+    const targetQuestion = moduleQuestions[questionIndex];
+    if (targetQuestion) {
+      navigate(`/quiz?module=${modules[moduleIndex].id}&question=${targetQuestion.id}`);
+    }
   };
 
   if (!isAuthenticated) {
