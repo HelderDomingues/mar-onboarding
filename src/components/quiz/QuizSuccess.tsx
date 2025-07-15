@@ -33,7 +33,7 @@ export function QuizSuccess() {
             e desenvolver o MApa para Alto Rendimento ideal o para o seu crescimento.
           </p>
           
-          <div className="bg-foreground rounded-lg p-6 border border-[hsl(var(--quiz-border))]">
+          <div className="bg-grey-900 rounded-lg p-6 border border-[hsl(var(--quiz-border))]">
             <h3 className="font-semibold text-lg mb-3 text-[hsl(var(--quiz-text))]">Próximos passos</h3>
             <p className="mb-4 text-[hsl(var(--quiz-text))]">
               Nossa equipe irá analisar suas respostas e entraremos em contato em breve para 
