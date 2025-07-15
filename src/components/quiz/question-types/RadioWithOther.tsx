@@ -60,7 +60,8 @@ export const RadioWithOther: React.FC<RadioWithOtherProps> = ({
   const handleOtherTextChange = (text: string) => {
     setOtherText(text);
     if (otherOption && selectedValue === otherOption.text) {
-      onChange(text || otherOption.text);
+      // Sempre enviar o texto digitado, mesmo se estiver vazio
+      onChange(text.trim() ? text : otherOption.text);
     }
   };
 

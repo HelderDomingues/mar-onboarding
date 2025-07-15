@@ -88,17 +88,13 @@ export const CheckboxWithOther: React.FC<CheckboxWithOtherProps> = ({
     setOtherText(text);
     
     if (otherOption && isOtherSelected) {
-      const baseValues = predefinedValues;
+      const baseValues = predefinedValues.filter(v => v !== otherOption.text);
       if (text.trim()) {
-        const customTexts = text.split(',').map(t => t.trim()).filter(t => t);
-        onChange([...baseValues, ...customTexts]);
+        // Enviar o texto completo como um valor único, preservando espaços
+        onChange([...baseValues, text]);
       } else {
-        // Se o texto estiver vazio, manter apenas "Outros" se estiver selecionado
-        if (baseValues.includes(otherOption.text)) {
-          onChange(baseValues);
-        } else {
-          onChange(baseValues.filter(v => v !== otherOption.text));
-        }
+        // Se o texto estiver vazio, manter apenas valores predefinidos
+        onChange(baseValues);
       }
     }
   };
