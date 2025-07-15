@@ -61,9 +61,9 @@ export interface QuizAnswer {
   answer: string | null;
   created_at?: string;
   updated_at?: string;
-  user_id?: string;        // Campo adicionado para resolver erros
-  question_text?: string;  // Campo adicionado para resolver erros
-  module_id?: string;      // Campo adicionado para resolver erros
-  module_title?: string;   // Campo adicionado para resolver erros
-  module_number?: number;  // Campo adicionado para resolver erros
+  user_id: string;         // Required field
+  question_text?: string;  // Optional for compatibility
+  module_id?: string;      // Optional for compatibility
+  module_title?: string;   // Optional for compatibility
+  module_number?: number;  // Optional for compatibility
 }

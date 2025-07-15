@@ -73,10 +73,13 @@ export async function fetchSubmission(userId: string): Promise<QuizSubmission | 
     
   if (answersError) throw answersError;
   
-  // Retornar a submissão com as respostas
+  // Retornar a submissão com as respostas, incluindo user_id para compatibilidade
   return {
     ...submission,
-    answers: answers || []
+    answers: (answers || []).map(answer => ({
+      ...answer,
+      user_id: submission.user_id // Add required user_id field
+    }))
   };
 }
 

@@ -1,159 +1,93 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
-import { addLogEntry } from '@/utils/projectLog';
 
 /**
- * Configurar a URL do webhook do Make.com
- * @param webhookUrl URL do webhook do Make.com
- * @returns Resultado da operação
+ * Sends quiz completion data to configured webhook
  */
-export async function configureMakeWebhookUrl(webhookUrl: string): Promise<{ success: boolean; message: string }> {
+export async function sendQuizDataToWebhook(
+  userId: string,
+  submissionId: string
+): Promise<boolean> {
   try {
+    // For webhook configuration, use environment variables
+    const webhookUrl = process.env.WEBHOOK_URL || '';
+    const webhookSecret = process.env.WEBHOOK_SECRET || '';
+
     if (!webhookUrl) {
-      return {
-        success: false,
-        message: 'URL do webhook não fornecida'
-      };
+      logger.warn('URL do webhook não configurada');
+      return false;
     }
 
-    // Validar se a URL parece ser do Make.com
-    if (!webhookUrl.includes('hook.eu1.make.com') && !webhookUrl.includes('hook.us1.make.com')) {
-      logger.warn('URL do webhook não parece ser do Make.com', { webhookUrl });
+    // Get quiz completion data
+    const { data: quizData, error: quizError } = await supabase
+      .from('quiz_respostas_completas')
+      .select('*')
+      .eq('submission_id', submissionId)
+      .single();
+
+    if (quizError || !quizData) {
+      logger.error('Erro ao buscar dados do questionário para webhook:', quizError);
+      return false;
     }
 
-    // Armazenar a URL do webhook no Supabase
-    const { data, error } = await supabase
-      .from('system_settings')
-      .upsert(
-        { 
-          key: 'make_webhook_url', 
-          value: webhookUrl,
-          updated_at: new Date().toISOString()
-        },
-        { onConflict: 'key' }
+    // Prepare payload
+    const payload = {
+      user_id: userId,
+      user_email: quizData.user_email,
+      user_name: quizData.user_name,
+      submission_id: submissionId,
+      completed_at: quizData.data_submissao,
+      quiz_answers: quizData.respostas
+    };
+
+    // Generate signature if secret is available
+    let signature = '';
+    if (webhookSecret && typeof window !== 'undefined' && window.crypto && window.crypto.subtle) {
+      const encoder = new TextEncoder();
+      const key = await window.crypto.subtle.importKey(
+        'raw',
+        encoder.encode(webhookSecret),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign']
       );
-
-    if (error) {
-      throw error;
+      const signatureBuffer = await window.crypto.subtle.sign(
+        'HMAC',
+        key,
+        encoder.encode(JSON.stringify(payload))
+      );
+      signature = Array.from(new Uint8Array(signatureBuffer))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
     }
 
-    // Registrar no log do sistema
-    addLogEntry('webhook', 'URL do webhook do Make.com configurada', { webhookUrl });
-    logger.info('URL do webhook do Make.com configurada com sucesso', { tag: 'webhook' });
-
-    return {
-      success: true,
-      message: 'URL do webhook configurada com sucesso'
-    };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    logger.error('Erro ao configurar URL do webhook', { error: errorMessage });
-    addLogEntry('error', 'Erro ao configurar URL do webhook', { error: errorMessage });
-    
-    return {
-      success: false,
-      message: `Erro ao configurar URL do webhook: ${errorMessage}`
-    };
-  }
-}
-
-/**
- * Testar conexão com o webhook do Make.com
- * @param webhookUrl URL do webhook a ser testada
- * @returns Resultado do teste
- */
-export async function testMakeWebhookConnection(webhookUrl: string): Promise<{ success: boolean; message: string }> {
-  try {
-    if (!webhookUrl) {
-      return {
-        success: false,
-        message: 'URL do webhook não fornecida'
-      };
-    }
-
-    // Validar formato básico da URL
-    try {
-      new URL(webhookUrl);
-    } catch (e) {
-      return {
-        success: false,
-        message: 'URL do webhook inválida'
-      };
-    }
-
-    // Validar se a URL parece ser do Make.com
-    if (!webhookUrl.includes('hook.eu1.make.com') && !webhookUrl.includes('hook.us1.make.com')) {
-      return {
-        success: false,
-        message: 'A URL não parece ser um webhook válido do Make.com'
-      };
-    }
-
-    // Enviar uma requisição de teste para o webhook
-    const testPayload = {
-      event: 'test_connection',
-      timestamp: new Date().toISOString(),
-      system: 'Sistema MAR',
-      test: true
-    };
-
+    // Send webhook request
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-Agent': 'Sistema-MAR-Webhook/1.0',
+        ...(signature && { 'X-Signature': `sha256=${signature}` })
       },
-      body: JSON.stringify(testPayload)
+      body: JSON.stringify(payload)
     });
 
-    // Verificar resposta
-    if (response.ok) {
-      // Registrar sucesso no log do sistema
-      addLogEntry('webhook', 'Teste de conexão com webhook bem-sucedido', { webhookUrl });
-      logger.info('Teste de conexão com webhook bem-sucedido', { tag: 'webhook' });
-
-      return {
-        success: true,
-        message: 'Conexão com webhook testada com sucesso'
-      };
-    } else {
-      const responseText = await response.text();
-      
-      // Registrar erro no log do sistema
-      addLogEntry('error', 'Falha no teste de conexão com webhook', { 
-        webhookUrl, 
-        statusCode: response.status, 
-        response: responseText 
-      });
-      
-      logger.warn('Falha no teste de conexão com webhook', { 
-        tag: 'webhook',
-        statusCode: response.status,
-        response: responseText
-      });
-      
-      return {
-        success: false,
-        message: `A requisição falhou com status ${response.status}: ${responseText.substring(0, 100)}`
-      };
+    if (!response.ok) {
+      throw new Error(`Webhook response error: ${response.status} ${response.statusText}`);
     }
+
+    logger.info('Dados enviados para webhook com sucesso', {
+      tag: 'Webhook',
+      data: { userId, submissionId, status: response.status }
+    });
+
+    return true;
+
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    
-    // Registrar erro no log do sistema
-    addLogEntry('error', 'Erro ao testar conexão com webhook', { 
-      webhookUrl, 
-      error: errorMessage 
+    logger.error('Erro ao enviar dados para webhook:', {
+      tag: 'Webhook',
+      data: { userId, submissionId, error: error instanceof Error ? error.message : 'Unknown error' }
     });
-    
-    logger.error('Erro ao testar conexão com webhook', { 
-      tag: 'webhook', 
-      error: errorMessage 
-    });
-    
-    return {
-      success: false,
-      message: `Erro ao testar conexão: ${errorMessage}`
-    };
+    return false;
   }
 }

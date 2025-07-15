@@ -116,15 +116,16 @@ export const generateQuizPDF = async (
     
     const fullName = profileData?.full_name || userName || userEmail;
     
-    // Combinar dados para o PDF
-    const enrichedAnswers = answers.map(answer => {
+    // Combinar dados iniciais para o PDF
+    const initialAnswers = answers.map(answer => {
       const question = questions.find(q => q.id === answer.question_id);
       return {
         ...answer,
         question_text: question?.text || 'Pergunta não encontrada',
         user_email: userEmail,
         module_id: question?.module_id,
-        module_title: modules.find(m => m.id === question?.module_id)?.title
+        module_title: modules.find(m => m.id === question?.module_id)?.title,
+        user_id: userId // Add required user_id field
       };
     });
     
@@ -179,8 +180,8 @@ export const generateQuizPDF = async (
       const module = moduleMap.get(question.module_id);
       questionsMap.set(question.id, {
         ...question,
-        // Usando text como fallback para question_text para garantir compatibilidade
-        question_text: question.question_text || question.text,
+        // Using text as the primary field (database schema uses 'text', not 'question_text')
+        question_text: question.text,
         module_title: module?.title || 'Sem módulo',
         module_number: module?.order_number || 0
       });
@@ -191,11 +192,12 @@ export const generateQuizPDF = async (
       answersMap.set(module.id, []);
     });
     
-    enrichedAnswers.forEach(answer => {
+    // Use the initial answers with required fields already mapped
+    initialAnswers.forEach(answer => {
       const question = questionsMap.get(answer.question_id);
       if (question) {
         const moduleAnswers = answersMap.get(question.module_id) || [];
-        moduleAnswers.push(answer);
+        moduleAnswers.push(answer as QuizAnswer);
         answersMap.set(question.module_id, moduleAnswers);
       }
     });
@@ -344,10 +346,16 @@ export const downloadQuizCSV = async (
   adminMode: boolean = false
 ): Promise<boolean> => {
   try {
-    // Buscar as respostas do usuário
+    // Buscar as respostas do usuário junto com as perguntas
     const { data: answers, error: answersError } = await supabase
       .from('quiz_answers')
-      .select('*')
+      .select(`
+        *,
+        quiz_questions!inner (
+          text,
+          order_number
+        )
+      `)
       .eq('user_id', userId);
     
     if (answersError || !answers || answers.length === 0) {
@@ -368,7 +376,7 @@ export const downloadQuizCSV = async (
         return `"${(text || '').toString().replace(/"/g, '""')}"`;
       };
       
-      csvContent += `${formatCSV(answer.question_text)},${formatCSV(formattedAnswer)}\n`;
+      csvContent += `${formatCSV(answer.quiz_questions?.text || 'Pergunta não encontrada')},${formatCSV(formattedAnswer)}\n`;
     });
     
     // Codificar para URI
