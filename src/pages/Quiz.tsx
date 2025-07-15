@@ -387,7 +387,7 @@ const Quiz = () => {
               disabled={isSubmitting}
               hint={question.hint}
               prefix="www.instagram.com/"
-              placeholder="perfildoconcorrente"
+              placeholder="perfildoinstagram"
               required={question.required}
             />
           </div>
