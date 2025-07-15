@@ -20,6 +20,7 @@ import { RadioWithOther } from '@/components/quiz/question-types/RadioWithOther'
 import { CheckboxWithOther } from '@/components/quiz/question-types/CheckboxWithOther';
 import { InstagramField } from '@/components/quiz/question-types/InstagramField';
 import { UrlField } from '@/components/quiz/question-types/UrlField';
+import { PrefixField } from '@/components/quiz/question-types/PrefixField';
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -363,7 +364,7 @@ const Quiz = () => {
         return (
           <div className="grid gap-2">
             <Label htmlFor={question.id}>{question.text}</Label>
-            <UrlField
+            <PrefixField
               id={question.id}
               value={answer as string}
               onChange={(value) => handleInputChange(question.id, value)}
@@ -371,6 +372,7 @@ const Quiz = () => {
               hint={question.hint}
               prefix="https://"
               placeholder="exemplo.com.br"
+              required={question.required}
             />
           </div>
         );
@@ -378,13 +380,15 @@ const Quiz = () => {
         return (
           <div className="grid gap-2">
             <Label htmlFor={question.id}>{question.text}</Label>
-            <InstagramField
+            <PrefixField
               id={question.id}
               value={answer as string}
               onChange={(value) => handleInputChange(question.id, value)}
               disabled={isSubmitting}
-              hint="Insira seu perfil SEM o @, ex: seuperfil"
-              prefix="@"
+              hint={question.hint}
+              prefix="www.instagram.com/"
+              placeholder="perfildoconcorrente"
+              required={question.required}
             />
           </div>
         );
