@@ -7,26 +7,379 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instanciate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
   public: {
     Tables: {
+      asaas_customers: {
+        Row: {
+          asaas_id: string | null
+          cpf_cnpj: number
+          created_at: string | null
+          email: string | null
+          id: string
+          nome_completo: string | null
+          telefone: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          asaas_id?: string | null
+          cpf_cnpj: number
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          nome_completo?: string | null
+          telefone?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          asaas_id?: string | null
+          cpf_cnpj?: number
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          nome_completo?: string | null
+          telefone?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      authors: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          role: string | null
+          social_links: Json | null
+          updated_at: string | null
+          user_id: string | null
+          website: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          role?: string | null
+          social_links?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+          website?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          role?: string | null
+          social_links?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
+      client_logos: {
+        Row: {
+          created_at: string
+          id: string
+          logo: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      diagnostic_requests: {
+        Row: {
+          company_name: string | null
+          company_size: string | null
+          completed_date: string | null
+          created_at: string | null
+          current_revenue: string | null
+          desired_results: string | null
+          email: string
+          id: string
+          lead_id: string | null
+          main_challenge: string | null
+          metadata: Json | null
+          name: string
+          phone: string
+          report_generated: boolean | null
+          scheduled_date: string | null
+          status: string | null
+          timeline: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          company_size?: string | null
+          completed_date?: string | null
+          created_at?: string | null
+          current_revenue?: string | null
+          desired_results?: string | null
+          email: string
+          id?: string
+          lead_id?: string | null
+          main_challenge?: string | null
+          metadata?: Json | null
+          name: string
+          phone: string
+          report_generated?: boolean | null
+          scheduled_date?: string | null
+          status?: string | null
+          timeline?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          company_size?: string | null
+          completed_date?: string | null
+          created_at?: string | null
+          current_revenue?: string | null
+          desired_results?: string | null
+          email?: string
+          id?: string
+          lead_id?: string | null
+          main_challenge?: string | null
+          metadata?: Json | null
+          name?: string
+          phone?: string
+          report_generated?: boolean | null
+          scheduled_date?: string | null
+          status?: string | null
+          timeline?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_requests_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_leads: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          email: string
+          id: string
+          instagram: string | null
+          lecture_date: string | null
+          lecture_id: string | null
+          material_sent: boolean
+          name: string
+          notes: string | null
+          phone: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          instagram?: string | null
+          lecture_date?: string | null
+          lecture_id?: string | null
+          material_sent?: boolean
+          name: string
+          notes?: string | null
+          phone: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          instagram?: string | null
+          lecture_date?: string | null
+          lecture_id?: string | null
+          material_sent?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_leads_lecture_id_fkey"
+            columns: ["lecture_id"]
+            isOneToOne: false
+            referencedRelation: "lectures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      image_placeholders: {
+        Row: {
+          alt_text: string | null
+          category: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          alt_text?: string | null
+          category: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          alt_text?: string | null
+          category?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          company_name: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          lead_source: string
+          metadata: Json | null
+          name: string | null
+          notes: string | null
+          phone: string
+          qualification: string | null
+          service_interest: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+          whatsapp_conversation_id: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          lead_source?: string
+          metadata?: Json | null
+          name?: string | null
+          notes?: string | null
+          phone: string
+          qualification?: string | null
+          service_interest?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          whatsapp_conversation_id?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          lead_source?: string
+          metadata?: Json | null
+          name?: string | null
+          notes?: string | null
+          phone?: string
+          qualification?: string | null
+          service_interest?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          whatsapp_conversation_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_whatsapp_conversation_id_fkey"
+            columns: ["whatsapp_conversation_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lectures: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          speaker: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          speaker?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          speaker?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       material_accesses: {
         Row: {
           accessed_at: string | null
           id: string
-          material_id: string
-          user_id: string
+          material_id: string | null
+          user_id: string | null
         }
         Insert: {
           accessed_at?: string | null
           id?: string
-          material_id: string
-          user_id: string
+          material_id?: string | null
+          user_id?: string | null
         }
         Update: {
           accessed_at?: string | null
           id?: string
-          material_id?: string
-          user_id?: string
+          material_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -41,41 +394,41 @@ export type Database = {
       materials: {
         Row: {
           access_count: number | null
-          category: string | null
+          category: string
           created_at: string | null
-          description: string | null
+          description: string
           file_url: string
           id: string
-          plan_level: string | null
+          plan_level: string
           thumbnail_url: string | null
           title: string
-          type: string | null
+          type: string
           updated_at: string | null
         }
         Insert: {
           access_count?: number | null
-          category?: string | null
+          category: string
           created_at?: string | null
-          description?: string | null
+          description: string
           file_url: string
           id?: string
-          plan_level?: string | null
+          plan_level: string
           thumbnail_url?: string | null
           title: string
-          type?: string | null
+          type?: string
           updated_at?: string | null
         }
         Update: {
           access_count?: number | null
-          category?: string | null
+          category?: string
           created_at?: string | null
-          description?: string | null
+          description?: string
           file_url?: string
           id?: string
-          plan_level?: string | null
+          plan_level?: string
           thumbnail_url?: string | null
           title?: string
-          type?: string | null
+          type?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -83,29 +436,32 @@ export type Database = {
       onboarding_content: {
         Row: {
           content: string
-          created_at: string | null
+          created_at: string
           id: string
           is_active: boolean | null
           title: string
-          updated_at: string | null
+          updated_at: string
+          user_id: string | null
           video_url: string | null
         }
         Insert: {
           content: string
-          created_at?: string | null
+          created_at?: string
           id?: string
           is_active?: boolean | null
           title: string
-          updated_at?: string | null
+          updated_at?: string
+          user_id?: string | null
           video_url?: string | null
         }
         Update: {
           content?: string
-          created_at?: string | null
+          created_at?: string
           id?: string
           is_active?: boolean | null
           title?: string
-          updated_at?: string | null
+          updated_at?: string
+          user_id?: string | null
           video_url?: string | null
         }
         Relationships: []
@@ -113,27 +469,54 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
-          created_at: string
+          cnpj: string | null
+          company_address: string | null
+          company_name: string | null
+          cpf: string | null
+          email: string | null
           full_name: string | null
+          has_asaas_customer: boolean | null
           id: string
           phone: string | null
-          user_email: string | null
+          role: string | null
+          social_media: Json | null
+          updated_at: string | null
+          username: string | null
+          website: string | null
         }
         Insert: {
           avatar_url?: string | null
-          created_at?: string
+          cnpj?: string | null
+          company_address?: string | null
+          company_name?: string | null
+          cpf?: string | null
+          email?: string | null
           full_name?: string | null
+          has_asaas_customer?: boolean | null
           id: string
           phone?: string | null
-          user_email?: string | null
+          role?: string | null
+          social_media?: Json | null
+          updated_at?: string | null
+          username?: string | null
+          website?: string | null
         }
         Update: {
           avatar_url?: string | null
-          created_at?: string
+          cnpj?: string | null
+          company_address?: string | null
+          company_name?: string | null
+          cpf?: string | null
+          email?: string | null
           full_name?: string | null
+          has_asaas_customer?: boolean | null
           id?: string
           phone?: string | null
-          user_email?: string | null
+          role?: string | null
+          social_media?: Json | null
+          updated_at?: string | null
+          username?: string | null
+          website?: string | null
         }
         Relationships: []
       }
@@ -143,24 +526,27 @@ export type Database = {
           created_at: string
           id: string
           question_id: string
-          submission_id: string
+          question_text: string | null
           updated_at: string
+          user_id: string
         }
         Insert: {
           answer?: string | null
           created_at?: string
           id?: string
           question_id: string
-          submission_id: string
+          question_text?: string | null
           updated_at?: string
+          user_id: string
         }
         Update: {
           answer?: string | null
           created_at?: string
           id?: string
           question_id?: string
-          submission_id?: string
+          question_text?: string | null
           updated_at?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -171,67 +557,41 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "quiz_answers_submission_id_fkey"
-            columns: ["submission_id"]
+            foreignKeyName: "quiz_answers_question_id_fkey"
+            columns: ["question_id"]
             isOneToOne: false
-            referencedRelation: "quiz_submissions"
-            referencedColumns: ["id"]
+            referencedRelation: "quiz_responses_flat"
+            referencedColumns: ["question_id"]
+          },
+          {
+            foreignKeyName: "quiz_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_submission_details"
+            referencedColumns: ["question_id"]
+          },
+          {
+            foreignKeyName: "quiz_answers_question_text_fkey"
+            columns: ["question_text"]
+            isOneToOne: true
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["text"]
+          },
+          {
+            foreignKeyName: "quiz_answers_question_text_fkey"
+            columns: ["question_text"]
+            isOneToOne: true
+            referencedRelation: "quiz_responses_flat"
+            referencedColumns: ["question_text"]
+          },
+          {
+            foreignKeyName: "quiz_answers_question_text_fkey"
+            columns: ["question_text"]
+            isOneToOne: true
+            referencedRelation: "quiz_submission_details"
+            referencedColumns: ["question_text"]
           },
         ]
-      }
-      "quiz_answers_backup_2025-04-29T18-12-42-205Z": {
-        Row: {
-          answer: string | null
-          created_at: string | null
-          id: string | null
-          question_id: string | null
-          submission_id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          answer?: string | null
-          created_at?: string | null
-          id?: string | null
-          question_id?: string | null
-          submission_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          answer?: string | null
-          created_at?: string | null
-          id?: string | null
-          question_id?: string | null
-          submission_id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      "quiz_answers_backup_2025-04-29T18-12-55-659Z": {
-        Row: {
-          answer: string | null
-          created_at: string | null
-          id: string | null
-          question_id: string | null
-          submission_id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          answer?: string | null
-          created_at?: string | null
-          id?: string | null
-          question_id?: string | null
-          submission_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          answer?: string | null
-          created_at?: string | null
-          id?: string | null
-          question_id?: string | null
-          submission_id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       quiz_modules: {
         Row: {
@@ -240,6 +600,7 @@ export type Database = {
           id: string
           order_number: number
           title: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
@@ -247,6 +608,7 @@ export type Database = {
           id?: string
           order_number: number
           title: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
@@ -254,54 +616,7 @@ export type Database = {
           id?: string
           order_number?: number
           title?: string
-        }
-        Relationships: []
-      }
-      "quiz_modules_backup_2025-04-29T18-12-42-201Z": {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: string | null
-          order_number: number | null
-          title: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: string | null
-          order_number?: number | null
-          title?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: string | null
-          order_number?: number | null
-          title?: string | null
-        }
-        Relationships: []
-      }
-      "quiz_modules_backup_2025-04-29T18-12-55-649Z": {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: string | null
-          order_number: number | null
-          title: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: string | null
-          order_number?: number | null
-          title?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: string | null
-          order_number?: number | null
-          title?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -312,6 +627,7 @@ export type Database = {
           order_number: number
           question_id: string
           text: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
@@ -319,6 +635,7 @@ export type Database = {
           order_number: number
           question_id: string
           text: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
@@ -326,6 +643,7 @@ export type Database = {
           order_number?: number
           question_id?: string
           text?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -335,55 +653,21 @@ export type Database = {
             referencedRelation: "quiz_questions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "quiz_options_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_responses_flat"
+            referencedColumns: ["question_id"]
+          },
+          {
+            foreignKeyName: "quiz_options_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_submission_details"
+            referencedColumns: ["question_id"]
+          },
         ]
-      }
-      "quiz_options_backup_2025-04-29T18-12-42-203Z": {
-        Row: {
-          created_at: string | null
-          id: string | null
-          order_number: number | null
-          question_id: string | null
-          text: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string | null
-          order_number?: number | null
-          question_id?: string | null
-          text?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string | null
-          order_number?: number | null
-          question_id?: string | null
-          text?: string | null
-        }
-        Relationships: []
-      }
-      "quiz_options_backup_2025-04-29T18-12-55-655Z": {
-        Row: {
-          created_at: string | null
-          id: string | null
-          order_number: number | null
-          question_id: string | null
-          text: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string | null
-          order_number?: number | null
-          question_id?: string | null
-          text?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string | null
-          order_number?: number | null
-          question_id?: string | null
-          text?: string | null
-        }
-        Relationships: []
       }
       quiz_questions: {
         Row: {
@@ -391,30 +675,36 @@ export type Database = {
           hint: string | null
           id: string
           module_id: string
+          module_tittle: string | null
           order_number: number
-          required: boolean | null
-          text: string
+          required: boolean
+          text: string | null
           type: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
           hint?: string | null
           id?: string
           module_id: string
+          module_tittle?: string | null
           order_number: number
-          required?: boolean | null
-          text: string
+          required?: boolean
+          text?: string | null
           type: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
           hint?: string | null
           id?: string
           module_id?: string
+          module_tittle?: string | null
           order_number?: number
-          required?: boolean | null
-          text?: string
+          required?: boolean
+          text?: string | null
           type?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -426,361 +716,549 @@ export type Database = {
           },
         ]
       }
-      "quiz_questions_backup_2025-04-29T18-12-42-202Z": {
-        Row: {
-          created_at: string | null
-          hint: string | null
-          id: string | null
-          module_id: string | null
-          order_number: number | null
-          required: boolean | null
-          text: string | null
-          type: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          hint?: string | null
-          id?: string | null
-          module_id?: string | null
-          order_number?: number | null
-          required?: boolean | null
-          text?: string | null
-          type?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          hint?: string | null
-          id?: string | null
-          module_id?: string | null
-          order_number?: number | null
-          required?: boolean | null
-          text?: string | null
-          type?: string | null
-        }
-        Relationships: []
-      }
-      "quiz_questions_backup_2025-04-29T18-12-55-651Z": {
-        Row: {
-          created_at: string | null
-          hint: string | null
-          id: string | null
-          module_id: string | null
-          order_number: number | null
-          required: boolean | null
-          text: string | null
-          type: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          hint?: string | null
-          id?: string | null
-          module_id?: string | null
-          order_number?: number | null
-          required?: boolean | null
-          text?: string | null
-          type?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          hint?: string | null
-          id?: string | null
-          module_id?: string | null
-          order_number?: number | null
-          required?: boolean | null
-          text?: string | null
-          type?: string | null
-        }
-        Relationships: []
-      }
       quiz_respostas_completas: {
         Row: {
-          data_submissao: string
+          company_name: string | null
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
           id: string
-          respostas: Json
-          submission_id: string
-          user_email: string
+          m1_cargo: string | null
+          m1_email: string | null
+          m1_empresa: string | null
+          m1_nome: string | null
+          m1_telefone: string | null
+          m2_faturamento: string | null
+          m2_funcionarios: string | null
+          m2_localizacao: string | null
+          m2_segmento: string | null
+          m2_site: string | null
+          m2_tempo_atuacao: string | null
+          m3_instagram_concorrente_a: string | null
+          m3_instagram_concorrente_b: string | null
+          m3_instagram_concorrente_c: string | null
+          m3_instagram_empresa: string | null
+          m3_presenca_digital: string | null
+          m3_principais_canais: string | null
+          m4_acoes_marketing: string | null
+          m4_atuais_campanhas: string | null
+          m4_desafios_atuais: string | null
+          m4_investimento_marketing: string | null
+          m5_canais_vendas: string | null
+          m5_equipe_comercial: string | null
+          m5_estrategia_comercial: string | null
+          m5_metas_vendas: string | null
+          m5_processo_vendas: string | null
+          m5_sistema_crm: string | null
+          m6_expectativas: string | null
+          m6_prazo_resultados: string | null
+          m6_principais_desafios: string | null
+          m6_resultados_esperados: string | null
+          m7_como_conheceu: string | null
+          m7_detalhes_adicionais: string | null
+          m7_preferencia_contato: string | null
+          submission_id: string | null
+          updated_at: string | null
           user_id: string
-          user_name: string | null
           webhook_processed: boolean | null
         }
         Insert: {
-          data_submissao?: string
+          company_name?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
           id?: string
-          respostas: Json
-          submission_id: string
-          user_email: string
+          m1_cargo?: string | null
+          m1_email?: string | null
+          m1_empresa?: string | null
+          m1_nome?: string | null
+          m1_telefone?: string | null
+          m2_faturamento?: string | null
+          m2_funcionarios?: string | null
+          m2_localizacao?: string | null
+          m2_segmento?: string | null
+          m2_site?: string | null
+          m2_tempo_atuacao?: string | null
+          m3_instagram_concorrente_a?: string | null
+          m3_instagram_concorrente_b?: string | null
+          m3_instagram_concorrente_c?: string | null
+          m3_instagram_empresa?: string | null
+          m3_presenca_digital?: string | null
+          m3_principais_canais?: string | null
+          m4_acoes_marketing?: string | null
+          m4_atuais_campanhas?: string | null
+          m4_desafios_atuais?: string | null
+          m4_investimento_marketing?: string | null
+          m5_canais_vendas?: string | null
+          m5_equipe_comercial?: string | null
+          m5_estrategia_comercial?: string | null
+          m5_metas_vendas?: string | null
+          m5_processo_vendas?: string | null
+          m5_sistema_crm?: string | null
+          m6_expectativas?: string | null
+          m6_prazo_resultados?: string | null
+          m6_principais_desafios?: string | null
+          m6_resultados_esperados?: string | null
+          m7_como_conheceu?: string | null
+          m7_detalhes_adicionais?: string | null
+          m7_preferencia_contato?: string | null
+          submission_id?: string | null
+          updated_at?: string | null
           user_id: string
-          user_name?: string | null
           webhook_processed?: boolean | null
         }
         Update: {
-          data_submissao?: string
+          company_name?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
           id?: string
-          respostas?: Json
-          submission_id?: string
-          user_email?: string
+          m1_cargo?: string | null
+          m1_email?: string | null
+          m1_empresa?: string | null
+          m1_nome?: string | null
+          m1_telefone?: string | null
+          m2_faturamento?: string | null
+          m2_funcionarios?: string | null
+          m2_localizacao?: string | null
+          m2_segmento?: string | null
+          m2_site?: string | null
+          m2_tempo_atuacao?: string | null
+          m3_instagram_concorrente_a?: string | null
+          m3_instagram_concorrente_b?: string | null
+          m3_instagram_concorrente_c?: string | null
+          m3_instagram_empresa?: string | null
+          m3_presenca_digital?: string | null
+          m3_principais_canais?: string | null
+          m4_acoes_marketing?: string | null
+          m4_atuais_campanhas?: string | null
+          m4_desafios_atuais?: string | null
+          m4_investimento_marketing?: string | null
+          m5_canais_vendas?: string | null
+          m5_equipe_comercial?: string | null
+          m5_estrategia_comercial?: string | null
+          m5_metas_vendas?: string | null
+          m5_processo_vendas?: string | null
+          m5_sistema_crm?: string | null
+          m6_expectativas?: string | null
+          m6_prazo_resultados?: string | null
+          m6_principais_desafios?: string | null
+          m6_resultados_esperados?: string | null
+          m7_como_conheceu?: string | null
+          m7_detalhes_adicionais?: string | null
+          m7_preferencia_contato?: string | null
+          submission_id?: string | null
+          updated_at?: string | null
           user_id?: string
-          user_name?: string | null
           webhook_processed?: boolean | null
         }
-        Relationships: []
-      }
-      "quiz_respostas_completas_backup_2025-04-29T18-12-42-206Z": {
-        Row: {
-          data_submissao: string | null
-          id: string | null
-          respostas: Json | null
-          submission_id: string | null
-          user_email: string | null
-          user_id: string | null
-          user_name: string | null
-          webhook_processed: boolean | null
-        }
-        Insert: {
-          data_submissao?: string | null
-          id?: string | null
-          respostas?: Json | null
-          submission_id?: string | null
-          user_email?: string | null
-          user_id?: string | null
-          user_name?: string | null
-          webhook_processed?: boolean | null
-        }
-        Update: {
-          data_submissao?: string | null
-          id?: string | null
-          respostas?: Json | null
-          submission_id?: string | null
-          user_email?: string | null
-          user_id?: string | null
-          user_name?: string | null
-          webhook_processed?: boolean | null
-        }
-        Relationships: []
-      }
-      "quiz_respostas_completas_backup_2025-04-29T18-12-55-660Z": {
-        Row: {
-          data_submissao: string | null
-          id: string | null
-          respostas: Json | null
-          submission_id: string | null
-          user_email: string | null
-          user_id: string | null
-          user_name: string | null
-          webhook_processed: boolean | null
-        }
-        Insert: {
-          data_submissao?: string | null
-          id?: string | null
-          respostas?: Json | null
-          submission_id?: string | null
-          user_email?: string | null
-          user_id?: string | null
-          user_name?: string | null
-          webhook_processed?: boolean | null
-        }
-        Update: {
-          data_submissao?: string | null
-          id?: string | null
-          respostas?: Json | null
-          submission_id?: string | null
-          user_email?: string | null
-          user_id?: string | null
-          user_name?: string | null
-          webhook_processed?: boolean | null
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "quiz_respostas_completas_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_responses_flat"
+            referencedColumns: ["submission_id"]
+          },
+          {
+            foreignKeyName: "quiz_respostas_completas_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quiz_submissions: {
         Row: {
           completed: boolean
           completed_at: string | null
+          contact_consent: boolean
           created_at: string
           current_module: number
+          email: string | null
           id: string
           started_at: string
-          user_email: string
+          updated_at: string
           user_id: string
+          webhook_processed: boolean | null
         }
         Insert: {
           completed?: boolean
           completed_at?: string | null
+          contact_consent?: boolean
           created_at?: string
           current_module?: number
+          email?: string | null
           id?: string
           started_at?: string
-          user_email: string
+          updated_at?: string
           user_id: string
+          webhook_processed?: boolean | null
         }
         Update: {
           completed?: boolean
           completed_at?: string | null
+          contact_consent?: boolean
           created_at?: string
           current_module?: number
+          email?: string | null
           id?: string
           started_at?: string
-          user_email?: string
+          updated_at?: string
+          user_id?: string
+          webhook_processed?: boolean | null
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          asaas_customer_id: string | null
+          asaas_payment_link: string | null
+          asaas_subscription_id: string | null
+          contract_accepted: boolean | null
+          contract_accepted_at: string | null
+          created_at: string
+          current_period_end: string | null
+          external_reference: string | null
+          id: string
+          installments: number | null
+          payment_details: Json | null
+          payment_id: string | null
+          payment_status: string | null
+          plan_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asaas_customer_id?: string | null
+          asaas_payment_link?: string | null
+          asaas_subscription_id?: string | null
+          contract_accepted?: boolean | null
+          contract_accepted_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          external_reference?: string | null
+          id?: string
+          installments?: number | null
+          payment_details?: Json | null
+          payment_id?: string | null
+          payment_status?: string | null
+          plan_id: string
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asaas_customer_id?: string | null
+          asaas_payment_link?: string | null
+          asaas_subscription_id?: string | null
+          contract_accepted?: boolean | null
+          contract_accepted_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          external_reference?: string | null
+          id?: string
+          installments?: number | null
+          payment_details?: Json | null
+          payment_id?: string | null
+          payment_status?: string | null
+          plan_id?: string
+          status?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
       }
-      "quiz_submissions_backup_2025-04-29T18-12-42-204Z": {
+      system_settings: {
         Row: {
-          completed: boolean | null
-          completed_at: string | null
-          created_at: string | null
-          current_module: number | null
-          id: string | null
-          started_at: string | null
-          user_email: string | null
-          user_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+          value: string
         }
         Insert: {
-          completed?: boolean | null
-          completed_at?: string | null
-          created_at?: string | null
-          current_module?: number | null
-          id?: string | null
-          started_at?: string | null
-          user_email?: string | null
-          user_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+          value: string
         }
         Update: {
-          completed?: boolean | null
-          completed_at?: string | null
-          created_at?: string | null
-          current_module?: number | null
-          id?: string | null
-          started_at?: string | null
-          user_email?: string | null
-          user_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: string
         }
         Relationships: []
       }
-      "quiz_submissions_backup_2025-04-29T18-12-55-657Z": {
+      testimonials: {
         Row: {
-          completed: boolean | null
-          completed_at: string | null
+          active: boolean | null
+          company: string
           created_at: string | null
-          current_module: number | null
-          id: string | null
-          started_at: string | null
-          user_email: string | null
-          user_id: string | null
+          id: string
+          name: string
+          role: string
+          text: string
+          updated_at: string | null
         }
         Insert: {
-          completed?: boolean | null
-          completed_at?: string | null
+          active?: boolean | null
+          company: string
           created_at?: string | null
-          current_module?: number | null
-          id?: string | null
-          started_at?: string | null
-          user_email?: string | null
-          user_id?: string | null
+          id?: string
+          name: string
+          role: string
+          text: string
+          updated_at?: string | null
         }
         Update: {
-          completed?: boolean | null
-          completed_at?: string | null
+          active?: boolean | null
+          company?: string
           created_at?: string | null
-          current_module?: number | null
-          id?: string | null
-          started_at?: string | null
-          user_email?: string | null
-          user_id?: string | null
+          id?: string
+          name?: string
+          role?: string
+          text?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
       user_roles: {
         Row: {
-          created_at: string
+          created_at: string | null
+          email: string | null
           id: string
+          name: string | null
           role: string
-          user_email: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
+          email?: string | null
           id?: string
+          name?: string | null
           role: string
-          user_email?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
+          email?: string | null
           id?: string
+          name?: string | null
           role?: string
-          user_email?: string | null
-          user_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_conversations: {
+        Row: {
+          conversation_status: string | null
+          created_at: string | null
+          id: string
+          last_message_at: string | null
+          lead_qualification: string | null
+          metadata: Json | null
+          phone_number: string
+          source: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          conversation_status?: string | null
+          created_at?: string | null
+          id?: string
+          last_message_at?: string | null
+          lead_qualification?: string | null
+          metadata?: Json | null
+          phone_number: string
+          source?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          conversation_status?: string | null
+          created_at?: string | null
+          id?: string
+          last_message_at?: string | null
+          lead_qualification?: string | null
+          metadata?: Json | null
+          phone_number?: string
+          source?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_messages: {
+        Row: {
+          content: string | null
+          conversation_id: string | null
+          created_at: string | null
+          direction: string
+          id: string
+          media_url: string | null
+          message_id: string | null
+          message_type: string | null
+          metadata: Json | null
+          phone_number: string
+          status: string | null
+        }
+        Insert: {
+          content?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          direction: string
+          id?: string
+          media_url?: string | null
+          message_id?: string | null
+          message_type?: string | null
+          metadata?: Json | null
+          phone_number: string
+          status?: string | null
+        }
+        Update: {
+          content?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          direction?: string
+          id?: string
+          media_url?: string | null
+          message_id?: string | null
+          message_type?: string | null
+          metadata?: Json | null
+          phone_number?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      quiz_responses_flat: {
+        Row: {
+          answer: string | null
+          company_name: string | null
+          completed: boolean | null
+          completed_at: string | null
+          contact_consent: boolean | null
+          email: string | null
+          full_name: string | null
+          question_id: string | null
+          question_text: string | null
+          started_at: string | null
+          submission_id: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      quiz_submission_details: {
+        Row: {
+          answer: string | null
+          question_id: string | null
+          question_text: string | null
+          user_id: string | null
         }
         Relationships: []
       }
     }
-    Views: {
-      [_ in never]: never
-    }
     Functions: {
-      admin_create_user: {
-        Args: {
-          admin_email: string
-          new_user_email: string
-          new_user_password: string
-          new_user_name: string
-          make_admin?: boolean
-        }
+      bootstrap_admin_role: {
+        Args: { admin_user_id: string }
+        Returns: boolean
+      }
+      check_and_migrate_data: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
-      complete_quiz: {
+      check_if_user_is_admin: {
         Args: { user_id: string }
         Returns: boolean
       }
-      create_table_backup: {
-        Args: {
-          source_table: string
-          target_table: string
-          backup_reason?: string
-        }
-        Returns: boolean
-      }
-      gerar_respostas_json: {
+      complete_quiz_submission: {
         Args: { p_user_id: string }
-        Returns: Json
+        Returns: boolean
       }
-      get_user_role: {
-        Args: { user_id: string }
+      create_table_if_not_exists: {
+        Args: { table_name: string; table_definition: string }
+        Returns: undefined
+      }
+      execute_sql: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      get_system_setting: {
+        Args: { setting_key: string }
         Returns: string
       }
-      get_users_with_emails: {
+      get_user_emails: {
         Args: Record<PropertyKey, never>
         Returns: {
-          user_id: string
-          user_email: string
-          user_created_at: string
-          user_name: string
+          email: string
         }[]
+      }
+      import_user_from_asaas: {
+        Args: {
+          p_email: string
+          p_nome: string
+          p_cpf_cnpj: string
+          p_telefone: string
+          p_asaas_id: string
+          p_password?: string
+        }
+        Returns: string
+      }
+      increment_material_access_count: {
+        Args: { material_id: string }
+        Returns: undefined
       }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
-      is_quiz_complete: {
-        Args: { p_user_id: string }
+      is_quiz_admin: {
+        Args: { user_email: string }
         Returns: boolean
       }
-      list_table_backups: {
-        Args: { table_name_pattern: string }
-        Returns: string[]
-      }
-      restore_table_from_backup: {
-        Args: { backup_table: string; target_table: string }
+      link_user_to_asaas_customer: {
+        Args: { user_email: string; asaas_email: string }
         Returns: boolean
       }
-      update_user_quiz_progress: {
-        Args: {
-          p_user_id: string
-          p_current_module: number
-          p_completed_modules?: number[]
-        }
+      process_quiz_completion: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      setup_asaas_customers_rls_policies: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      setup_subscriptions_rls_policies: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      sync_existing_users: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
     }
     Enums: {
@@ -792,21 +1270,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -824,14 +1306,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -847,14 +1331,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -870,14 +1356,16 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -885,14 +1373,16 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
