@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -11,6 +11,102 @@ import { InstagramField } from "@/components/quiz/question-types/InstagramField"
 import { UrlField } from "@/components/quiz/question-types/UrlField";
 import { LimitedCheckbox } from "@/components/quiz/question-types/LimitedCheckbox";
 import { QuizOption } from "@/types/quiz";
+
+// Componente de Input com debounce
+interface DebouncedInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  placeholder?: string;
+  className?: string;
+}
+
+const DebouncedInput: React.FC<DebouncedInputProps> = ({ value, onChange, type = "text", placeholder, className }) => {
+  const [localValue, setLocalValue] = useState(value);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setLocalValue(newValue);
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      onChange(newValue);
+    }, 500);
+  };
+
+  return (
+    <Input
+      type={type}
+      value={localValue}
+      onChange={handleChange}
+      placeholder={placeholder}
+      className={className}
+    />
+  );
+};
+
+// Componente de Textarea com debounce
+interface DebouncedTextareaProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+}
+
+const DebouncedTextarea: React.FC<DebouncedTextareaProps> = ({ value, onChange, placeholder, className }) => {
+  const [localValue, setLocalValue] = useState(value);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    setLocalValue(newValue);
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      onChange(newValue);
+    }, 500);
+  };
+
+  return (
+    <Textarea
+      value={localValue}
+      onChange={handleChange}
+      placeholder={placeholder}
+      className={className}
+    />
+  );
+};
 
 export type QuestionType = 'text' | 'number' | 'email' | 'radio' | 'checkbox' | 'textarea' | 'select' | 'url' | 'instagram' | 'phone';
 
@@ -383,15 +479,15 @@ export function QuestionCard({
           </RadioGroup>
           
           {showOtherInput && <div className="mt-2 pl-6">
-            <Input type="text" placeholder="Especifique sua resposta..." value={otherValue} onChange={e => setOtherValue(e.target.value)} className="w-full text-slate-900 bg-white" />
+            <DebouncedInput type="text" placeholder="Especifique sua resposta..." value={otherValue} onChange={setOtherValue} className="w-full text-slate-900 bg-white" />
           </div>}
         </div>;
     }
     if (question.type === 'text') {
-      return <Input type="text" placeholder={getPlaceholder(question)} value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full text-slate-900 bg-white mx-0 px-[40px]" />;
+      return <DebouncedInput type="text" placeholder={getPlaceholder(question)} value={textAnswer} onChange={setTextAnswer} className="w-full text-slate-900 bg-white mx-0 px-[40px]" />;
     }
     if (question.type === 'email') {
-      return <Input type="email" placeholder={getPlaceholder(question)} value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full text-slate-900 bg-white" />;
+      return <DebouncedInput type="email" placeholder={getPlaceholder(question)} value={textAnswer} onChange={setTextAnswer} className="w-full text-slate-900 bg-white" />;
     }
     if (question.type === 'url') {
       return <UrlField id={`url-${question.id}`} value={textAnswer} onChange={setTextAnswer} placeholder={getPlaceholder(question)} hint={question.hint} required={question.required} prefix={question.prefix || 'https://'} error={validationError} />;
@@ -400,10 +496,10 @@ export function QuestionCard({
       return <InstagramField id={`instagram-${question.id}`} value={textAnswer} onChange={setTextAnswer} placeholder={getPlaceholder(question)} hint={question.hint} required={question.required} prefix={question.prefix || '@'} error={validationError} />;
     }
     if (question.type === 'number') {
-      return <Input type="number" placeholder={getPlaceholder(question)} value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="w-full text-slate-900 bg-white" />;
+      return <DebouncedInput type="number" placeholder={getPlaceholder(question)} value={textAnswer} onChange={setTextAnswer} className="w-full text-slate-900 bg-white" />;
     }
     if (question.type === 'textarea') {
-      return <Textarea placeholder={getPlaceholder(question)} value={textAnswer} onChange={e => setTextAnswer(e.target.value)} className="min-h-[120px] text-slate-900 bg-white" />;
+      return <DebouncedTextarea placeholder={getPlaceholder(question)} value={textAnswer} onChange={setTextAnswer} className="min-h-[120px] text-slate-900 bg-white" />;
     }
     if (question.type === 'checkbox' && question.options) {
       return <div className="space-y-3">
@@ -422,7 +518,7 @@ export function QuestionCard({
         })}
           
           {showOtherInput && <div className="mt-2 pl-6">
-            <Input type="text" placeholder="Especifique sua resposta..." value={otherValue} onChange={e => setOtherValue(e.target.value)} className="w-full text-slate-900 bg-white" />
+            <DebouncedInput type="text" placeholder="Especifique sua resposta..." value={otherValue} onChange={setOtherValue} className="w-full text-slate-900 bg-white" />
           </div>}
         </div>;
     }

@@ -239,10 +239,19 @@ const QuizReviewPage = () => {
   };
 
   const handleEditQuestion = (moduleIndex: number, questionIndex: number) => {
-    const moduleQuestions = questions.filter(q => q.module_id === modules[moduleIndex].id);
+    // Encontrar todas as questões do módulo especificado
+    const targetModule = modules[moduleIndex];
+    if (!targetModule) return;
+    
+    const moduleQuestions = questions
+      .filter(q => q.module_id === targetModule.id)
+      .sort((a, b) => a.order_number - b.order_number);
+    
     const targetQuestion = moduleQuestions[questionIndex];
     if (targetQuestion) {
-      navigate(`/quiz?module=${modules[moduleIndex].id}&question=${targetQuestion.id}`);
+      // Calcular o módulo correto baseado no order_number do módulo + 1 (base 1)
+      const moduleNumber = targetModule.order_number + 1;
+      navigate(`/quiz?module=${moduleNumber}&question=${targetQuestion.order_number}`);
     }
   };
 
