@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -74,6 +74,7 @@ const Quiz = () => {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   useEffect(() => {
     document.title = "Questionário MAR - Crie Valor";
@@ -115,6 +116,11 @@ const Quiz = () => {
             const submission = await fetchSubmission(user.id);
             if (submission) {
               setSubmissionId(submission.id);
+              
+              // Definir o módulo atual baseado na submissão
+              if (submission.current_module && submission.current_module > 1) {
+                setCurrentModuleIndex(submission.current_module - 1); // -1 porque array começa em 0
+              }
               
               // Verificar se a submission tem uma propriedade answers antes de usá-la
               if (submission.answers && Array.isArray(submission.answers)) {
@@ -178,22 +184,70 @@ const Quiz = () => {
     loadQuestions();
   }, [currentModule, toast]);
   
-  const handleNextModule = () => {
+  // Cleanup do timeout quando o componente é desmontado
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+  
+  const updateCurrentModule = async (moduleNumber: number) => {
+    try {
+      if (!submissionId) return;
+      
+      const { error } = await supabase
+        .from('quiz_submissions')
+        .update({ current_module: moduleNumber })
+        .eq('id', submissionId);
+        
+      if (error) {
+        console.error('Erro ao atualizar módulo atual:', error);
+        return;
+      }
+      
+      console.log(`Módulo atual atualizado para: ${moduleNumber}`);
+    } catch (error) {
+      console.error('Erro ao atualizar módulo atual:', error);
+    }
+  };
+  
+  const handleNextModule = async () => {
     if (currentModuleIndex < modules.length - 1) {
-      setCurrentModuleIndex(currentModuleIndex + 1);
+      const nextModuleIndex = currentModuleIndex + 1;
+      setCurrentModuleIndex(nextModuleIndex);
+      
+      // Atualizar o módulo atual no banco de dados
+      if (submissionId) {
+        await updateCurrentModule(nextModuleIndex + 1); // +1 porque módulos começam em 1
+      }
     }
   };
   
-  const handlePrevModule = () => {
+  const handlePrevModule = async () => {
     if (currentModuleIndex > 0) {
-      setCurrentModuleIndex(currentModuleIndex - 1);
+      const prevModuleIndex = currentModuleIndex - 1;
+      setCurrentModuleIndex(prevModuleIndex);
+      
+      // Atualizar o módulo atual no banco de dados
+      if (submissionId) {
+        await updateCurrentModule(prevModuleIndex + 1); // +1 porque módulos começam em 1
+      }
     }
   };
   
-  const handleInputChange = async (questionId: string, value: string) => {
+  const handleInputChange = (questionId: string, value: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
-    // Salvar automaticamente quando houver mudança
-    await handleSaveAnswer(questionId, value);
+    
+    // Debounce para salvar automaticamente após 500ms de inatividade
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      handleSaveAnswer(questionId, value);
+    }, 500);
   };
   
   const handleCheckboxChange = async (questionId: string, value: string) => {
