@@ -177,7 +177,7 @@ export function UserDashboard({
                   </div> : <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-2 text-sm text-amber-600">
                       <Clock className="h-4 w-4" />
-                      <span>Em progresso - Módulo {submission.current_module} de 8</span>
+                      <span>Em progresso - Módulo {submission.current_module} de 11</span>
                     </div>
                     <p className="text-slate-600">
                       Continue de onde parou para completar seu questionário MAR.
