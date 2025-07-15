@@ -403,6 +403,8 @@ const Quiz = () => {
           </div>
         );
       case 'checkbox':
+        // Para a questão 22 (Visão), limitar a 3 opções
+        const maxOptions = question.order_number === 22 ? 3 : question.max_options;
         return (
           <div className="grid gap-2">
             <Label htmlFor={question.id}>{question.text}</Label>
@@ -413,7 +415,7 @@ const Quiz = () => {
               onChange={(value) => setAnswers(prev => ({ ...prev, [question.id]: value }))}
               disabled={isSubmitting}
               hint={question.hint}
-              maxOptions={question.max_options}
+              maxOptions={maxOptions}
             />
           </div>
         );
