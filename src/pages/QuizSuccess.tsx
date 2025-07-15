@@ -31,7 +31,7 @@ export default function QuizSuccess() {
           
           <div className="rounded-lg p-6 border border-border bg-green-100">
             <h3 className="font-semibold text-lg mb-3 text-foreground">Próximos passos</h3>
-            <p className="mb-4 text-primary dark:text-foreground">
+            <p className="mb-4 text-gray-800">
               Nossa equipe irá analisar suas respostas e entraremos em contato em breve para 
               discutir os resultados e as próximas etapas do programa MAR.
             </p>
