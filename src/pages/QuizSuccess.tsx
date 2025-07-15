@@ -19,7 +19,7 @@ export default function QuizSuccess() {
           <div className="mx-auto bg-green-100 p-4 rounded-full w-20 h-20 flex items-center justify-center mb-4">
             <CheckCircle className="h-10 w-10 text-green-600" />
           </div>
-          <CardTitle className="text-3xl font-bold text-foreground">Parabéns!</CardTitle>
+          <CardTitle className="text-3xl font-bold text-primary dark:text-foreground">Parabéns!</CardTitle>
         </CardHeader>
         
         <CardContent className="text-center px-6">
