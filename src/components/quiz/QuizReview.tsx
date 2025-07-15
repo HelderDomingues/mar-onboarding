@@ -39,12 +39,21 @@ export function QuizReview() {
         }
         setModules(modulesData || []);
 
+        // Buscar informações das perguntas
+        const {
+          data: allQuestions,
+          error: questionsError
+        } = await supabase.from('quiz_questions').select('*');
+        if (questionsError) {
+          throw questionsError;
+        }
+
         // Buscar diretamente da tabela quiz_answers
         const {
           data: answersData,
           error: answersError
         } = await supabase.from('quiz_answers')
-          .select('question_id, question_text, answer, module_id, module_title, module_number')
+          .select('*')
           .eq('user_id', user.id);
         if (answersError) {
           throw answersError;
@@ -65,15 +74,17 @@ export function QuizReview() {
 
         // Adicionar títulos de módulos às respostas, utilizando os dados obtidos
         const processedAnswers = answersData.map(answer => {
-          // Se não tiver título ou número do módulo, buscar dos módulos carregados
-          if (!answer.module_title || !answer.module_number) {
-            const module = modulesData?.find(m => m.id === answer.module_id);
-            if (module) {
-              answer.module_title = module.title;
-              answer.module_number = module.order_number;
-            }
-          }
-          return answer;
+          // Find the question and module from the fetched data
+          const question = allQuestions?.find(q => q.id === answer.question_id);
+          const module = modulesData?.find(m => m.id === question?.module_id);
+          
+          return {
+            ...answer,
+            question_text: question?.text || '',
+            module_title: module?.title || '',
+            module_number: module?.order_number || 0,
+            module_id: question?.module_id || ''
+          };
         });
         
         logger.info('Respostas do questionário carregadas', {

@@ -3,7 +3,7 @@ import { QuestionCard, Question, QuestionType as CardQuestionType } from "@/comp
 import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { Button } from "@/components/ui/button";
 import { QuizProgress } from "@/components/quiz/QuizProgress";
-import { QuizReview } from "@/components/quiz/QuizReview";
+import { QuizReviewComponent } from "@/components/quiz/QuizReviewComponent";
 import { ArrowRight, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { logger } from "@/utils/logger";
@@ -155,7 +155,7 @@ export function QuizContent({
   };
 
   const renderReview = () => {
-    return <QuizReview modules={allModules} questions={allQuestions} answers={currentAnswers} onComplete={handleReviewComplete} onEdit={onEditQuestion} />;
+    return <QuizReviewComponent modules={allModules} questions={allQuestions} answers={currentAnswers} onComplete={handleReviewComplete} onEdit={onEditQuestion} />;
   };
 
   return <div className="w-full flex flex-col items-center">

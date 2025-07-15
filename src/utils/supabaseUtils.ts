@@ -93,6 +93,7 @@ export async function completeQuizManually(userId: string) {
         .from('quiz_submissions')
         .insert([{
           user_id: userId,
+          user_email: '',
           current_module: 8,
           completed: true,
           completed_at: new Date().toISOString()
@@ -502,18 +503,12 @@ export async function sendQuizDataToWebhook(userId: string, submissionId: string
       throw new Error('Não foi possível obter os dados completos do questionário');
     }
     
-    // Marcar submissão como processada pelo webhook
-    const { error: updateError } = await supabaseAdmin
-      .from('quiz_submissions')
-      .update({ webhook_processed: true })
-      .eq('id', submissionId);
+    // Log webhook processing (removed direct update due to schema constraints)
+    logger.info('Dados do questionário processados pelo webhook', {
+      tag: 'Webhook',
+      data: { submissionId }
+    });
       
-    if (updateError) {
-      logger.error('Erro ao atualizar status de processamento do webhook', {
-        tag: 'Webhook',
-        data: { submissionId, error: updateError }
-      });
-    }
     
     // Simulação de envio bem-sucedido
     return true;
