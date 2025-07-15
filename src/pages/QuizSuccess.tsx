@@ -3,44 +3,40 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, HomeIcon, User, Mail, Phone } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
-
 export default function QuizSuccess() {
   const navigate = useNavigate();
-  
   const handleNavigateToDashboard = () => {
     navigate('/dashboard');
   };
-  
-  return (
-    <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-8">
+  return <div className="w-full max-w-3xl mx-auto animate-fade-in space-y-8">
       <Card className="quiz-card overflow-hidden">
         <div className="bg-green-500 h-2 w-full"></div>
         <CardHeader className="text-center pt-8">
           <div className="mx-auto bg-green-100 p-4 rounded-full w-20 h-20 flex items-center justify-center mb-4">
             <CheckCircle className="h-10 w-10 text-green-600" />
           </div>
-          <CardTitle className="text-3xl font-bold text-primary dark:text-foreground">Parabéns!</CardTitle>
+          <CardTitle className="text-3xl font-bold text-lime-400">Parabéns!</CardTitle>
         </CardHeader>
         
         <CardContent className="text-center px-6">
-          <p className="text-xl mb-4 text-primary dark:text-foreground">
+          <p className="text-xl mb-4 text-slate-200">
             Você concluiu o Questionário MAR com sucesso!
           </p>
           
-          <p className="text-primary dark:text-foreground mb-8">
+          <p className="mb-8 text-slate-50">
             Agradecemos pelo tempo dedicado ao preenchimento do questionário. 
             Suas respostas são fundamentais para que possamos entender melhor o seu negócio 
             e desenvolver o MApa para Alto Rendimento ideal para o seu crescimento.
           </p>
           
-          <div className="bg-muted rounded-lg p-6 border border-border">
+          <div className="rounded-lg p-6 border border-border bg-green-100">
             <h3 className="font-semibold text-lg mb-3 text-foreground">Próximos passos</h3>
             <p className="mb-4 text-primary dark:text-foreground">
               Nossa equipe irá analisar suas respostas e entraremos em contato em breve para 
               discutir os resultados e as próximas etapas do programa MAR.
             </p>
             
-            <h4 className="font-medium mt-4 mb-2 text-cyan-300">Fale com um consultor</h4>
+            <h4 className="font-medium mt-4 mb-2 text-slate-700">Fale com um consultor</h4>
             <div className="inline-flex flex-col md:flex-row gap-5 justify-center mx-[5px]">
               <a href="https://wa.me/+5547992150289" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-green-600 text-white hover:bg-green-700 h-10 px-4 py-2 w-full md:w-auto">
                 <Phone className="h-4 w-4 mr-2" /> WhatsApp (47)
@@ -65,12 +61,11 @@ export default function QuizSuccess() {
           </Button>
           
           <Link to="/quiz/view-answers">
-            <Button variant="outline" className="w-full md:w-auto">
+            <Button variant="outline" className="w-full md:w-auto bg-blue-800 hover:bg-blue-700">
               <User className="h-4 w-4 mr-2" /> Ver Minhas Respostas
             </Button>
           </Link>
         </CardFooter>
       </Card>
-    </div>
-  );
+    </div>;
 }
