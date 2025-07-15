@@ -19,23 +19,23 @@ export default function QuizSuccess() {
           <div className="mx-auto bg-green-100 p-4 rounded-full w-20 h-20 flex items-center justify-center mb-4">
             <CheckCircle className="h-10 w-10 text-green-600" />
           </div>
-          <CardTitle className="text-3xl font-bold text-slate-900">Parabéns!</CardTitle>
+          <CardTitle className="text-3xl font-bold text-foreground">Parabéns!</CardTitle>
         </CardHeader>
         
         <CardContent className="text-center px-6">
-          <p className="text-xl mb-4 text-slate-800">
+          <p className="text-xl mb-4 text-foreground">
             Você concluiu o Questionário MAR com sucesso!
           </p>
           
-          <p className="text-slate-600 opacity-80 mb-8">
+          <p className="text-muted-foreground mb-8">
             Agradecemos pelo tempo dedicado ao preenchimento do questionário. 
             Suas respostas são fundamentais para que possamos entender melhor o seu negócio 
             e desenvolver o MApa para Alto Rendimento ideal para o seu crescimento.
           </p>
           
-          <div className="bg-slate-800 rounded-lg p-6 border border-slate-200">
-            <h3 className="font-semibold text-lg mb-3 text-white">Próximos passos</h3>
-            <p className="mb-4 text-slate-300">
+          <div className="bg-muted rounded-lg p-6 border border-border">
+            <h3 className="font-semibold text-lg mb-3 text-foreground">Próximos passos</h3>
+            <p className="mb-4 text-muted-foreground">
               Nossa equipe irá analisar suas respostas e entraremos em contato em breve para 
               discutir os resultados e as próximas etapas do programa MAR.
             </p>
