@@ -2,7 +2,7 @@
 import React from "react";
 import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarWrapper } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { logger } from "@/utils/logger";
 import { addLogEntry } from "@/utils/projectLog";
@@ -66,13 +66,13 @@ const AdminRoute = () => {
   addLogEntry('auth', 'Acesso administrativo concedido', {}, user?.id);
   
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen">
+    <SidebarProvider>
+      <SidebarWrapper>
         <AdminSidebar />
-        <div className="flex-1 bg-gray-50">
+        <main className="flex-1 bg-gray-50 p-8">
           <Outlet />
-        </div>
-      </div>
+        </main>
+      </SidebarWrapper>
     </SidebarProvider>
   );
 };
