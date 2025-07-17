@@ -65,8 +65,8 @@ interface QuizSubmission {
   user_email: string;
   started_at: string;
   completed_at: string | null;
-  webhook_processed: boolean | null;
   completed: boolean;
+  // webhook_processed removed as it doesn't exist in schema
 }
 
 const QuizResponses = () => {
@@ -103,27 +103,15 @@ const QuizResponses = () => {
       
       let query = supabaseAdmin
         .from('quiz_submissions')
-        .select('id, user_id, user_name, user_email, started_at, completed_at, completed, webhook_processed')
+        .select('id, user_id, user_email, started_at, completed_at, completed')
         .order('started_at', { ascending: false });
       
       if (statusFilter === 'complete') {
         query = query.eq('completed', true);
       } else if (statusFilter === 'incomplete') {
         query = query.eq('completed', false);
-      } else if (statusFilter === 'processed') {
-        // Use type assertion to avoid recursion
-        query = (supabaseAdmin as any)
-          .from('quiz_submissions')
-          .select('id, user_id, user_name, user_email, started_at, completed_at, completed, webhook_processed')
-          .order('started_at', { ascending: false })
-          .eq('webhook_processed', true);
-      } else if (statusFilter === 'unprocessed') {
-        query = (supabaseAdmin as any)
-          .from('quiz_submissions')
-          .select('id, user_id, user_name, user_email, started_at, completed_at, completed, webhook_processed')
-          .order('started_at', { ascending: false })
-          .eq('webhook_processed', false);
       }
+      // Removed webhook_processed filters as field doesn't exist in schema
       
       const { data, error } = await query;
       
@@ -165,20 +153,18 @@ const QuizResponses = () => {
       }
       
       const headers = [
-        'ID', 'Usuário', 'Nome', 'Email', 
+        'ID', 'Usuário', 'Email', 
         'Data de Início', 'Data de Conclusão', 
-        'Status', 'Webhook Processado'
+        'Status'
       ];
       
       const rows = dataToExport.map(s => [
         s.id,
         s.user_id,
-        s.user_name || 'N/A',
         s.user_email,
         new Date(s.started_at).toLocaleString('pt-BR'),
         s.completed_at ? new Date(s.completed_at).toLocaleString('pt-BR') : 'N/A',
-        s.completed ? 'Completo' : 'Incompleto',
-        s.webhook_processed ? 'Sim' : 'Não'
+        s.completed ? 'Completo' : 'Incompleto'
       ]);
       
       const csvContent = [
@@ -226,10 +212,11 @@ const QuizResponses = () => {
       
       if (submissionError) throw submissionError;
       
-      // Use type assertion to avoid type recursion
-      const answersResult = await (supabaseAdmin as any).from('quiz_answers').select('*').eq('user_id', submission.user_id);
-      const answers = answersResult.data;
-      const answersError = answersResult.error;
+      // Simplified query to avoid type recursion
+      const { data: answers, error: answersError } = await supabaseAdmin
+        .from('quiz_answers')
+        .select('question_id, answer')
+        .eq('submission_id', submissionId);
       
       if (answersError) throw answersError;
       
@@ -551,15 +538,9 @@ const QuizResponses = () => {
         )}
       </TableCell>
       <TableCell>
-        {submission.webhook_processed ? (
-          <Badge variant="outline" className="bg-blue-100 border-blue-300 text-blue-800">
-            Processado
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="bg-slate-100 border-slate-300 text-slate-800">
-            Pendente
-          </Badge>
-        )}
+        <Badge variant="outline" className="bg-slate-100 border-slate-300 text-slate-800">
+          N/A
+        </Badge>
       </TableCell>
       <TableCell className="text-right">
         {renderDropdownMenu(submission)}
@@ -653,14 +634,13 @@ const QuizResponses = () => {
                     <TableHead>Email</TableHead>
                     <TableHead>Data de Início</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Webhook</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8">
+                      <TableCell colSpan={6} className="text-center py-8">
                         <div className="flex justify-center items-center">
                           <RefreshCw className="h-5 w-5 animate-spin mr-2" />
                           <span>Carregando dados...</span>
@@ -669,7 +649,7 @@ const QuizResponses = () => {
                     </TableRow>
                   ) : filteredSubmissions.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8">
+                      <TableCell colSpan={6} className="text-center py-8">
                         <div className="flex flex-col items-center justify-center text-muted-foreground">
                           <FileText className="h-12 w-12 mb-2 opacity-50" />
                           <p>Nenhuma submissão encontrada</p>

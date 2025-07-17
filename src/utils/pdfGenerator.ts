@@ -15,10 +15,10 @@ interface QuizAnswer {
   id: string;
   user_id: string;
   question_id: string;
-  question_text: string;
   answer: string;
   created_at: string;
   updated_at: string;
+  question_text?: string; // Optional compatibility field
 }
 
 interface QuizQuestion {
@@ -70,17 +70,17 @@ export const generateQuizPDF = async (
       throw questionsError;
     }
     
-    // Buscar as respostas do usuário
-    const answersResult = await supabase
+    // Buscar as respostas do usuário - Simplified query to avoid type recursion
+    const { data: rawAnswers, error: answersError } = await supabase
       .from('quiz_answers')
-      .select('*');
+      .select('id, question_id, answer, created_at, updated_at')
+      .not('answer', 'is', null);
     
-    const answers = answersResult.data?.filter(answer => 
-      (answer as any).submission_id && 
-      (answer as any).question_id && 
-      (answer as any).answer !== undefined
-    );
-    const answersError = answersResult.error;
+    const answers = rawAnswers?.map(answer => ({
+      ...answer,
+      user_id: userId, // Add required user_id field
+      question_text: '' // Will be populated later
+    }));
     
     if (answersError) {
       throw answersError;
