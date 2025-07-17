@@ -1,13 +1,13 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarFooter } from '@/components/ui/sidebar';
-import { Users, Database, FileText, Settings, Home, BarChart2, FileCheck, Book, Calendar, ListChecks, LogOut } from 'lucide-react';
+import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarFooter, useSidebar } from '@/components/ui/sidebar';
+import { Users, Database, FileText, Settings, Home, BarChart2, FileCheck, Book, Calendar, ListChecks, LogOut, PanelLeftClose, PanelRightClose } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+
 export const AdminSidebar = () => {
-  const {
-    logout
-  } = useAuth();
+  const { logout } = useAuth();
+  const { open, toggleSidebar } = useSidebar();
   const handleSignOut = async () => {
     try {
       await logout();
@@ -15,14 +15,17 @@ export const AdminSidebar = () => {
       console.error('Erro ao sair:', error);
     }
   };
-  return <Sidebar variant="sidebar" collapsible="icon">
+  return <Sidebar>
       <SidebarHeader>
-        <div className="flex items-center p-4">
+        <div className="flex items-center p-4 justify-between">
           
           <div>
             <h2 className="text-lg font-semibold">Sistema MAR</h2>
             <p className="text-xs text-muted-foreground">Painel Administrativo</p>
           </div>
+          <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+            {open ? <PanelLeftClose /> : <PanelRightClose />}
+          </Button>
         </div>
       </SidebarHeader>
       
@@ -37,7 +40,7 @@ export const AdminSidebar = () => {
                   isActive
                 }) => isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"}>
                     <Home className="w-4 h-4 mr-2" />
-                    <span>Dashboard</span>
+                    <span className={open ? "opacity-100" : "opacity-0"}>Dashboard</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -48,7 +51,7 @@ export const AdminSidebar = () => {
                   isActive
                 }) => isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"}>
                     <Database className="w-4 h-4 mr-2" />
-                    <span>Teste de Conexão</span>
+                    <span className={open ? "opacity-100" : "opacity-0"}>Teste de Conexão</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -66,7 +69,7 @@ export const AdminSidebar = () => {
                   isActive
                 }) => isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"}>
                     <Users className="w-4 h-4 mr-2" />
-                    <span>Usuários</span>
+                    <span className={open ? "opacity-100" : "opacity-0"}>Usuários</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -77,7 +80,7 @@ export const AdminSidebar = () => {
                   isActive
                 }) => isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"}>
                     <Book className="w-4 h-4 mr-2" />
-                    <span>Materiais</span>
+                    <span className={open ? "opacity-100" : "opacity-0"}>Materiais</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -88,7 +91,7 @@ export const AdminSidebar = () => {
                   isActive
                 }) => isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"}>
                     <FileCheck className="w-4 h-4 mr-2" />
-                    <span>Respostas do Questionário</span>
+                    <span className={open ? "opacity-100" : "opacity-0"}>Respostas do Questionário</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -106,7 +109,7 @@ export const AdminSidebar = () => {
                   isActive
                 }) => isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"}>
                     <FileText className="w-4 h-4 mr-2" />
-                    <span>Editor de Questionário</span>
+                    <span className={open ? "opacity-100" : "opacity-0"}>Editor de Questionário</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -117,7 +120,7 @@ export const AdminSidebar = () => {
                   isActive
                 }) => isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"}>
                     <Database className="w-4 h-4 mr-2" />
-                    <span>Inicializar Questionário</span>
+                    <span className={open ? "opacity-100" : "opacity-0"}>Inicializar Questionário</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -128,7 +131,7 @@ export const AdminSidebar = () => {
                   isActive
                 }) => isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"}>
                     <ListChecks className="w-4 h-4 mr-2" />
-                    <span>Recuperar Questionário</span>
+                    <span className={open ? "opacity-100" : "opacity-0"}>Recuperar Questionário</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -146,7 +149,7 @@ export const AdminSidebar = () => {
                   isActive
                 }) => isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"}>
                     <Calendar className="w-4 h-4 mr-2" />
-                    <span>Relatórios</span>
+                    <span className={open ? "opacity-100" : "opacity-0"}>Relatórios</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -157,7 +160,7 @@ export const AdminSidebar = () => {
                   isActive
                 }) => isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"}>
                     <BarChart2 className="w-4 h-4 mr-2" />
-                    <span>Métricas</span>
+                    <span className={open ? "opacity-100" : "opacity-0"}>Métricas</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -168,7 +171,7 @@ export const AdminSidebar = () => {
                   isActive
                 }) => isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"}>
                     <FileText className="w-4 h-4 mr-2" />
-                    <span>Logs do Sistema</span>
+                    <span className={open ? "opacity-100" : "opacity-0"}>Logs do Sistema</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -186,7 +189,7 @@ export const AdminSidebar = () => {
                   isActive
                 }) => isActive ? "text-primary font-medium flex items-center w-full" : "text-muted-foreground flex items-center w-full"}>
                     <Settings className="w-4 h-4 mr-2" />
-                    <span>Configurações</span>
+                    <span className={open ? "opacity-100" : "opacity-0"}>Configurações</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -199,7 +202,7 @@ export const AdminSidebar = () => {
         <div className="p-4">
           <Button variant="outline" onClick={handleSignOut} className="w-full justify-start bg-red-600 hover:bg-red-500">
             <LogOut className="w-4 h-4 mr-2" />
-            <span>Sair</span>
+            <span className={open ? "opacity-100" : "opacity-0"}>Sair</span>
           </Button>
         </div>
       </SidebarFooter>
