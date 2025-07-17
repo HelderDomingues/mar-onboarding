@@ -18,7 +18,7 @@ export const AdminSidebar = () => {
   return <Sidebar variant="sidebar" collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center p-4">
-          <img src="/lovable-uploads/e109ec41-0f89-456d-8081-f73393ed4fd5.png" alt="Crie Valor" className="h-8 mr-2" />
+          
           <div>
             <h2 className="text-lg font-semibold">Sistema MAR</h2>
             <p className="text-xs text-muted-foreground">Painel Administrativo</p>
