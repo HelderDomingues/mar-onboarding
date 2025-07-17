@@ -4,10 +4,14 @@ import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, S
 import { Users, Database, FileText, Settings, Home, BarChart2, FileCheck, Book, Calendar, ListChecks, LogOut, PanelLeftClose, PanelRightClose } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-
 export const AdminSidebar = () => {
-  const { logout } = useAuth();
-  const { open, toggleSidebar } = useSidebar();
+  const {
+    logout
+  } = useAuth();
+  const {
+    open,
+    toggleSidebar
+  } = useSidebar();
   const handleSignOut = async () => {
     try {
       await logout();
@@ -23,7 +27,7 @@ export const AdminSidebar = () => {
             <h2 className="text-lg font-semibold">Sistema MAR</h2>
             <p className="text-xs text-muted-foreground">Painel Administrativo</p>
           </div>
-          <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="text-slate-400">
             {open ? <PanelLeftClose /> : <PanelRightClose />}
           </Button>
         </div>
@@ -38,7 +42,7 @@ export const AdminSidebar = () => {
                 <SidebarMenuButton asChild>
                   <NavLink to="/dashboard" className={({
                   isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}` }>
+                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
                     <Home className="w-4 h-4 mr-2" />
                     <span className={open ? "opacity-100" : "opacity-0"}>Dashboard</span>
                   </NavLink>
@@ -49,7 +53,7 @@ export const AdminSidebar = () => {
                 <SidebarMenuButton asChild>
                   <NavLink to="/test-connection" className={({
                   isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}` }>
+                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
                     <Database className="w-4 h-4 mr-2" />
                     <span className={open ? "opacity-100" : "opacity-0"}>Teste de Conexão</span>
                   </NavLink>
@@ -67,7 +71,7 @@ export const AdminSidebar = () => {
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/users" className={({
                   isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}` }>
+                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
                     <Users className="w-4 h-4 mr-2" />
                     <span className={open ? "opacity-100" : "opacity-0"}>Usuários</span>
                   </NavLink>
@@ -78,7 +82,7 @@ export const AdminSidebar = () => {
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/materials" className={({
                   isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}` }>
+                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
                     <Book className="w-4 h-4 mr-2" />
                     <span className={open ? "opacity-100" : "opacity-0"}>Materiais</span>
                   </NavLink>
@@ -89,7 +93,7 @@ export const AdminSidebar = () => {
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/quiz-responses" className={({
                   isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}` }>
+                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
                     <FileCheck className="w-4 h-4 mr-2" />
                     <span className={open ? "opacity-100" : "opacity-0"}>Respostas do Questionário</span>
                   </NavLink>
@@ -107,7 +111,7 @@ export const AdminSidebar = () => {
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/quiz-editor" className={({
                   isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}` }>
+                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
                     <FileText className="w-4 h-4 mr-2" />
                     <span className={open ? "opacity-100" : "opacity-0"}>Editor de Questionário</span>
                   </NavLink>
@@ -118,7 +122,7 @@ export const AdminSidebar = () => {
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/seed-quiz" className={({
                   isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}` }>
+                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
                     <Database className="w-4 h-4 mr-2" />
                     <span className={open ? "opacity-100" : "opacity-0"}>Inicializar Questionário</span>
                   </NavLink>
@@ -129,7 +133,7 @@ export const AdminSidebar = () => {
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/recover-quiz" className={({
                   isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}` }>
+                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
                     <ListChecks className="w-4 h-4 mr-2" />
                     <span className={open ? "opacity-100" : "opacity-0"}>Recuperar Questionário</span>
                   </NavLink>
@@ -147,7 +151,7 @@ export const AdminSidebar = () => {
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/reports" className={({
                   isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}` }>
+                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
                     <Calendar className="w-4 h-4 mr-2" />
                     <span className={open ? "opacity-100" : "opacity-0"}>Relatórios</span>
                   </NavLink>
@@ -158,7 +162,7 @@ export const AdminSidebar = () => {
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/metrics" className={({
                   isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}` }>
+                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
                     <BarChart2 className="w-4 h-4 mr-2" />
                     <span className={open ? "opacity-100" : "opacity-0"}>Métricas</span>
                   </NavLink>
@@ -169,7 +173,7 @@ export const AdminSidebar = () => {
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/logs" className={({
                   isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}` }>
+                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
                     <FileText className="w-4 h-4 mr-2" />
                     <span className={open ? "opacity-100" : "opacity-0"}>Logs do Sistema</span>
                   </NavLink>
@@ -187,7 +191,7 @@ export const AdminSidebar = () => {
                 <SidebarMenuButton asChild>
                   <NavLink to="/admin/settings" className={({
                   isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}` }>
+                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
                     <Settings className="w-4 h-4 mr-2" />
                     <span className={open ? "opacity-100" : "opacity-0"}>Configurações</span>
                   </NavLink>
