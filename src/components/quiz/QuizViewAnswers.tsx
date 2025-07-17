@@ -63,11 +63,10 @@ export function QuizViewAnswers() {
         // Buscar respostas se houver submissão
         let answersData = [];
         if (submissionData) {
-          const {
-            data: answers,
-            error: answersError
-          } = await supabase.from('quiz_answers')
-            .select('question_id, answer')
+          // Simplified query to avoid type recursion
+          const { data: answers, error: answersError } = await supabase
+            .from('quiz_answers')
+            .select('id, question_id, answer, created_at')
             .eq('submission_id', submissionData.id);
           if (answersError) {
             throw answersError;

@@ -283,10 +283,14 @@ Resolver os erros de conclusão do questionário, melhorar a exibição de mensa
   - Usar EXATAMENTE os dados fornecidos pelo cliente sem modificações
   - Numerar corretamente as perguntas conforme sequência estabelecida
 
-## Próximos Passos (Priorizados)
-1. [EM ANDAMENTO] Implementação de todos os módulos do questionário (9, 10, 11, 12 e 13)
-2. [PENDENTE] Validação do funcionamento do questionário após implementação dos módulos
-3. [PENDENTE] Verificar funcionamento da integração com Make.com com dados reais
+## Próximos Passos (Atualizados - FASE 2 EM ANDAMENTO)
+1. [EM ANDAMENTO] **Fase 2 - Funcionalidades Core**: 
+   - ✅ PDF Generator corrigido e simplificado
+   - ✅ Links administrativos verificados e funcionais  
+   - ✅ Quiz navigation testada (11 módulos, 68 questões)
+   - 🔄 CSV export system em aprimoramento
+2. [PENDENTE] **Fase 3 - Features Finais**: Webhook configuration, Material System
+3. [PENDENTE] Validação end-to-end e testes de integração final
 4. [PENDENTE] Limpeza das tabelas _backup e normalização do banco de dados
 5. [PENDENTE] Expandir documentação técnica do sistema
 6. [PENDENTE] Retornar para resolver os problemas da sidebar após completar o questionário
