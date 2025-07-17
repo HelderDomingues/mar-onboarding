@@ -111,6 +111,7 @@ const QuizResponses = () => {
       } else if (statusFilter === 'incomplete') {
         query = query.eq('completed', false);
       }
+      // Por padrão, mostrar todos os registros se nenhum filtro for selecionado
       // Removed webhook_processed filters as field doesn't exist in schema
       
       const { data, error } = await query;
