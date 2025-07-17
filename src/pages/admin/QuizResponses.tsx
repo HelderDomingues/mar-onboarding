@@ -538,11 +538,6 @@ const QuizResponses = () => {
           </Badge>
         )}
       </TableCell>
-      <TableCell>
-        <Badge variant="outline" className="bg-slate-100 border-slate-300 text-slate-800">
-          N/A
-        </Badge>
-      </TableCell>
       <TableCell className="text-right">
         {renderDropdownMenu(submission)}
       </TableCell>
@@ -610,11 +605,9 @@ const QuizResponses = () => {
                     <SelectValue placeholder="Filtrar por status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="complete">Completos</SelectItem>
-                    <SelectItem value="incomplete">Incompletos</SelectItem>
-                    <SelectItem value="processed">Webhook Processado</SelectItem>
-                    <SelectItem value="unprocessed">Webhook Pendente</SelectItem>
+                    <SelectItem value="">Todos os registros</SelectItem>
+                    <SelectItem value="complete">Apenas completos</SelectItem>
+                    <SelectItem value="incomplete">Apenas incompletos</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -641,7 +634,7 @@ const QuizResponses = () => {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
+                      <TableCell colSpan={5} className="text-center py-8">
                         <div className="flex justify-center items-center">
                           <RefreshCw className="h-5 w-5 animate-spin mr-2" />
                           <span>Carregando dados...</span>
@@ -650,7 +643,7 @@ const QuizResponses = () => {
                     </TableRow>
                   ) : filteredSubmissions.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
+                      <TableCell colSpan={5} className="text-center py-8">
                         <div className="flex flex-col items-center justify-center text-muted-foreground">
                           <FileText className="h-12 w-12 mb-2 opacity-50" />
                           <p>Nenhuma submissão encontrada</p>

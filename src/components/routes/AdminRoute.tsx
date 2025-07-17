@@ -67,9 +67,9 @@ const AdminRoute = () => {
   
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen w-full bg-background">
+      <div className="flex min-h-screen">
         <AdminSidebar />
-        <div className="flex-1 p-6 overflow-auto">
+        <div className="flex-1 bg-gray-50">
           <Outlet />
         </div>
       </div>
