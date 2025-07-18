@@ -11,39 +11,34 @@ import { QuizModule, QuizQuestion, QuizOption } from "@/types/quiz";
 import { useToast } from "@/components/ui/use-toast";
 import { ReloadQuizDataButton } from "@/components/admin/ReloadQuizDataButton";
 import { QuizEditorDialog } from "@/components/quiz/QuizEditorDialog";
-
 const QuizEditor = () => {
   const [selectedTab, setSelectedTab] = useState("modules");
   const [modules, setModules] = useState<QuizModule[]>([]);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [options, setOptions] = useState<QuizOption[]>([]);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   useEffect(() => {
     const fetchQuizData = async () => {
       try {
         setLoading(true);
-        
-        const { data: modulesData, error: modulesError } = await supabase
-          .from('quiz_modules')
-          .select('*')
-          .order('order_number');
-
-        const { data: questionsData, error: questionsError } = await supabase
-          .from('quiz_questions')
-          .select('*')
-          .order('order_number');
-
-        const { data: optionsData, error: optionsError } = await supabase
-          .from('quiz_options')
-          .select('*')
-          .order('order_number');
-
+        const {
+          data: modulesData,
+          error: modulesError
+        } = await supabase.from('quiz_modules').select('*').order('order_number');
+        const {
+          data: questionsData,
+          error: questionsError
+        } = await supabase.from('quiz_questions').select('*').order('order_number');
+        const {
+          data: optionsData,
+          error: optionsError
+        } = await supabase.from('quiz_options').select('*').order('order_number');
         if (modulesError || questionsError || optionsError) {
           throw new Error('Erro ao carregar dados do questionário');
         }
-
         setModules(modulesData || []);
         setQuestions(questionsData || []);
         setOptions(optionsData || []);
@@ -58,42 +53,33 @@ const QuizEditor = () => {
         setLoading(false);
       }
     };
-
     fetchQuizData();
   }, []);
-
   const getQuestionOptions = (questionId: string) => {
     return options.filter(option => option.question_id === questionId);
   };
-
   const getQuestionModule = (moduleId: string) => {
     return modules.find(module => module.id === moduleId);
   };
-
   const refreshData = () => {
     const fetchQuizData = async () => {
       try {
         setLoading(true);
-        
-        const { data: modulesData, error: modulesError } = await supabase
-          .from('quiz_modules')
-          .select('*')
-          .order('order_number');
-
-        const { data: questionsData, error: questionsError } = await supabase
-          .from('quiz_questions')
-          .select('*')
-          .order('order_number');
-
-        const { data: optionsData, error: optionsError } = await supabase
-          .from('quiz_options')
-          .select('*')
-          .order('order_number');
-
+        const {
+          data: modulesData,
+          error: modulesError
+        } = await supabase.from('quiz_modules').select('*').order('order_number');
+        const {
+          data: questionsData,
+          error: questionsError
+        } = await supabase.from('quiz_questions').select('*').order('order_number');
+        const {
+          data: optionsData,
+          error: optionsError
+        } = await supabase.from('quiz_options').select('*').order('order_number');
         if (modulesError || questionsError || optionsError) {
           throw new Error('Erro ao carregar dados do questionário');
         }
-
         setModules(modulesData || []);
         setQuestions(questionsData || []);
         setOptions(optionsData || []);
@@ -108,12 +94,9 @@ const QuizEditor = () => {
         setLoading(false);
       }
     };
-
     fetchQuizData();
   };
-
-  return (
-    <SidebarProvider>
+  return <SidebarProvider>
       <div className="flex min-h-screen bg-background font-sans">
         <AdminSidebar />
         
@@ -128,27 +111,18 @@ const QuizEditor = () => {
               </div>
               
               <div className="flex gap-2">
-                <QuizEditorDialog
-                  type="module"
-                  onSave={refreshData}
-                  trigger={
-                    <Button>
+                <QuizEditorDialog type="module" onSave={refreshData} trigger={<Button className="text-slate-200 bg-indigo-700 hover:bg-indigo-600">
                       <PlusCircle className="h-4 w-4 mr-2" />
                       Novo Módulo
-                    </Button>
-                  }
-                />
+                    </Button>} />
                 <ReloadQuizDataButton />
               </div>
             </div>
             
-            {loading ? (
-              <div className="flex justify-center items-center space-x-2">
+            {loading ? <div className="flex justify-center items-center space-x-2">
                 <Loader2 className="h-8 w-8 animate-spin" />
                 <p>Carregando dados do questionário...</p>
-              </div>
-            ) : (
-              <Tabs defaultValue="modules" value={selectedTab} onValueChange={setSelectedTab}>
+              </div> : <Tabs defaultValue="modules" value={selectedTab} onValueChange={setSelectedTab}>
                 <TabsList className="mb-4">
                   <TabsTrigger value="modules">Módulos ({modules.length})</TabsTrigger>
                   <TabsTrigger value="questions">Questões ({questions.length})</TabsTrigger>
@@ -167,21 +141,14 @@ const QuizEditor = () => {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      {modules.length === 0 ? (
-                        <Alert variant="destructive">
+                      {modules.length === 0 ? <Alert variant="destructive">
                           <AlertCircle className="h-4 w-4" />
                           <AlertTitle>Nenhum módulo encontrado</AlertTitle>
                           <AlertDescription>
                             Não foram encontrados módulos do questionário. Utilize o botão "Recarregar dados do questionário" para configurar o questionário MAR.
                           </AlertDescription>
-                        </Alert>
-                      ) : (
-                        <div className="grid gap-4">
-                          {modules.map((module) => (
-                            <div 
-                              key={module.id} 
-                              className="border p-4 rounded-md flex justify-between items-center"
-                            >
+                        </Alert> : <div className="grid gap-4">
+                          {modules.map(module => <div key={module.id} className="border p-4 rounded-md flex justify-between items-center">
                               <div>
                                 <h3 className="font-semibold">{module.order_number}. {module.title}</h3>
                                 <p className="text-sm text-muted-foreground">
@@ -191,21 +158,12 @@ const QuizEditor = () => {
                                   Perguntas: {questions.filter(q => q.module_id === module.id).length}
                                 </p>
                               </div>
-                              <QuizEditorDialog
-                                type="module"
-                                item={module}
-                                onSave={refreshData}
-                                trigger={
-                                  <Button variant="outline" size="sm">
+                              <QuizEditorDialog type="module" item={module} onSave={refreshData} trigger={<Button variant="outline" size="sm">
                                     <Edit className="h-4 w-4 mr-2" />
                                     Editar
-                                  </Button>
-                                }
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                                  </Button>} />
+                            </div>)}
+                        </div>}
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -221,47 +179,31 @@ const QuizEditor = () => {
                         Gerencie as {questions.length} perguntas do questionário por módulo
                       </CardDescription>
                       <div className="flex gap-2">
-                        <QuizEditorDialog
-                          type="question"
-                          onSave={refreshData}
-                          trigger={
-                            <Button size="sm">
+                        <QuizEditorDialog type="question" onSave={refreshData} trigger={<Button size="sm">
                               <PlusCircle className="h-4 w-4 mr-2" />
                               Nova Questão
-                            </Button>
-                          }
-                        />
+                            </Button>} />
                       </div>
                     </CardHeader>
                     <CardContent>
-                      {questions.length === 0 ? (
-                        <Alert variant="destructive">
+                      {questions.length === 0 ? <Alert variant="destructive">
                           <AlertCircle className="h-4 w-4" />
                           <AlertTitle>Nenhuma pergunta encontrada</AlertTitle>
                           <AlertDescription>
                             Não foram encontradas perguntas no questionário. Utilize o botão "Recarregar dados do questionário" para configurar o questionário MAR.
                           </AlertDescription>
-                        </Alert>
-                      ) : (
-                        <div className="space-y-6">
-                          {modules.map((module) => {
-                            const moduleQuestions = questions.filter(q => q.module_id === module.id);
-                            
-                            if (moduleQuestions.length === 0) {
-                              return null;
-                            }
-                            
-                            return (
-                              <div key={module.id} className="space-y-2">
+                        </Alert> : <div className="space-y-6">
+                          {modules.map(module => {
+                      const moduleQuestions = questions.filter(q => q.module_id === module.id);
+                      if (moduleQuestions.length === 0) {
+                        return null;
+                      }
+                      return <div key={module.id} className="space-y-2">
                                 <h3 className="text-lg font-semibold border-b pb-2">
                                   Módulo {module.order_number}: {module.title}
                                 </h3>
                                 <div className="grid gap-4">
-                                  {moduleQuestions.map((question) => (
-                                    <div 
-                                      key={question.id} 
-                                      className="border p-4 rounded-md"
-                                    >
+                                  {moduleQuestions.map(question => <div key={question.id} className="border p-4 rounded-md">
                                       <div className="flex justify-between items-start mb-2">
                                         <div>
                                           <h4 className="font-semibold">{question.order_number}. {question.text}</h4>
@@ -272,51 +214,33 @@ const QuizEditor = () => {
                                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${question.required ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
                                               {question.required ? 'Obrigatório' : 'Opcional'}
                                             </span>
-                                            {question.max_options !== undefined && (
-                                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            {question.max_options !== undefined && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                                 Máx: {question.max_options}
-                                              </span>
-                                            )}
+                                              </span>}
                                           </div>
-                                          {question.hint && (
-                                            <p className="text-sm text-muted-foreground mt-1">
+                                          {question.hint && <p className="text-sm text-muted-foreground mt-1">
                                               <span className="font-medium">Dica:</span> {question.hint}
-                                            </p>
-                                          )}
+                                            </p>}
                                         </div>
-                                        <QuizEditorDialog
-                                          type="question"
-                                          item={question}
-                                          onSave={refreshData}
-                                          trigger={
-                                            <Button variant="outline" size="sm">
+                                        <QuizEditorDialog type="question" item={question} onSave={refreshData} trigger={<Button variant="outline" size="sm">
                                               <Edit className="h-4 w-4 mr-2" />
                                               Editar
-                                            </Button>
-                                          }
-                                        />
+                                            </Button>} />
                                       </div>
                                       
-                                      {(question.type === 'radio' || question.type === 'checkbox') && (
-                                        <div className="mt-2 border-t pt-2">
+                                      {(question.type === 'radio' || question.type === 'checkbox') && <div className="mt-2 border-t pt-2">
                                           <p className="text-sm font-medium mb-1">Opções de resposta:</p>
                                           <ul className="space-y-1 pl-5 list-disc">
-                                            {getQuestionOptions(question.id).map((option) => (
-                                              <li key={option.id} className="text-sm">
+                                            {getQuestionOptions(question.id).map(option => <li key={option.id} className="text-sm">
                                                 {option.text}
-                                              </li>
-                                            ))}
+                                              </li>)}
                                           </ul>
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
+                                        </div>}
+                                    </div>)}
                                 </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+                              </div>;
+                    })}
+                        </div>}
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -332,98 +256,65 @@ const QuizEditor = () => {
                         Gerencie as {options.length} opções de resposta para perguntas de múltipla escolha
                       </CardDescription>
                       <div className="flex gap-2">
-                        <QuizEditorDialog
-                          type="option"
-                          onSave={refreshData}
-                          trigger={
-                            <Button size="sm">
+                        <QuizEditorDialog type="option" onSave={refreshData} trigger={<Button size="sm">
                               <PlusCircle className="h-4 w-4 mr-2" />
                               Nova Opção
-                            </Button>
-                          }
-                        />
+                            </Button>} />
                       </div>
                     </CardHeader>
                     <CardContent>
-                      {options.length === 0 ? (
-                        <Alert variant="destructive">
+                      {options.length === 0 ? <Alert variant="destructive">
                           <AlertCircle className="h-4 w-4" />
                           <AlertTitle>Nenhuma opção encontrada</AlertTitle>
                           <AlertDescription>
                             Não foram encontradas opções de resposta. Utilize o botão "Recarregar dados do questionário" para configurar o questionário MAR.
                           </AlertDescription>
-                        </Alert>
-                      ) : (
-                        <div className="space-y-6">
-                          {modules.map((module) => {
-                            const moduleQuestions = questions.filter(q => q.module_id === module.id && (q.type === 'radio' || q.type === 'checkbox'));
-                            
-                            if (moduleQuestions.length === 0) {
-                              return null;
-                            }
-                            
-                            return (
-                              <div key={module.id} className="space-y-2">
+                        </Alert> : <div className="space-y-6">
+                          {modules.map(module => {
+                      const moduleQuestions = questions.filter(q => q.module_id === module.id && (q.type === 'radio' || q.type === 'checkbox'));
+                      if (moduleQuestions.length === 0) {
+                        return null;
+                      }
+                      return <div key={module.id} className="space-y-2">
                                 <h3 className="text-lg font-semibold border-b pb-2">
                                   Módulo {module.order_number}: {module.title}
                                 </h3>
                                 
-                                {moduleQuestions.map((question) => {
-                                  const questionOptions = getQuestionOptions(question.id);
-                                  
-                                  if (questionOptions.length === 0) {
-                                    return null;
-                                  }
-                                  
-                                  return (
-                                    <div key={question.id} className="border p-4 rounded-md mb-4">
+                                {moduleQuestions.map(question => {
+                          const questionOptions = getQuestionOptions(question.id);
+                          if (questionOptions.length === 0) {
+                            return null;
+                          }
+                          return <div key={question.id} className="border p-4 rounded-md mb-4">
                                       <h4 className="font-semibold mb-2">
                                         Pergunta {question.order_number}: {question.text}
                                       </h4>
                                       
                                       <div className="grid gap-2">
-                                        {questionOptions.map((option) => (
-                                          <div 
-                                            key={option.id} 
-                                            className="border p-2 rounded-md flex justify-between items-center"
-                                          >
+                                        {questionOptions.map(option => <div key={option.id} className="border p-2 rounded-md flex justify-between items-center">
                                             <div className="flex items-center gap-2">
                                               <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-xs font-medium">
                                                 {option.order_number}
                                               </span>
                                               <span>{option.text}</span>
                                             </div>
-                                            <QuizEditorDialog
-                                              type="option"
-                                              item={option}
-                                              onSave={refreshData}
-                                              trigger={
-                                                <Button variant="ghost" size="sm">
+                                            <QuizEditorDialog type="option" item={option} onSave={refreshData} trigger={<Button variant="ghost" size="sm">
                                                   <Edit className="h-3 w-3" />
-                                                </Button>
-                                              }
-                                            />
-                                          </div>
-                                        ))}
+                                                </Button>} />
+                                          </div>)}
                                       </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+                                    </div>;
+                        })}
+                              </div>;
+                    })}
+                        </div>}
                     </CardContent>
                   </Card>
                 </TabsContent>
-              </Tabs>
-            )}
+              </Tabs>}
           </div>
         </div>
       </div>
-    </SidebarProvider>
-  );
+    </SidebarProvider>;
 };
-
 export default QuizEditor;
