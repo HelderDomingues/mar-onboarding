@@ -10,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { QuizModule, QuizQuestion, QuizOption } from "@/types/quiz";
 import { useToast } from "@/components/ui/use-toast";
 import { ReloadQuizDataButton } from "@/components/admin/ReloadQuizDataButton";
+import { QuizEditorDialog } from "@/components/quiz/QuizEditorDialog";
 
 const QuizEditor = () => {
   const [selectedTab, setSelectedTab] = useState("modules");
@@ -69,6 +70,48 @@ const QuizEditor = () => {
     return modules.find(module => module.id === moduleId);
   };
 
+  const refreshData = () => {
+    const fetchQuizData = async () => {
+      try {
+        setLoading(true);
+        
+        const { data: modulesData, error: modulesError } = await supabase
+          .from('quiz_modules')
+          .select('*')
+          .order('order_number');
+
+        const { data: questionsData, error: questionsError } = await supabase
+          .from('quiz_questions')
+          .select('*')
+          .order('order_number');
+
+        const { data: optionsData, error: optionsError } = await supabase
+          .from('quiz_options')
+          .select('*')
+          .order('order_number');
+
+        if (modulesError || questionsError || optionsError) {
+          throw new Error('Erro ao carregar dados do questionário');
+        }
+
+        setModules(modulesData || []);
+        setQuestions(questionsData || []);
+        setOptions(optionsData || []);
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os dados do questionário",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuizData();
+  };
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-background font-sans">
@@ -85,6 +128,16 @@ const QuizEditor = () => {
               </div>
               
               <div className="flex gap-2">
+                <QuizEditorDialog
+                  type="module"
+                  onSave={refreshData}
+                  trigger={
+                    <Button>
+                      <PlusCircle className="h-4 w-4 mr-2" />
+                      Novo Módulo
+                    </Button>
+                  }
+                />
                 <ReloadQuizDataButton />
               </div>
             </div>
@@ -138,10 +191,17 @@ const QuizEditor = () => {
                                   Perguntas: {questions.filter(q => q.module_id === module.id).length}
                                 </p>
                               </div>
-                              <Button variant="outline" size="sm">
-                                <Edit className="h-4 w-4 mr-2" />
-                                Editar
-                              </Button>
+                              <QuizEditorDialog
+                                type="module"
+                                item={module}
+                                onSave={refreshData}
+                                trigger={
+                                  <Button variant="outline" size="sm">
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Editar
+                                  </Button>
+                                }
+                              />
                             </div>
                           ))}
                         </div>
@@ -160,6 +220,18 @@ const QuizEditor = () => {
                       <CardDescription>
                         Gerencie as {questions.length} perguntas do questionário por módulo
                       </CardDescription>
+                      <div className="flex gap-2">
+                        <QuizEditorDialog
+                          type="question"
+                          onSave={refreshData}
+                          trigger={
+                            <Button size="sm">
+                              <PlusCircle className="h-4 w-4 mr-2" />
+                              Nova Questão
+                            </Button>
+                          }
+                        />
+                      </div>
                     </CardHeader>
                     <CardContent>
                       {questions.length === 0 ? (
@@ -212,10 +284,17 @@ const QuizEditor = () => {
                                             </p>
                                           )}
                                         </div>
-                                        <Button variant="outline" size="sm">
-                                          <Edit className="h-4 w-4 mr-2" />
-                                          Editar
-                                        </Button>
+                                        <QuizEditorDialog
+                                          type="question"
+                                          item={question}
+                                          onSave={refreshData}
+                                          trigger={
+                                            <Button variant="outline" size="sm">
+                                              <Edit className="h-4 w-4 mr-2" />
+                                              Editar
+                                            </Button>
+                                          }
+                                        />
                                       </div>
                                       
                                       {(question.type === 'radio' || question.type === 'checkbox') && (
@@ -252,6 +331,18 @@ const QuizEditor = () => {
                       <CardDescription>
                         Gerencie as {options.length} opções de resposta para perguntas de múltipla escolha
                       </CardDescription>
+                      <div className="flex gap-2">
+                        <QuizEditorDialog
+                          type="option"
+                          onSave={refreshData}
+                          trigger={
+                            <Button size="sm">
+                              <PlusCircle className="h-4 w-4 mr-2" />
+                              Nova Opção
+                            </Button>
+                          }
+                        />
+                      </div>
                     </CardHeader>
                     <CardContent>
                       {options.length === 0 ? (
@@ -302,9 +393,16 @@ const QuizEditor = () => {
                                               </span>
                                               <span>{option.text}</span>
                                             </div>
-                                            <Button variant="ghost" size="sm">
-                                              <Edit className="h-3 w-3" />
-                                            </Button>
+                                            <QuizEditorDialog
+                                              type="option"
+                                              item={option}
+                                              onSave={refreshData}
+                                              trigger={
+                                                <Button variant="ghost" size="sm">
+                                                  <Edit className="h-3 w-3" />
+                                                </Button>
+                                              }
+                                            />
                                           </div>
                                         ))}
                                       </div>

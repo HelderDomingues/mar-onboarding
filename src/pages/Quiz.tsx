@@ -49,6 +49,7 @@ import { QuizModule, QuizQuestion } from '@/types/quiz';
 import { logger } from '@/utils/logger';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { SiteFooter } from '@/components/layout/SiteFooter';
+import { QuizEditControls } from '@/components/quiz/QuizEditControls';
 import { 
   ArrowRight, 
   ArrowLeft, 
@@ -74,6 +75,8 @@ const Quiz = () => {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [editingSpecificQuestion, setEditingSpecificQuestion] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   useEffect(() => {
@@ -107,31 +110,72 @@ const Quiz = () => {
         const fetchedModules = await fetchModules();
         setModules(fetchedModules);
         
-        if (fetchedModules.length > 0) {
-          const fetchedQuestions = await fetchQuestions(fetchedModules[0].id);
-          setQuestions(fetchedQuestions);
+        // Verificar se há navegação específica via URL params
+        const moduleParam = searchParams.get('module');
+        const questionParam = searchParams.get('question');
+        const isEditMode = searchParams.get('edit') === 'true';
         
-          // Carregar submissão existente
+        if (fetchedModules.length > 0) {
+          let targetModuleIndex = 0;
+          let targetQuestionIndex = 0;
+          
+          // Se há parâmetro de módulo, navegar para ele
+          if (moduleParam) {
+            const moduleNumber = parseInt(moduleParam);
+            const targetModule = fetchedModules.find(m => m.order_number === moduleNumber);
+            if (targetModule) {
+              targetModuleIndex = fetchedModules.findIndex(m => m.id === targetModule.id);
+            }
+          }
+          
+          setCurrentModuleIndex(targetModuleIndex);
+          const targetModule = fetchedModules[targetModuleIndex];
+          const fetchedQuestions = await fetchQuestions(targetModule.id);
+          setQuestions(fetchedQuestions);
+          
+          // Se há parâmetro de questão e está em modo de edição
+          if (questionParam && isEditMode) {
+            const questionNumber = parseInt(questionParam);
+            const targetQuestion = fetchedQuestions.find(q => q.order_number === questionNumber);
+            if (targetQuestion) {
+              targetQuestionIndex = fetchedQuestions.findIndex(q => q.id === targetQuestion.id);
+              setCurrentQuestionIndex(targetQuestionIndex);
+              setEditingSpecificQuestion(true);
+            }
+          }
+        
+          // Carregar submissão existente e respostas
           if (user?.id) {
             const submission = await fetchSubmission(user.id);
             if (submission) {
               setSubmissionId(submission.id);
               
-              // Definir o módulo atual baseado na submissão
-              if (submission.current_module && submission.current_module > 1) {
-                setCurrentModuleIndex(submission.current_module - 1); // -1 porque array começa em 0
-              }
+              // Carregar todas as respostas do usuário
+              const { data: answersData } = await supabase
+                .from('quiz_answers')
+                .select('*')
+                .eq('submission_id', submission.id);
               
-              // Verificar se a submission tem uma propriedade answers antes de usá-la
-              if (submission.answers && Array.isArray(submission.answers)) {
+              if (answersData) {
                 const initialAnswers: Record<string, string | string[]> = {};
-                fetchedQuestions.forEach(question => {
-                  const answer = submission.answers?.find(a => a.question_id === question.id);
-                  if (answer) {
-                    initialAnswers[question.id] = answer.answer;
+                answersData.forEach(answer => {
+                  try {
+                    // Tentar fazer parse se for array JSON
+                    if (answer.answer && answer.answer.startsWith('[') && answer.answer.endsWith(']')) {
+                      initialAnswers[answer.question_id] = JSON.parse(answer.answer);
+                    } else {
+                      initialAnswers[answer.question_id] = answer.answer || '';
+                    }
+                  } catch {
+                    initialAnswers[answer.question_id] = answer.answer || '';
                   }
                 });
                 setAnswers(initialAnswers);
+              }
+              
+              // Se não há navegação específica, usar o módulo atual da submissão
+              if (!moduleParam && submission.current_module && submission.current_module > 1) {
+                setCurrentModuleIndex(submission.current_module - 1); // -1 porque array começa em 0
               }
             }
           }
@@ -192,6 +236,31 @@ const Quiz = () => {
       }
     };
   }, []);
+
+  // Salvar progresso ao sair da página
+  useEffect(() => {
+    const handleBeforeUnload = async (e: BeforeUnloadEvent) => {
+      // Salvar todas as respostas pendentes
+      const pendingSaves = Object.entries(answers).map(([questionId, answer]) => {
+        if (submissionId) {
+          return saveAnswer(submissionId, questionId, typeof answer === 'string' ? answer : JSON.stringify(answer));
+        }
+        return Promise.resolve();
+      });
+      
+      try {
+        await Promise.all(pendingSaves);
+      } catch (error) {
+        console.error('Erro ao salvar progresso antes de sair:', error);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [answers, submissionId]);
   
   const updateCurrentModule = async (moduleNumber: number) => {
     try {
@@ -240,14 +309,8 @@ const Quiz = () => {
   const handleInputChange = (questionId: string, value: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
     
-    // Debounce para salvar automaticamente após 500ms de inatividade
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    
-    saveTimeoutRef.current = setTimeout(() => {
-      handleSaveAnswer(questionId, value);
-    }, 500);
+    // Salvar imediatamente (sem debounce) - será chamado pelo onBlur
+    handleSaveAnswer(questionId, value);
   };
   
   const handleCheckboxChange = async (questionId: string, value: string) => {
@@ -601,11 +664,23 @@ const Quiz = () => {
             </CardHeader>
             
             <CardContent className="space-y-4">
-              <Progress value={((currentModuleIndex + 1) / modules.length) * 100} className="mb-4" />
+              {!editingSpecificQuestion && (
+                <Progress value={((currentModuleIndex + 1) / modules.length) * 100} className="mb-4" />
+              )}
               
               {questions.length === 0 ? (
                 <div className="text-center">
                   <p className="text-gray-500">Nenhuma pergunta encontrada para este módulo.</p>
+                </div>
+              ) : editingSpecificQuestion ? (
+                // Modo de edição de questão específica
+                <div className="space-y-4">
+                  <div className="text-sm text-muted-foreground">
+                    Editando questão {currentQuestionIndex + 1} de {questions.length}
+                  </div>
+                  <div key={questions[currentQuestionIndex]?.id} className="space-y-2">
+                    {renderQuestion(questions[currentQuestionIndex])}
+                  </div>
                 </div>
               ) : (
                 questions.map((question) => (
@@ -616,38 +691,46 @@ const Quiz = () => {
               )}
             </CardContent>
             
-            <CardFooter className="flex justify-between items-center">
-              <Button
-                variant="secondary"
-                onClick={handlePrevModule}
-                disabled={currentModuleIndex === 0 || isSubmitting}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Anterior
-              </Button>
-              
-              <div className="flex items-center gap-2">
-                {currentModuleIndex === modules.length - 1 ? (
-                  <Button 
-                    onClick={() => navigate('/quiz/review')}
-                    disabled={isSubmitting}
-                  >
-                    Revisar e Finalizar
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleNextModule}
-                    disabled={isSubmitting}
-                  >
-                    Próximo
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </CardFooter>
+            {!editingSpecificQuestion && (
+              <CardFooter className="flex justify-between items-center">
+                <Button
+                  variant="secondary"
+                  onClick={handlePrevModule}
+                  disabled={currentModuleIndex === 0 || isSubmitting}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Anterior
+                </Button>
+                
+                <div className="flex items-center gap-2">
+                  {currentModuleIndex === modules.length - 1 ? (
+                    <Button 
+                      onClick={() => navigate('/quiz/review')}
+                      disabled={isSubmitting}
+                    >
+                      Revisar e Finalizar
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleNextModule}
+                      disabled={isSubmitting}
+                    >
+                      Próximo
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </CardFooter>
+            )}
           </Card>
         )}
+        
+        {/* Controles de edição quando em modo de edição */}
+        <QuizEditControls 
+          onSave={() => Promise.resolve()}
+          isLoading={isSubmitting}
+        />
       </div>
       
       <SiteFooter />

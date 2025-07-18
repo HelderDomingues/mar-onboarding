@@ -23,31 +23,20 @@ interface DebouncedInputProps {
 
 const DebouncedInput: React.FC<DebouncedInputProps> = ({ value, onChange, type = "text", placeholder, className }) => {
   const [localValue, setLocalValue] = useState(value);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setLocalValue(value);
   }, [value]);
 
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setLocalValue(newValue);
+  };
 
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+  const handleBlur = () => {
+    if (localValue !== value) {
+      onChange(localValue);
     }
-
-    timeoutRef.current = setTimeout(() => {
-      onChange(newValue);
-    }, 500);
   };
 
   return (
@@ -55,6 +44,7 @@ const DebouncedInput: React.FC<DebouncedInputProps> = ({ value, onChange, type =
       type={type}
       value={localValue}
       onChange={handleChange}
+      onBlur={handleBlur}
       placeholder={placeholder}
       className={className}
     />
@@ -71,37 +61,27 @@ interface DebouncedTextareaProps {
 
 const DebouncedTextarea: React.FC<DebouncedTextareaProps> = ({ value, onChange, placeholder, className }) => {
   const [localValue, setLocalValue] = useState(value);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setLocalValue(value);
   }, [value]);
 
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     setLocalValue(newValue);
+  };
 
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+  const handleBlur = () => {
+    if (localValue !== value) {
+      onChange(localValue);
     }
-
-    timeoutRef.current = setTimeout(() => {
-      onChange(newValue);
-    }, 500);
   };
 
   return (
     <Textarea
       value={localValue}
       onChange={handleChange}
+      onBlur={handleBlur}
       placeholder={placeholder}
       className={className}
     />

@@ -249,9 +249,9 @@ const QuizReviewPage = () => {
     
     const targetQuestion = moduleQuestions[questionIndex];
     if (targetQuestion) {
-      // Calcular o módulo correto baseado no order_number do módulo + 1 (base 1)
-      const moduleNumber = targetModule.order_number + 1;
-      navigate(`/quiz?module=${moduleNumber}&question=${targetQuestion.order_number}`);
+      // Navegar para o quiz com parâmetros para ir direto à questão específica
+      const moduleNumber = targetModule.order_number;
+      navigate(`/quiz?module=${moduleNumber}&question=${targetQuestion.order_number}&edit=true`);
     }
   };
 
