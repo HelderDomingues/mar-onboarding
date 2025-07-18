@@ -182,7 +182,7 @@ const QuizEditor = () => {
                         <QuizEditorDialog type="question" onSave={refreshData} trigger={<Button size="sm">
                               <PlusCircle className="h-4 w-4 mr-2" />
                               Nova Questão
-                            </Button>} className="text-blue-200" />
+                            </Button>} className="text-slate-200" />
                       </div>
                     </CardHeader>
                     <CardContent>
