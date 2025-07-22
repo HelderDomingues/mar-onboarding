@@ -19,6 +19,7 @@ interface QuizEditorDialogProps {
   questionId?: string;
   onSave: () => void;
   trigger: React.ReactNode;
+  className?: string;
 }
 
 export const QuizEditorDialog: React.FC<QuizEditorDialogProps> = ({
