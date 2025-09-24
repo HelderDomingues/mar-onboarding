@@ -50,11 +50,11 @@ import {
 } from "lucide-react";
 import { logger } from "@/utils/logger";
 import { 
-  sendQuizDataToWebhook, 
   getQuizCompletedAnswers, 
   formatCompletedAnswersToCSV, 
   formatCompletedAnswersForPDF 
 } from "@/utils/supabaseUtils";
+import { sendQuizDataToWebhook } from "@/utils/webhookUtils";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 
@@ -417,20 +417,17 @@ const QuizResponses = () => {
     try {
       setProcessingWebhook(submissionId);
       
-      const success = await sendQuizDataToWebhook(
-        submissions.find(s => s.id === submissionId)?.user_id || '', 
-        submissionId
-      );
+      const result = await sendQuizDataToWebhook(submissionId);
       
-      if (success) {
+      if (result.success) {
         toast({
           title: "Webhook executado com sucesso",
-          description: "Os dados foram enviados para o Make.com com sucesso.",
+          description: result.message,
         });
         
         fetchSubmissions();
       } else {
-        throw new Error("Falha ao processar webhook");
+        throw new Error(result.message || "Falha ao processar webhook");
       }
     } catch (error: any) {
       logger.error('Erro ao executar webhook:', {

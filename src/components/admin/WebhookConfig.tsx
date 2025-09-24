@@ -1,73 +1,37 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle, Loader2, Send } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { sendQuizDataToWebhook } from '@/utils/webhookUtils';
-import { useToast } from '@/components/ui/use-toast';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { testWebhookConnection } from '@/utils/webhookUtils';
+import { toast } from 'sonner';
+import { CheckCircle, AlertCircle, Globe } from 'lucide-react';
 
-export function WebhookConfig() {
-  const { toast } = useToast();
-  const [webhookUrl, setWebhookUrl] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [testResult, setTestResult] = useState<{
-    success: boolean;
-    message: string;
-  } | null>(null);
+const WebhookConfig = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [testResult, setTestResult] = useState<{success: boolean, message: string} | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!webhookUrl) {
-      toast({
-        title: "URL não fornecida",
-        description: "Por favor, insira a URL do webhook do Make.com",
-        variant: "destructive"
-      });
-      return;
-    }
-    
+  const handleTestConnection = async () => {
     setIsLoading(true);
     setTestResult(null);
     
     try {
-      // Test webhook by attempting to send test data
-      const testSuccess = await sendQuizDataToWebhook('test-user', 'test-submission');
-      
-      const result = {
-        success: testSuccess,
-        message: testSuccess ? 'Webhook conectado com sucesso' : 'Falha ao conectar com webhook'
-      };
+      const result = await testWebhookConnection();
       
       setTestResult(result);
       
-      if (testSuccess) {
-        toast({
-          title: "Webhook configurado",
-          description: "URL do webhook configurada com sucesso",
-          variant: "default"
-        });
+      if (result.success) {
+        toast.success('Conexão com Make.com bem-sucedida!');
       } else {
-        toast({
-          title: "Falha na conexão",
-          description: result.message,
-          variant: "destructive"
-        });
+        toast.error('Falha na conexão com Make.com');
       }
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: error instanceof Error ? error.message : 'Erro desconhecido ao configurar webhook',
-        variant: "destructive"
-      });
-      
+      console.error('Erro ao testar webhook:', error);
       setTestResult({
         success: false,
-        message: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro inesperado ao testar a conexão.'
       });
+      toast.error('Erro inesperado ao testar a conexão');
     } finally {
       setIsLoading(false);
     }
@@ -76,68 +40,56 @@ export function WebhookConfig() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-xl">Configuração do Webhook (Make.com)</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Globe className="h-5 w-5" />
+          Webhook Make.com
+        </CardTitle>
         <CardDescription>
-          Configure a URL do webhook para envio dos dados do questionário para o Make.com
+          Sistema integrado com Make.com para automação. O webhook está pré-configurado e pronto para uso.
         </CardDescription>
       </CardHeader>
-      
-      <form onSubmit={handleSubmit}>
-        <CardContent>
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="webhook-url">URL do Webhook</Label>
-              <Input
-                id="webhook-url"
-                placeholder="https://hook.eu1.make.com/seu-token-aqui"
-                value={webhookUrl}
-                onChange={(e) => setWebhookUrl(e.target.value)}
-                disabled={isLoading}
-                required
-              />
-              <p className="text-sm text-muted-foreground">
-                Insira a URL completa do webhook fornecida pelo Make.com
-              </p>
-            </div>
-            
-            {testResult && (
-              <Alert variant={testResult.success ? "default" : "destructive"} className="mt-4">
-                {testResult.success ? (
-                  <CheckCircle className="h-4 w-4" />
-                ) : (
-                  <AlertCircle className="h-4 w-4" />
-                )}
-                <AlertTitle>
-                  {testResult.success ? "Conexão estabelecida" : "Falha na conexão"}
-                </AlertTitle>
-                <AlertDescription>
-                  {testResult.message}
-                </AlertDescription>
-              </Alert>
-            )}
+      <CardContent className="space-y-4">
+        <div className="bg-slate-50 p-4 rounded-lg">
+          <h4 className="font-medium mb-2">Status da Configuração</h4>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <CheckCircle className="h-4 w-4 text-green-500" />
+            Webhook configurado com Make.com
           </div>
-        </CardContent>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+            <CheckCircle className="h-4 w-4 text-green-500" />
+            URL: https://hook.eu2.make.com/*** (oculta por segurança)
+          </div>
+        </div>
         
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" type="button" disabled={isLoading}>
-            Cancelar
-          </Button>
-          
-          <Button type="submit" disabled={isLoading || !webhookUrl}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Testando...
-              </>
-            ) : (
-              <>
-                <Send className="mr-2 h-4 w-4" />
-                Testar e Salvar
-              </>
-            )}
-          </Button>
-        </CardFooter>
-      </form>
+        {testResult && (
+          <Alert variant={testResult.success ? "default" : "destructive"}>
+            <AlertDescription className="flex items-center gap-2">
+              {testResult.success ? (
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              ) : (
+                <AlertCircle className="h-4 w-4 text-red-500" />
+              )}
+              {testResult.message}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        <Button 
+          onClick={handleTestConnection}
+          disabled={isLoading}
+          className="w-full"
+          variant="outline"
+        >
+          {isLoading ? 'Testando Conexão...' : 'Testar Conexão com Make.com'}
+        </Button>
+        
+        <div className="text-xs text-muted-foreground mt-4">
+          <p>ℹ️ O webhook é ativado automaticamente quando um questionário é completado.</p>
+          <p>⚡ Você também pode reenviar dados manualmente através da lista de respostas.</p>
+        </div>
+      </CardContent>
     </Card>
   );
-}
+};
+
+export default WebhookConfig;

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ServiceRoleConfig from '@/components/admin/ServiceRoleConfig';
-import { WebhookConfig } from '@/components/admin/WebhookConfig';
+import WebhookConfig from '@/components/admin/WebhookConfig';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { useAuth } from '@/hooks/useAuth';

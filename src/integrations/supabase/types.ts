@@ -324,6 +324,7 @@ export type Database = {
           started_at: string
           user_email: string
           user_id: string
+          webhook_processed: boolean | null
         }
         Insert: {
           completed?: boolean
@@ -334,6 +335,7 @@ export type Database = {
           started_at?: string
           user_email: string
           user_id: string
+          webhook_processed?: boolean | null
         }
         Update: {
           completed?: boolean
@@ -344,6 +346,7 @@ export type Database = {
           started_at?: string
           user_email?: string
           user_id?: string
+          webhook_processed?: boolean | null
         }
         Relationships: []
       }

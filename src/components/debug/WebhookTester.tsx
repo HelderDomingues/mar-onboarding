@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, AlertCircle, CheckCircle, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { testarConexaoWebhook } from '@/utils/webhookService';
+import { testWebhookConnection } from '@/utils/webhookUtils';
 import { Separator } from '@/components/ui/separator';
 
 const WebhookTester = () => {
@@ -20,7 +20,7 @@ const WebhookTester = () => {
     setShowDetails(false);
     
     try {
-      const testResult = await testarConexaoWebhook();
+      const testResult = await testWebhookConnection();
       setResult(testResult);
       
       toast({

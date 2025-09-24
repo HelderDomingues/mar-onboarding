@@ -491,41 +491,6 @@ export function formatCompletedAnswersForPDF(completedAnswers) {
 }
 
 /**
- * Função para enviar dados do questionário para webhook
- */
-export async function sendQuizDataToWebhook(userId: string, submissionId: string) {
-  try {
-    logger.info('Iniciando envio de dados para webhook', {
-      tag: 'Webhook',
-      data: { userId, submissionId }
-    });
-    
-    // Buscar dados completos do questionário
-    const quizData = await getQuizCompletedAnswers(submissionId);
-    
-    if (!quizData) {
-      throw new Error('Não foi possível obter os dados completos do questionário');
-    }
-    
-    // Log webhook processing (removed direct update due to schema constraints)
-    logger.info('Dados do questionário processados pelo webhook', {
-      tag: 'Webhook',
-      data: { submissionId }
-    });
-      
-    
-    // Simulação de envio bem-sucedido
-    return true;
-  } catch (error) {
-    logger.error('Erro ao enviar dados para webhook', {
-      tag: 'Webhook',
-      data: { userId, submissionId, error }
-    });
-    return false;
-  }
-}
-
-/**
  * Função para atualizar o progresso da submissão
  */
 export async function updateSubmissionProgress(submissionId: string, currentModule: number): Promise<void> {
