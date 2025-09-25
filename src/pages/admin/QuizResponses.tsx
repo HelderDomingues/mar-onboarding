@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseAdminClient } from "@/utils/supabaseAdminClient";
 import { useNavigate } from "react-router-dom";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -46,8 +46,7 @@ import {
   Filter, 
   MoreVertical, 
   ExternalLink, 
-  FileSpreadsheet,
-  Trash2
+  FileSpreadsheet
 } from "lucide-react";
 import { logger } from "@/utils/logger";
 import { 
@@ -102,15 +101,27 @@ const QuizResponses = () => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase.functions.invoke('get-all-submissions', {
-        body: { statusFilter },
-      });
+      const supabaseAdmin = getSupabaseAdminClient();
+      let query = supabaseAdmin
+        .from('quiz_submissions')
+        .select('id, user_id, user_email, started_at, completed_at, completed')
+        .order('started_at', { ascending: false });
+
+      if (statusFilter === 'complete') {
+        query = query.eq('completed', true);
+      } else if (statusFilter === 'incomplete') {
+        query = query.eq('completed', false);
+      }
+      // Por padrão, mostrar todos os registros se nenhum filtro for selecionado
+      // Removed webhook_processed filters as field doesn't exist in schema
+
+      const { data, error } = await query;
 
       if (error) {
         throw error;
       }
       
-      setSubmissions(data.submissions as QuizSubmission[]);
+      setSubmissions(data as unknown as QuizSubmission[]);
       setSelectedRows([]);
     } catch (error: any) {
       logger.error('Erro ao buscar submissões:', {
@@ -195,25 +206,44 @@ const QuizResponses = () => {
   
   const downloadDetailedCSV = async (submissionId: string) => {
     try {
-      const { data: details, error } = await supabase.functions.invoke('get-submission-details', {
-        body: { submission_id: submissionId },
-      });
+      const supabaseAdmin = getSupabaseAdminClient();
+      const { data: submission, error: submissionError } = await supabaseAdmin
+        .from('quiz_submissions')
+        .select('*')
+        .eq('id', submissionId)
+        .single();
 
-      if (error) throw error;
+      if (submissionError) throw submissionError;
 
-      const { submission, answers } = details;
+      // Simplified query to avoid type recursion
+      const { data: answers, error: answersError } = await supabaseAdmin
+        .from('quiz_answers')
+        .select('question_id, answer')
+        .eq('submission_id', submissionId);
+
+      if (answersError) throw answersError;
+
+      const { data: questions, error: questionsError } = await supabaseAdmin
+        .from('quiz_questions')
+        .select('*');
+
+      if (questionsError) throw questionsError;
 
       const headers = [
         'ID da Pergunta', 'Texto da Pergunta', 'Módulo', 'Tipo', 'Resposta'
       ];
       
+      const questionMap = new Map();
+      questions.forEach(q => {
+        questionMap.set(q.id, q);
+      });
+
       const rows = answers.map(a => {
-        const question = a.quiz_questions || {};
-        const module = question.quiz_modules || {};
+        const question = questionMap.get(a.question_id) || {};
         return [
-          question.id,
-          question.text || 'N/A',
-          module.title || 'N/A',
+          a.question_id,
+          question.text || 'N/A', // Use question.text instead of a.question_text
+          question.module_id || 'N/A',
           question.type || 'N/A',
           a.answer || 'Sem resposta'
         ];
@@ -420,33 +450,6 @@ const QuizResponses = () => {
   const viewDetails = (submissionId: string) => {
     navigate(`/quiz/view-answers?id=${submissionId}&admin=true`);
   };
-
-  const handleDeleteSubmission = async (submissionId: string) => {
-    if (!window.confirm("Tem certeza que deseja deletar esta submissão? Esta ação não pode ser desfeita.")) {
-      return;
-    }
-    try {
-      const { error } = await supabase.functions.invoke('delete-quiz-submission', {
-        body: { submission_id: submissionId },
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      toast({
-        title: "Submissão deletada",
-        description: "A submissão e suas respostas foram removidas.",
-      });
-      fetchSubmissions(); // Recarrega a lista
-    } catch (error: any) {
-      toast({
-        title: "Erro ao deletar",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
   
   const toggleSelectAll = () => {
     if (selectedRows.length === submissions.length) {
@@ -500,13 +503,6 @@ const QuizResponses = () => {
         >
           <Send className={`h-4 w-4 mr-2 ${processingWebhook === submission.id ? 'animate-pulse' : ''}`} />
           {processingWebhook === submission.id ? 'Enviando...' : 'Enviar para webhook'}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => handleDeleteSubmission(submission.id)}
-          className="text-red-600"
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Deletar Submissão
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

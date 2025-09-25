@@ -1,5 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
-import { getSupabaseAdminClient } from '@/utils/supabaseAdminClient';
+import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
 import { QuizAnswer, QuizQuestion } from '@/types/quiz';
 
@@ -34,20 +33,88 @@ export async function isQuizComplete(userId: string): Promise<boolean> {
  */
 export async function completeQuizManually(userId: string) {
   try {
-    logger.info('Invocando função para completar questionário manualmente', {
+    logger.info('Completando questionário manualmente', {
       tag: 'Quiz',
       data: { userId }
     });
 
-    const { data, error } = await supabase.functions.invoke('complete-quiz-manually', {
-      body: { user_id: userId },
-    });
+    // Tenta usar RPC para completar o questionário primeiro (método preferido)
+    try {
+      const { data, error } = await supabase.rpc('complete_quiz', { user_id: userId });
 
-    if (error) {
-      throw error;
+      if (!error) {
+        logger.info('Questionário completado via RPC', {
+          tag: 'Quiz',
+          data: { userId, method: 'rpc' }
+        });
+
+        return { success: true, method: 'rpc' };
+      }
+    } catch (rpcError) {
+      logger.warn('Falha no método RPC para completar questionário', {
+        tag: 'Quiz',
+        data: { userId, error: rpcError }
+      });
     }
 
-    return { success: true, ...data };
+    // Método alternativo: atualização direta via admin
+    const { data: submission, error: fetchError } = await supabaseAdmin
+      .from('quiz_submissions')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (fetchError) {
+      throw fetchError;
+    }
+
+    if (submission) {
+      const { error: updateError } = await supabaseAdmin
+        .from('quiz_submissions')
+        .update({
+          completed: true,
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', submission.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      logger.info('Questionário completado via atualização direta', {
+        tag: 'Quiz',
+        data: { userId, method: 'direct_update' }
+      });
+
+      return { success: true, method: 'direct_update' };
+    } else {
+      // Buscar email do usuário antes de criar submissão
+      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+      const userEmail = userData?.user?.email || '';
+
+      // Caso não encontre submissão, cria uma já completa
+      const { data: newSubmission, error: createError } = await supabaseAdmin
+        .from('quiz_submissions')
+        .insert([{
+          user_id: userId,
+          user_email: userEmail,
+          current_module: 8,
+          completed: true,
+          completed_at: new Date().toISOString()
+        }])
+        .select();
+
+      if (createError) {
+        throw createError;
+      }
+
+      logger.info('Questionário completado via criação de submissão', {
+        tag: 'Quiz',
+        data: { userId, method: 'create_complete' }
+      });
+
+      return { success: true, method: 'create_complete' };
+    }
   } catch (error) {
     logger.error('Erro ao completar questionário manualmente', {
       tag: 'Quiz',
@@ -243,14 +310,95 @@ export function processQuizAnswersToSimplified(questions, answers) {
  */
 export async function getQuizCompletedAnswers(submissionId: string) {
   try {
-    const { data, error } = await supabase.functions.invoke('get-quiz-completed-answers', {
-      body: { submission_id: submissionId },
+    // Buscar detalhes da submissão
+    const { data: submission, error: submissionError } = await supabaseAdmin
+      .from('quiz_submissions')
+      .select('*')
+      .eq('id', submissionId)
+      .single();
+
+    if (submissionError || !submission) {
+      throw submissionError || new Error('Submissão não encontrada');
+    }
+
+    // Buscar todas as respostas
+    const { data: answers, error: answersError } = await supabaseAdmin
+      .from('quiz_answers')
+      .select('*')
+      .eq('submission_id', submissionId);
+
+    if (answersError) {
+      throw answersError;
+    }
+
+    // Buscar todas as perguntas
+    const { data: questions, error: questionsError } = await supabaseAdmin
+      .from('quiz_questions')
+      .select(`
+        *,
+        quiz_modules!inner(
+          id, title, order_number
+        )
+      `);
+
+    if (questionsError) {
+      throw questionsError;
+    }
+
+    // Mapear perguntas por ID para acesso rápido
+    const questionsMap = new Map();
+    questions.forEach(q => {
+      questionsMap.set(q.id, {
+        ...q,
+        module_title: q.quiz_modules.title,
+        module_number: q.quiz_modules.order_number
+      });
     });
 
-    if (error) {
-      throw error;
-    }
-    return data;
+    // Processar respostas
+    const processedAnswers = answers.map(answer => {
+      const question = questionsMap.get(answer.question_id);
+      if (!question) return null;
+
+      let formattedAnswer = answer.answer || '';
+
+      // Tentar formatar JSON
+      try {
+        if (formattedAnswer.startsWith('[') || formattedAnswer.startsWith('{')) {
+          const parsed = JSON.parse(formattedAnswer);
+          if (Array.isArray(parsed)) {
+            formattedAnswer = parsed.join(', ');
+          } else if (typeof parsed === 'object') {
+            formattedAnswer = Object.values(parsed).join(', ');
+          }
+        }
+      } catch (e) {
+        // Manter como está se falhar
+      }
+
+      return {
+        question_id: answer.question_id,
+        question_text: question.text,
+        answer: formattedAnswer,
+        question_type: question.type,
+        module_id: question.module_id,
+        module_title: question.module_title,
+        module_number: question.module_number
+      };
+    }).filter(Boolean);
+
+    // Organizar por módulo e número da pergunta
+    processedAnswers.sort((a, b) => {
+      if (a.module_number !== b.module_number) {
+        return a.module_number - b.module_number;
+      }
+      return a.question_id.localeCompare(b.question_id);
+    });
+
+    return {
+      ...submission,
+      answers: processedAnswers
+    };
   } catch (error) {
     logger.error('Erro ao obter respostas completas do questionário', {
       tag: 'Admin',

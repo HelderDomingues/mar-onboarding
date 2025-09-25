@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
+import { getSupabaseAdminClient } from '@/utils/supabaseAdminClient';
 
 // Função para obter a URL do webhook da configuração do sistema
 const getWebhookUrl = async (): Promise<string> => {
@@ -35,63 +36,125 @@ export async function sendQuizDataToWebhook(
 
     const webhookUrl = await getWebhookUrl();
 
-    // Invoca a Edge Function para buscar todos os dados da submissão de forma segura
-    const { data: submissionDetails, error: functionError } = await supabase.functions.invoke(
-      'get-submission-details',
-      { body: { submission_id: submissionId } }
-    );
+    // Buscar dados da submissão usando cliente administrativo
+    const supabaseAdmin = getSupabaseAdminClient();
+    const { data: submission, error: submissionError } = await supabaseAdmin
+      .from('quiz_submissions')
+      .select('*')
+      .eq('id', submissionId)
+      .single();
 
-    if (functionError) {
-      const message = 'Erro ao buscar detalhes da submissão via Edge Function.';
-      logger.error(message, { tag: 'Webhook', data: { submissionId, error: functionError.message } });
+    if (submissionError || !submission) {
+      const message = 'Submissão não encontrada';
+      logger.error(message, { tag: 'Webhook', data: { submissionId, submissionError } });
       return { success: false, message };
     }
 
-    const { submission, profile, answers } = submissionDetails;
-
-    // Verificar se a submissão já foi processada
+    // Verificar se já foi processado
     if (submission.webhook_processed) {
       const message = 'Webhook já processado para esta submissão';
       logger.info(message, { tag: 'Webhook', data: { submissionId } });
       return { success: true, message };
     }
 
-    // Monta a estrutura aninhada a partir dos dados retornados
-    const modulos: any = {};
-    answers.forEach(item => {
-      if (item.quiz_questions && item.quiz_questions.quiz_modules) {
-        const modulo = item.quiz_questions.quiz_modules;
-        const pergunta = item.quiz_questions;
+    // Buscar dados do perfil usando cliente administrativo
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('*')
+      .eq('id', submission.user_id)
+      .single();
 
-        if (!modulos[modulo.order_number]) {
-          modulos[modulo.order_number] = {
-            NomeModulo: modulo.title,
-            OrdemModulo: modulo.order_number,
-            Respostas: []
-          };
-        }
+    // Buscar respostas completas da tabela específica
+    const { data: respostas } = await supabaseAdmin
+      .from('quiz_respostas_completas')
+      .select('*')
+      .eq('submission_id', submissionId)
+      .single();
 
-        modulos[modulo.order_number].Respostas.push({
-          Pergunta: pergunta.text,
-          Resposta: item.answer || '',
-          OrdemPergunta: pergunta.order_number
-        });
+    let respostasFormatadas = {};
+    let userEmail = submission.user_email;
+    let userName = profile?.full_name || '';
+
+    // Verificar se as respostas estão estruturadas corretamente na tabela de respostas completas
+    if (respostas?.respostas &&
+        typeof respostas.respostas === 'object' &&
+        Object.keys(respostas.respostas).length > 1) {
+
+      // Usar respostas já consolidadas
+      respostasFormatadas = respostas.respostas;
+      userEmail = respostas.user_email || submission.user_email;
+      userName = respostas.user_name || userName;
+
+      logger.info('Usando respostas da tabela consolidada', {
+        tag: 'Webhook',
+        data: { submissionId, questoesEncontradas: Object.keys(respostasFormatadas).length }
+      });
+
+    } else {
+      // Buscar respostas individuais da tabela quiz_answers
+      logger.info('Buscando respostas individuais da tabela quiz_answers', {
+        tag: 'Webhook',
+        data: { submissionId }
+      });
+
+      const { data: answers, error: answersError } = await supabaseAdmin
+        .from('quiz_answers')
+        .select(`
+          answer,
+          quiz_questions!inner (
+            text,
+            type,
+            order_number
+          )
+        `)
+        .eq('submission_id', submissionId)
+        .order('quiz_questions.order_number');
+
+      if (answersError || !answers || answers.length === 0) {
+        const message = 'Nenhuma resposta encontrada para esta submissão';
+        logger.error(message, { tag: 'Webhook', data: { submissionId, answersError } });
+        return { success: false, message };
       }
-    });
 
-    const modulosArray = Object.values(modulos);
+      // Estruturar respostas no formato adequado
+      answers.forEach((item, index) => {
+        if (item.quiz_questions) {
+          const questionText = item.quiz_questions.text;
+          const answer = item.answer || '';
 
-    // Prepara o payload final
+          // Usar tanto o texto da pergunta quanto um identificador numerado
+          respostasFormatadas[`Pergunta_${index + 1}`] = questionText;
+          respostasFormatadas[`Resposta_${index + 1}`] = answer;
+          respostasFormatadas[questionText] = answer;
+        }
+      });
+
+      logger.info('Respostas estruturadas com sucesso', {
+        tag: 'Webhook',
+        data: {
+          submissionId,
+          totalRespostas: answers.length,
+          camposGerados: Object.keys(respostasFormatadas).length
+        }
+      });
+    }
+
+    // Preparar payload otimizado para Make.com
     const payload = {
+      // Metadados essenciais
       "ID_Submissao": submissionId,
       "ID_Usuario": submission.user_id,
       "Data_Submissao": submission.completed_at || submission.created_at,
       "Timestamp": new Date().toISOString(),
       "Origem": "Sistema MAR - Crie Valor Consultoria",
-      "Email": submission.user_email,
-      "Nome": profile?.full_name || '',
+
+      // Dados do usuário
+      "Email": userEmail,
+      "Nome": userName,
       "Telefone": profile?.phone || '',
-      "Modulos": modulosArray
+
+      // Respostas do questionário (estrutura plana)
+      ...respostasFormatadas
     };
 
     logger.info('Enviando payload para webhook', {
@@ -121,18 +184,17 @@ export async function sendQuizDataToWebhook(
       return { success: false, message };
     }
 
-    // Invoca a Edge Function para marcar como processado
-    const { error: updateError } = await supabase.functions.invoke(
-      'mark-submission-processed',
-      { body: { submission_id: submissionId } }
-    );
+    // Marcar como processado usando cliente administrativo
+    const { error: updateError } = await supabaseAdmin
+      .from('quiz_submissions')
+      .update({ webhook_processed: true })
+      .eq('id', submissionId);
 
     if (updateError) {
-      logger.error('Erro ao invocar a função para marcar como processado', {
+      logger.error('Erro ao marcar webhook como processado', {
         tag: 'Webhook',
-        data: { submissionId, error: updateError.message }
+        data: { submissionId, updateError }
       });
-      // Não tratamos como erro fatal, apenas logamos.
     }
 
     const message = 'Dados enviados com sucesso para o webhook';
