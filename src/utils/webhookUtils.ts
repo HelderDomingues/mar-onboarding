@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
+import { getSupabaseAdminClient } from '@/utils/supabaseAdminClient';
 
 // Função para obter a URL do webhook da configuração do sistema
 const getWebhookUrl = async (): Promise<string> => {
@@ -35,8 +36,9 @@ export async function sendQuizDataToWebhook(
 
     const webhookUrl = await getWebhookUrl();
 
-    // Buscar dados da submissão
-    const { data: submission, error: submissionError } = await supabase
+    // Buscar dados da submissão usando cliente administrativo
+    const supabaseAdmin = getSupabaseAdminClient();
+    const { data: submission, error: submissionError } = await supabaseAdmin
       .from('quiz_submissions')
       .select('*')
       .eq('id', submissionId)
@@ -55,8 +57,8 @@ export async function sendQuizDataToWebhook(
       return { success: true, message };
     }
 
-    // Buscar respostas completas
-    const { data: respostas, error: respostasError } = await supabase
+    // Buscar respostas completas usando cliente administrativo
+    const { data: respostas, error: respostasError } = await supabaseAdmin
       .from('quiz_respostas_completas')
       .select('*')
       .eq('submission_id', submissionId)
@@ -68,8 +70,8 @@ export async function sendQuizDataToWebhook(
       return { success: false, message };
     }
 
-    // Buscar dados do perfil
-    const { data: profile } = await supabase
+    // Buscar dados do perfil usando cliente administrativo
+    const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('*')
       .eq('id', submission.user_id)
@@ -120,8 +122,8 @@ export async function sendQuizDataToWebhook(
       return { success: false, message };
     }
 
-    // Marcar como processado
-    const { error: updateError } = await supabase
+    // Marcar como processado usando cliente administrativo
+    const { error: updateError } = await supabaseAdmin
       .from('quiz_submissions')
       .update({ webhook_processed: true })
       .eq('id', submissionId);

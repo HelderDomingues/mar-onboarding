@@ -85,7 +85,8 @@ export const addLogEntry = (
       const existingLogs = JSON.parse(localStorage.getItem('mar_system_logs') || '[]');
       existingLogs.push(entry);
       // Limitar tamanho do localStorage para evitar estouro de quota
-      localStorage.setItem('mar_system_logs', JSON.stringify(existingLogs.slice(-MAX_LOG_SIZE)));
+      const logsToSave = existingLogs.slice(-MAX_LOG_SIZE);
+      localStorage.setItem('mar_system_logs', JSON.stringify(logsToSave));
     }
   } catch (e) {
     console.error('Erro ao salvar logs no localStorage:', e);
@@ -93,24 +94,47 @@ export const addLogEntry = (
 };
 
 /**
- * Função para obter todos os logs
+ * Função para obter todos os logs (combinando memória e localStorage)
  */
 export const getAllLogs = (): LogEntry[] => {
-  return [...inMemoryLogs];
+  const allLogs = [...inMemoryLogs];
+  
+  // Tenta carregar logs adicionais do localStorage
+  try {
+    if (typeof window !== 'undefined') {
+      const savedLogs = localStorage.getItem('mar_system_logs');
+      if (savedLogs) {
+        const parsedLogs = JSON.parse(savedLogs) as LogEntry[];
+        
+        // Mescla com logs em memória, evitando duplicatas baseadas no timestamp
+        const memoryTimestamps = new Set(allLogs.map(log => log.timestamp));
+        parsedLogs.forEach(log => {
+          if (!memoryTimestamps.has(log.timestamp)) {
+            allLogs.push(log);
+          }
+        });
+      }
+    }
+  } catch (e) {
+    console.error('Erro ao carregar logs do localStorage:', e);
+  }
+  
+  // Ordena por timestamp mais recente primeiro
+  return allLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 };
 
 /**
  * Função para obter logs por tipo
  */
 export const getLogsByType = (type: LogEntry['type']): LogEntry[] => {
-  return inMemoryLogs.filter(log => log.type === type);
+  return getAllLogs().filter(log => log.type === type);
 };
 
 /**
  * Função para obter logs por usuário
  */
 export const getLogsByUser = (userId: string): LogEntry[] => {
-  return inMemoryLogs.filter(log => log.userId === userId);
+  return getAllLogs().filter(log => log.userId === userId);
 };
 
 /**
@@ -165,7 +189,7 @@ export const exportLogsToFile = async (userId: string): Promise<boolean> => {
       return false;
     }
     
-    const logText = JSON.stringify(inMemoryLogs, null, 2);
+    const logText = JSON.stringify(getAllLogs(), null, 2);
     const blob = new Blob([logText], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     
