@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabaseAdmin } from "@/integrations/supabase/client";
+import { getSupabaseAdminClient } from "@/utils/supabaseAdminClient";
 import { useNavigate } from "react-router-dom";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -101,6 +101,7 @@ const QuizResponses = () => {
     try {
       setLoading(true);
       
+      const supabaseAdmin = getSupabaseAdminClient();
       let query = supabaseAdmin
         .from('quiz_submissions')
         .select('id, user_id, user_email, started_at, completed_at, completed')
@@ -205,6 +206,7 @@ const QuizResponses = () => {
   
   const downloadDetailedCSV = async (submissionId: string) => {
     try {
+      const supabaseAdmin = getSupabaseAdminClient();
       const { data: submission, error: submissionError } = await supabaseAdmin
         .from('quiz_submissions')
         .select('*')

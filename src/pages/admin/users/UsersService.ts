@@ -1,5 +1,6 @@
 
-import { supabase, supabaseAdmin } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseAdminClient } from "@/utils/supabaseAdminClient";
 import { addLogEntry } from "@/utils/projectLog";
 import { logger } from "@/utils/logger";
 import type { UserProfile, ConfigResult } from "@/types/admin";
@@ -8,9 +9,7 @@ import { ServiceRoleConfig } from "@/config/serviceRole";
 // Função para obter emails dos usuários usando client admin
 export async function getUserEmails() {
   try {
-    if (!supabaseAdmin) {
-      throw new Error('Acesso admin não configurado');
-    }
+    const supabaseAdmin = getSupabaseAdminClient();
     
     const { data, error } = await supabaseAdmin.auth.admin.listUsers();
     
@@ -97,6 +96,9 @@ export const fetchUserProfiles = async (userId: string | undefined) => {
     
     const emailData = await getUserEmails();
     
+    // Verificar se realmente obteve dados do admin
+    const hasEmailAccess = emailData && Array.isArray(emailData) && emailData.length > 0;
+    
     const { data: adminRolesData, error: adminRolesError } = await supabase
       .from('user_roles')
       .select('user_id')
@@ -143,7 +145,7 @@ export const fetchUserProfiles = async (userId: string | undefined) => {
     
     return {
       users: processedUsers,
-      hasEmailAccess: emailMap.size > 0
+      hasEmailAccess: hasEmailAccess
     };
   } catch (error: any) {
     logger.error('Erro ao buscar usuários:', {

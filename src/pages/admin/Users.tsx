@@ -35,12 +35,12 @@ const UsersPage = () => {
       setUsers(fetchedUsers);
       
       if (!hasEmailAccess) {
-        setError("Acesso limitado aos dados de email. A função get_users_with_emails pode não estar disponível ou você pode não ter permissões suficientes.");
+        setError("Service role key não configurada ou inválida. Configure para acessar os emails dos usuários.");
       }
     } catch (error: any) {
       toast({
         title: "Erro ao carregar usuários",
-        description: "Ocorreu um problema ao buscar os dados dos usuários.",
+        description: "Verifique se a service role key está configurada corretamente.",
         variant: "destructive",
       });
       
