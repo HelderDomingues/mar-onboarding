@@ -57,25 +57,87 @@ export async function sendQuizDataToWebhook(
       return { success: true, message };
     }
 
-    // Buscar respostas completas usando cliente administrativo
-    const { data: respostas, error: respostasError } = await supabaseAdmin
-      .from('quiz_respostas_completas')
-      .select('*')
-      .eq('submission_id', submissionId)
-      .single();
-
-    if (respostasError || !respostas) {
-      const message = 'Respostas não encontradas';
-      logger.error(message, { tag: 'Webhook', data: { submissionId, respostasError } });
-      return { success: false, message };
-    }
-
     // Buscar dados do perfil usando cliente administrativo
     const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('*')
       .eq('id', submission.user_id)
       .single();
+
+    // Buscar respostas completas da tabela específica
+    const { data: respostas } = await supabaseAdmin
+      .from('quiz_respostas_completas')
+      .select('*')
+      .eq('submission_id', submissionId)
+      .single();
+
+    let respostasFormatadas = {};
+    let userEmail = submission.user_email;
+    let userName = profile?.full_name || '';
+
+    // Verificar se as respostas estão estruturadas corretamente na tabela de respostas completas
+    if (respostas?.respostas && 
+        typeof respostas.respostas === 'object' && 
+        Object.keys(respostas.respostas).length > 1) {
+      
+      // Usar respostas já consolidadas
+      respostasFormatadas = respostas.respostas;
+      userEmail = respostas.user_email || submission.user_email;
+      userName = respostas.user_name || userName;
+      
+      logger.info('Usando respostas da tabela consolidada', {
+        tag: 'Webhook',
+        data: { submissionId, questoesEncontradas: Object.keys(respostasFormatadas).length }
+      });
+      
+    } else {
+      // Buscar respostas individuais da tabela quiz_answers
+      logger.info('Buscando respostas individuais da tabela quiz_answers', {
+        tag: 'Webhook',
+        data: { submissionId }
+      });
+
+      const { data: answers, error: answersError } = await supabaseAdmin
+        .from('quiz_answers')
+        .select(`
+          answer,
+          quiz_questions!inner (
+            text,
+            type,
+            order_number
+          )
+        `)
+        .eq('submission_id', submissionId)
+        .order('quiz_questions.order_number');
+
+      if (answersError || !answers || answers.length === 0) {
+        const message = 'Nenhuma resposta encontrada para esta submissão';
+        logger.error(message, { tag: 'Webhook', data: { submissionId, answersError } });
+        return { success: false, message };
+      }
+
+      // Estruturar respostas no formato adequado
+      answers.forEach((item, index) => {
+        if (item.quiz_questions) {
+          const questionText = item.quiz_questions.text;
+          const answer = item.answer || '';
+          
+          // Usar tanto o texto da pergunta quanto um identificador numerado
+          respostasFormatadas[`Pergunta_${index + 1}`] = questionText;
+          respostasFormatadas[`Resposta_${index + 1}`] = answer;
+          respostasFormatadas[questionText] = answer;
+        }
+      });
+
+      logger.info('Respostas estruturadas com sucesso', {
+        tag: 'Webhook',
+        data: { 
+          submissionId, 
+          totalRespostas: answers.length,
+          camposGerados: Object.keys(respostasFormatadas).length
+        }
+      });
+    }
 
     // Preparar payload otimizado para Make.com
     const payload = {
@@ -87,12 +149,12 @@ export async function sendQuizDataToWebhook(
       "Origem": "Sistema MAR - Crie Valor Consultoria",
       
       // Dados do usuário
-      "Email": respostas.user_email || submission.user_email,
-      "Nome": respostas.user_name || profile?.full_name || '',
+      "Email": userEmail,
+      "Nome": userName,
       "Telefone": profile?.phone || '',
       
       // Respostas do questionário (estrutura plana)
-      ...(typeof respostas.respostas === 'object' && respostas.respostas ? respostas.respostas : {})
+      ...respostasFormatadas
     };
 
     logger.info('Enviando payload para webhook', {
