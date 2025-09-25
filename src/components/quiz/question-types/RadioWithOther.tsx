@@ -31,19 +31,25 @@ export const RadioWithOther: React.FC<RadioWithOtherProps> = ({
     option.text.toLowerCase().includes('outro')
   );
 
-  const isCustomValue = value && !options.some(option => option.text === value);
-
+fix/quiz-radio-issues-and-optimize
   useEffect(() => {
-    if (isCustomValue && otherOption) {
+    // Tenta encontrar a opção por ID ou por Texto
+    const selectedOption = options.find(opt => opt.id === value || opt.text === value);
+
+    if (selectedOption) {
+      // Encontrou uma opção predefinida
+      setSelectedValue(selectedOption.text);
+      if (otherOption && selectedOption.id !== otherOption.id) {
+        setInternalOtherText('');
+      }
+    } else if (value && otherOption) {
+      // Não encontrou, então deve ser um valor personalizado para "Outro"
       setSelectedValue(otherOption.text);
       setInternalOtherText(value);
     } else {
-      setSelectedValue(value);
-      if (value !== otherOption?.text) {
-        setInternalOtherText('');
-      }
+ fix/quiz-radio-issues-and-optimize
     }
-  }, [value, isCustomValue, otherOption]);
+  }, [value, options, otherOption]);
 
   const handleRadioChange = (selectedOptionText: string) => {
     setSelectedValue(selectedOptionText);
