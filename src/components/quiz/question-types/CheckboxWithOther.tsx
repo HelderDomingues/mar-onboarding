@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -26,14 +26,11 @@ export const CheckboxWithOther: React.FC<CheckboxWithOtherProps> = ({
   maxOptions
 }) => {
   const [otherText, setOtherText] = useState('');
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Encontrar a opção "Outro" ou "Outros"
   const otherOption = options.find(option => 
     option.text.toLowerCase().includes('outro')
   );
 
-  // Separar valores predefinidos dos personalizados
   const predefinedValues = value.filter(v => 
     options.some(option => option.text === v)
   );
@@ -42,7 +39,6 @@ export const CheckboxWithOther: React.FC<CheckboxWithOtherProps> = ({
   );
 
   useEffect(() => {
-    // Se há valores personalizados, mostrar no campo de texto
     if (customValues.length > 0) {
       setOtherText(customValues.join(', '));
     } else {
@@ -59,65 +55,44 @@ export const CheckboxWithOther: React.FC<CheckboxWithOtherProps> = ({
 
     if (otherOption && optionText === otherOption.text) {
       if (checked) {
-        // Adicionar "Outros" e manter texto personalizado se houver
         newValues = [...predefinedValues.filter(v => v !== otherOption.text), otherOption.text];
         if (otherText.trim()) {
           const customTexts = otherText.split(',').map(t => t.trim()).filter(t => t);
           newValues = [...newValues, ...customTexts];
         }
       } else {
-        // Remover "Outros" e textos personalizados
         newValues = predefinedValues.filter(v => v !== otherOption.text);
         setOtherText('');
       }
     } else {
       if (checked) {
-        // Verificar limite máximo se definido
         if (maxOptions && value.length >= maxOptions) {
-          return; // Não adicionar se já atingiu o limite
+          return;
         }
         newValues = [...value, optionText];
       } else {
         newValues = value.filter(v => v !== optionText);
       }
     }
-
     onChange(newValues);
   };
 
   const handleOtherTextChange = (text: string) => {
     setOtherText(text);
-    
-    // Clear previous timeout
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-    
-    // Debounce the onChange call
-    debounceRef.current = setTimeout(() => {
-      if (otherOption && isOtherSelected) {
-        const baseValues = predefinedValues.filter(v => v !== otherOption.text);
-        if (text.trim()) {
-          // Enviar o texto completo como um valor único, preservando espaços
-          onChange([...baseValues, text]);
-        } else {
-          // Se o texto estiver vazio, manter apenas valores predefinidos
-          onChange(baseValues);
-        }
+  };
+
+  const handleOtherTextBlur = () => {
+    if (otherOption && isOtherSelected) {
+      const baseValues = predefinedValues.filter(v => v !== otherOption.text);
+      if (otherText.trim()) {
+        onChange([...baseValues, otherText]);
+      } else {
+        onChange(baseValues);
       }
-    }, 500);
+    }
   };
 
   const reachedMaxLimit = maxOptions && value.length >= maxOptions;
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-  }, []);
 
   return (
     <div className="grid gap-2">
@@ -141,13 +116,13 @@ export const CheckboxWithOther: React.FC<CheckboxWithOtherProps> = ({
               </Label>
             </div>
             
-            {/* Campo de texto adicional para "Outros" */}
             {otherOption && option.id === otherOption.id && isOtherSelected && (
               <div className="ml-6">
                 <Input
                   type="text"
                   value={otherText}
                   onChange={(e) => handleOtherTextChange(e.target.value)}
+                  onBlur={handleOtherTextBlur}
                   placeholder="Especifique (separe múltiplas opções por vírgula)..."
                   disabled={disabled}
                   className="w-full"
