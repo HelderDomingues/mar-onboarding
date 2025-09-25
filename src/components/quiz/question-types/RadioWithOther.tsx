@@ -23,25 +23,25 @@ export const RadioWithOther: React.FC<RadioWithOtherProps> = ({
   hint,
   error
 }) => {
-  const [otherText, setOtherText] = useState('');
-  const [selectedValue, setSelectedValue] = useState(value);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const [internalOtherText, setInternalOtherText] = useState('');
+  const [selectedValue, setSelectedValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Encontrar a opção "Outro" ou "Outros"
   const otherOption = options.find(option => 
     option.text.toLowerCase().includes('outro')
   );
 
-  // Verificar se o valor atual é um texto personalizado (não está nas opções predefinidas)
   const isCustomValue = value && !options.some(option => option.text === value);
 
   useEffect(() => {
     if (isCustomValue && otherOption) {
       setSelectedValue(otherOption.text);
-      setOtherText(value);
+      setInternalOtherText(value);
     } else {
       setSelectedValue(value);
-      setOtherText('');
+      if (value !== otherOption?.text) {
+        setInternalOtherText('');
+      }
     }
   }, [value, isCustomValue, otherOption]);
 
@@ -49,42 +49,31 @@ export const RadioWithOther: React.FC<RadioWithOtherProps> = ({
     setSelectedValue(selectedOptionText);
     
     if (otherOption && selectedOptionText === otherOption.text) {
-      // Se selecionou "Outro", manter o texto atual ou limpar
-      onChange(otherText || selectedOptionText);
+      if (internalOtherText) {
+        onChange(internalOtherText);
+      } else {
+        onChange(selectedOptionText);
+      }
+      inputRef.current?.focus();
     } else {
-      // Se selecionou uma opção predefinida, usar o texto da opção
-      setOtherText('');
+      setInternalOtherText('');
       onChange(selectedOptionText);
     }
   };
 
-  const handleOtherTextChange = (text: string) => {
-    setOtherText(text);
-    
-    // Clear previous timeout
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
+  const handleOtherTextBlur = () => {
+    if (otherOption) {
+      onChange(internalOtherText.trim() ? internalOtherText : otherOption.text);
     }
-    
-    // Debounce the onChange call
-    debounceRef.current = setTimeout(() => {
-      if (otherOption && selectedValue === otherOption.text) {
-        // Sempre enviar o texto digitado, mesmo se estiver vazio
-        onChange(text.trim() ? text : otherOption.text);
-      }
-    }, 500);
   };
 
   const isOtherSelected = otherOption && selectedValue === otherOption.text;
 
-  // Cleanup timeout on unmount
   useEffect(() => {
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-  }, []);
+    if (isOtherSelected) {
+      inputRef.current?.focus();
+    }
+  }, [isOtherSelected]);
 
   return (
     <div className="grid gap-2">
@@ -106,13 +95,14 @@ export const RadioWithOther: React.FC<RadioWithOtherProps> = ({
               </Label>
             </div>
             
-            {/* Campo de texto adicional para "Outro" */}
             {otherOption && option.id === otherOption.id && isOtherSelected && (
               <div className="ml-6">
                 <Input
+                  ref={inputRef}
                   type="text"
-                  value={otherText}
-                  onChange={(e) => handleOtherTextChange(e.target.value)}
+                  value={internalOtherText}
+                  onChange={(e) => setInternalOtherText(e.target.value)}
+                  onBlur={handleOtherTextBlur}
                   placeholder="Especifique..."
                   disabled={disabled}
                   className="w-full"
