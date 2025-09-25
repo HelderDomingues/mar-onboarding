@@ -10,6 +10,7 @@ import { InfoIcon } from "lucide-react";
 import { InstagramField } from "@/components/quiz/question-types/InstagramField";
 import { UrlField } from "@/components/quiz/question-types/UrlField";
 import { LimitedCheckbox } from "@/components/quiz/question-types/LimitedCheckbox";
+import { RadioWithOther } from '@/components/quiz/question-types/RadioWithOther';
 import { QuizOption } from "@/types/quiz";
 
 // Componente de Input com debounce
@@ -122,7 +123,6 @@ export function QuestionCard({
   isLast,
   currentAnswer
 }: QuestionCardProps) {
-  const [selectedOption, setSelectedOption] = useState<string>('');
   const [textAnswer, setTextAnswer] = useState<string>('');
   const [checkedOptions, setCheckedOptions] = useState<string[]>([]);
   const [otherValue, setOtherValue] = useState<string>('');
@@ -134,6 +134,11 @@ export function QuestionCard({
   };
 
   const getOptionValue = (option: string | QuizOption): string => {
+    // Para 'radio', o valor salvo pode ser o texto da opção.
+    // Para garantir a seleção correta, usamos o texto como valor se o ID não corresponder.
+    if (question.type === 'radio' && typeof currentAnswer === 'string' && typeof option !== 'string') {
+      if (option.text === currentAnswer) return option.text;
+    }
     return typeof option === 'string' ? option : option.id;
   };
 
@@ -169,7 +174,6 @@ export function QuestionCard({
   };
 
   useEffect(() => {
-    setSelectedOption('');
     setTextAnswer('');
     setCheckedOptions([]);
     setOtherValue('');
@@ -177,15 +181,10 @@ export function QuestionCard({
     setValidationError(null);
     if (currentAnswer !== undefined) {
       if (typeof currentAnswer === 'string') {
-        setSelectedOption(currentAnswer);
         setTextAnswer(currentAnswer);
         if (question.options && question.options.some(opt => optionContainsText(opt, 'outro')) && !question.options.some(opt => getOptionText(opt) === currentAnswer) && currentAnswer !== '') {
           setOtherValue(currentAnswer);
           setShowOtherInput(true);
-          if (question.type === 'radio') {
-            const otherOption = question.options.find(opt => optionContainsText(opt, 'outro'));
-            if (otherOption) setSelectedOption(getOptionValue(otherOption));
-          }
         }
       } else if (Array.isArray(currentAnswer)) {
         setCheckedOptions(currentAnswer);
@@ -199,7 +198,7 @@ export function QuestionCard({
         }
       }
     }
-  }, [question.id, currentAnswer, question.options]);
+  }, [question.id, currentAnswer, question.options, question.type]);
 
   const handleCheckboxChange = (option: string | QuizOption) => {
     const optionValue = getOptionValue(option);
@@ -218,22 +217,16 @@ export function QuestionCard({
     }
   };
 
-  const handleRadioChange = (value: string) => {
-    setSelectedOption(value);
-    if (question.options) {
-      const selectedOption = question.options.find(opt => getOptionValue(opt) === value);
-      if (selectedOption && optionContainsText(selectedOption, 'outro')) {
-        setShowOtherInput(true);
-      } else {
-        setShowOtherInput(false);
-      }
-    }
-  };
-
   const validateInput = (): boolean => {
     setValidationError(null);
-    if (!question.required && (textAnswer === '' || selectedOption === '' || checkedOptions.length === 0)) {
-      return true;
+
+    // Se a questão não for obrigatória e não houver resposta, é válido
+    if (!question.required) {
+        const hasTextAnswer = textAnswer.trim() !== '';
+        const hasCurrentAnswer = Array.isArray(currentAnswer) ? currentAnswer.length > 0 : !!currentAnswer;
+        if (!hasTextAnswer && !hasCurrentAnswer) {
+            return true;
+        }
     }
     
     const questionType = getQuestionType(question);
@@ -266,20 +259,21 @@ export function QuestionCard({
       }
     }
     
+    if (!question.required) return true;
+
     switch (questionType) {
-      case 'radio':
-        if (selectedOption === '') {
-          setValidationError("Selecione uma opção.");
-          return false;
+      case 'radio': {
+        if (typeof currentAnswer !== 'string' || currentAnswer.trim() === '') {
+            setValidationError("Selecione uma opção.");
+            return false;
         }
-        if (question.options) {
-          const selected = question.options.find(opt => getOptionValue(opt) === selectedOption);
-          if (selected && optionContainsText(selected, 'outro') && showOtherInput && otherValue === '') {
+        const otherOption = question.options?.find(opt => optionContainsText(opt, 'outro'));
+        if (otherOption && currentAnswer === getOptionText(otherOption)) {
             setValidationError("Especifique sua resposta no campo 'Outro'.");
             return false;
-          }
         }
         break;
+      }
       case 'checkbox':
         if (checkedOptions.length === 0) {
           setValidationError("Selecione pelo menos uma opção.");
@@ -351,20 +345,9 @@ export function QuestionCard({
     if (!validateInput()) {
       return;
     }
-    if (question.type === 'radio') {
-      if (question.options) {
-        const selected = question.options.find(opt => getOptionValue(opt) === selectedOption);
-        if (selected && optionContainsText(selected, 'outro') && showOtherInput && otherValue) {
-          onAnswer(question.id, otherValue);
-        } else if (selected) {
-          onAnswer(question.id, getOptionText(selected));
-        } else {
-          onAnswer(question.id, selectedOption);
-        }
-      } else {
-        onAnswer(question.id, selectedOption);
-      }
-    } else if (question.type === 'checkbox') {
+
+    // onAnswer para radio e select é chamado diretamente no componente
+    if (question.type === 'checkbox') {
       if (question.options) {
         const textAnswers = convertOptionsIdsToText(checkedOptions);
         
@@ -393,7 +376,8 @@ export function QuestionCard({
         formattedAnswer = `https://${formattedAnswer}`;
       }
       onAnswer(question.id, formattedAnswer);
-    } else {
+    } else if (question.type !== 'radio' && question.type !== 'select') {
+      // Para os tipos restantes (text, textarea, email, number), chame onAnswer
       onAnswer(question.id, textAnswer);
     }
     onNext();
@@ -402,14 +386,15 @@ export function QuestionCard({
   const isAnswerValid = () => {
     if (!question.required) return true;
     switch (question.type) {
-      case 'radio':
-        if (question.options) {
-          const selected = question.options.find(opt => getOptionValue(opt) === selectedOption);
-          if (selected && optionContainsText(selected, 'outro')) {
-            return !!otherValue;
-          }
+      case 'radio': {
+        if (typeof currentAnswer !== 'string' || currentAnswer.trim() === '') return false;
+
+        const otherOption = question.options?.find(opt => optionContainsText(opt, 'outro'));
+        if (otherOption && currentAnswer === getOptionText(otherOption)) {
+           return false;
         }
-        return !!selectedOption;
+        return true;
+      }
       case 'checkbox':
         if (question.options) {
           const hasOtherSelected = question.options.some(opt => optionContainsText(opt, 'outro') && checkedOptions.includes(getOptionValue(opt)));
@@ -430,6 +415,22 @@ export function QuestionCard({
     }
   };
 
+  // Normaliza as opções para o formato esperado por RadioWithOther
+  const normalizeOptions = (options: (QuizOption | string)[] | undefined): QuizOption[] => {
+    if (!options) return [];
+    return options.map(option => {
+      if (typeof option === 'string') {
+        return {
+          id: option,
+          question_id: question.id,
+          text: option,
+          order_number: 0 // ou algum valor padrão
+        };
+      }
+      return option;
+    });
+  };
+
   const convertOptionsIdsToText = (optionIds: string[]): string[] => {
     if (!question.options) return optionIds;
     
@@ -440,28 +441,17 @@ export function QuestionCard({
   };
 
   const renderQuestion = () => {
-    if (question.type === 'radio' && question.options && Array.isArray(question.options)) {
-      return <div className="space-y-4">
-          <p className="text-sm text-slate-300 mb-2">
-            Selecione uma opção abaixo:
-          </p>
-          <RadioGroup value={selectedOption} onValueChange={handleRadioChange} className="space-y-3">
-            {question.options.map((option, index) => {
-            const optionText = getOptionText(option);
-            const optionValue = getOptionValue(option);
-            return <div key={index} className="flex items-center space-x-2">
-                  <RadioGroupItem value={optionValue} id={`option-${question.id}-${index}`} />
-                  <Label htmlFor={`option-${question.id}-${index}`} className="text-base text-white">
-                    {optionText}
-                  </Label>
-                </div>;
-          })}
-          </RadioGroup>
-          
-          {showOtherInput && <div className="mt-2 pl-6">
-            <DebouncedInput type="text" placeholder="Especifique sua resposta..." value={otherValue} onChange={setOtherValue} className="w-full text-slate-900 bg-white" />
-          </div>}
-        </div>;
+    if (question.type === 'radio' && question.options) {
+        const normalizedOptions = normalizeOptions(question.options);
+        return (
+            <RadioWithOther
+                id={question.id}
+                options={normalizedOptions}
+                value={typeof currentAnswer === 'string' ? currentAnswer : ''}
+                onChange={(value) => onAnswer(question.id, value)}
+                error={validationError}
+            />
+        );
     }
     if (question.type === 'text') {
       return <DebouncedInput type="text" placeholder={getPlaceholder(question)} value={textAnswer} onChange={setTextAnswer} className="w-full text-slate-900 bg-white mx-0 px-[40px]" />;
@@ -503,7 +493,7 @@ export function QuestionCard({
         </div>;
     }
     if (question.type === 'select' && question.options) {
-      return <select className="w-full border border-gray-300 rounded-md p-2 text-slate-900 bg-white" value={selectedOption} onChange={e => setSelectedOption(e.target.value)}>
+      return <select className="w-full border border-gray-300 rounded-md p-2 text-slate-900 bg-white" value={typeof currentAnswer === 'string' ? currentAnswer : ''} onChange={e => onAnswer(question.id, e.target.value)}>
           <option value="">Selecione uma opção</option>
           {question.options.map((option, index) => {
           const optionText = getOptionText(option);
