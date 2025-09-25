@@ -230,13 +230,6 @@ addLogEntry('info', 'Sistema de logs inicializado', {
   environment: typeof window !== 'undefined' ? window.location.hostname : 'unknown'
 });
 
-// Registra problemas encontrados com a configuração do service_role
-addLogEntry('error', 'Problema persistente na configuração da chave service_role', { 
-  detalhes: 'Após várias tentativas de correção, incluindo renomeação de colunas e atualização de funções no banco de dados, o problema persiste quando o botão de salvar configuração é clicado',
-  dataTentativa: new Date().toISOString(),
-  decisao: 'Adiado para focar em outras funcionalidades críticas'
-});
-
 // Registra problema com links quebrados no dashboard
 addLogEntry('warning', 'Links quebrados no dashboard administrativo detectados', { 
   detalhes: 'Vários botões e links no dashboard administrativo estão levando a páginas 404',

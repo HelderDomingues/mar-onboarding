@@ -144,9 +144,27 @@ const Quiz = () => {
             }
           }
         
-          // Carregar submissão existente e respostas
+          // Carregar ou criar submissão e carregar respostas
           if (user?.id) {
-            const submission = await fetchSubmission(user.id);
+            let submission = await fetchSubmission(user.id);
+
+            // Se não houver submissão, cria uma nova
+            if (!submission) {
+              const { data: newSubmission, error: submissionError } = await supabase
+                .from('quiz_submissions')
+                .insert([{
+                  user_id: user.id,
+                  user_email: user.email || '',
+                  current_module: 1,
+                  started_at: new Date().toISOString()
+                }])
+                .select()
+                .single();
+
+              if (submissionError) throw submissionError;
+              submission = newSubmission;
+            }
+
             if (submission) {
               setSubmissionId(submission.id);
               
@@ -160,7 +178,6 @@ const Quiz = () => {
                 const initialAnswers: Record<string, string | string[]> = {};
                 answersData.forEach(answer => {
                   try {
-                    // Tentar fazer parse se for array JSON
                     if (answer.answer && answer.answer.startsWith('[') && answer.answer.endsWith(']')) {
                       initialAnswers[answer.question_id] = JSON.parse(answer.answer);
                     } else {
@@ -175,7 +192,7 @@ const Quiz = () => {
               
               // Se não há navegação específica, usar o módulo atual da submissão
               if (!moduleParam && submission.current_module && submission.current_module > 1) {
-                setCurrentModuleIndex(submission.current_module - 1); // -1 porque array começa em 0
+                setCurrentModuleIndex(submission.current_module - 1);
               }
             }
           }
@@ -390,39 +407,12 @@ const Quiz = () => {
         module_title: question.module_title
       };
       
-      // Usar saveAnswer do utils/quiz.ts em vez de saveQuizAnswer
       if (!submissionId) {
-        // Criar nova submissão primeiro
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData.user) {
-          throw new Error("Usuário não autenticado");
-        }
-        
-        const { data: newSubmission, error: submissionError } = await supabase
-          .from('quiz_submissions')
-          .insert([{
-            user_id: user.id,
-            user_email: userData.user.email || '',
-            current_module: 1,
-            started_at: new Date().toISOString()
-          }])
-          .select()
-          .single();
-          
-        if (submissionError) {
-          console.error("Erro ao criar submissão:", submissionError);
-          throw submissionError;
-        }
-        
-        setSubmissionId(newSubmission.id);
-        console.log("Nova submissão criada:", newSubmission.id);
-        
-        // Agora salvar a resposta
-        await saveAnswer(newSubmission.id, questionId, typeof answer === 'string' ? answer : JSON.stringify(answer));
-      } else {
-        // Usar submissão existente
-        await saveAnswer(submissionId, questionId, typeof answer === 'string' ? answer : JSON.stringify(answer));
+        throw new Error("ID da submissão não encontrado. Não foi possível salvar a resposta.");
       }
+
+      // Usar submissão existente
+      await saveAnswer(submissionId, questionId, typeof answer === 'string' ? answer : JSON.stringify(answer));
       
       // Atualizar estado local das respostas
       setAnswers(prev => ({
