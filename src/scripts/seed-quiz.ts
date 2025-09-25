@@ -4,9 +4,17 @@
  * Versão segura - Implementa backups antes de operações destrutivas e verificações
  */
 
-import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
+import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { quizModulesData, quizQuestionsData, quizOptionsData } from './quiz-data';
 import { logger } from '@/utils/logger';
+
+// Para scripts do lado do servidor, podemos criar um cliente admin diretamente
+// se as variáveis de ambiente estiverem disponíveis.
+const supabaseAdmin = createClient(
+  process.env.VITE_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 import { addLogEntry } from '@/utils/projectLog';
 import { backupQuizTables } from '@/utils/backupUtils';
 

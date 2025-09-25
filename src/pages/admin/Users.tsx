@@ -6,10 +6,9 @@ import { addLogEntry } from "@/utils/projectLog";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserSearch } from "./users/UserSearch";
-import { ServiceRoleSetup } from "./users/ServiceRoleSetup";
 import { UsersTableView } from "@/components/admin/UsersTableView";
-import { fetchUserProfiles, toggleAdminRole, setupEmailAccessService } from "./users/UsersService";
-import type { UserProfile, ConfigResult } from "@/types/admin";
+import { fetchUserProfiles, toggleAdminRole } from "./users/UsersService";
+import type { UserProfile } from "@/types/admin";
 
 const UsersPage = () => {
   const { isAuthenticated, user, isAdmin } = useAuth();
@@ -19,10 +18,6 @@ const UsersPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [isConfiguring, setIsConfiguring] = useState(false);
-  const [serviceRoleKey, setServiceRoleKey] = useState("");
-  const [showConfigForm, setShowConfigForm] = useState(false);
-  const [configResult, setConfigResult] = useState<ConfigResult | null>(null);
   
   const fetchUsers = async () => {
     if (!user || !isAdmin) return;
@@ -31,16 +26,12 @@ const UsersPage = () => {
     setError(null);
     
     try {
-      const { users: fetchedUsers, hasEmailAccess } = await fetchUserProfiles(user?.id);
+      const { users: fetchedUsers } = await fetchUserProfiles(user?.id);
       setUsers(fetchedUsers);
-      
-      if (!hasEmailAccess) {
-        setError("Service role key não configurada ou inválida. Configure para acessar os emails dos usuários.");
-      }
     } catch (error: any) {
       toast({
         title: "Erro ao carregar usuários",
-        description: "Verifique se a service role key está configurada corretamente.",
+        description: "Ocorreu um erro ao buscar os dados dos usuários. Verifique o console para mais detalhes.",
         variant: "destructive",
       });
       
@@ -106,53 +97,6 @@ const UsersPage = () => {
     }
   };
   
-  const setupEmailAccess = () => {
-    setShowConfigForm(true);
-    setConfigResult(null);
-  };
-  
-  const handleConfigureEmailAccess = async () => {
-    if (!serviceRoleKey.trim()) {
-      toast({
-        title: "Erro",
-        description: "A chave service_role é obrigatória.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsConfiguring(true);
-    setConfigResult(null);
-    
-    try {
-      const result = await setupEmailAccessService(serviceRoleKey);
-      
-      setConfigResult(result);
-      
-      if (result.success) {
-        toast({
-          title: "Configuração concluída",
-          description: result.message,
-        });
-        fetchUsers();
-      } else {
-        toast({
-          title: "Erro na configuração",
-          description: result.message,
-          variant: "destructive",
-        });
-      }
-    } finally {
-      setIsConfiguring(false);
-    }
-  };
-  
-  const handleCancelConfig = () => {
-    setShowConfigForm(false);
-    setServiceRoleKey("");
-    setConfigResult(null);
-  };
-  
   if (!isAuthenticated) {
     return null;
   }
@@ -182,18 +126,6 @@ const UsersPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <ServiceRoleSetup 
-            error={error}
-            setupEmailAccess={setupEmailAccess}
-            handleConfigureEmailAccess={handleConfigureEmailAccess}
-            handleCancelConfig={handleCancelConfig}
-            isConfiguring={isConfiguring}
-            serviceRoleKey={serviceRoleKey}
-            setServiceRoleKey={setServiceRoleKey}
-            configResult={configResult}
-            showConfigForm={showConfigForm}
-          />
-          
           <UsersTableView
             users={filteredUsers}
             isLoading={isLoading}

@@ -5,9 +5,15 @@
  */
 import { recoverQuizData } from './quiz-recovery';
 import { seedQuizData } from './seed-quiz';
+import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/utils/logger';
 import { addLogEntry } from '@/utils/projectLog';
-import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
+
+const supabaseAdmin = createClient(
+  process.env.VITE_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 /**
  * Função de recuperação forçada que garante a existência dos dados do questionário

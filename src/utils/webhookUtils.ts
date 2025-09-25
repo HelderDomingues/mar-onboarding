@@ -1,6 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
-import { getSupabaseAdminClient } from '@/utils/supabaseAdminClient';
 
 // Função para obter a URL do webhook da configuração do sistema
 const getWebhookUrl = async (): Promise<string> => {
@@ -36,150 +35,64 @@ export async function sendQuizDataToWebhook(
 
     const webhookUrl = await getWebhookUrl();
 
-    // Buscar dados da submissão usando cliente administrativo
-    const supabaseAdmin = getSupabaseAdminClient();
-    const { data: submission, error: submissionError } = await supabaseAdmin
-      .from('quiz_submissions')
-      .select('*')
-      .eq('id', submissionId)
-      .single();
+    // Invoca a Edge Function para buscar todos os dados da submissão de forma segura
+    const { data: submissionDetails, error: functionError } = await supabase.functions.invoke(
+      'get-submission-details',
+      { body: { submission_id: submissionId } }
+    );
 
-    if (submissionError || !submission) {
-      const message = 'Submissão não encontrada';
-      logger.error(message, { tag: 'Webhook', data: { submissionId, submissionError } });
+    if (functionError) {
+      const message = 'Erro ao buscar detalhes da submissão via Edge Function.';
+      logger.error(message, { tag: 'Webhook', data: { submissionId, error: functionError.message } });
       return { success: false, message };
     }
 
-    // Verificar se já foi processado
+    const { submission, profile, answers } = submissionDetails;
+
+    // Verificar se a submissão já foi processada
     if (submission.webhook_processed) {
       const message = 'Webhook já processado para esta submissão';
       logger.info(message, { tag: 'Webhook', data: { submissionId } });
       return { success: true, message };
     }
 
-    // Buscar dados do perfil usando cliente administrativo
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('*')
-      .eq('id', submission.user_id)
-      .single();
+    // Monta a estrutura aninhada a partir dos dados retornados
+    const modulos: any = {};
+    answers.forEach(item => {
+      if (item.quiz_questions && item.quiz_questions.quiz_modules) {
+        const modulo = item.quiz_questions.quiz_modules;
+        const pergunta = item.quiz_questions;
 
-    // Buscar respostas completas da tabela específica
-    const { data: respostas } = await supabaseAdmin
-      .from('quiz_respostas_completas')
-      .select('*')
-      .eq('submission_id', submissionId)
-      .single();
+        if (!modulos[modulo.order_number]) {
+          modulos[modulo.order_number] = {
+            NomeModulo: modulo.title,
+            OrdemModulo: modulo.order_number,
+            Respostas: []
+          };
+        }
 
-    let respostasFormatadas = {};
-    let userEmail = submission.user_email;
-    let userName = profile?.full_name || '';
-
-    let payload: any;
-
-    // Verificar se as respostas estão estruturadas corretamente na tabela de respostas completas
-    if (respostas?.respostas && 
-        typeof respostas.respostas === 'object' && 
-        Object.keys(respostas.respostas).length > 1) {
-      
-      // Usar respostas já consolidadas (estrutura antiga)
-      respostasFormatadas = respostas.respostas;
-      userEmail = respostas.user_email || submission.user_email;
-      userName = respostas.user_name || userName;
-      
-      logger.info('Usando respostas da tabela consolidada (fallback)', {
-        tag: 'Webhook',
-        data: { submissionId, questoesEncontradas: Object.keys(respostasFormatadas).length }
-      });
-      
-      payload = {
-        "ID_Submissao": submissionId,
-        "ID_Usuario": submission.user_id,
-        "Data_Submissao": submission.completed_at || submission.created_at,
-        "Timestamp": new Date().toISOString(),
-        "Origem": "Sistema MAR - Crie Valor Consultoria",
-        "Email": userEmail,
-        "Nome": userName,
-        "Telefone": profile?.phone || '',
-        ...respostasFormatadas
-      };
-
-    } else {
-      // Buscar respostas individuais e montar a nova estrutura aninhada
-      logger.info('Buscando respostas individuais para montar payload aninhado', {
-        tag: 'Webhook',
-        data: { submissionId }
-      });
-
-      const { data: answers, error: answersError } = await supabaseAdmin
-        .from('quiz_answers')
-        .select(`
-          answer,
-          quiz_questions!inner (
-            text,
-            type,
-            order_number,
-            quiz_modules!inner (
-              title,
-              order_number
-            )
-          )
-        `)
-        .eq('submission_id', submissionId)
-        .order('order_number', { foreignTable: 'quiz_questions.quiz_modules' })
-        .order('order_number', { foreignTable: 'quiz_questions' });
-
-      if (answersError || !answers || answers.length === 0) {
-        const message = 'Nenhuma resposta encontrada para esta submissão';
-        logger.error(message, { tag: 'Webhook', data: { submissionId, answersError } });
-        return { success: false, message };
+        modulos[modulo.order_number].Respostas.push({
+          Pergunta: pergunta.text,
+          Resposta: item.answer || '',
+          OrdemPergunta: pergunta.order_number
+        });
       }
+    });
 
-      const modulos: any = {};
-      answers.forEach(item => {
-        if (item.quiz_questions && item.quiz_questions.quiz_modules) {
-          const modulo = item.quiz_questions.quiz_modules;
-          const pergunta = item.quiz_questions;
-          
-          if (!modulos[modulo.order_number]) {
-            modulos[modulo.order_number] = {
-              NomeModulo: modulo.title,
-              OrdemModulo: modulo.order_number,
-              Respostas: []
-            };
-          }
+    const modulosArray = Object.values(modulos);
 
-          modulos[modulo.order_number].Respostas.push({
-            Pergunta: pergunta.text,
-            Resposta: item.answer || '',
-            OrdemPergunta: pergunta.order_number
-          });
-        }
-      });
-
-      const modulosArray = Object.values(modulos);
-
-      logger.info('Respostas estruturadas com sucesso no formato aninhado', {
-        tag: 'Webhook',
-        data: { 
-          submissionId, 
-          totalRespostas: answers.length,
-          modulosEncontrados: modulosArray.length
-        }
-      });
-
-      payload = {
-        "ID_Submissao": submissionId,
-        "ID_Usuario": submission.user_id,
-        "Data_Submissao": submission.completed_at || submission.created_at,
-        "Timestamp": new Date().toISOString(),
-        "Origem": "Sistema MAR - Crie Valor Consultoria",
-        "Email": userEmail,
-        "Nome": userName,
-        "Telefone": profile?.phone || '',
-        "Modulos": modulosArray
-      };
-    }
+    // Prepara o payload final
+    const payload = {
+      "ID_Submissao": submissionId,
+      "ID_Usuario": submission.user_id,
+      "Data_Submissao": submission.completed_at || submission.created_at,
+      "Timestamp": new Date().toISOString(),
+      "Origem": "Sistema MAR - Crie Valor Consultoria",
+      "Email": submission.user_email,
+      "Nome": profile?.full_name || '',
+      "Telefone": profile?.phone || '',
+      "Modulos": modulosArray
+    };
 
     logger.info('Enviando payload para webhook', {
       tag: 'Webhook',
@@ -208,17 +121,18 @@ export async function sendQuizDataToWebhook(
       return { success: false, message };
     }
 
-    // Marcar como processado usando cliente administrativo
-    const { error: updateError } = await supabaseAdmin
-      .from('quiz_submissions')
-      .update({ webhook_processed: true })
-      .eq('id', submissionId);
+    // Invoca a Edge Function para marcar como processado
+    const { error: updateError } = await supabase.functions.invoke(
+      'mark-submission-processed',
+      { body: { submission_id: submissionId } }
+    );
 
     if (updateError) {
-      logger.error('Erro ao marcar webhook como processado', {
+      logger.error('Erro ao invocar a função para marcar como processado', {
         tag: 'Webhook',
-        data: { submissionId, updateError }
+        data: { submissionId, error: updateError.message }
       });
+      // Não tratamos como erro fatal, apenas logamos.
     }
 
     const message = 'Dados enviados com sucesso para o webhook';
