@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_user_id: string
+          created_at: string | null
+          id: string
+          ip_address: unknown | null
+          new_values: Json | null
+          old_values: Json | null
+          target_record_id: string | null
+          target_table: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          admin_user_id: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          target_record_id?: string | null
+          target_table?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          target_record_id?: string | null
+          target_table?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       material_accesses: {
         Row: {
           accessed_at: string | null
@@ -350,6 +389,33 @@ export type Database = {
         }
         Relationships: []
       }
+      system_config: {
+        Row: {
+          config_key: string
+          config_value: string
+          created_at: string | null
+          description: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          config_key: string
+          config_value: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          config_key?: string
+          config_value?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -405,6 +471,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
+      get_system_config: {
+        Args: { p_config_key: string }
+        Returns: string
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: string
@@ -422,6 +492,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      is_current_user_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_quiz_complete: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -430,8 +504,26 @@ export type Database = {
         Args: { table_name_pattern: string }
         Returns: string[]
       }
+      log_admin_action: {
+        Args: {
+          p_action: string
+          p_new_values?: Json
+          p_old_values?: Json
+          p_target_record_id?: string
+          p_target_table?: string
+        }
+        Returns: boolean
+      }
       restore_table_from_backup: {
         Args: { backup_table: string; target_table: string }
+        Returns: boolean
+      }
+      toggle_user_admin_role: {
+        Args: { p_make_admin: boolean; p_user_email: string; p_user_id: string }
+        Returns: boolean
+      }
+      update_system_config: {
+        Args: { p_config_key: string; p_config_value: string }
         Returns: boolean
       }
       update_user_quiz_progress: {

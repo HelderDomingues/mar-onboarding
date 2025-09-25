@@ -2,6 +2,26 @@
  * Utilitário para formatação de dados e respostas do questionário
  */
 
+import { formatDistanceToNow, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+export const formatUtils = {
+  formatDateTime: (dateString: string): string => {
+    const date = new Date(dateString);
+    return format(date, 'dd/MM/yyyy HH:mm', { locale: ptBR });
+  },
+  
+  formatDate: (dateString: string): string => {
+    const date = new Date(dateString);
+    return format(date, 'dd/MM/yyyy', { locale: ptBR });
+  },
+  
+  formatTimeAgo: (dateString: string): string => {
+    const date = new Date(dateString);
+    return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
+  }
+};
+
 /**
  * Formata respostas JSON para exibição amigável
  * @param answerStr String contendo a resposta (possivelmente em formato JSON)

@@ -1,20 +1,39 @@
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
 
-// URL do webhook Make.com (fixo para simplicidade)
-const MAKE_WEBHOOK_URL = 'https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh';
+// Função para obter a URL do webhook da configuração do sistema
+const getWebhookUrl = async (): Promise<string> => {
+  try {
+    const { data, error } = await supabase.rpc('get_system_config', { 
+      p_config_key: 'webhook_url' 
+    });
+    
+    if (error) {
+      console.error('Erro ao obter URL do webhook:', error);
+      // Fallback para URL padrão em caso de erro
+      return 'https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh';
+    }
+    
+    return data || 'https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh';
+  } catch (error) {
+    console.error('Exceção ao obter URL do webhook:', error);
+    return 'https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh';
+  }
+};
 
 /**
- * Envia dados do questionário diretamente para o webhook do Make.com
+ * Envia dados do questionário para o webhook configurado dinamicamente
  */
 export async function sendQuizDataToWebhook(
   submissionId: string
 ): Promise<{ success: boolean; message: string; details?: any }> {
   try {
-    logger.info('Iniciando envio para webhook Make.com', {
+    logger.info('Iniciando envio para webhook', {
       tag: 'Webhook',
       data: { submissionId }
     });
+
+    const webhookUrl = await getWebhookUrl();
 
     // Buscar dados da submissão
     const { data: submission, error: submissionError } = await supabase
@@ -74,17 +93,16 @@ export async function sendQuizDataToWebhook(
       ...(typeof respostas.respostas === 'object' && respostas.respostas ? respostas.respostas : {})
     };
 
-    logger.info('Enviando payload para Make.com', {
+    logger.info('Enviando payload para webhook', {
       tag: 'Webhook',
       data: { 
         submissionId, 
         camposEnviados: Object.keys(payload).length,
-        url: MAKE_WEBHOOK_URL.replace('wpbbjokh8cexvd1hql9i7ae6uyf32bzh', '***') 
       }
     });
 
-    // Enviar para Make.com
-    const response = await fetch(MAKE_WEBHOOK_URL, {
+    // Enviar para webhook
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -95,7 +113,7 @@ export async function sendQuizDataToWebhook(
 
     if (!response.ok) {
       const message = `Erro HTTP ${response.status}: ${response.statusText}`;
-      logger.error('Falha no envio para Make.com', {
+      logger.error('Falha no envio para webhook', {
         tag: 'Webhook',
         data: { submissionId, status: response.status, message }
       });
@@ -115,7 +133,7 @@ export async function sendQuizDataToWebhook(
       });
     }
 
-    const message = 'Dados enviados com sucesso para o Make.com';
+    const message = 'Dados enviados com sucesso para o webhook';
     logger.info(message, {
       tag: 'Webhook',
       data: { submissionId, status: response.status }
@@ -143,17 +161,18 @@ export async function sendQuizDataToWebhook(
 }
 
 /**
- * Testa a conectividade com o webhook do Make.com
+ * Testa a conectividade com o webhook configurado
  */
 export async function testWebhookConnection(): Promise<{ success: boolean; message: string }> {
   try {
+    const webhookUrl = await getWebhookUrl();
     const testPayload = {
       teste: true,
       timestamp: new Date().toISOString(),
       origem: "Sistema MAR - Teste de Conectividade"
     };
 
-    const response = await fetch(MAKE_WEBHOOK_URL, {
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -171,7 +190,7 @@ export async function testWebhookConnection(): Promise<{ success: boolean; messa
 
     return { 
       success: true, 
-      message: 'Conexão com Make.com bem-sucedida!' 
+      message: 'Conexão com webhook bem-sucedida!' 
     };
 
   } catch (error) {

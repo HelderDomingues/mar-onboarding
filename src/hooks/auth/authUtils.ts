@@ -8,52 +8,40 @@ import { User } from "@supabase/supabase-js";
  * Verifica o status de administrador de um usuário
  */
 export const checkAdminStatus = async (userId: string): Promise<boolean> => {
-  if (!userId) return false;
-  
   try {
-    // Usar setTimeout para evitar que esta operação bloqueie a UI
-    return new Promise<boolean>((resolve) => {
-      setTimeout(async () => {
-        try {
-          addLogEntry('auth', 'Verificando status de administrador', { userId }, userId);
-          
-          // Usar somente a função RPC is_admin sem fallback para a tabela user_roles
-          const { data, error } = await supabase.rpc('is_admin');
-          
-          if (error) {
-            logger.error('Erro ao verificar papel de administrador via RPC:', {
-              tag: 'Auth',
-              data: { error, userId }
-            });
-            
-            addLogEntry('error', 'Erro ao verificar papel de administrador', { error }, userId);
-            resolve(false);
-            return;
-          }
-          
-          logger.info('Status de admin verificado via RPC:', {
-            tag: 'Auth',
-            data: { isAdmin: !!data, userId }
-          });
-          
-          addLogEntry('auth', 'Status de admin verificado via RPC', { isAdmin: !!data }, userId);
-          resolve(!!data);
-        } catch (error) {
-          logger.error('Exceção ao verificar papel de administrador:', {
-            tag: 'Auth',
-            data: { error, userId }
-          });
-          addLogEntry('error', 'Exceção ao verificar papel de administrador', { error }, userId);
-          resolve(false);
-        }
-      }, 0);
+    logger.info('Verificando status de admin para usuário:', { 
+      tag: 'Auth', 
+      data: { userId } 
     });
+    
+    addLogEntry('auth', 'Verificando status de admin', { userId });
+    
+    // Usar nova função segura is_current_user_admin
+    const { data, error } = await supabase.rpc('is_current_user_admin');
+    
+    if (error) {
+      logger.error('Erro ao verificar status de admin:', { 
+        tag: 'Auth', 
+        data: { error, userId } 
+      });
+      addLogEntry('error', 'Erro ao verificar status de admin', { error, userId });
+      return false;
+    }
+    
+    const isAdmin = !!data;
+    logger.info('Status de admin verificado:', { 
+      tag: 'Auth', 
+      data: { userId, isAdmin } 
+    });
+    addLogEntry('auth', 'Status de admin verificado', { userId, isAdmin });
+    
+    return isAdmin;
   } catch (error) {
-    logger.error('Exceção ao verificar papel de administrador:', {
-      tag: 'Auth',
-      data: { error, userId }
+    logger.error('Exceção ao verificar status de admin:', { 
+      tag: 'Auth', 
+      data: { error, userId } 
     });
-    addLogEntry('error', 'Exceção ao verificar papel de administrador', { error }, userId);
+    addLogEntry('error', 'Exceção ao verificar status de admin', { error, userId });
     return false;
   }
 };

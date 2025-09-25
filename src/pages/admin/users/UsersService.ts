@@ -159,27 +159,51 @@ export const fetchUserProfiles = async (userId: string | undefined) => {
   }
 };
 
-export const toggleAdminRole = async (userId: string, isCurrentlyAdmin: boolean) => {
+// Função para obter email do usuário
+const getUserEmail = async (userId: string): Promise<string | null> => {
   try {
-    if (isCurrentlyAdmin) {
-      await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId)
-        .eq('role', 'admin');
-    } else {
-      await supabase
-        .from('user_roles')
-        .insert({ user_id: userId, role: 'admin' });
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('user_email')
+      .eq('id', userId)
+      .single();
+    
+    if (error) {
+      console.error('Erro ao obter email do usuário:', error);
+      return null;
     }
     
-    return true;
+    return data?.user_email || null;
   } catch (error) {
-    logger.error('Erro ao atualizar permissão:', {
-      tag: 'Admin',
-      data: { error }
+    console.error('Exceção ao obter email do usuário:', error);
+    return null;
+  }
+};
+
+export const toggleAdminRole = async (userId: string, isCurrentlyAdmin: boolean): Promise<boolean> => {
+  try {
+    // Obter o email do usuário
+    const userEmail = await getUserEmail(userId);
+    if (!userEmail) {
+      throw new Error('Não foi possível obter o email do usuário');
+    }
+    
+    // Usar a nova função segura que inclui auditoria
+    const { data, error } = await supabase.rpc('toggle_user_admin_role', {
+      p_user_id: userId,
+      p_user_email: userEmail,
+      p_make_admin: !isCurrentlyAdmin
     });
-    throw error;
+    
+    if (error) {
+      console.error('Erro ao alterar papel de admin:', error);
+      throw error;
+    }
+    
+    return data === true;
+  } catch (error) {
+    console.error('Erro ao alterar papel de admin:', error);
+    return false;
   }
 };
 
