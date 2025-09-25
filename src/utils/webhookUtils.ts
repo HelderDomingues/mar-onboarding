@@ -75,24 +75,38 @@ export async function sendQuizDataToWebhook(
     let userEmail = submission.user_email;
     let userName = profile?.full_name || '';
 
+    let payload: any;
+
     // Verificar se as respostas estão estruturadas corretamente na tabela de respostas completas
     if (respostas?.respostas && 
         typeof respostas.respostas === 'object' && 
         Object.keys(respostas.respostas).length > 1) {
       
-      // Usar respostas já consolidadas
+      // Usar respostas já consolidadas (estrutura antiga)
       respostasFormatadas = respostas.respostas;
       userEmail = respostas.user_email || submission.user_email;
       userName = respostas.user_name || userName;
       
-      logger.info('Usando respostas da tabela consolidada', {
+      logger.info('Usando respostas da tabela consolidada (fallback)', {
         tag: 'Webhook',
         data: { submissionId, questoesEncontradas: Object.keys(respostasFormatadas).length }
       });
       
+      payload = {
+        "ID_Submissao": submissionId,
+        "ID_Usuario": submission.user_id,
+        "Data_Submissao": submission.completed_at || submission.created_at,
+        "Timestamp": new Date().toISOString(),
+        "Origem": "Sistema MAR - Crie Valor Consultoria",
+        "Email": userEmail,
+        "Nome": userName,
+        "Telefone": profile?.phone || '',
+        ...respostasFormatadas
+      };
+
     } else {
-      // Buscar respostas individuais da tabela quiz_answers
-      logger.info('Buscando respostas individuais da tabela quiz_answers', {
+      // Buscar respostas individuais e montar a nova estrutura aninhada
+      logger.info('Buscando respostas individuais para montar payload aninhado', {
         tag: 'Webhook',
         data: { submissionId }
       });
@@ -104,10 +118,15 @@ export async function sendQuizDataToWebhook(
           quiz_questions!inner (
             text,
             type,
-            order_number
+            order_number,
+            quiz_modules!inner (
+              title,
+              order_number
+            )
           )
         `)
         .eq('submission_id', submissionId)
+        .order('order_number', { foreignTable: 'quiz_questions.quiz_modules' })
         .order('order_number', { foreignTable: 'quiz_questions' });
 
       if (answersError || !answers || answers.length === 0) {
@@ -116,46 +135,51 @@ export async function sendQuizDataToWebhook(
         return { success: false, message };
       }
 
-      // Estruturar respostas no formato adequado
-      answers.forEach((item, index) => {
-        if (item.quiz_questions) {
-          const questionText = item.quiz_questions.text;
-          const answer = item.answer || '';
+      const modulos: any = {};
+      answers.forEach(item => {
+        if (item.quiz_questions && item.quiz_questions.quiz_modules) {
+          const modulo = item.quiz_questions.quiz_modules;
+          const pergunta = item.quiz_questions;
           
-          // Usar tanto o texto da pergunta quanto um identificador numerado
-          respostasFormatadas[`Pergunta_${index + 1}`] = questionText;
-          respostasFormatadas[`Resposta_${index + 1}`] = answer;
-          respostasFormatadas[questionText] = answer;
+          if (!modulos[modulo.order_number]) {
+            modulos[modulo.order_number] = {
+              NomeModulo: modulo.title,
+              OrdemModulo: modulo.order_number,
+              Respostas: []
+            };
+          }
+
+          modulos[modulo.order_number].Respostas.push({
+            Pergunta: pergunta.text,
+            Resposta: item.answer || '',
+            OrdemPergunta: pergunta.order_number
+          });
         }
       });
 
-      logger.info('Respostas estruturadas com sucesso', {
+      const modulosArray = Object.values(modulos);
+
+      logger.info('Respostas estruturadas com sucesso no formato aninhado', {
         tag: 'Webhook',
         data: { 
           submissionId, 
           totalRespostas: answers.length,
-          camposGerados: Object.keys(respostasFormatadas).length
+          modulosEncontrados: modulosArray.length
         }
       });
-    }
 
-    // Preparar payload otimizado para Make.com
-    const payload = {
-      // Metadados essenciais
-      "ID_Submissao": submissionId,
-      "ID_Usuario": submission.user_id,
-      "Data_Submissao": submission.completed_at || submission.created_at,
-      "Timestamp": new Date().toISOString(),
-      "Origem": "Sistema MAR - Crie Valor Consultoria",
-      
-      // Dados do usuário
-      "Email": userEmail,
-      "Nome": userName,
-      "Telefone": profile?.phone || '',
-      
-      // Respostas do questionário (estrutura plana)
-      ...respostasFormatadas
-    };
+      payload = {
+        "ID_Submissao": submissionId,
+        "ID_Usuario": submission.user_id,
+        "Data_Submissao": submission.completed_at || submission.created_at,
+        "Timestamp": new Date().toISOString(),
+        "Origem": "Sistema MAR - Crie Valor Consultoria",
+        "Email": userEmail,
+        "Nome": userName,
+        "Telefone": profile?.phone || '',
+        "Modulos": modulosArray
+      };
+    }
 
     logger.info('Enviando payload para webhook', {
       tag: 'Webhook',
