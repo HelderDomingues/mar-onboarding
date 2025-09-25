@@ -306,14 +306,11 @@ const Quiz = () => {
     }
   };
   
-  const handleInputChange = (questionId: string, value: string) => {
+  const handleInputChange = React.useCallback((questionId: string, value: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
-    
-    // Salvar imediatamente (sem debounce) - será chamado pelo onBlur
-    handleSaveAnswer(questionId, value);
-  };
+  }, []);
   
-  const handleCheckboxChange = async (questionId: string, value: string) => {
+  const handleCheckboxChange = React.useCallback(async (questionId: string, value: string) => {
     let newAnswers: string[] = [];
     
     setAnswers(prev => {
@@ -331,7 +328,7 @@ const Quiz = () => {
     
     // Salvar automaticamente após mudança
     await handleSaveAnswer(questionId, newAnswers);
-  };
+  }, []);
   
   const handleCompleteQuiz = async () => {
     setIsCompleting(true);
@@ -472,6 +469,7 @@ const Quiz = () => {
               id={question.id}
               value={answer as string}
               onChange={(e) => handleInputChange(question.id, e.target.value)}
+              onBlur={(e) => handleSaveAnswer(question.id, e.target.value)}
               disabled={isSubmitting}
               placeholder={question.placeholder || undefined}
             />
@@ -485,6 +483,7 @@ const Quiz = () => {
               id={question.id}
               value={answer as string}
               onChange={(e) => handleInputChange(question.id, e.target.value)}
+              onBlur={(e) => handleSaveAnswer(question.id, e.target.value)}
               disabled={isSubmitting}
               placeholder={question.placeholder || undefined}
             />
@@ -499,6 +498,7 @@ const Quiz = () => {
               id={question.id}
               value={answer as string}
               onChange={(e) => handleInputChange(question.id, e.target.value)}
+              onBlur={(e) => handleSaveAnswer(question.id, e.target.value)}
               disabled={isSubmitting}
               placeholder={question.placeholder || undefined}
             />
@@ -513,6 +513,7 @@ const Quiz = () => {
               id={question.id}
               value={answer as string}
               onChange={(e) => handleInputChange(question.id, e.target.value)}
+              onBlur={(e) => handleSaveAnswer(question.id, e.target.value)}
               disabled={isSubmitting}
               placeholder={question.placeholder || undefined}
             />
@@ -526,6 +527,7 @@ const Quiz = () => {
               id={question.id}
               value={answer as string}
               onChange={(value) => handleInputChange(question.id, value)}
+              onBlur={(value) => handleSaveAnswer(question.id, value)}
               disabled={isSubmitting}
               hint={question.hint}
               prefix="https://"
@@ -542,6 +544,7 @@ const Quiz = () => {
               id={question.id}
               value={answer as string}
               onChange={(value) => handleInputChange(question.id, value)}
+              onBlur={(value) => handleSaveAnswer(question.id, value)}
               disabled={isSubmitting}
               hint={question.hint}
               prefix="www.instagram.com/"

@@ -9,10 +9,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { QuizStructureTest } from "@/components/quiz/QuizStructureTest";
 import { ForceRecoveryButton } from "@/components/admin/ForceRecoveryButton";
-import { Loader2, AlertCircle, CheckCircle, Database, Server, Webhook } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, Database, Server } from "lucide-react";
 import { testSupabaseStructure } from "@/utils/testSupabaseStructure";
 import { forceQuizRecovery } from "@/scripts/force-quiz-recovery";
-import WebhookTester from '@/components/debug/WebhookTester';
 
 const DiagnosticoSistema: React.FC = () => {
   const { isAdmin } = useAuth();
@@ -75,10 +74,6 @@ const DiagnosticoSistema: React.FC = () => {
             <TabsTrigger value="questionario" className="flex items-center gap-2">
               <Server className="h-4 w-4" />
               Questionário
-            </TabsTrigger>
-            <TabsTrigger value="webhook" className="flex items-center gap-2">
-              <Webhook className="h-4 w-4" />
-              Webhook
             </TabsTrigger>
           </TabsList>
           
@@ -214,10 +209,6 @@ const DiagnosticoSistema: React.FC = () => {
                 )}
               </CardFooter>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="webhook">
-            <WebhookTester />
           </TabsContent>
         </Tabs>
       </div>
