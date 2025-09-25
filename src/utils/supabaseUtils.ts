@@ -1,4 +1,5 @@
-import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
+import { getSupabaseAdminClient } from '@/utils/supabaseAdminClient';
 import { logger } from '@/utils/logger';
 import { QuizAnswer, QuizQuestion } from '@/types/quiz';
 
@@ -58,6 +59,7 @@ export async function completeQuizManually(userId: string) {
     }
     
     // Método alternativo: atualização direta via admin
+    const supabaseAdmin = getSupabaseAdminClient();
     const { data: submission, error: fetchError } = await supabaseAdmin
       .from('quiz_submissions')
       .select('id')
@@ -69,7 +71,7 @@ export async function completeQuizManually(userId: string) {
     }
     
     if (submission) {
-      const { error: updateError } = await supabaseAdmin
+      const { error: updateError } = await getSupabaseAdminClient()
         .from('quiz_submissions')
         .update({
           completed: true,
@@ -89,11 +91,11 @@ export async function completeQuizManually(userId: string) {
       return { success: true, method: 'direct_update' };
     } else {
       // Buscar email do usuário antes de criar submissão
-      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+      const { data: userData, error: userError } = await getSupabaseAdminClient().auth.admin.getUserById(userId);
       const userEmail = userData?.user?.email || '';
       
       // Caso não encontre submissão, cria uma já completa
-      const { data: newSubmission, error: createError } = await supabaseAdmin
+      const { data: newSubmission, error: createError } = await getSupabaseAdminClient()
         .from('quiz_submissions')
         .insert([{
           user_id: userId,
@@ -310,6 +312,7 @@ export function processQuizAnswersToSimplified(questions, answers) {
  */
 export async function getQuizCompletedAnswers(submissionId: string) {
   try {
+    const supabaseAdmin = getSupabaseAdminClient();
     // Buscar detalhes da submissão
     const { data: submission, error: submissionError } = await supabaseAdmin
       .from('quiz_submissions')
