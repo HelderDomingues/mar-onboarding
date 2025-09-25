@@ -595,14 +595,14 @@ const QuizResponses = () => {
               <div className="flex items-center w-full md:w-1/2 md:justify-end gap-2">
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <Select 
-                  value={statusFilter || ""} 
-                  onValueChange={(value) => setStatusFilter(value || null)}
+                  value={statusFilter || "all"} 
+                  onValueChange={(value) => setStatusFilter(value === "all" ? null : value)}
                 >
                   <SelectTrigger className="w-full md:w-[200px]">
                     <SelectValue placeholder="Filtrar por status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os registros</SelectItem>
+                    <SelectItem value="all">Todos os registros</SelectItem>
                     <SelectItem value="complete">Apenas completos</SelectItem>
                     <SelectItem value="incomplete">Apenas incompletos</SelectItem>
                   </SelectContent>
