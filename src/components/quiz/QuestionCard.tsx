@@ -265,6 +265,7 @@ export function QuestionCard({
       case 'radio': {
         if (typeof currentAnswer !== 'string' || currentAnswer.trim() === '') {
             setValidationError("Selecione uma opção.");
+ fix/quiz-radio-issues-and-optimize
             return false;
         }
         break;

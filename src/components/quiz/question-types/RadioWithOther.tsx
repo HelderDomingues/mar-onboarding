@@ -31,6 +31,7 @@ export const RadioWithOther: React.FC<RadioWithOtherProps> = ({
     option.text.toLowerCase().includes('outro')
   );
 
+ fix/quiz-radio-issues-and-optimize
   useEffect(() => {
     // Tenta encontrar a opção por ID ou por Texto
     const selectedOption = options.find(opt => opt.id === value || opt.text === value);
@@ -46,6 +47,7 @@ export const RadioWithOther: React.FC<RadioWithOtherProps> = ({
       setSelectedValue(otherOption.text);
       setInternalOtherText(value);
     } else {
+ fix/quiz-radio-issues-and-optimize
       // Nenhum valor ou valor inválido, reseta o estado
       setSelectedValue('');
       setInternalOtherText('');
