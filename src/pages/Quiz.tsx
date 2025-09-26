@@ -516,8 +516,11 @@ const Quiz = () => {
             <PrefixField
               id={question.id}
               value={answer as string}
-              onChange={(value) => handleInputChange(question.id, value)}
-              onBlur={(value) => handleSaveAnswer(question.id, value)}
+              onChange={(value) => setAnswers(prev => ({ ...prev, [question.id]: value }))}
+              onBlur={async (value) => {
+                await handleSaveAnswer(question.id, value);
+                return true;
+              }}
               disabled={isSubmitting}
               hint={question.hint}
               prefix="https://"
@@ -533,8 +536,11 @@ const Quiz = () => {
             <PrefixField
               id={question.id}
               value={answer as string}
-              onChange={(value) => handleInputChange(question.id, value)}
-              onBlur={(value) => handleSaveAnswer(question.id, value)}
+              onChange={(value) => setAnswers(prev => ({ ...prev, [question.id]: value }))}
+              onBlur={async (value) => {
+                await handleSaveAnswer(question.id, value);
+                return true;
+              }}
               disabled={isSubmitting}
               hint={question.hint}
               prefix="www.instagram.com/"
@@ -551,7 +557,10 @@ const Quiz = () => {
               id={question.id}
               options={question.options || []}
               value={answer as string}
-              onChange={(value) => handleInputChange(question.id, value)}
+              onChange={async (value) => {
+                setAnswers(prev => ({ ...prev, [question.id]: value }));
+                await handleSaveAnswer(question.id, value);
+              }}
               disabled={isSubmitting}
               hint={question.hint}
             />
