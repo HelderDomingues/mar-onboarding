@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "./input";
 interface PrefixInputProps extends Omit<React.ComponentPropsWithoutRef<typeof Input>, 'prefix'> {
   prefix?: string;
+  onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void;
 }
 const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(({
   className,

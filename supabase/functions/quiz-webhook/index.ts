@@ -288,7 +288,7 @@ serve(async (req) => {
       console.log(`Geradas ${Object.keys(respostasManual).length} respostas manualmente`);
       
       // Continuar com estas respostas
-      respostas = {
+      let respostasCompletas = {
         user_id: submission.user_id,
         user_email: submission.user_email || "",
         user_name: submission.user_name || "",
@@ -319,7 +319,7 @@ serve(async (req) => {
         } else if (Array.isArray(respostas.respostas)) {
           // Converte array para objeto se possível
           const respostasObj: Record<string, any> = {};
-          respostas.respostas.forEach((item, index) => {
+          respostas.respostas.forEach((item: any, index: number) => {
             if (typeof item === 'object' && item.question && item.answer) {
               respostasObj[item.question] = item.answer;
             } else {
@@ -460,7 +460,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: "Erro interno no servidor", 
-        details: error.message,
+        details: error instanceof Error ? error.message : 'Erro desconhecido',
         errorCode: "INTERNAL_SERVER_ERROR",
         timestamp: new Date().toISOString()
       }),

@@ -6,6 +6,7 @@ interface PrefixFieldProps {
   id: string;
   value: string;
   onChange: (value: string) => void;
+  onBlur?: (value: any) => Promise<boolean>;
   disabled?: boolean;
   hint?: string;
   error?: string | null;
@@ -18,6 +19,7 @@ export const PrefixField: React.FC<PrefixFieldProps> = ({
   id,
   value,
   onChange,
+  onBlur,
   disabled = false,
   hint,
   error,
@@ -36,6 +38,7 @@ export const PrefixField: React.FC<PrefixFieldProps> = ({
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur ? (e) => onBlur(e.target.value) : undefined}
           placeholder={placeholder}
           disabled={disabled}
           required={required}
