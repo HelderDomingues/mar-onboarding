@@ -265,11 +265,7 @@ export function QuestionCard({
       case 'radio': {
         if (typeof currentAnswer !== 'string' || currentAnswer.trim() === '') {
             setValidationError("Selecione uma opção.");
-            return false;
-        }
-        const otherOption = question.options?.find(opt => optionContainsText(opt, 'outro'));
-        if (otherOption && currentAnswer === getOptionText(otherOption)) {
-            setValidationError("Especifique sua resposta no campo 'Outro'.");
+ fix/quiz-radio-issues-and-optimize
             return false;
         }
         break;
