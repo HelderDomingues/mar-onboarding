@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { QuizModule, QuizQuestion, QuizOption, QuizSubmission, QuizAnswer } from '@/types/quiz';
+import { sendQuizDataToWebhook } from '@/utils/webhookUtils';
 
 export async function fetchModules(): Promise<QuizModule[]> {
   const { data, error } = await supabase
@@ -112,6 +113,14 @@ export async function completeQuiz(submissionId: string): Promise<void> {
     .eq('id', submissionId);
     
   if (error) throw error;
+  
+  // Tentar enviar dados para o webhook automaticamente
+  try {
+    await sendQuizDataToWebhook(submissionId);
+  } catch (webhookError) {
+    console.warn('Erro ao enviar webhook automaticamente:', webhookError);
+    // Não interrompe o fluxo mesmo se o webhook falhar
+  }
 }
 
 export async function isQuizComplete(userId: string): Promise<boolean> {

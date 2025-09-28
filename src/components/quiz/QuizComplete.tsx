@@ -30,8 +30,14 @@ export function QuizComplete() {
         
         <p className="text-center text-muted-foreground">
           Obrigado por completar o questionário MAR (Mapa para Alto Rendimento). 
-          Suas respostas foram salvas com sucesso.
+          Suas respostas foram automaticamente processadas e enviadas para nossa equipe.
         </p>
+        
+        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+          <p className="text-sm text-blue-800 text-center">
+            <strong>✅ Status:</strong> Dados consolidados e enviados automaticamente
+          </p>
+        </div>
         
         <Separator />
         

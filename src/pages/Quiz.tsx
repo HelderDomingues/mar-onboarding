@@ -43,6 +43,7 @@ import {
   completeQuiz, 
   isQuizComplete 
 } from '@/utils/quiz';
+import { sendQuizDataToWebhook } from '@/utils/webhookUtils';
 import { saveQuizAnswer } from '@/utils/supabaseUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { QuizModule, QuizQuestion } from '@/types/quiz';
@@ -358,10 +359,28 @@ const Quiz = () => {
       await completeQuiz(submissionId);
       setQuizCompleted(true);
       
-      toast({
-        title: "Questionário completado",
-        description: "Parabéns! Você completou o questionário.",
-      });
+      // Tentar enviar dados para o webhook
+      try {
+        const webhookResult = await sendQuizDataToWebhook(submissionId);
+        if (webhookResult.success) {
+          toast({
+            title: "Questionário completado",
+            description: "Parabéns! Suas respostas foram enviadas com sucesso.",
+          });
+        } else {
+          toast({
+            title: "Questionário completado",
+            description: "Quiz finalizado, mas houve problema no envio automático das respostas.",
+            variant: "default",
+          });
+        }
+      } catch (webhookError) {
+        console.warn('Erro no webhook, mas quiz foi concluído:', webhookError);
+        toast({
+          title: "Questionário completado",
+          description: "Parabéns! Você completou o questionário.",
+        });
+      }
       
       // Redirecionar para a página de sucesso
       navigate('/quiz/success');

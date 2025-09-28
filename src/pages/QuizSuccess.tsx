@@ -25,16 +25,23 @@ export default function QuizSuccess() {
           
           <p className="mb-8 text-slate-50">
             Agradecemos pelo tempo dedicado ao preenchimento do questionário. 
-            Suas respostas são fundamentais para que possamos entender melhor o seu negócio 
-            e desenvolver o MApa para Alto Rendimento ideal para o seu crescimento.
+            Suas respostas foram automaticamente processadas e enviadas para nossa equipe técnica
+            que desenvolverá o MApa para Alto Rendimento ideal para o seu crescimento.
           </p>
           
           <div className="rounded-lg p-6 border border-border bg-green-100">
             <h3 className="font-semibold text-lg mb-3 text-foreground">Próximos passos</h3>
             <p className="mb-4 text-gray-800">
+              ✅ Suas respostas foram processadas e enviadas automaticamente para nossa equipe.<br/>
               Nossa equipe irá analisar suas respostas e entraremos em contato em breve para 
               discutir os resultados e as próximas etapas do programa MAR.
             </p>
+            
+            <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
+              <p className="text-sm text-blue-800">
+                <strong>📊 Status:</strong> Dados consolidados e enviados com sucesso para análise.
+              </p>
+            </div>
             
             <h4 className="font-medium mt-4 mb-2 text-slate-700">Fale com um consultor</h4>
             <div className="inline-flex flex-col md:flex-row gap-5 justify-center mx-[5px]">
