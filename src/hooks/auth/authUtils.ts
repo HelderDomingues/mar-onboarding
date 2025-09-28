@@ -16,11 +16,36 @@ export const checkAdminStatus = async (userId: string): Promise<boolean> => {
     
     addLogEntry('auth', 'Verificando status de admin', { userId });
     
-    // Usar nova função segura is_current_user_admin
-    const { data, error } = await supabase.rpc('is_current_user_admin');
+    // Primeiro tentar usar a função RPC is_current_user_admin
+    try {
+      const { data, error } = await supabase.rpc('is_current_user_admin');
+      
+      if (!error && data !== null) {
+        const isAdmin = !!data;
+        logger.info('Status de admin verificado via RPC:', { 
+          tag: 'Auth', 
+          data: { userId, isAdmin } 
+        });
+        addLogEntry('auth', 'Status de admin verificado via RPC', { userId, isAdmin });
+        return isAdmin;
+      }
+    } catch (rpcError) {
+      logger.warn('Erro na função RPC, tentando query direta:', { 
+        tag: 'Auth', 
+        data: { rpcError, userId } 
+      });
+    }
+    
+    // Fallback: query direta na tabela user_roles
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .limit(1);
     
     if (error) {
-      logger.error('Erro ao verificar status de admin:', { 
+      logger.error('Erro ao verificar status de admin via query direta:', { 
         tag: 'Auth', 
         data: { error, userId } 
       });
@@ -28,8 +53,8 @@ export const checkAdminStatus = async (userId: string): Promise<boolean> => {
       return false;
     }
     
-    const isAdmin = !!data;
-    logger.info('Status de admin verificado:', { 
+    const isAdmin = data && data.length > 0;
+    logger.info('Status de admin verificado via query direta:', { 
       tag: 'Auth', 
       data: { userId, isAdmin } 
     });

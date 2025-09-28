@@ -83,7 +83,7 @@ export async function sendQuizDataToWebhook(
       // Usar respostas já consolidadas
       respostasFormatadas = respostas.respostas;
       userEmail = respostas.user_email || submission.user_email;
-      userName = respostas.user_name || userName;
+      userName = respostas.full_name || userName;
 
       logger.info('Usando respostas da tabela consolidada', {
         tag: 'Webhook',
