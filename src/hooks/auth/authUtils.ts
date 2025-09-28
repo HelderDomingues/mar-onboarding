@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { addLogEntry } from "@/utils/projectLog";
@@ -37,12 +36,11 @@ export const checkAdminStatus = async (userId: string): Promise<boolean> => {
     }
     
     // Fallback: query direta na tabela user_roles
+    // ALTERAÇÃO CRÍTICA: Removido .eq('role', 'admin') e .limit(1) para evitar 406
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .limit(1);
+      .eq('user_id', userId); // Buscar todas as roles para o usuário
     
     if (error) {
       logger.error('Erro ao verificar status de admin via query direta:', { 
@@ -53,7 +51,11 @@ export const checkAdminStatus = async (userId: string): Promise<boolean> => {
       return false;
     }
     
-    const isAdmin = data && data.length > 0;
+    // ALTERAÇÃO CRÍTICA: Usar .some() para verificar se a role 'admin' está presente no array de resultados
+    const isAdmin = data 
+      ? data.some(r => r.role === 'admin') 
+      : false;
+
     logger.info('Status de admin verificado via query direta:', { 
       tag: 'Auth', 
       data: { userId, isAdmin } 
