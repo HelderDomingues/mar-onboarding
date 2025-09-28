@@ -15,25 +15,46 @@ export const checkAdminStatus = async (userId: string): Promise<boolean> => {
     
     addLogEntry('auth', 'Verificando status de admin', { userId });
     
-    // Primeiro tentar usar a função RPC is_current_user_admin
-    try {
-      const { data, error } = await supabase.rpc('is_current_user_admin');
-      
-      if (!error && data !== null) {
-        const isAdmin = !!data;
-        logger.info('Status de admin verificado via RPC:', { 
-          tag: 'Auth', 
-          data: { userId, isAdmin } 
-        });
-        addLogEntry('auth', 'Status de admin verificado via RPC', { userId, isAdmin });
-        return isAdmin;
-      }
-    } catch (rpcError) {
-      logger.warn('Erro na função RPC, tentando query direta:', { 
+    // TEMPORARIAMENTE IGNORANDO RPC PARA ISOLAR O ERRO 406
+    // O código original estava aqui: try/catch para supabase.rpc('is_current_user_admin')
+    
+    // Fallback: query direta na tabela user_roles
+    // Já corrigida para buscar todas as roles, o que evita o 406 por falta de linha.
+    const { data: rolesData, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId); 
+    
+    if (error) {
+      logger.error('Erro ao verificar status de admin via query direta:', { 
         tag: 'Auth', 
-        data: { rpcError, userId } 
+        data: { error, userId } 
       });
+      addLogEntry('error', 'Erro ao verificar status de admin', { error, userId });
+      return false;
     }
+    
+    // Usar .some() para verificar se a role 'admin' está presente no array de resultados
+    const isAdmin = rolesData 
+      ? rolesData.some(r => r.role === 'admin') 
+      : false;
+
+    logger.info('Status de admin verificado via query direta:', { 
+      tag: 'Auth', 
+      data: { userId, isAdmin } 
+    });
+    addLogEntry('auth', 'Status de admin verificado', { userId, isAdmin });
+    
+    return isAdmin;
+  } catch (error) {
+    logger.error('Exceção ao verificar status de admin:', { 
+      tag: 'Auth', 
+      data: { error, userId } 
+    });
+    addLogEntry('error', 'Exceção ao verificar status de admin', { error, userId });
+    return false;
+  }
+};
     
     // Fallback: query direta na tabela user_roles
     // ALTERAÇÃO CRÍTICA: Removido .eq('role', 'admin') e .limit(1) para evitar 406
