@@ -108,7 +108,7 @@ export async function sendQuizDataToWebhook(
           )
         `)
         .eq('submission_id', submissionId)
-        .order('quiz_questions(order_number)');
+        .order('quiz_questions.order_number');
 
       if (answersError || !answers || answers.length === 0) {
         const message = 'Nenhuma resposta encontrada para esta submissão';
