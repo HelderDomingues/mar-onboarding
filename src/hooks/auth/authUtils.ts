@@ -7,7 +7,7 @@ import { User } from "@supabase/supabase-js";
  * Verifica o status de administrador de um usuário
  */
 export const checkAdminStatus = async (userId: string): Promise<boolean> => {
-  try { // <--- Este é o bloco try principal
+  try {
     logger.info('Verificando status de admin para usuário:', { 
       tag: 'Auth', 
       data: { userId } 
@@ -15,11 +15,11 @@ export const checkAdminStatus = async (userId: string): Promise<boolean> => {
     
     addLogEntry('auth', 'Verificando status de admin', { userId });
     
-    // TEMPORARIAMENTE IGNORANDO RPC PARA ISOLAR O ERRO 406
-    // O código original estava aqui: try/catch para supabase.rpc('is_current_user_admin')
+    // NOTA: O bloco RPC para 'is_current_user_admin' foi removido
+    // temporariamente para isolar e resolver o erro 406.
     
-    // Fallback: query direta na tabela user_roles
-    // Já corrigida para buscar todas as roles, o que evita o 406 por falta de linha.
+    // QUERY DIRETA (Fallback corrigido):
+    // Busca todas as roles do usuário para evitar o erro 406 de "0 linhas retornadas".
     const { data: rolesData, error } = await supabase
       .from('user_roles')
       .select('role')
@@ -34,7 +34,7 @@ export const checkAdminStatus = async (userId: string): Promise<boolean> => {
       return false;
     }
     
-    // Usar .some() para verificar se a role 'admin' está presente no array de resultados
+    // A verificação é feita no cliente (JavaScript): checa se a role 'admin' existe no array.
     const isAdmin = rolesData 
       ? rolesData.some(r => r.role === 'admin') 
       : false;
@@ -45,48 +45,9 @@ export const checkAdminStatus = async (userId: string): Promise<boolean> => {
     });
     addLogEntry('auth', 'Status de admin verificado', { userId, isAdmin });
     
-    return isAdmin; // <--- O RETORNO ESTÁ CORRETO AQUI
-  } 
-  // O catch deve estar diretamente após o fechamento do try principal.
-  catch (error) { // <--- O CATCH PRINCIPAL DEVE FICAR AQUI
-    logger.error('Exceção ao verificar status de admin:', { 
-      tag: 'Auth', 
-      data: { error, userId } 
-    });
-    addLogEntry('error', 'Exceção ao verificar status de admin', { error, userId });
-    return false;
-  } 
-};
-    
-    // Fallback: query direta na tabela user_roles
-    // ALTERAÇÃO CRÍTICA: Removido .eq('role', 'admin') e .limit(1) para evitar 406
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId); // Buscar todas as roles para o usuário
-    
-    if (error) {
-      logger.error('Erro ao verificar status de admin via query direta:', { 
-        tag: 'Auth', 
-        data: { error, userId } 
-      });
-      addLogEntry('error', 'Erro ao verificar status de admin', { error, userId });
-      return false;
-    }
-    
-    // ALTERAÇÃO CRÍTICA: Usar .some() para verificar se a role 'admin' está presente no array de resultados
-    const isAdmin = data 
-      ? data.some(r => r.role === 'admin') 
-      : false;
-
-    logger.info('Status de admin verificado via query direta:', { 
-      tag: 'Auth', 
-      data: { userId, isAdmin } 
-    });
-    addLogEntry('auth', 'Status de admin verificado', { userId, isAdmin });
-    
     return isAdmin;
-  } catch (error) {
+  } 
+  catch (error) { 
     logger.error('Exceção ao verificar status de admin:', { 
       tag: 'Auth', 
       data: { error, userId } 
@@ -174,7 +135,7 @@ export const logoutUser = async (userId?: string) => {
     
     logger.info('Logout realizado com sucesso', { tag: 'Auth' });
     addLogEntry('auth', 'Logout realizado com sucesso', {}, userId);
-  } catch (error) {
+  } catch (error) { 
     logger.error("Erro ao fazer logout:", {
       tag: 'Auth',
       data: error
