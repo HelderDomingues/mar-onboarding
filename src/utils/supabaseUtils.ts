@@ -98,7 +98,7 @@ export async function completeQuizManually(userId: string) {
         .insert([{
           user_id: userId,
           user_email: userEmail,
-          current_module: 8,
+          current_module: 11,
           completed: true,
           completed_at: new Date().toISOString()
         }])
@@ -472,7 +472,7 @@ export function formatCompletedAnswersForPDF(completedAnswers) {
   
   // Formatar cabeçalho
   const cabecalho = {
-    usuario: completedAnswers.user_name || 'N/A',
+    usuario: completedAnswers.full_name || 'N/A',
     email: completedAnswers.user_email || 'N/A',
     dataSubmissao: new Date(completedAnswers.completed_at || completedAnswers.created_at).toLocaleDateString('pt-BR')
   };
