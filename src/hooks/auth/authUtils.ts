@@ -7,7 +7,7 @@ import { User } from "@supabase/supabase-js";
  * Verifica o status de administrador de um usuário
  */
 export const checkAdminStatus = async (userId: string): Promise<boolean> => {
-  try {
+  try { // <--- Este é o bloco try principal
     logger.info('Verificando status de admin para usuário:', { 
       tag: 'Auth', 
       data: { userId } 
@@ -45,15 +45,17 @@ export const checkAdminStatus = async (userId: string): Promise<boolean> => {
     });
     addLogEntry('auth', 'Status de admin verificado', { userId, isAdmin });
     
-    return isAdmin;
-  } catch (error) {
+    return isAdmin; // <--- O RETORNO ESTÁ CORRETO AQUI
+  } 
+  // O catch deve estar diretamente após o fechamento do try principal.
+  catch (error) { // <--- O CATCH PRINCIPAL DEVE FICAR AQUI
     logger.error('Exceção ao verificar status de admin:', { 
       tag: 'Auth', 
       data: { error, userId } 
     });
     addLogEntry('error', 'Exceção ao verificar status de admin', { error, userId });
     return false;
-  }
+  } 
 };
     
     // Fallback: query direta na tabela user_roles
