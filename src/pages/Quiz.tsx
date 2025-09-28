@@ -349,14 +349,25 @@ const Quiz = () => {
   }, []);
   
   const handleCompleteQuiz = async () => {
+    console.log('🚀 [HandleCompleteQuiz] Iniciando finalização do quiz');
+    
     setIsCompleting(true);
     
     try {
       if (!submissionId) {
+        console.error('❌ [HandleCompleteQuiz] Submissão não encontrada:', { submissionId });
         throw new Error("Submissão não encontrada");
       }
+
+      console.log('📋 [HandleCompleteQuiz] Dados da submissão:', { 
+        submissionId,
+        userId: user?.id
+      });
       
+      console.log('⏳ [HandleCompleteQuiz] Chamando completeQuiz...');
       await completeQuiz(submissionId);
+      console.log('✅ [HandleCompleteQuiz] Quiz finalizado com sucesso!');
+      
       setQuizCompleted(true);
       
       // Tentar enviar dados para o webhook
@@ -385,6 +396,7 @@ const Quiz = () => {
       // Redirecionar para a página de sucesso
       navigate('/quiz/success');
     } catch (error: any) {
+      console.error('❌ [HandleCompleteQuiz] Erro ao finalizar quiz:', error);
       logger.error('Erro ao completar questionário', {
         tag: 'Quiz',
         data: error
@@ -398,6 +410,7 @@ const Quiz = () => {
     } finally {
       setIsCompleting(false);
       setShowConfirmation(false);
+      console.log('🏁 [HandleCompleteQuiz] Processo finalizado');
     }
   };
 

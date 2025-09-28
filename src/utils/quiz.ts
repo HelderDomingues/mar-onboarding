@@ -104,21 +104,31 @@ export async function saveAnswer(
 }
 
 export async function completeQuiz(submissionId: string): Promise<void> {
+  console.log('🎯 [CompleteQuiz] Iniciando processo de finalização:', { submissionId });
+  
   const { error } = await supabase
     .from('quiz_submissions')
     .update({
       completed: true,
-      completed_at: new Date().toISOString()
+      completed_at: new Date().toISOString(),
+      webhook_processed: false
     })
     .eq('id', submissionId);
     
-  if (error) throw error;
+  if (error) {
+    console.error('❌ [CompleteQuiz] Erro ao completar quiz:', error);
+    throw error;
+  }
+
+  console.log('✅ [CompleteQuiz] Quiz marcado como completo com sucesso');
   
-  // Tentar enviar dados para o webhook automaticamente
+  // Tentar enviar dados para o webhook automaticamente  
   try {
+    console.log('📤 [CompleteQuiz] Enviando dados para webhook...');
     await sendQuizDataToWebhook(submissionId);
+    console.log('✅ [CompleteQuiz] Webhook enviado com sucesso');
   } catch (webhookError) {
-    console.warn('Erro ao enviar webhook automaticamente:', webhookError);
+    console.error('❌ [CompleteQuiz] Erro ao enviar dados para webhook:', webhookError);
     // Não interrompe o fluxo mesmo se o webhook falhar
   }
 }
