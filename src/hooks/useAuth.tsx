@@ -148,7 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Verificar sessão atual com um pequeno atraso
     setTimeout(() => {
       checkCurrentSession();
-    }, 50);
+    }, 200);
 
     // Cleanup ao desmontar
     return () => {
