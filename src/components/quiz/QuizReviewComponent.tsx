@@ -1,39 +1,35 @@
 import React from 'react';
-import { QuizModule, QuizQuestion } from '@/types/quiz';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { recoveryLogger } from '@/utils/recoveryLogger';
 
-interface QuizReviewComponentProps {
-  modules: QuizModule[];
-  questions: QuizQuestion[];
-  answers: Record<string, string | string[]>;
-  onComplete: () => void;
-  onEdit: (moduleIndex: number, questionIndex: number) => void;
-}
+export default function QuizReviewComponent({ onComplete }) {
 
-export function QuizReviewComponent({
-  modules,
-  questions,
-  answers,
-  onComplete,
-  onEdit
-}: QuizReviewComponentProps) {
-  
-  React.useEffect(() => {
-    recoveryLogger.infoStep('FASE2', 'QUIZ_REVIEW', 'QuizReviewComponent carregado', {
-      modulesCount: modules.length,
-      questionsCount: questions.length,
-      answersCount: Object.keys(answers).length
-    });
-  }, [modules, questions, answers]);
+  // Exemplo de dados fictícios, substitua pelos reais conforme necessário
+  const modules = [
+    { id: 'mod1', order_number: 1, title: 'Módulo 1' },
+    { id: 'mod2', order_number: 2, title: 'Módulo 2' }
+  ];
+  const questions = [
+    { id: 'q1', module_id: 'mod1', text: 'Pergunta 1 do módulo 1' },
+    { id: 'q2', module_id: 'mod2', text: 'Pergunta 1 do módulo 2' }
+  ];
+  const answers = {
+    q1: 'Resposta 1',
+    q2: 'Resposta 2'
+  };
 
-  const getModuleQuestions = (moduleId: string) => {
+  // Função para editar resposta
+  const onEdit = (moduleIndex, questionIndex) => {
+    // Implemente a lógica de edição conforme necessário
+    alert(`Editar resposta do módulo ${moduleIndex + 1}, questão ${questionIndex + 1}`);
+  };
+
+  const getModuleQuestions = (moduleId) => {
     return questions.filter(q => q.module_id === moduleId);
   };
 
-  const getAnswerDisplay = (answer: string | string[]) => {
+  const getAnswerDisplay = (answer) => {
     if (Array.isArray(answer)) {
       return answer.join(', ');
     }
