@@ -40,7 +40,7 @@ export async function completeQuizManually(userId: string) {
 
     // Tenta usar RPC para completar o questionário primeiro (método preferido)
     try {
-      const { data, error } = await supabase.rpc('complete_quiz', { user_id: userId });
+  const { data, error } = await supabase.rpc('complete_quiz', ({ p_user_id: userId } as any));
 
       if (!error) {
         logger.info('Questionário completado via RPC', {
