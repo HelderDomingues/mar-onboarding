@@ -75,21 +75,72 @@ export async function sendQuizDataToWebhook(
     let userEmail = submission.user_email;
     let userName = profile?.full_name || '';
 
-    // Verificar se as respostas estão estruturadas corretamente na tabela de respostas completas
-    if (respostas?.respostas &&
-        typeof respostas.respostas === 'object' &&
-        Object.keys(respostas.respostas).length > 1) {
+    // Prefer to build an ordered, stable payload from quiz_answers (ordered by question)
+    // even when consolidated respostas exist. This preserves Pergunta_N/Resposta_N pairing
+    // and avoids unpredictable key ordering coming from jsonb objects.
+    let answers: any[] | null = null;
+    try {
+      const { data: answersData, error: answersError } = await supabaseAdmin
+        .from('quiz_answers')
+        .select(`
+          answer,
+          quiz_questions!inner (
+            id,
+            text,
+            type,
+            order_number
+          )
+        `)
+        .eq('submission_id', submissionId)
+        .order('quiz_questions.order_number');
 
-      // Usar respostas já consolidadas
+      if (!answersError && answersData && Array.isArray(answersData) && answersData.length > 0) {
+        answers = answersData;
+      } else {
+        answers = null;
+      }
+    } catch (e) {
+      answers = null;
+      logger.warn('Falha ao buscar quiz_answers para montar payload ordenado', { tag: 'Webhook', data: { submissionId, error: e } });
+    }
+
+    if (answers && answers.length > 0) {
+      // Build payload from ordered answers (stable Pergunta_N/Resposta_N keys)
+      answers.forEach((item, index) => {
+        if (item.quiz_questions) {
+          const questionText = item.quiz_questions.text;
+          const answer = item.answer || '';
+
+          respostasFormatadas[`Pergunta_${index + 1}`] = questionText;
+          respostasFormatadas[`Resposta_${index + 1}`] = answer;
+          // Also include the question text key for compatibility
+          respostasFormatadas[questionText] = answer;
+        }
+      });
+
+      logger.info('Respostas estruturadas com sucesso (ordenadas)', {
+        tag: 'Webhook',
+        data: {
+          submissionId,
+          totalRespostas: answers.length,
+          camposGerados: Object.keys(respostasFormatadas).length
+        }
+      });
+
+      // prefer user info from consolidated table if present
+      userEmail = respostas?.user_email || submission.user_email;
+      userName = (respostas as any)?.full_name || userName;
+
+    } else if (respostas?.respostas && typeof respostas.respostas === 'object' && Object.keys(respostas.respostas).length > 0) {
+      // Fallback: use consolidated object (no ordering guarantees)
       respostasFormatadas = respostas.respostas;
       userEmail = respostas.user_email || submission.user_email;
       userName = (respostas as any).full_name || userName;
 
-      logger.info('Usando respostas da tabela consolidada', {
+      logger.info('Usando respostas da tabela consolidada (fallback)', {
         tag: 'Webhook',
         data: { submissionId, questoesEncontradas: Object.keys(respostasFormatadas).length }
       });
-
     } else {
       // Buscar respostas individuais da tabela quiz_answers
       logger.info('Buscando respostas individuais da tabela quiz_answers', {
