@@ -15,15 +15,31 @@ export const checkAdminStatus = async (userId: string): Promise<boolean> => {
     
     addLogEntry('auth', 'Verificando status de admin', { userId });
     
-    // NOTA: O bloco RPC para 'is_current_user_admin' foi removido
-    // temporariamente para isolar e resolver o erro 406.
+    // Tenta usar RPC primeiro (Método preferido se a função existir e for segura)
+    try {
+      const { data, error } = await supabase.rpc('is_current_user_admin'); //
+      
+      if (!error && data !== null) {
+        const isAdmin = !!data;
+        logger.info('Status de admin verificado via RPC:', { 
+          tag: 'Auth', 
+          data: { userId, isAdmin } 
+        });
+        addLogEntry('auth', 'Status de admin verificado via RPC', { userId, isAdmin });
+        return isAdmin;
+      }
+    } catch (rpcError) {
+      logger.warn('Erro na função RPC, tentando query direta:', { 
+        tag: 'Auth', 
+        data: { rpcError, userId } 
+      });
+    }
     
-    // QUERY DIRETA (Fallback corrigido):
-    // Busca todas as roles do usuário para evitar o erro 406 de "0 linhas retornadas".
+    // Fallback: query direta na tabela user_roles (A QUERY CORRIGIDA)
     const { data: rolesData, error } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', userId); 
+      .eq('user_id', userId); // <-- REMOVIDO o .eq('role', 'admin') para evitar 406
     
     if (error) {
       logger.error('Erro ao verificar status de admin via query direta:', { 
@@ -34,7 +50,7 @@ export const checkAdminStatus = async (userId: string): Promise<boolean> => {
       return false;
     }
     
-    // A verificação é feita no cliente (JavaScript): checa se a role 'admin' existe no array.
+    // Usar .some() para verificar se a role 'admin' está presente no array de resultados
     const isAdmin = rolesData 
       ? rolesData.some(r => r.role === 'admin') 
       : false;
@@ -56,7 +72,6 @@ export const checkAdminStatus = async (userId: string): Promise<boolean> => {
     return false;
   }
 };
-
 /**
  * Realiza login no sistema
  */
