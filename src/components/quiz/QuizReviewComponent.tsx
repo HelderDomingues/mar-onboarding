@@ -3,27 +3,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-export function QuizReviewComponent({ onComplete }) {
+export function QuizReviewComponent({ onComplete, modules: propModules, questions: propQuestions, answers: propAnswers, onEdit: propOnEdit }) {
 
-  // Exemplo de dados fictícios, substitua pelos reais conforme necessário
-  const modules = [
+  // Mock fallback data (kept for development). The component now prefers props passed from the parent.
+  const defaultModules = [
     { id: 'mod1', order_number: 1, title: 'Módulo 1' },
     { id: 'mod2', order_number: 2, title: 'Módulo 2' }
   ];
-  const questions = [
+  const defaultQuestions = [
     { id: 'q1', module_id: 'mod1', text: 'Pergunta 1 do módulo 1' },
     { id: 'q2', module_id: 'mod2', text: 'Pergunta 1 do módulo 2' }
   ];
-  const answers = {
+  const defaultAnswers = {
     q1: 'Resposta 1',
     q2: 'Resposta 2'
   };
 
-  // Função para editar resposta
-  const onEdit = (moduleIndex, questionIndex) => {
-    // Implemente a lógica de edição conforme necessário
-    alert(`Editar resposta do módulo ${moduleIndex + 1}, questão ${questionIndex + 1}`);
-  };
+  // Use props when provided; otherwise fall back to defaults
+  const modules = (Array.isArray(propModules) && propModules.length) ? propModules : defaultModules;
+  const questions = (Array.isArray(propQuestions) && propQuestions.length) ? propQuestions : defaultQuestions;
+  const answers = propAnswers || defaultAnswers;
+
+  // Função para editar resposta: usa a função recebida pelo pai se fornecida, senão fallback de alerta
+  const onEdit = typeof propOnEdit === 'function'
+    ? propOnEdit
+    : (moduleIndex, questionIndex) => {
+        alert(`Editar resposta do módulo ${moduleIndex + 1}, questão ${questionIndex + 1}`);
+      };
 
   const getModuleQuestions = (moduleId) => {
     return questions.filter(q => q.module_id === moduleId);
