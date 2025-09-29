@@ -11,7 +11,7 @@ const corsHeaders = {
 console.log("Função quiz-webhook v3.0 iniciada - Otimizada para Make.com");
 
 // Obter token do webhook das variáveis de ambiente
-const WEBHOOK_TOKEN = Deno.env.get("WEBHOOK_TOKEN") || "wpbbjokh8cexvd1hql9i7ae6uyf32bzh";
+const WEBHOOK_TOKEN = Deno.env.get("WEBHOOK_TOKEN") || "amuls2ba837paniiscdb4hlero9pjpdi";
 
 // Configurações globais para maior segurança
 const MAX_PAYLOAD_SIZE = 5 * 1024 * 1024; // 5MB

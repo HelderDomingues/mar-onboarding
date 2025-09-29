@@ -78,12 +78,11 @@ const FAQ = () => {
         const { data, error } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .single();
-          
-        if (!error && data) {
-          setIsAdmin(true);
+          .eq('user_id', user.id);
+
+        if (!error && Array.isArray(data)) {
+          const isAdminLocal = data.some((r: any) => r.role === 'admin');
+          setIsAdmin(isAdminLocal);
         }
       } catch (error) {
         console.error('Erro ao verificar permissões:', error);

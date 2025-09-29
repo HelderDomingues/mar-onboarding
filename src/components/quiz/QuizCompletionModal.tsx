@@ -24,6 +24,7 @@ import { useToast } from "@/components/ui/use-toast";
 export interface QuizCompletionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  submissionId?: string | null;
   completionResult: {
     success: boolean;
     verified: boolean;
@@ -140,7 +141,7 @@ export function QuizCompletionModal({ isOpen, onClose, completionResult }: QuizC
   const hasErrors = steps.some(s => s.status === 'error');
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

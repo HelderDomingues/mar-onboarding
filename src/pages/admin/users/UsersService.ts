@@ -101,8 +101,7 @@ export const fetchUserProfiles = async (userId: string | undefined) => {
     
     const { data: adminRolesData, error: adminRolesError } = await supabase
       .from('user_roles')
-      .select('user_id')
-      .eq('role', 'admin');
+      .select('user_id, role');
     
     if (adminRolesError) {
       logger.error('Erro ao buscar papéis de administrador:', {

@@ -12,13 +12,13 @@ const getWebhookUrl = async (): Promise<string> => {
     if (error) {
       console.error('Erro ao obter URL do webhook:', error);
       // Fallback para URL padrão em caso de erro
-      return 'https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh';
+  return 'https://hook.eu2.make.com/amuls2ba837paniiscdb4hlero9pjpdi';
     }
     
-    return data || 'https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh';
+  return data || 'https://hook.eu2.make.com/amuls2ba837paniiscdb4hlero9pjpdi';
   } catch (error) {
     console.error('Exceção ao obter URL do webhook:', error);
-    return 'https://hook.eu2.make.com/wpbbjokh8cexvd1hql9i7ae6uyf32bzh';
+  return 'https://hook.eu2.make.com/amuls2ba837paniiscdb4hlero9pjpdi';
   }
 };
 

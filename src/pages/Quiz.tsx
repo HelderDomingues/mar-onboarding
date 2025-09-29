@@ -669,6 +669,13 @@ const Quiz = () => {
           </Card>
         </div>
         
+        {/* Ensure the completion modal can still be shown on the completed page */}
+        <QuizCompletionModal 
+          isOpen={showCompletionModal}
+          submissionId={submissionId}
+          onClose={() => setShowCompletionModal(false)}
+          completionResult={completionResult}
+        />
         <SiteFooter />
       </div>
     );
