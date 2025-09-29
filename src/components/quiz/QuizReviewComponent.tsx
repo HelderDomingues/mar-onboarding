@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-export default function QuizReviewComponent({ onComplete }) {
+export function QuizReviewComponent({ onComplete }) {
 
   // Exemplo de dados fictícios, substitua pelos reais conforme necessário
   const modules = [
@@ -95,3 +95,5 @@ export default function QuizReviewComponent({ onComplete }) {
     </div>
   );
 }
+
+export default QuizReviewComponent;

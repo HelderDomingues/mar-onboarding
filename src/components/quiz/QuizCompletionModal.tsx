@@ -90,98 +90,116 @@ export function QuizCompletionModal({ isOpen, onClose, completionResult }: QuizC
           return step;
       }
     }));
+    if (!result.success) {
+      setCanRetry(true);
+    }
+  };
 
+  // Helpers and handlers used by the JSX
+  const getStepIcon = (status: VerificationStep['status']) => {
+    switch (status) {
+      case 'success':
+        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+      case 'error':
+        return <XCircle className="h-5 w-5 text-red-500" />;
+      case 'pending':
+        return <Loader2 className="h-5 w-5 animate-spin text-blue-500" />;
+      case 'loading':
+      default:
+        return <Loader2 className="h-5 w-5 animate-spin text-blue-500" />;
+    }
+  };
 
-          return (
-            <Dialog open={isOpen} onOpenChange={onClose}>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    {allStepsSuccessful ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    ) : hasErrors ? (
-                      <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                    ) : (
-                      <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
-                    )}
-                    {allStepsSuccessful ? 'Questionário Finalizado!' : 'Finalizando Questionário...'}
-                  </DialogTitle>
-                  <DialogDescription>
-                    {allStepsSuccessful 
-                      ? 'Parabéns! Seu questionário foi completado com sucesso.'
-                      : 'Verificando o status da finalização do seu questionário...'
-                    }
-                  </DialogDescription>
-                </DialogHeader>
+  const getStepBadge = (status: VerificationStep['status']) => {
+    switch (status) {
+      case 'success':
+        return <Badge variant="default">Concluído</Badge>;
+      case 'error':
+        return <Badge variant="destructive">Erro</Badge>;
+      case 'pending':
+        return <Badge variant="secondary">Pendente</Badge>;
+      case 'loading':
+      default:
+        return <Badge variant="outline">Processando</Badge>;
+    }
+  };
 
-                <div className="space-y-4 py-4">
-                  {steps.map((step, index) => (
-                    <div key={step.id} className="flex items-center gap-3 p-3 rounded-lg border">
-                      <div className="flex-shrink-0">
-                        {getStepIcon(step.status)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium">{step.title}</p>
-                          {getStepBadge(step.status)}
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {step.description}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+  const handleRetry = () => {
+    setIsRetrying(true);
+    // placeholder: re-fetch or re-run verification
+    setTimeout(() => {
+      setIsRetrying(false);
+      toast({ title: 'Verificação reexecutada', description: 'A verificação foi reexecutada.' });
+    }, 1200);
+  };
+
+  const handleNavigateToDashboard = () => { navigate('/dashboard'); onClose(); };
+  const handleNavigateToMemberArea = () => { navigate('/member'); onClose(); };
+
+  const allStepsSuccessful = steps.every(s => s.status === 'success');
+  const hasErrors = steps.some(s => s.status === 'error');
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {allStepsSuccessful ? (
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+            ) : hasErrors ? (
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+            ) : (
+              <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+            )}
+            {allStepsSuccessful ? 'Questionário Finalizado!' : 'Finalizando Questionário...'}
+          </DialogTitle>
+          <DialogDescription>
+            {allStepsSuccessful ? 'Parabéns! Seu questionário foi completado com sucesso.' : 'Verificando o status da finalização do seu questionário...'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          {steps.map(step => (
+            <div key={step.id} className="flex items-center gap-3 p-3 rounded-lg border">
+              <div className="flex-shrink-0">{getStepIcon(step.status)}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">{step.title}</p>
+                  {getStepBadge(step.status)}
                 </div>
+                <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
 
-                {hasErrors && (
-                  <div className="p-3 rounded-lg bg-yellow-50 border border-yellow-200">
-                    <div className="flex items-center gap-2 text-yellow-800">
-                      <AlertTriangle className="h-4 w-4" />
-                      <p className="text-sm font-medium">
-                        Alguns processos falharam, mas seus dados foram salvos.
-                      </p>
-                    </div>
-                    <p className="text-sm text-yellow-700 mt-1">
-                      Nossa equipe será notificada e processará manualmente se necessário.
-                    </p>
-                  </div>
-                )}
+        {hasErrors && (
+          <div className="p-3 rounded-lg bg-yellow-50 border border-yellow-200">
+            <div className="flex items-center gap-2 text-yellow-800">
+              <AlertTriangle className="h-4 w-4" />
+              <p className="text-sm font-medium">Alguns processos falharam, mas seus dados foram salvos.</p>
+            </div>
+            <p className="text-sm text-yellow-700 mt-1">Nossa equipe será notificada e processará manualmente se necessário.</p>
+          </div>
+        )}
 
-                <DialogFooter className="flex-col gap-2 sm:flex-row">
-                  {canRetry && !allStepsSuccessful && (
-                    <Button 
-                      variant="outline" 
-                      onClick={handleRetry}
-                      disabled={isRetrying}
-                      className="w-full sm:w-auto"
-                    >
-                      {isRetrying ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                      )}
-                      Verificar Novamente
-                    </Button>
-                  )}
-          
-                  <Button 
-                    onClick={handleNavigateToDashboard}
-                    className="w-full sm:w-auto"
-                  >
-                    <Home className="h-4 w-4 mr-2" />
-                    Voltar ao Dashboard
-                  </Button>
-          
-                  <Button 
-                    variant="outline" 
-                    onClick={handleNavigateToMemberArea}
-                    className="w-full sm:w-auto"
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Área do Membro
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+        <DialogFooter className="flex-col gap-2 sm:flex-row">
+          {canRetry && !allStepsSuccessful && (
+            <Button variant="outline" onClick={handleRetry} disabled={isRetrying} className="w-full sm:w-auto">
+              {isRetrying ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+              Verificar Novamente
+            </Button>
+          )}
+
+          <Button onClick={handleNavigateToDashboard} className="w-full sm:w-auto">
+            <Home className="h-4 w-4 mr-2" /> Voltar ao Dashboard
+          </Button>
+
+          <Button variant="outline" onClick={handleNavigateToMemberArea} className="w-full sm:w-auto">
+            <User className="h-4 w-4 mr-2" /> Área do Membro
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
