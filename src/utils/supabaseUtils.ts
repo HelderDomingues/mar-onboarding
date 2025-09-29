@@ -1,5 +1,6 @@
 import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
+import { sendQuizDataToWebhook } from '@/utils/webhookUtils';
 import { QuizAnswer, QuizQuestion } from '@/types/quiz';
 
 /**
@@ -40,21 +41,62 @@ export async function completeQuizManually(userId: string) {
 
     // Tenta usar RPC para completar o questionário primeiro (método preferido)
     try {
-      const { data, error } = await supabase.rpc('complete_quiz', { user_id: userId });
+      // call RPC using parameter name p_user_id (matches updated function)
+  const { data, error } = await supabase.rpc('complete_quiz', ({ p_user_id: userId } as any));
 
-      if (!error) {
+      if (error) {
+        // RPC returned an error -> fallthrough to admin fallback
+        logger.warn('RPC complete_quiz returned error', { tag: 'Quiz', data: { userId, error } });
+        throw error;
+      }
+
+      // Some RPC implementations may return boolean true/false or more complex objects.
+      // We expect a truthy success; otherwise consider it a failure so fallback runs.
+      if (data === true || (data && (data as any).success)) {
         logger.info('Questionário completado via RPC', {
           tag: 'Quiz',
-          data: { userId, method: 'rpc' }
+          data: { userId, method: 'rpc', rpcData: data }
         });
 
-        return { success: true, method: 'rpc' };
+        // RPC confirmed completion — attempt best-effort webhook send by locating
+        // the submission id and invoking the webhook sender. This ensures the
+        // modal reflects webhook status even when RPC path was used.
+        try {
+          const { data: submissionRow, error: subErr } = await supabaseAdmin
+            .from('quiz_submissions')
+            .select('id')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+          if (subErr) {
+            logger.warn('Não foi possível obter submission id após RPC', { tag: 'Quiz', data: { userId, subErr } });
+            return { success: true, method: 'rpc', webhookSent: false };
+          }
+
+          const submissionId = submissionRow?.id;
+          if (!submissionId) {
+            logger.warn('Nenhuma submissão encontrada para enviar webhook após RPC', { tag: 'Quiz', data: { userId } });
+            return { success: true, method: 'rpc', webhookSent: false };
+          }
+
+          const webhookResult = await sendQuizDataToWebhook(submissionId);
+          const webhookSent = !!webhookResult?.success;
+          return { success: true, method: 'rpc', webhookSent };
+        } catch (e) {
+          logger.warn('Erro ao tentar enviar webhook após RPC', { tag: 'Quiz', data: { userId, error: e } });
+          return { success: true, method: 'rpc', webhookSent: false };
+        }
       }
+
+      // If RPC returned falsy or did not confirm, throw to trigger fallback
+      logger.warn('RPC complete_quiz did not confirm completion', { tag: 'Quiz', data: { userId, rpcData: data } });
+      throw new Error('RPC did not confirm completion');
     } catch (rpcError) {
-      logger.warn('Falha no método RPC para completar questionário', {
+      logger.warn('Falha no método RPC para completar questionário, executando fallback admin', {
         tag: 'Quiz',
         data: { userId, error: rpcError }
       });
+      // continue to admin fallback
     }
 
     // Método alternativo: atualização direta via admin
@@ -81,12 +123,92 @@ export async function completeQuizManually(userId: string) {
         throw updateError;
       }
 
+      // Verificação: garantir que a linha foi efetivamente marcada
+      const { data: verifyRow, error: verifyError } = await supabaseAdmin
+        .from('quiz_submissions')
+        .select('id, completed, completed_at')
+        .eq('id', submission.id)
+        .maybeSingle();
+
+      if (verifyError) {
+        throw verifyError;
+      }
+
+      if (!verifyRow || verifyRow.completed !== true) {
+        throw new Error(`Admin update didn't persist completed flag for submission id=${submission.id}`);
+      }
+
       logger.info('Questionário completado via atualização direta', {
         tag: 'Quiz',
         data: { userId, method: 'direct_update' }
       });
 
-      return { success: true, method: 'direct_update' };
+      // Build and upsert consolidated answers into quiz_respostas_completas
+      try {
+        // fetch profile to enrich data
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('full_name, user_email')
+          .eq('id', userId)
+          .maybeSingle();
+
+        // fetch answers joined with questions
+        const { data: answers, error: answersError } = await supabaseAdmin
+          .from('quiz_answers')
+          .select(`answer, question_id, quiz_questions!inner(text, order_number)`)
+          .eq('submission_id', submission.id)
+          .order('quiz_questions.order_number');
+
+        if (answersError) {
+          logger.warn('Erro ao buscar quiz_answers para consolidacao', { tag: 'Quiz', data: { submissionId: submission.id, error: answersError } });
+        }
+
+        // Build respostas object in the same flat shape used by webhookUtils
+        const respostasObj: Record<string, any> = {};
+        if (answers && Array.isArray(answers) && answers.length > 0) {
+          answers.forEach((item: any, idx: number) => {
+            const questionText = item.quiz_questions?.text || `Pergunta ${idx + 1}`;
+            const answerVal = item.answer || '';
+            respostasObj[`Pergunta_${idx + 1}`] = questionText;
+            respostasObj[`Resposta_${idx + 1}`] = answerVal;
+            respostasObj[questionText] = answerVal;
+          });
+        }
+
+        // Ensure non-null (NOT NULL constraint). If empty, use empty object {}
+        const respostasPayload = Object.keys(respostasObj).length > 0 ? respostasObj : {};
+
+        const upsertRow = {
+          submission_id: submission.id,
+          user_id: userId,
+          user_email: (submission as any).user_email || profile?.user_email || '',
+          full_name: profile?.full_name || (submission as any).user_name || '',
+          data_submissao: (submission as any).completed_at || (submission as any).created_at || new Date().toISOString(),
+          respostas: respostasPayload
+        };
+
+        const { error: upsertError } = await supabaseAdmin
+          .from('quiz_respostas_completas')
+          .upsert(upsertRow, { onConflict: 'submission_id' });
+
+        if (upsertError) {
+          logger.warn('Falha ao upsert em quiz_respostas_completas', { tag: 'Quiz', data: { submissionId: submission.id, error: upsertError } });
+        } else {
+          logger.info('quiz_respostas_completas upsert realizado', { tag: 'Quiz', data: { submissionId: submission.id } });
+        }
+      } catch (e) {
+        logger.error('Excecao ao consolidar respostas em quiz_respostas_completas', { tag: 'Quiz', data: { userId, error: e } });
+      }
+
+      // Try to send webhook (best-effort)
+      try {
+        const webhookResult = await sendQuizDataToWebhook(submission.id);
+        const webhookSent = !!webhookResult?.success;
+        return { success: true, method: 'direct_update', webhookSent };
+      } catch (e) {
+        logger.warn('Erro ao enviar webhook após atualização direta', { tag: 'Quiz', data: { userId, error: e } });
+        return { success: true, method: 'direct_update', webhookSent: false };
+      }
     } else {
       // Buscar email do usuário antes de criar submissão
       const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
@@ -108,12 +230,94 @@ export async function completeQuizManually(userId: string) {
         throw createError;
       }
 
+      // Verificação: garantir que a nova submissão foi criada com completed = true
+      const createdId = newSubmission?.[0]?.id;
+      if (!createdId) {
+        throw new Error('New submission created but id not returned');
+      }
+
+      const { data: verifyCreated, error: verifyCreatedError } = await supabaseAdmin
+        .from('quiz_submissions')
+        .select('id, completed, completed_at')
+        .eq('id', createdId)
+        .maybeSingle();
+
+      if (verifyCreatedError) {
+        throw verifyCreatedError;
+      }
+
+      if (!verifyCreated || verifyCreated.completed !== true) {
+        throw new Error(`Created submission id=${createdId} does not have completed=true`);
+      }
+
       logger.info('Questionário completado via criação de submissão', {
         tag: 'Quiz',
         data: { userId, method: 'create_complete' }
       });
 
-      return { success: true, method: 'create_complete' };
+      // After creating a completed submission, also upsert consolidated responses
+      try {
+        // fetch profile to enrich data
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('full_name, user_email')
+          .eq('id', userId)
+          .maybeSingle();
+
+        // fetch answers for this user/submission (may be none)
+        const { data: answers, error: answersError } = await supabaseAdmin
+          .from('quiz_answers')
+          .select(`answer, question_id, quiz_questions!inner(text, order_number)`)
+          .eq('submission_id', createdId)
+          .order('quiz_questions.order_number');
+
+        if (answersError) {
+          logger.warn('Erro ao buscar quiz_answers apos criar submissao', { tag: 'Quiz', data: { submissionId: createdId, error: answersError } });
+        }
+
+        const respostasObj: Record<string, any> = {};
+        if (answers && Array.isArray(answers) && answers.length > 0) {
+          answers.forEach((item: any, idx: number) => {
+            const questionText = item.quiz_questions?.text || `Pergunta ${idx + 1}`;
+            const answerVal = item.answer || '';
+            respostasObj[`Pergunta_${idx + 1}`] = questionText;
+            respostasObj[`Resposta_${idx + 1}`] = answerVal;
+            respostasObj[questionText] = answerVal;
+          });
+        }
+
+        const respostasPayload = Object.keys(respostasObj).length > 0 ? respostasObj : {};
+
+        const upsertRow = {
+          submission_id: createdId,
+          user_id: userId,
+          user_email: userEmail || profile?.user_email || '',
+          full_name: profile?.full_name || '',
+          data_submissao: new Date().toISOString(),
+          respostas: respostasPayload
+        };
+
+        const { error: upsertError } = await supabaseAdmin
+          .from('quiz_respostas_completas')
+          .upsert(upsertRow, { onConflict: 'submission_id' });
+
+        if (upsertError) {
+          logger.warn('Falha ao upsert em quiz_respostas_completas apos criar submissao', { tag: 'Quiz', data: { submissionId: createdId, error: upsertError } });
+        } else {
+          logger.info('quiz_respostas_completas upsert realizado apos criar submissao', { tag: 'Quiz', data: { submissionId: createdId } });
+        }
+      } catch (e) {
+        logger.error('Excecao ao consolidar respostas apos criar submissao', { tag: 'Quiz', data: { userId, error: e } });
+      }
+      // Try to send webhook (best-effort)
+      try {
+        const webhookResult = await sendQuizDataToWebhook(createdId);
+        const webhookSent = !!webhookResult?.success;
+        return { success: true, method: 'create_complete', webhookSent };
+      } catch (e) {
+        logger.warn('Erro ao enviar webhook apos criação de submissão', { tag: 'Quiz', data: { userId, error: e } });
+        return { success: true, method: 'create_complete', webhookSent: false };
+      }
     }
   } catch (error) {
     logger.error('Erro ao completar questionário manualmente', {

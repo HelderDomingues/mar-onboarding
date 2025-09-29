@@ -15,6 +15,10 @@ export class ServiceRoleConfig {
    */
   static get(): string | undefined {
     try {
+      // Prefer environment variable in server / deployment environments
+      if (typeof process !== 'undefined' && process.env && process.env.SUPABASE_SERVICE_ROLE) {
+        return process.env.SUPABASE_SERVICE_ROLE;
+      }
       // Em ambiente de servidor, não temos localStorage
       if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
         return undefined;
