@@ -103,33 +103,56 @@ export async function saveAnswer(
   if (error) throw error;
 }
 
-export async function completeQuiz(submissionId: string): Promise<void> {
+export async function completeQuiz(submissionId: string): Promise<{ success: boolean; verified: boolean; webhookSent: boolean; error?: any }> {
   console.log('🎯 [CompleteQuiz] Iniciando processo de finalização:', { submissionId });
   
-  const { error } = await supabase
-    .from('quiz_submissions')
-    .update({
-      completed: true,
-      completed_at: new Date().toISOString(),
-      webhook_processed: false
-    })
-    .eq('id', submissionId);
-    
-  if (error) {
-    console.error('❌ [CompleteQuiz] Erro ao completar quiz:', error);
-    throw error;
-  }
-
-  console.log('✅ [CompleteQuiz] Quiz marcado como completo com sucesso');
-  
-  // Tentar enviar dados para o webhook automaticamente  
   try {
-    console.log('📤 [CompleteQuiz] Enviando dados para webhook...');
-    await sendQuizDataToWebhook(submissionId);
-    console.log('✅ [CompleteQuiz] Webhook enviado com sucesso');
-  } catch (webhookError) {
-    console.error('❌ [CompleteQuiz] Erro ao enviar dados para webhook:', webhookError);
-    // Não interrompe o fluxo mesmo se o webhook falhar
+    // Passo 1: Marcar como completo
+    const { error: updateError } = await supabase
+      .from('quiz_submissions')
+      .update({
+        completed: true,
+        completed_at: new Date().toISOString(),
+        webhook_processed: false
+      })
+      .eq('id', submissionId);
+      
+    if (updateError) {
+      console.error('❌ [CompleteQuiz] Erro ao completar quiz:', updateError);
+      return { success: false, verified: false, webhookSent: false, error: updateError };
+    }
+
+    console.log('✅ [CompleteQuiz] Quiz marcado como completo');
+    
+    // Passo 2: Verificar se foi marcado corretamente
+    const { data: verification, error: verifyError } = await supabase
+      .from('quiz_submissions')
+      .select('completed, completed_at')
+      .eq('id', submissionId)
+      .single();
+      
+    if (verifyError || !verification?.completed) {
+      console.error('❌ [CompleteQuiz] Falha na verificação:', verifyError);
+      return { success: true, verified: false, webhookSent: false, error: verifyError };
+    }
+    
+    console.log('✅ [CompleteQuiz] Verificação confirmada');
+    
+    // Passo 3: Tentar enviar webhook
+    let webhookSent = false;
+    try {
+      console.log('📤 [CompleteQuiz] Enviando dados para webhook...');
+      const webhookResult = await sendQuizDataToWebhook(submissionId);
+      webhookSent = webhookResult.success;
+      console.log(`${webhookSent ? '✅' : '❌'} [CompleteQuiz] Webhook: ${webhookResult.message}`);
+    } catch (webhookError) {
+      console.error('❌ [CompleteQuiz] Erro ao enviar dados para webhook:', webhookError);
+    }
+    
+    return { success: true, verified: true, webhookSent };
+  } catch (error) {
+    console.error('❌ [CompleteQuiz] Erro crítico:', error);
+    return { success: false, verified: false, webhookSent: false, error };
   }
 }
 

@@ -51,6 +51,7 @@ import { logger } from '@/utils/logger';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { QuizEditControls } from '@/components/quiz/QuizEditControls';
+import { QuizCompletionModal } from '@/components/quiz/QuizCompletionModal';
 import { 
   ArrowRight, 
   ArrowLeft, 
@@ -76,6 +77,8 @@ const Quiz = () => {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [completionResult, setCompletionResult] = useState<any>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [editingSpecificQuestion, setEditingSpecificQuestion] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -352,11 +355,15 @@ const Quiz = () => {
     console.log('🚀 [HandleCompleteQuiz] Iniciando finalização do quiz');
     
     setIsCompleting(true);
+    setShowConfirmation(false);
     
     try {
       if (!submissionId) {
         console.error('❌ [HandleCompleteQuiz] Submissão não encontrada:', { submissionId });
-        throw new Error("Submissão não encontrada");
+        const error = { success: false, verified: false, webhookSent: false, error: 'Submissão não encontrada' };
+        setCompletionResult(error);
+        setShowCompletionModal(true);
+        return;
       }
 
       console.log('📋 [HandleCompleteQuiz] Dados da submissão:', { 
@@ -365,51 +372,54 @@ const Quiz = () => {
       });
       
       console.log('⏳ [HandleCompleteQuiz] Chamando completeQuiz...');
-      await completeQuiz(submissionId);
-      console.log('✅ [HandleCompleteQuiz] Quiz finalizado com sucesso!');
+      const result = await completeQuiz(submissionId);
+      console.log('📊 [HandleCompleteQuiz] Resultado:', result);
       
-      setQuizCompleted(true);
+      setCompletionResult(result);
+      setShowCompletionModal(true);
       
-      // Tentar enviar dados para o webhook
-      try {
-        const webhookResult = await sendQuizDataToWebhook(submissionId);
-        if (webhookResult.success) {
+      if (result.success && result.verified) {
+        setQuizCompleted(true);
+        
+        // Mostrar toast baseado no resultado
+        if (result.webhookSent) {
           toast({
             title: "Questionário completado",
             description: "Parabéns! Suas respostas foram enviadas com sucesso.",
           });
         } else {
           toast({
-            title: "Questionário completado",
-            description: "Quiz finalizado, mas houve problema no envio automático das respostas.",
+            title: "Questionário finalizado",
+            description: "Quiz salvo com sucesso. O processamento será feito em breve.",
             variant: "default",
           });
         }
-      } catch (webhookError) {
-        console.warn('Erro no webhook, mas quiz foi concluído:', webhookError);
+      } else {
         toast({
-          title: "Questionário completado",
-          description: "Parabéns! Você completou o questionário.",
+          title: "Problema na finalização",
+          description: "Houve um problema ao finalizar o questionário. Verifique o modal para mais detalhes.",
+          variant: "destructive",
         });
       }
       
-      // Redirecionar para a página de sucesso
-      navigate('/quiz/success');
     } catch (error: any) {
-      console.error('❌ [HandleCompleteQuiz] Erro ao finalizar quiz:', error);
-      logger.error('Erro ao completar questionário', {
+      console.error('❌ [HandleCompleteQuiz] Erro crítico ao finalizar quiz:', error);
+      logger.error('Erro crítico ao completar questionário', {
         tag: 'Quiz',
         data: error
       });
       
+      const errorResult = { success: false, verified: false, webhookSent: false, error };
+      setCompletionResult(errorResult);
+      setShowCompletionModal(true);
+      
       toast({
         title: "Erro ao completar questionário",
-        description: error.message || "Ocorreu um erro ao completar o questionário.",
+        description: error.message || "Ocorreu um erro crítico ao completar o questionário.",
         variant: "destructive",
       });
     } finally {
       setIsCompleting(false);
-      setShowConfirmation(false);
       console.log('🏁 [HandleCompleteQuiz] Processo finalizado');
     }
   };
@@ -755,6 +765,14 @@ const Quiz = () => {
         <QuizEditControls 
           onSave={() => Promise.resolve()}
           isLoading={isSubmitting}
+        />
+        
+        {/* Modal de finalização do questionário */}
+        <QuizCompletionModal 
+          isOpen={showCompletionModal}
+          submissionId={submissionId}
+          onClose={() => setShowCompletionModal(false)}
+          completionResult={completionResult}
         />
       </div>
       
