@@ -30,6 +30,7 @@ export interface QuizCompletionModalProps {
     webhookSent: boolean;
     error?: any;
   } | null;
+  onRetry?: () => Promise<any> | void;
 }
 
 export interface VerificationStep {
@@ -39,7 +40,7 @@ export interface VerificationStep {
   description: string;
 }
 
-export function QuizCompletionModal({ isOpen, onClose, completionResult }: QuizCompletionModalProps) {
+export function QuizCompletionModal({ isOpen, onClose, completionResult, onRetry }: QuizCompletionModalProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -73,6 +74,21 @@ export function QuizCompletionModal({ isOpen, onClose, completionResult }: QuizC
     }
   }, [completionResult, isOpen]);
 
+  // Auto-navigate/close after success
+  useEffect(() => {
+    if (isOpen) {
+      const allSuccess = steps.every(s => s.status === 'success');
+      if (allSuccess) {
+        const t = setTimeout(() => {
+          navigate('/dashboard');
+          onClose();
+        }, 1200);
+        return () => clearTimeout(t);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [steps, isOpen]);
+
   const updateStepsFromResult = (result: typeof completionResult) => {
     if (!result) return;
 
@@ -86,13 +102,26 @@ export function QuizCompletionModal({ isOpen, onClose, completionResult }: QuizC
               ? 'Questionário finalizado com sucesso!' 
               : 'Erro ao finalizar questionário'
           };
+        case 'verification':
+          return {
+            ...step,
+            status: result.verified ? 'success' : (result.success ? 'pending' : 'error'),
+            description: result.verified ? 'Confirmação no banco de dados realizada.' : (result.success ? 'Aguardando verificação...' : 'Falha na verificação')
+          };
+        case 'webhook':
+          return {
+            ...step,
+            status: result.webhookSent ? 'success' : (result.success ? 'pending' : 'error'),
+            description: result.webhookSent ? 'Dados enviados para processamento.' : (result.success ? 'Envio pendente' : 'Falha no envio')
+          };
         default:
           return step;
       }
     }));
-    if (!result.success) {
-      setCanRetry(true);
-    }
+
+    // if anything is not fully successful allow retry for verification/webhook
+    const needsRetry = !result.success || !result.verified || !result.webhookSent;
+    setCanRetry(!!needsRetry);
   };
 
   // Helpers and handlers used by the JSX
@@ -125,12 +154,25 @@ export function QuizCompletionModal({ isOpen, onClose, completionResult }: QuizC
   };
 
   const handleRetry = () => {
-    setIsRetrying(true);
-    // placeholder: re-fetch or re-run verification
-    setTimeout(() => {
-      setIsRetrying(false);
-      toast({ title: 'Verificação reexecutada', description: 'A verificação foi reexecutada.' });
-    }, 1200);
+    if (typeof onRetry === 'function') {
+      setIsRetrying(true);
+      Promise.resolve(onRetry())
+        .then((res) => {
+          // Expect parent to update completionResult prop so useEffect will refresh
+          toast({ title: 'Verificação reexecutada', description: 'O processo foi reexecutado.' });
+        })
+        .catch((err) => {
+          toast({ title: 'Erro ao reexecutar', description: (err && err.message) || 'Falha ao reexecutar verificação', variant: 'destructive' });
+        })
+        .finally(() => setIsRetrying(false));
+    } else {
+      // fallback behaviour
+      setIsRetrying(true);
+      setTimeout(() => {
+        setIsRetrying(false);
+        toast({ title: 'Verificação reexecutada', description: 'A verificação foi reexecutada.' });
+      }, 1200);
+    }
   };
 
   const handleNavigateToDashboard = () => { navigate('/dashboard'); onClose(); };

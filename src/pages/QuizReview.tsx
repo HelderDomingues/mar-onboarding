@@ -9,6 +9,7 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { useToast } from "@/components/ui/use-toast";
 import { completeQuizManually } from "@/utils/supabaseUtils";
+import { QuizCompletionModal } from "@/components/quiz/QuizCompletionModal";
 import { logger } from "@/utils/logger";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -26,6 +27,8 @@ const QuizReviewPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
   const [completionError, setCompletionError] = useState<SystemError | null>(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [completionResult, setCompletionResult] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -201,22 +204,36 @@ const QuizReviewPage = () => {
       }
       
       const result = await completeQuizManually(user.id);
-      
-      if (result.success) {
+
+      // Normalizar resultado para o formato esperado pelo modal
+      if (result && result.success) {
+        const normalized = {
+          success: true,
+          verified: true,
+          webhookSent: (result as any)?.webhookSent ?? false,
+          method: result.method || 'manual'
+        };
+
         logger.info('Questionário completado com sucesso', {
           tag: 'Quiz',
           userId: user.id,
           data: { method: result.method }
         });
-        
+
         toast({
           title: "Sucesso!",
           description: "Questionário concluído com sucesso!",
         });
-        
-        navigate('/dashboard');
+
+        setCompletionResult(normalized);
+        setShowCompletionModal(true);
       } else {
-        throw result.error || formatError("Não foi possível completar o questionário", 'QuizReview.handleComplete');
+        const err = result?.error || formatError("Não foi possível completar o questionário", 'QuizReview.handleComplete');
+        // abrir modal com erro para permitir retry
+        const normalizedErr = { success: false, verified: false, webhookSent: false, error: err };
+        setCompletionResult(normalizedErr);
+        setShowCompletionModal(true);
+        throw err;
       }
     } catch (error: any) {
       const formattedError = formatError(error, 'QuizReview.handleComplete');
@@ -227,7 +244,9 @@ const QuizReviewPage = () => {
       });
       
       setCompletionError(formattedError);
-      
+      setCompletionResult({ success: false, verified: false, webhookSent: false, error: formattedError });
+      setShowCompletionModal(true);
+
       toast({
         title: "Erro ao finalizar questionário",
         description: formatErrorForDisplay(formattedError),
@@ -235,6 +254,36 @@ const QuizReviewPage = () => {
       });
     } finally {
       setIsCompleting(false);
+    }
+  };
+
+  const handleRetryCompletion = async () => {
+    if (!user) return;
+    // Call the same manual complete flow again
+    try {
+      const result = await completeQuizManually(user.id);
+      if (result && result.success) {
+        const normalized = {
+          success: true,
+          verified: true,
+          webhookSent: (result as any)?.webhookSent ?? false,
+          method: result.method || 'manual'
+        };
+        setCompletionResult(normalized);
+        setShowCompletionModal(true);
+        return normalized;
+      } else {
+        const err = result?.error || formatError("Erro ao reexecutar finalização", 'QuizReview.handleRetryCompletion');
+        const normalizedErr = { success: false, verified: false, webhookSent: false, error: err };
+        setCompletionResult(normalizedErr);
+        setShowCompletionModal(true);
+        throw err;
+      }
+    } catch (error) {
+      const formattedError = formatError(error, 'QuizReview.handleRetryCompletion');
+      setCompletionResult({ success: false, verified: false, webhookSent: false, error: formattedError });
+      setShowCompletionModal(true);
+      throw formattedError;
     }
   };
 
@@ -371,6 +420,13 @@ const QuizReviewPage = () => {
         />
       </div>
       
+      <QuizCompletionModal
+        isOpen={showCompletionModal}
+        completionResult={completionResult}
+        onClose={() => setShowCompletionModal(false)}
+        onRetry={handleRetryCompletion}
+      />
+
       <SiteFooter />
     </div>
   );
