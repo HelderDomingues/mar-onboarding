@@ -20,6 +20,7 @@ import {
   RefreshCw
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { sendQuizDataToWebhook } from '@/utils/webhookUtils';
 
 export interface QuizCompletionModalProps {
   isOpen: boolean;
@@ -40,7 +41,7 @@ export interface VerificationStep {
   description: string;
 }
 
-export function QuizCompletionModal({ isOpen, onClose, completionResult }: QuizCompletionModalProps) {
+export function QuizCompletionModal({ isOpen, onClose, submissionId, completionResult }: QuizCompletionModalProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -67,6 +68,8 @@ export function QuizCompletionModal({ isOpen, onClose, completionResult }: QuizC
 
   const [isRetrying, setIsRetrying] = useState(false);
   const [canRetry, setCanRetry] = useState(false);
+  const [rpcDetails, setRpcDetails] = useState<any | null>(null);
+  const [webhookDetails, setWebhookDetails] = useState<any | null>(null);
 
   useEffect(() => {
     if (completionResult && isOpen) {
@@ -93,6 +96,13 @@ export function QuizCompletionModal({ isOpen, onClose, completionResult }: QuizC
     }));
     if (!result.success) {
       setCanRetry(true);
+    }
+
+    // Extract additional details if available for display
+    if ((result as any).details) {
+      const d = (result as any).details;
+      setRpcDetails(d.verification || d.verificationResult || null);
+      setWebhookDetails(d.webhook || d.webhookResult || (d.status ? d : null));
     }
   };
 
@@ -125,13 +135,36 @@ export function QuizCompletionModal({ isOpen, onClose, completionResult }: QuizC
     }
   };
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
+    if (!submissionId) {
+      toast({ title: 'Erro', description: 'SubmissionId não disponível para retry.', variant: 'destructive' });
+      return;
+    }
+
     setIsRetrying(true);
-    // placeholder: re-fetch or re-run verification
-    setTimeout(() => {
+    try {
+      toast({ title: 'Reenviando webhook', description: 'Tentando reenviar os dados para processamento...' });
+      const result = await sendQuizDataToWebhook(submissionId);
+
+      // Update UI based on result
+      if (result && result.success) {
+        setWebhookDetails(result.details || { message: result.message });
+        setSteps(prev => prev.map(s => s.id === 'webhook' ? { ...s, status: 'success', description: 'Webhook enviado com sucesso' } : s));
+        setCanRetry(false);
+        toast({ title: 'Webhook enviado', description: 'Os dados foram reenviados com sucesso.' });
+      } else {
+        setWebhookDetails(result.details || { message: result.message });
+        setSteps(prev => prev.map(s => s.id === 'webhook' ? { ...s, status: 'error', description: 'Falha ao enviar webhook' } : s));
+        setCanRetry(true);
+        toast({ title: 'Falha no webhook', description: result.message || 'Falha ao reenviar webhook', variant: 'destructive' });
+      }
+    } catch (e: any) {
+      setSteps(prev => prev.map(s => s.id === 'webhook' ? { ...s, status: 'error', description: 'Erro ao reenviar webhook' } : s));
+      setWebhookDetails({ error: e });
+      toast({ title: 'Erro', description: e?.message || 'Erro desconhecido', variant: 'destructive' });
+    } finally {
       setIsRetrying(false);
-      toast({ title: 'Verificação reexecutada', description: 'A verificação foi reexecutada.' });
-    }, 1200);
+    }
   };
 
   const handleNavigateToDashboard = () => { navigate('/dashboard'); onClose(); };
@@ -181,6 +214,32 @@ export function QuizCompletionModal({ isOpen, onClose, completionResult }: QuizC
               <p className="text-sm font-medium">Alguns processos falharam, mas seus dados foram salvos.</p>
             </div>
             <p className="text-sm text-yellow-700 mt-1">Nossa equipe será notificada e processará manualmente se necessário.</p>
+          </div>
+        )}
+
+        {/* Details panel for RPC and Webhook responses */}
+        {(rpcDetails || webhookDetails) && (
+          <div className="mt-4 p-3 rounded-lg bg-gray-50 border">
+            <h4 className="text-sm font-medium mb-2">Detalhes técnicos</h4>
+            {rpcDetails && (
+              <div className="mb-2 text-xs font-mono bg-white p-2 rounded border">
+                <strong>Verificação (RPC):</strong>
+                <pre className="whitespace-pre-wrap mt-1 text-[11px]">{JSON.stringify(rpcDetails, null, 2)}</pre>
+              </div>
+            )}
+            {webhookDetails && (
+              <div className="text-xs font-mono bg-white p-2 rounded border">
+                <strong>Webhook:</strong>
+                <pre className="whitespace-pre-wrap mt-1 text-[11px]">{JSON.stringify(webhookDetails, null, 2)}</pre>
+              </div>
+            )}
+            <div className="flex gap-2 mt-2">
+              <Button variant="ghost" onClick={() => {
+                const toCopy = JSON.stringify({ rpcDetails, webhookDetails }, null, 2);
+                navigator.clipboard.writeText(toCopy);
+                toast({ title: 'Copiado', description: 'Detalhes técnicos copiados para a área de transferência.' });
+              }}>Copiar detalhes</Button>
+            </div>
           </div>
         )}
 
