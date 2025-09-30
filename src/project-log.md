@@ -1,6 +1,71 @@
 
 # Sistema MAR - Log de Implementação
 
+## ⚡ 2025-09-30 - Melhorias de UI/UX e Correções de Bugs Administrativos
+
+### ✅ PROBLEMAS CORRIGIDOS
+
+**1. Modal de Finalização do Questionário - Responsividade**
+- **Problema**: Modal estava extrapolando a página em dispositivos menores
+- **Solução**: 
+  - Alterado `sm:max-w-md` para `sm:max-w-lg` para mais espaço
+  - Adicionado `max-h-[90vh] overflow-y-auto` para scroll vertical quando necessário
+  - Ajustado botões do footer para flex responsivo (`flex-col sm:flex-row`)
+- **Arquivo**: `src/components/quiz/QuizCompletionModal.tsx`
+- **Status**: ✅ Modal totalmente responsivo
+
+**2. QuizResponses - Redirecionamento Incorreto ao Ver Detalhes**
+- **Problema**: Ao clicar em "Ver detalhes" na página de respostas do admin, estava redirecionando para as respostas do admin logado ao invés do usuário selecionado
+- **Causa**: Faltava passar o `userId` na URL de redirecionamento
+- **Solução**: 
+  - Modificado função `viewDetails` para aceitar objeto `QuizSubmission` completo
+  - Adicionado parâmetro `userId` na URL: `/quiz/view-answers?id=${submission.id}&userId=${submission.user_id}&admin=true`
+- **Arquivo**: `src/pages/admin/QuizResponses.tsx` (linha 450)
+- **Status**: ✅ Redirecionamento correto para respostas do usuário específico
+
+**3. UsersTableView - Opções de Gerenciamento Limitadas**
+- **Problema**: Apenas botões de admin toggle e email disponíveis, interface limitada
+- **Solução**:
+  - Implementado dropdown menu com ícone `MoreVertical` 
+  - Adicionadas opções organizadas:
+    - 📋 Ver Perfil (opcional, com callback `onViewProfile`)
+    - 📧 Enviar Email
+    - 🛡️ Tornar Admin / Remover Admin (com ícones Shield/ShieldOff)
+    - 🗑️ Excluir Usuário (opcional, com callback `onDeleteUser`)
+  - Substituído botão de destaque por indicador visual simples na coluna "Função"
+  - Melhorada acessibilidade com labels e separadores
+- **Arquivo**: `src/components/admin/UsersTableView.tsx`
+- **Status**: ✅ Interface de gerenciamento completa e profissional
+
+**4. Reports.tsx - Erro ao Carregar Dados de Usuários**
+- **Problema**: Coluna `user_name` não existe no schema da tabela `quiz_submissions`, causando erro ao carregar relatórios
+- **Erro no Console**: `column quiz_submissions.user_name does not exist`
+- **Solução**:
+  - Substituído TODAS as referências de `user_name` por `full_name` (nome correto no schema)
+  - Corrigido em:
+    - Query SELECT (linha 99)
+    - Geração de PDF (linha 166)
+    - Geração de CSV (linha 213)
+    - Renderização de tabela (linha 479)
+- **Arquivo**: `src/pages/admin/Reports.tsx`
+- **Status**: ✅ Dados de usuários carregam corretamente, sem erros
+
+### 🎨 Melhorias de UI/UX
+
+- **Modal de Conclusão**: Design mais compacto e responsivo com scroll quando necessário
+- **Gerenciamento de Usuários**: Interface mais organizada com dropdown menu contextual
+- **Relatórios**: Dados carregando corretamente com informações precisas dos usuários
+
+### 📋 Testes Recomendados
+
+- [ ] Testar modal de finalização em diferentes tamanhos de tela (mobile, tablet, desktop)
+- [ ] Verificar redirecionamento correto ao visualizar respostas de usuários específicos
+- [ ] Testar todas as opções do dropdown de gerenciamento de usuários
+- [ ] Validar exportação de relatórios (PDF e CSV) com os dados corretos
+- [ ] Confirmar que dados de usuários são exibidos corretamente na página de relatórios
+
+---
+
 ## ⚡ 2025-09-30 (CORREÇÃO DEFINITIVA) - Fluxo Completo de Finalização do Questionário
 
 ### ✅ PROBLEMA RESOLVIDO COMPLETAMENTE

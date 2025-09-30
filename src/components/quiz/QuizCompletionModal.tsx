@@ -197,7 +197,7 @@ export function QuizCompletionModal({ isOpen, onClose, submissionId, completionR
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {allStepsSuccessful ? (
@@ -265,19 +265,19 @@ export function QuizCompletionModal({ isOpen, onClose, submissionId, completionR
           </div>
         )}
 
-        <DialogFooter className="flex-col gap-2 sm:flex-row">
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           {canRetry && !allStepsSuccessful && (
-            <Button variant="outline" onClick={handleRetry} disabled={isRetrying} className="w-full sm:w-auto">
+            <Button variant="outline" onClick={handleRetry} disabled={isRetrying} className="w-full sm:flex-1">
               {isRetrying ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
               Verificar Novamente
             </Button>
           )}
 
-          <Button onClick={handleNavigateToDashboard} className="w-full sm:w-auto">
-            <Home className="h-4 w-4 mr-2" /> Voltar ao Dashboard
+          <Button onClick={handleNavigateToDashboard} className="w-full sm:flex-1">
+            <Home className="h-4 w-4 mr-2" /> Dashboard
           </Button>
 
-          <Button variant="outline" onClick={handleNavigateToMemberArea} className="w-full sm:w-auto">
+          <Button variant="outline" onClick={handleNavigateToMemberArea} className="w-full sm:flex-1">
             <User className="h-4 w-4 mr-2" /> Área do Membro
           </Button>
         </DialogFooter>

@@ -96,7 +96,7 @@ const Reports = () => {
           id, 
           user_id, 
           user_email, 
-          user_name, 
+          full_name, 
           completed, 
           current_module, 
           started_at, 
@@ -163,7 +163,7 @@ const Reports = () => {
           : 'N/A';
         
         tableRows.push([
-          sub.user_name || 'Sem nome',
+          sub.full_name || 'Sem nome',
           sub.user_email || 'Sem email',
           status,
           completionDate
@@ -213,7 +213,7 @@ const Reports = () => {
           : '';
         
         const row = [
-          sub.user_name || 'Sem nome',
+          sub.full_name || 'Sem nome',
           sub.user_email || 'Sem email',
           status,
           sub.current_module || '0',
@@ -476,7 +476,7 @@ const Reports = () => {
                             ) : (
                               submissions.map((sub) => (
                                 <tr key={sub.id}>
-                                  <td className="px-6 py-4 whitespace-nowrap">{sub.user_name || 'Sem nome'}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap">{sub.full_name || 'Sem nome'}</td>
                                   <td className="px-6 py-4 whitespace-nowrap">{sub.user_email || 'Sem email'}</td>
                                   <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${

@@ -9,7 +9,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Mail, CheckCircle, XCircle } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuLabel
+} from "@/components/ui/dropdown-menu";
+import { Mail, CheckCircle, XCircle, MoreVertical, UserCog, Shield, ShieldOff, Trash2 } from "lucide-react";
 import type { UserProfile } from "@/types/admin";
 
 interface UsersTableViewProps {
@@ -18,6 +26,8 @@ interface UsersTableViewProps {
   searchQuery: string;
   onToggleAdmin: (userId: string, isCurrentlyAdmin: boolean) => Promise<void>;
   onSendEmail: (userId: string) => void;
+  onViewProfile?: (userId: string) => void;
+  onDeleteUser?: (userId: string) => void;
 }
 
 export const UsersTableView = ({
@@ -25,7 +35,9 @@ export const UsersTableView = ({
   isLoading,
   searchQuery,
   onToggleAdmin,
-  onSendEmail
+  onSendEmail,
+  onViewProfile,
+  onDeleteUser
 }: UsersTableViewProps) => {
   const filteredUsers = users.filter(user => {
     const searchLower = searchQuery.toLowerCase();
@@ -52,7 +64,7 @@ export const UsersTableView = ({
             <TableHead>Nome</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Questionário</TableHead>
-            <TableHead>Admin</TableHead>
+            <TableHead>Função</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -84,18 +96,68 @@ export const UsersTableView = ({
                   )}
                 </TableCell>
                 <TableCell>
-                  <Button 
-                    variant={user.is_admin ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => onToggleAdmin(user.id, !!user.is_admin)}
-                  >
-                    {user.is_admin ? 'Admin' : 'Usuário'}
-                  </Button>
+                  {user.is_admin ? (
+                    <div className="flex items-center gap-1">
+                      <Shield className="h-3 w-3 text-primary" />
+                      <span className="text-sm font-medium">Admin</span>
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Usuário</span>
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" onClick={() => onSendEmail(user.id)}>
-                    <Mail className="h-4 w-4" />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuLabel>Gerenciar Usuário</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      
+                      {onViewProfile && (
+                        <DropdownMenuItem onClick={() => onViewProfile(user.id)}>
+                          <UserCog className="h-4 w-4 mr-2" />
+                          Ver Perfil
+                        </DropdownMenuItem>
+                      )}
+                      
+                      <DropdownMenuItem onClick={() => onSendEmail(user.id)}>
+                        <Mail className="h-4 w-4 mr-2" />
+                        Enviar Email
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuSeparator />
+                      
+                      <DropdownMenuItem onClick={() => onToggleAdmin(user.id, !!user.is_admin)}>
+                        {user.is_admin ? (
+                          <>
+                            <ShieldOff className="h-4 w-4 mr-2" />
+                            Remover Admin
+                          </>
+                        ) : (
+                          <>
+                            <Shield className="h-4 w-4 mr-2" />
+                            Tornar Admin
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      
+                      {onDeleteUser && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => onDeleteUser(user.id)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir Usuário
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))
