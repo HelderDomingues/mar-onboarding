@@ -8,7 +8,9 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { QuizModule, QuizQuestion } from "@/types/quiz";
 import { useToast } from "@/components/ui/use-toast";
 import { completeQuizManually } from "@/utils/supabaseUtils";
+import { completeQuiz } from '@/utils/quiz';
 import { logger } from "@/utils/logger";
+import { QuizCompletionModal } from '@/components/quiz/QuizCompletionModal';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { formatQuizAnswers } from "@/utils/quizDataUtils";
@@ -20,11 +22,14 @@ const QuizReviewPage = () => {
   const navigate = useNavigate();
   const [modules, setModules] = useState<QuizModule[]>([]);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
   const [completionError, setCompletionError] = useState<SystemError | null>(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [completionResult, setCompletionResult] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -95,6 +100,7 @@ const QuizReviewPage = () => {
       }
 
       if (submissionData) {
+        setSubmissionId(submissionData.id);
         const { data: answerData, error: answerError } = await supabase
           .from('quiz_answers')
           .select('*')
@@ -181,57 +187,52 @@ const QuizReviewPage = () => {
 
   const handleComplete = async () => {
     if (!user || isCompleting) return;
-    
+
     setIsCompleting(true);
     setCompletionError(null);
-    
+
     try {
-      logger.info('Iniciando processo de conclusão do questionário', {
+      logger.info('Iniciando processo de conclusão do questionário (UI flow)', {
         tag: 'Quiz',
-        data: { userId: user.id, userEmail: user.email }
+        data: { userId: user.id, userEmail: user.email, submissionId }
       });
-      
-      if (!user.email) {
-        throw formatError({
-          message: "Email do usuário não encontrado", 
-          code: "EMAIL_NOT_FOUND",
-          details: "O email do usuário é necessário para finalizar o questionário",
-        }, 'QuizReview.handleComplete');
+
+      if (!submissionId) {
+        const errorResult = { success: false, verified: false, webhookSent: false, error: 'Submissão não encontrada' };
+        setCompletionResult(errorResult);
+        setShowCompletionModal(true);
+        return;
       }
-      
-      const result = await completeQuizManually(user.id);
-      
-      if (result.success) {
-        logger.info('Questionário completado com sucesso', {
+
+      // Call the centralized client-side completeQuiz which performs update + webhook
+      const result = await completeQuiz(submissionId);
+
+      setCompletionResult(result);
+      setShowCompletionModal(true);
+
+      if (result.success && result.verified) {
+        logger.info('Questionário completado com sucesso (UI flow)', {
           tag: 'Quiz',
-          userId: user.id,
-          data: { method: result.method }
+          data: result
         });
-        
-        toast({
-          title: "Sucesso!",
-          description: "Questionário concluído com sucesso!",
-        });
-        
-        navigate('/dashboard');
+        if (result.webhookSent) {
+          toast({ title: 'Questionário completado', description: 'Parabéns! Suas respostas foram enviadas com sucesso.' });
+        } else {
+          toast({ title: 'Questionário finalizado', description: 'Quiz salvo com sucesso. O processamento será feito em breve.' });
+        }
       } else {
-        throw result.error || formatError("Não foi possível completar o questionário", 'QuizReview.handleComplete');
+        toast({ title: 'Problema na finalização', description: 'Houve um problema ao finalizar o questionário. Verifique o modal para mais detalhes.', variant: 'destructive' });
       }
+
     } catch (error: any) {
-      const formattedError = formatError(error, 'QuizReview.handleComplete');
-      
-      logger.error("Erro ao finalizar questionário:", {
-        tag: 'Quiz',
-        data: formattedError
-      });
-      
-      setCompletionError(formattedError);
-      
-      toast({
-        title: "Erro ao finalizar questionário",
-        description: formatErrorForDisplay(formattedError),
-        variant: "destructive"
-      });
+      console.error('❌ [QuizReview.handleComplete] Erro crítico ao finalizar quiz:', error);
+      logger.error('Erro crítico ao completar questionário (UI flow)', { tag: 'Quiz', data: error });
+
+      const errorResult = { success: false, verified: false, webhookSent: false, error };
+      setCompletionResult(errorResult);
+      setShowCompletionModal(true);
+
+      toast({ title: 'Erro ao completar questionário', description: error.message || 'Ocorreu um erro crítico ao completar o questionário.', variant: 'destructive' });
     } finally {
       setIsCompleting(false);
     }
@@ -370,6 +371,12 @@ const QuizReviewPage = () => {
         />
       </div>
       
+      <QuizCompletionModal 
+        isOpen={showCompletionModal}
+        submissionId={submissionId}
+        onClose={() => setShowCompletionModal(false)}
+        completionResult={completionResult}
+      />
       <SiteFooter />
     </div>
   );
