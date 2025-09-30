@@ -172,10 +172,10 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    // Obter dados da submissão
+    // Obter dados da submissão (consulta simples) - não assumimos relacionamento PostgREST
     const { data: submission, error: submissionError } = await supabase
       .from("quiz_submissions")
-      .select("*, user:user_id(full_name, user_email)")
+      .select("*")
       .eq("id", submissionId)
       .maybeSingle();
     
@@ -298,11 +298,11 @@ serve(async (req) => {
       };
     }
     
-    // Obter o perfil do usuário para informações complementares
+    // Obter o perfil do usuário para informações complementares (consulta separada)
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", submission.user_id)
+      .eq("id", submission?.user_id)
       .maybeSingle();
     
     if (profileError) {
