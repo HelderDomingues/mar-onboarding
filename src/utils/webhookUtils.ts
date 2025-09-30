@@ -3,22 +3,32 @@ import { logger } from '@/utils/logger';
 import { getSupabaseAdminClient } from '@/utils/supabaseAdminClient';
 
 // Função para obter a URL do webhook da configuração do sistema
+const DEFAULT_WEBHOOK = 'https://hook.eu2.make.com/amuls2ba837paniiscdb4hlero9pjpdi';
+
 const getWebhookUrl = async (): Promise<string> => {
   try {
     const { data, error } = await supabase.rpc('get_system_config', { 
-      p_config_key: 'webhook_url' 
+      p_config_key: 'webhook_url'
     });
-    
+
     if (error) {
-      console.error('Erro ao obter URL do webhook:', error);
-      // Fallback para URL padrão em caso de erro
-  return 'https://hook.eu2.make.com/amuls2ba837paniiscdb4hlero9pjpdi';
+      // If the RPC is admin-only (P0001) the client will not be allowed to call it.
+      // This can happen in the browser for anonymous/authenticated non-admin users.
+      // Fall back gracefully to the default webhook URL without noisy console.error.
+      if (error.code === 'P0001' || (error.message && String(error.message).toLowerCase().includes('apenas administradores'))) {
+        logger.info('get_system_config is admin-only; using default webhook URL', { tag: 'Webhook' });
+        return DEFAULT_WEBHOOK;
+      }
+
+      // Other errors: log a warning and fall back to the default URL
+      logger.warn('Erro ao obter URL do webhook (rpc get_system_config)', { tag: 'Webhook', data: { error } });
+      return DEFAULT_WEBHOOK;
     }
-    
-  return data || 'https://hook.eu2.make.com/amuls2ba837paniiscdb4hlero9pjpdi';
+
+    return (data as unknown as string) || DEFAULT_WEBHOOK;
   } catch (error) {
-    console.error('Exceção ao obter URL do webhook:', error);
-  return 'https://hook.eu2.make.com/amuls2ba837paniiscdb4hlero9pjpdi';
+    logger.warn('Exceção ao obter URL do webhook', { tag: 'Webhook', data: { error } });
+    return DEFAULT_WEBHOOK;
   }
 };
 
@@ -91,11 +101,16 @@ export async function sendQuizDataToWebhook(
             order_number
           )
         `)
-        .eq('submission_id', submissionId)
-        .order('quiz_questions.order_number');
+        .eq('submission_id', submissionId);
 
       if (!answersError && answersData && Array.isArray(answersData) && answersData.length > 0) {
-        answers = answersData;
+        // Order server responses client-side by the related question's order_number to avoid
+        // PostgREST parsing issues when ordering by related-table columns in the query string.
+        answers = answersData.sort((a: any, b: any) => {
+          const ao = a?.quiz_questions?.order_number ?? 0;
+          const bo = b?.quiz_questions?.order_number ?? 0;
+          return ao - bo;
+        });
       } else {
         answers = null;
       }
@@ -158,8 +173,12 @@ export async function sendQuizDataToWebhook(
             order_number
           )
         `)
-        .eq('submission_id', submissionId)
-        .order('quiz_questions.order_number');
+        .eq('submission_id', submissionId);
+
+      // Sort client-side to ensure stable ordering by question order_number
+      if (answers && Array.isArray(answers)) {
+        answers.sort((a: any, b: any) => (a?.quiz_questions?.order_number ?? 0) - (b?.quiz_questions?.order_number ?? 0));
+      }
 
       if (answersError || !answers || answers.length === 0) {
         const message = 'Nenhuma resposta encontrada para esta submissão';
