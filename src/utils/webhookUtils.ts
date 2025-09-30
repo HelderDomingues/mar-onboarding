@@ -254,16 +254,39 @@ export async function sendQuizDataToWebhook(
       return { success: false, message };
     }
 
-    // Marcar como processado usando cliente administrativo
+    // Marcar como processado usando cliente administrativo em AMBAS as tabelas
     const { error: updateError } = await supabaseAdmin
       .from('quiz_submissions')
       .update({ webhook_processed: true })
       .eq('id', submissionId);
 
     if (updateError) {
-      logger.error('Erro ao marcar webhook como processado', {
+      logger.error('Erro ao marcar webhook como processado em quiz_submissions', {
         tag: 'Webhook',
         data: { submissionId, updateError }
+      });
+    } else {
+      logger.info('✅ Marcado webhook_processed=true em quiz_submissions', {
+        tag: 'Webhook',
+        data: { submissionId }
+      });
+    }
+
+    // CRÍTICO: Também marcar na tabela quiz_respostas_completas
+    const { error: updateRespostasError } = await supabaseAdmin
+      .from('quiz_respostas_completas')
+      .update({ webhook_processed: true })
+      .eq('submission_id', submissionId);
+
+    if (updateRespostasError) {
+      logger.error('Erro ao marcar webhook como processado em quiz_respostas_completas', {
+        tag: 'Webhook',
+        data: { submissionId, updateRespostasError }
+      });
+    } else {
+      logger.info('✅ Marcado webhook_processed=true em quiz_respostas_completas', {
+        tag: 'Webhook',
+        data: { submissionId }
       });
     }
 
@@ -276,7 +299,12 @@ export async function sendQuizDataToWebhook(
     return { 
       success: true, 
       message,
-      details: { status: response.status, submissionId }
+      details: { 
+        status: response.status, 
+        submissionId,
+        webhook_processed_submissions: !updateError,
+        webhook_processed_respostas: !updateRespostasError
+      }
     };
 
   } catch (error) {

@@ -80,21 +80,43 @@ export function QuizCompletionModal({ isOpen, onClose, submissionId, completionR
   const updateStepsFromResult = (result: typeof completionResult) => {
     if (!result) return;
 
-    setSteps(prev => prev.map(step => {
+    const newSteps: VerificationStep[] = steps.map(step => {
       switch (step.id) {
         case 'submission':
           return {
             ...step,
-            status: result.success ? 'success' : 'error',
+            status: (result.success ? 'success' : 'error') as VerificationStep['status'],
             description: result.success 
               ? 'Questionário finalizado com sucesso!' 
               : 'Erro ao finalizar questionário'
           };
+        case 'verification':
+          return {
+            ...step,
+            status: (result.verified ? 'success' : (result.success ? 'error' : 'pending')) as VerificationStep['status'],
+            description: result.verified 
+              ? 'Dados confirmados no banco de dados!' 
+              : (result.success ? 'Erro ao verificar dados' : 'Aguardando finalização...')
+          };
+        case 'webhook':
+          return {
+            ...step,
+            status: (result.webhookSent ? 'success' : (result.verified ? 'error' : 'pending')) as VerificationStep['status'],
+            description: result.webhookSent 
+              ? 'Dados enviados para processamento!' 
+              : (result.verified ? 'Erro ao enviar dados' : 'Aguardando verificação...')
+          };
         default:
           return step;
       }
-    }));
-    if (!result.success) {
+    });
+
+    setSteps(newSteps);
+
+    // Habilitar retry apenas se houver erro após a submission ter sucesso
+    if (result.success && (!result.verified || !result.webhookSent)) {
+      setCanRetry(true);
+    } else if (!result.success) {
       setCanRetry(true);
     }
 

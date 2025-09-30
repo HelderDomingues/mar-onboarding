@@ -103,56 +103,97 @@ export async function saveAnswer(
   if (error) throw error;
 }
 
-export async function completeQuiz(submissionId: string): Promise<{ success: boolean; verified: boolean; webhookSent: boolean; error?: any }> {
+export async function completeQuiz(submissionId: string): Promise<{ success: boolean; verified: boolean; webhookSent: boolean; error?: any; details?: any }> {
   console.log('🎯 [CompleteQuiz] Iniciando processo de finalização:', { submissionId });
   
   try {
-    // Passo 1: Marcar como completo
+    const now = new Date().toISOString();
+    
+    // Passo 1: Marcar como completo com completed_at
     const { error: updateError } = await supabase
       .from('quiz_submissions')
       .update({
         completed: true,
-        completed_at: new Date().toISOString(),
+        completed_at: now,
         webhook_processed: false
       })
       .eq('id', submissionId);
       
     if (updateError) {
       console.error('❌ [CompleteQuiz] Erro ao completar quiz:', updateError);
-      return { success: false, verified: false, webhookSent: false, error: updateError };
+      return { 
+        success: false, 
+        verified: false, 
+        webhookSent: false, 
+        error: updateError,
+        details: { step: 'update', error: updateError }
+      };
     }
 
-    console.log('✅ [CompleteQuiz] Quiz marcado como completo');
+    console.log('✅ [CompleteQuiz] Quiz marcado como completo com completed_at:', now);
     
     // Passo 2: Verificar se foi marcado corretamente
     const { data: verification, error: verifyError } = await supabase
       .from('quiz_submissions')
-      .select('completed, completed_at')
+      .select('completed, completed_at, webhook_processed')
       .eq('id', submissionId)
       .single();
       
     if (verifyError || !verification?.completed) {
       console.error('❌ [CompleteQuiz] Falha na verificação:', verifyError);
-      return { success: true, verified: false, webhookSent: false, error: verifyError };
+      return { 
+        success: true, 
+        verified: false, 
+        webhookSent: false, 
+        error: verifyError,
+        details: { step: 'verification', error: verifyError, verification }
+      };
     }
     
-    console.log('✅ [CompleteQuiz] Verificação confirmada');
+    console.log('✅ [CompleteQuiz] Verificação confirmada:', verification);
     
     // Passo 3: Tentar enviar webhook
     let webhookSent = false;
+    let webhookResult: any = null;
+    
     try {
       console.log('📤 [CompleteQuiz] Enviando dados para webhook...');
-      const webhookResult = await sendQuizDataToWebhook(submissionId);
+      webhookResult = await sendQuizDataToWebhook(submissionId);
       webhookSent = webhookResult.success;
-      console.log(`${webhookSent ? '✅' : '❌'} [CompleteQuiz] Webhook: ${webhookResult.message}`);
+      console.log(`${webhookSent ? '✅' : '❌'} [CompleteQuiz] Webhook: ${webhookResult.message}`, webhookResult);
+      
+      // Verificar novamente se webhook_processed foi marcado
+      const { data: webhookVerification } = await supabase
+        .from('quiz_submissions')
+        .select('webhook_processed')
+        .eq('id', submissionId)
+        .single();
+        
+      console.log('🔍 [CompleteQuiz] Verificação webhook_processed:', webhookVerification);
+      
     } catch (webhookError) {
       console.error('❌ [CompleteQuiz] Erro ao enviar dados para webhook:', webhookError);
+      webhookResult = { success: false, message: webhookError instanceof Error ? webhookError.message : 'Erro desconhecido' };
     }
     
-    return { success: true, verified: true, webhookSent };
+    return { 
+      success: true, 
+      verified: true, 
+      webhookSent,
+      details: {
+        verification,
+        webhook: webhookResult
+      }
+    };
   } catch (error) {
     console.error('❌ [CompleteQuiz] Erro crítico:', error);
-    return { success: false, verified: false, webhookSent: false, error };
+    return { 
+      success: false, 
+      verified: false, 
+      webhookSent: false, 
+      error,
+      details: { step: 'critical', error }
+    };
   }
 }
 

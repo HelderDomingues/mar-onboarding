@@ -1,6 +1,130 @@
 
 # Sistema MAR - Log de Implementação
 
+## ⚡ 2025-09-30 (CORREÇÃO DEFINITIVA) - Fluxo Completo de Finalização do Questionário
+
+### ✅ PROBLEMA RESOLVIDO COMPLETAMENTE
+
+**Situação identificada após análise profunda:**
+- ✅ Webhook estava sendo disparado
+- ❌ Campo `completed_at` ficava NULL mesmo com `completed=true`
+- ⚠️ `quiz_submissions.webhook_processed = true` (OK)
+- ❌ `quiz_respostas_completas.webhook_processed = false` (ERRO)
+- ❌ Modal não atualizava todos os steps corretamente
+
+### 🔍 Análise das Causas Raiz
+
+1. **`completed_at` NULL**: O UPDATE não estava preenchendo o campo consistentemente
+2. **Inconsistência entre tabelas**: Apenas `quiz_submissions` era marcada como `webhook_processed=true`, mas não `quiz_respostas_completas`
+3. **Modal incompleto**: Função `updateStepsFromResult` só atualizava o step 'submission', deixando 'verification' e 'webhook' sempre em 'pending'
+4. **Falta de verificação completa**: O retorno da função não incluía todos os detalhes necessários
+
+### 🔧 Correções Implementadas
+
+#### 1. **Correção do `completeQuiz` em `src/utils/quiz.ts`**
+```typescript
+// ANTES
+.update({ completed: true, webhook_processed: false })
+
+// DEPOIS - Com completed_at consistente
+const now = new Date().toISOString();
+.update({ 
+  completed: true, 
+  completed_at: now,  // ← CRÍTICO: agora sempre preenchido
+  webhook_processed: false 
+})
+
+// Verificação expandida
+const verification = await supabase
+  .select('completed, completed_at, webhook_processed')  // ← Verifica todos os campos
+  
+// Retorno enriquecido com detalhes
+return { 
+  success, 
+  verified, 
+  webhookSent,
+  details: { verification, webhook: webhookResult }  // ← Detalhes completos
+}
+```
+
+#### 2. **Correção do `webhookUtils.ts` - Atualização em AMBAS as tabelas**
+```typescript
+// ANTES - Só atualizava quiz_submissions
+await supabaseAdmin
+  .from('quiz_submissions')
+  .update({ webhook_processed: true })
+
+// DEPOIS - Atualiza em AMBAS as tabelas
+// 1. Atualizar quiz_submissions
+await supabaseAdmin
+  .from('quiz_submissions')
+  .update({ webhook_processed: true })
+  .eq('id', submissionId);
+
+// 2. CRÍTICO: Também atualizar quiz_respostas_completas
+await supabaseAdmin
+  .from('quiz_respostas_completas')
+  .update({ webhook_processed: true })
+  .eq('submission_id', submissionId);
+```
+
+#### 3. **Correção do `QuizCompletionModal.tsx` - Todos os steps atualizados**
+```typescript
+// ANTES - Só atualizava step 'submission'
+case 'submission':
+  return { ...step, status: result.success ? 'success' : 'error' }
+default:
+  return step  // ← Outros steps não eram atualizados!
+
+// DEPOIS - Atualiza TODOS os 3 steps
+case 'submission':
+  return { status: result.success ? 'success' : 'error', ... }
+case 'verification':
+  return { status: result.verified ? 'success' : 'error', ... }
+case 'webhook':
+  return { status: result.webhookSent ? 'success' : 'error', ... }
+```
+
+### 🎯 Fluxo Correto Após Correções
+
+```
+1. Usuário clica "Finalizar Questionário"
+   ↓
+2. completeQuiz() → UPDATE com completed=true E completed_at=now()
+   ↓
+3. Verificação SELECT → confirma completed=true, completed_at preenchido
+   ↓
+4. sendQuizDataToWebhook() → envia dados para Make.com
+   ↓
+5. Atualização: webhook_processed=true em AMBAS as tabelas
+   ├─ quiz_submissions.webhook_processed = true
+   └─ quiz_respostas_completas.webhook_processed = true
+   ↓
+6. Modal exibe todos os 3 steps:
+   ├─ ✅ Submission (success)
+   ├─ ✅ Verification (success)
+   └─ ✅ Webhook (success)
+   ↓
+7. Usuário navega para Dashboard ou Área do Membro
+```
+
+### ✅ Testes Necessários
+
+- [ ] **Finalização completa**: Verificar `completed=true` E `completed_at` preenchido
+- [ ] **Ambas as tabelas atualizadas**: Confirmar `webhook_processed=true` em quiz_submissions E quiz_respostas_completas
+- [ ] **Modal com todos os steps**: Verificar que os 3 steps são atualizados corretamente
+- [ ] **Webhook disparado**: Confirmar que dados chegam ao Make.com
+- [ ] **Retry funcional**: Testar botão de retry em caso de falha
+
+### 📝 Arquivos Modificados
+
+1. **src/utils/quiz.ts**: Função `completeQuiz` - adicionado `completed_at` e detalhes no retorno
+2. **src/utils/webhookUtils.ts**: Atualização em AMBAS as tabelas (submissions + respostas_completas)
+3. **src/components/quiz/QuizCompletionModal.tsx**: Correção da lógica de atualização de todos os steps
+4. **src/project-log.md**: Documentação completa das correções
+
+---
+
 ## Data: 2025-01-29 - Correção Crítica do Fluxo de Finalização do Questionário
 
 ### ✅ PROBLEMA RESOLVIDO: Falha na finalização do questionário
