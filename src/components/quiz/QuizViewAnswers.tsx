@@ -226,26 +226,26 @@ export function QuizViewAnswers() {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto bg-white rounded-lg shadow-md overflow-hidden relative">
-      {/* Logo MAR no canto superior direito */}
-      <div className="absolute top-2 right-2 z-10">
-        <img 
-          src="/mar-logo.png" 
-          alt="Logo MAR" 
-          className="h-12 w-auto"
-        />
-      </div>
-
+    <div className="w-full max-w-3xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
       <Card>
         <CardHeader className="bg-sky-900 rounded-lg">
-          <div className="flex justify-between items-start">
-            <div>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+            <div className="flex-1">
               <CardTitle className="text-xl font-bold text-slate-300">Confira Suas Respostas Aqui</CardTitle>
             </div>
             
-            {submission?.completed && <Badge variant="secondary" className="text-green-800 bg-lime-400">
-                Completado
-              </Badge>}
+            <div className="flex items-center gap-3">
+              {submission?.completed && (
+                <Badge variant="secondary" className="text-green-800 bg-lime-400">
+                  Completado
+                </Badge>
+              )}
+              <img 
+                src="/mar-logo.png" 
+                alt="Logo MAR" 
+                className="h-10 sm:h-12 w-auto"
+              />
+            </div>
           </div>
         </CardHeader>
         
