@@ -46,16 +46,11 @@ export const ProtectedRoute = ({ component: Component }: ProtectedRouteProps) =>
           }
         });
         
-        // Usar timeout para evitar problemas de navegação durante renderização
-        setTimeout(() => {
-          navigate("/", { replace: true });
-        }, 50);
-      }
-      
-      // Marcar verificação como concluída após atualizações de estado
-      setTimeout(() => {
+        navigate("/", { replace: true });
+      } else {
+        // Se autenticado, marcar verificação como concluída
         setIsCheckingAuth(false);
-      }, 100);
+      }
     }
   }, [isAuthenticated, isLoading, navigate, user]);
   
@@ -69,6 +64,16 @@ export const ProtectedRoute = ({ component: Component }: ProtectedRouteProps) =>
     );
   }
   
+  // Se não estiver autenticado, mostrar loading (o redirect já foi acionado)
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+        <p className="text-slate-600">Redirecionando...</p>
+      </div>
+    );
+  }
+  
   // Renderizar o componente apenas se estiver autenticado
-  return isAuthenticated ? <Component /> : null;
+  return <Component />;
 };
