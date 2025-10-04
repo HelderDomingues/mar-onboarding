@@ -1,364 +1,90 @@
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
-import { getSupabaseAdminClient } from '@/utils/supabaseAdminClient';
-
-// Função para obter a URL do webhook da configuração do sistema
-const DEFAULT_WEBHOOK = 'https://hook.eu2.make.com/amuls2ba837paniiscdb4hlero9pjpdi';
-
-const getWebhookUrl = async (): Promise<string> => {
-  try {
-    const { data, error } = await supabase.rpc('get_system_config', { 
-      p_config_key: 'webhook_url'
-    });
-
-    if (error) {
-      // If the RPC is admin-only (P0001) the client will not be allowed to call it.
-      // This can happen in the browser for anonymous/authenticated non-admin users.
-      // Fall back gracefully to the default webhook URL without noisy console.error.
-      if (error.code === 'P0001' || (error.message && String(error.message).toLowerCase().includes('apenas administradores'))) {
-        logger.info('get_system_config is admin-only; using default webhook URL', { tag: 'Webhook' });
-        return DEFAULT_WEBHOOK;
-      }
-
-      // Other errors: log a warning and fall back to the default URL
-      logger.warn('Erro ao obter URL do webhook (rpc get_system_config)', { tag: 'Webhook', data: { error } });
-      return DEFAULT_WEBHOOK;
-    }
-
-    return (data as unknown as string) || DEFAULT_WEBHOOK;
-  } catch (error) {
-    logger.warn('Exceção ao obter URL do webhook', { tag: 'Webhook', data: { error } });
-    return DEFAULT_WEBHOOK;
-  }
-};
 
 /**
- * Envia dados do questionário para o webhook configurado dinamicamente
+ * Envia dados do questionário para o webhook através da Edge Function segura
+ * A Edge Function tem acesso à service role key no servidor, evitando exposição no frontend
  */
 export async function sendQuizDataToWebhook(
   submissionId: string
 ): Promise<{ success: boolean; message: string; details?: any }> {
   try {
-    logger.info('Iniciando envio para webhook', {
+    logger.info('Chamando Edge Function quiz-webhook', {
       tag: 'Webhook',
       data: { submissionId }
     });
 
-    const webhookUrl = await getWebhookUrl();
+    // Chamar a Edge Function que já tem toda a lógica implementada de forma segura
+    const { data, error } = await supabase.functions.invoke('quiz-webhook', {
+      body: { submissionId }
+    });
 
-    // Buscar dados da submissão usando cliente administrativo
-    const supabaseAdmin = getSupabaseAdminClient();
-    const { data: submission, error: submissionError } = await supabaseAdmin
-      .from('quiz_submissions')
-      .select('*')
-      .eq('id', submissionId)
-      .single();
-
-    if (submissionError || !submission) {
-      const message = 'Submissão não encontrada';
-      logger.error(message, { tag: 'Webhook', data: { submissionId, submissionError } });
-      return { success: false, message };
+    if (error) {
+      logger.error('Erro ao chamar Edge Function quiz-webhook', {
+        tag: 'Webhook',
+        data: { submissionId, error }
+      });
+      
+      return {
+        success: false,
+        message: `Erro ao processar webhook: ${error.message || 'Erro desconhecido'}`,
+        details: error
+      };
     }
 
-    // Verificar se já foi processado
-    if (submission.webhook_processed) {
-      const message = 'Webhook já processado para esta submissão';
-      logger.info(message, { tag: 'Webhook', data: { submissionId } });
-      return { success: true, message };
-    }
-
-    // Buscar dados do perfil usando cliente administrativo
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('*')
-      .eq('id', submission.user_id)
-      .single();
-
-    // Buscar respostas completas da tabela específica
-    const { data: respostas } = await supabaseAdmin
-      .from('quiz_respostas_completas')
-      .select('*')
-      .eq('submission_id', submissionId)
-      .single();
-
-    let respostasFormatadas = {};
-    let userEmail = submission.user_email;
-    let userName = profile?.full_name || '';
-
-    // Prefer to build an ordered, stable payload from quiz_answers (ordered by question)
-    // even when consolidated respostas exist. This preserves Pergunta_N/Resposta_N pairing
-    // and avoids unpredictable key ordering coming from jsonb objects.
-    let answers: any[] | null = null;
-    try {
-      const { data: answersData, error: answersError } = await supabaseAdmin
-        .from('quiz_answers')
-        .select(`
-          answer,
-          quiz_questions!inner (
-            id,
-            text,
-            type,
-            order_number
-          )
-        `)
-        .eq('submission_id', submissionId);
-
-      if (!answersError && answersData && Array.isArray(answersData) && answersData.length > 0) {
-        // Order server responses client-side by the related question's order_number to avoid
-        // PostgREST parsing issues when ordering by related-table columns in the query string.
-        answers = answersData.sort((a: any, b: any) => {
-          const ao = a?.quiz_questions?.order_number ?? 0;
-          const bo = b?.quiz_questions?.order_number ?? 0;
-          return ao - bo;
-        });
-      } else {
-        answers = null;
-      }
-    } catch (e) {
-      answers = null;
-      logger.warn('Falha ao buscar quiz_answers para montar payload ordenado', { tag: 'Webhook', data: { submissionId, error: e } });
-    }
-
-    if (answers && answers.length > 0) {
-      // Build payload from ordered answers (stable Pergunta_N/Resposta_N keys)
-      answers.forEach((item, index) => {
-        if (item.quiz_questions) {
-          const questionText = item.quiz_questions.text;
-          const answer = item.answer || '';
-
-          respostasFormatadas[`Pergunta_${index + 1}`] = questionText;
-          respostasFormatadas[`Resposta_${index + 1}`] = answer;
-          // Also include the question text key for compatibility
-          respostasFormatadas[questionText] = answer;
-        }
-      });
-
-      logger.info('Respostas estruturadas com sucesso (ordenadas)', {
-        tag: 'Webhook',
-        data: {
-          submissionId,
-          totalRespostas: answers.length,
-          camposGerados: Object.keys(respostasFormatadas).length
-        }
-      });
-
-      // prefer user info from consolidated table if present
-      userEmail = respostas?.user_email || submission.user_email;
-      userName = (respostas as any)?.full_name || userName;
-
-    } else if (respostas?.respostas && typeof respostas.respostas === 'object' && Object.keys(respostas.respostas).length > 0) {
-      // Fallback: use consolidated object (no ordering guarantees)
-      respostasFormatadas = respostas.respostas;
-      userEmail = respostas.user_email || submission.user_email;
-      userName = (respostas as any).full_name || userName;
-
-      logger.info('Usando respostas da tabela consolidada (fallback)', {
-        tag: 'Webhook',
-        data: { submissionId, questoesEncontradas: Object.keys(respostasFormatadas).length }
-      });
-    } else {
-      // Buscar respostas individuais da tabela quiz_answers
-      logger.info('Buscando respostas individuais da tabela quiz_answers', {
-        tag: 'Webhook',
-        data: { submissionId }
-      });
-
-      const { data: answers, error: answersError } = await supabaseAdmin
-        .from('quiz_answers')
-        .select(`
-          answer,
-          quiz_questions!inner (
-            text,
-            type,
-            order_number
-          )
-        `)
-        .eq('submission_id', submissionId);
-
-      // Sort client-side to ensure stable ordering by question order_number
-      if (answers && Array.isArray(answers)) {
-        answers.sort((a: any, b: any) => (a?.quiz_questions?.order_number ?? 0) - (b?.quiz_questions?.order_number ?? 0));
-      }
-
-      if (answersError || !answers || answers.length === 0) {
-        const message = 'Nenhuma resposta encontrada para esta submissão';
-        logger.error(message, { tag: 'Webhook', data: { submissionId, answersError } });
-        return { success: false, message };
-      }
-
-      // Estruturar respostas no formato adequado
-      answers.forEach((item, index) => {
-        if (item.quiz_questions) {
-          const questionText = item.quiz_questions.text;
-          const answer = item.answer || '';
-
-          // Usar tanto o texto da pergunta quanto um identificador numerado
-          respostasFormatadas[`Pergunta_${index + 1}`] = questionText;
-          respostasFormatadas[`Resposta_${index + 1}`] = answer;
-          respostasFormatadas[questionText] = answer;
-        }
-      });
-
-      logger.info('Respostas estruturadas com sucesso', {
-        tag: 'Webhook',
-        data: {
-          submissionId,
-          totalRespostas: answers.length,
-          camposGerados: Object.keys(respostasFormatadas).length
-        }
-      });
-    }
-
-    // Preparar payload otimizado para Make.com
-    const payload = {
-      // Metadados essenciais
-      "ID_Submissao": submissionId,
-      "ID_Usuario": submission.user_id,
-      "Data_Submissao": submission.completed_at || submission.created_at,
-      "Timestamp": new Date().toISOString(),
-      "Origem": "Sistema MAR - Crie Valor Consultoria",
-
-      // Dados do usuário
-      "Email": userEmail,
-      "Nome": userName,
-      "Telefone": profile?.phone || '',
-
-      // Respostas do questionário (estrutura plana)
-      ...respostasFormatadas
-    };
-
-    logger.info('Enviando payload para webhook', {
+    logger.info('Edge Function quiz-webhook executada com sucesso', {
       tag: 'Webhook',
-      data: { 
-        submissionId, 
-        camposEnviados: Object.keys(payload).length,
-      }
+      data: { submissionId, response: data }
     });
 
-    // Enviar para webhook
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Sistema-MAR-Webhook/2.0'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const message = `Erro HTTP ${response.status}: ${response.statusText}`;
-      logger.error('Falha no envio para webhook', {
-        tag: 'Webhook',
-        data: { submissionId, status: response.status, message }
-      });
-      return { success: false, message };
-    }
-
-    // Marcar como processado usando cliente administrativo em AMBAS as tabelas
-    const { error: updateError } = await supabaseAdmin
-      .from('quiz_submissions')
-      .update({ webhook_processed: true })
-      .eq('id', submissionId);
-
-    if (updateError) {
-      logger.error('Erro ao marcar webhook como processado em quiz_submissions', {
-        tag: 'Webhook',
-        data: { submissionId, updateError }
-      });
-    } else {
-      logger.info('✅ Marcado webhook_processed=true em quiz_submissions', {
-        tag: 'Webhook',
-        data: { submissionId }
-      });
-    }
-
-    // CRÍTICO: Também marcar na tabela quiz_respostas_completas
-    const { error: updateRespostasError } = await supabaseAdmin
-      .from('quiz_respostas_completas')
-      .update({ webhook_processed: true })
-      .eq('submission_id', submissionId);
-
-    if (updateRespostasError) {
-      logger.error('Erro ao marcar webhook como processado em quiz_respostas_completas', {
-        tag: 'Webhook',
-        data: { submissionId, updateRespostasError }
-      });
-    } else {
-      logger.info('✅ Marcado webhook_processed=true em quiz_respostas_completas', {
-        tag: 'Webhook',
-        data: { submissionId }
-      });
-    }
-
-    const message = 'Dados enviados com sucesso para o webhook';
-    logger.info(message, {
-      tag: 'Webhook',
-      data: { submissionId, status: response.status }
-    });
-
-    return { 
-      success: true, 
-      message,
-      details: { 
-        status: response.status, 
-        submissionId,
-        webhook_processed_submissions: !updateError,
-        webhook_processed_respostas: !updateRespostasError
-      }
+    return {
+      success: data?.success || false,
+      message: data?.message || 'Webhook processado',
+      details: data
     };
 
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
-    logger.error('Exceção ao enviar para webhook', {
+    logger.error('Exceção ao chamar Edge Function quiz-webhook', {
       tag: 'Webhook',
       data: { submissionId, error: message }
     });
     
-    return { 
-      success: false, 
+    return {
+      success: false,
       message: `Erro: ${message}`,
-      details: error 
+      details: error
     };
   }
 }
 
 /**
- * Testa a conectividade com o webhook configurado
+ * Testa a conectividade com o webhook através da Edge Function
  */
 export async function testWebhookConnection(): Promise<{ success: boolean; message: string }> {
   try {
-    const webhookUrl = await getWebhookUrl();
-    const testPayload = {
-      teste: true,
-      timestamp: new Date().toISOString(),
-      origem: "Sistema MAR - Teste de Conectividade"
-    };
+    logger.info('Testando conexão com webhook via Edge Function', { tag: 'Webhook' });
 
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Sistema-MAR-Webhook-Test/2.0'
-      },
-      body: JSON.stringify(testPayload)
+    const { data, error } = await supabase.functions.invoke('quiz-webhook', {
+      body: { test: true }
     });
 
-    if (!response.ok) {
-      return { 
-        success: false, 
-        message: `Erro na conexão: HTTP ${response.status}` 
+    if (error) {
+      return {
+        success: false,
+        message: `Erro ao testar webhook: ${error.message || 'Erro desconhecido'}`
       };
     }
 
-    return { 
-      success: true, 
-      message: 'Conexão com webhook bem-sucedida!' 
+    return {
+      success: true,
+      message: 'Conexão com webhook testada com sucesso via Edge Function!'
     };
 
   } catch (error) {
-    return { 
-      success: false, 
-      message: `Erro de conexão: ${error instanceof Error ? error.message : 'Desconhecido'}` 
+    return {
+      success: false,
+      message: `Erro de conexão: ${error instanceof Error ? error.message : 'Desconhecido'}`
     };
   }
 }
