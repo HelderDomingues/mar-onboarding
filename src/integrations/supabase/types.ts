@@ -161,7 +161,7 @@ export type Database = {
           full_name: string | null
           id: string
           phone: string | null
-          user_email: string | null
+          user_email: string
         }
         Insert: {
           avatar_url?: string | null
@@ -169,7 +169,7 @@ export type Database = {
           full_name?: string | null
           id: string
           phone?: string | null
-          user_email?: string | null
+          user_email: string
         }
         Update: {
           avatar_url?: string | null
@@ -177,7 +177,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
-          user_email?: string | null
+          user_email?: string
         }
         Relationships: []
       }
@@ -323,32 +323,32 @@ export type Database = {
       quiz_respostas_completas: {
         Row: {
           data_submissao: string
+          full_name: string | null
           id: string
           respostas: Json
           submission_id: string
           user_email: string
           user_id: string
-          user_name: string | null
           webhook_processed: boolean | null
         }
         Insert: {
           data_submissao?: string
+          full_name?: string | null
           id?: string
           respostas: Json
           submission_id: string
           user_email: string
           user_id: string
-          user_name?: string | null
           webhook_processed?: boolean | null
         }
         Update: {
           data_submissao?: string
+          full_name?: string | null
           id?: string
           respostas?: Json
           submission_id?: string
           user_email?: string
           user_id?: string
-          user_name?: string | null
           webhook_processed?: boolean | null
         }
         Relationships: []
@@ -359,6 +359,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           current_module: number
+          full_name: string | null
           id: string
           started_at: string
           user_email: string
@@ -370,6 +371,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           current_module?: number
+          full_name?: string | null
           id?: string
           started_at?: string
           user_email: string
@@ -381,6 +383,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           current_module?: number
+          full_name?: string | null
           id?: string
           started_at?: string
           user_email?: string
@@ -456,7 +459,7 @@ export type Database = {
         Returns: Json
       }
       complete_quiz: {
-        Args: { user_id: string }
+        Args: { p_user_id: string }
         Returns: boolean
       }
       create_table_backup: {
@@ -465,6 +468,10 @@ export type Database = {
           source_table: string
           target_table: string
         }
+        Returns: boolean
+      }
+      fix_quiz_completion: {
+        Args: { p_user_id: string }
         Returns: boolean
       }
       gerar_respostas_json: {
@@ -482,10 +489,10 @@ export type Database = {
       get_users_with_emails: {
         Args: Record<PropertyKey, never>
         Returns: {
+          full_name: string
           user_created_at: string
           user_email: string
           user_id: string
-          user_name: string
         }[]
       }
       is_admin: {
