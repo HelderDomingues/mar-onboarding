@@ -199,6 +199,7 @@ export async function saveQuizAnswer(userId: string, questionId: string, answer:
         submission_id: submissionId,
         question_id: questionId,
         answer: normalizedAnswer,
+        user_email: userEmail,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'submission_id,question_id'

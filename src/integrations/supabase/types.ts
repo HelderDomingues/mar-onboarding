@@ -189,6 +189,7 @@ export type Database = {
           question_id: string
           submission_id: string
           updated_at: string
+          user_email: string | null
         }
         Insert: {
           answer?: string | null
@@ -197,6 +198,7 @@ export type Database = {
           question_id: string
           submission_id: string
           updated_at?: string
+          user_email?: string | null
         }
         Update: {
           answer?: string | null
@@ -205,6 +207,7 @@ export type Database = {
           question_id?: string
           submission_id?: string
           updated_at?: string
+          user_email?: string | null
         }
         Relationships: [
           {

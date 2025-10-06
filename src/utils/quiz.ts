@@ -89,12 +89,20 @@ export async function saveAnswer(
   questionId: string,
   answer: string | null
 ): Promise<void> {
+  // Buscar o email do usuário da submissão
+  const { data: submission } = await supabase
+    .from('quiz_submissions')
+    .select('user_email')
+    .eq('id', submissionId)
+    .single();
+  
   const { error } = await supabase
     .from('quiz_answers')
     .upsert({
       submission_id: submissionId,
       question_id: questionId,
       answer,
+      user_email: submission?.user_email || '',
       updated_at: new Date().toISOString()
     }, {
       onConflict: 'submission_id,question_id'
