@@ -415,43 +415,72 @@ serve(async (req) => {
     }
     
     // Marcar submissão como processada pelo webhook
+    console.log(`Tentando marcar submissão ${submissionId} como processada...`);
     const { error: updateError } = await supabase
       .from("quiz_submissions")
       .update({ webhook_processed: true })
       .eq("id", submissionId);
     
+    let updateSuccess = false;
     if (updateError) {
-      console.error("Erro ao atualizar status de processamento da submissão:", updateError);
+      console.error("❌ ERRO CRÍTICO ao atualizar webhook_processed na submissão:", {
+        error: updateError,
+        message: updateError.message,
+        details: updateError.details,
+        hint: updateError.hint,
+        code: updateError.code,
+        submissionId
+      });
     } else {
-      console.log(`Submissão ${submissionId} marcada como processada com sucesso`);
+      console.log(`✅ Submissão ${submissionId} marcada como processada com sucesso`);
+      updateSuccess = true;
     }
     
     // Marcar respostas_completas como processada pelo webhook, se existir
-    if (respostas.id) {
+    let updateRespostasSuccess = false;
+    if (respostas && respostas.id) {
       const { error: updateRespostasError } = await supabase
         .from("quiz_respostas_completas")
         .update({ webhook_processed: true })
         .eq("submission_id", submissionId);
       
       if (updateRespostasError) {
-        console.error("Erro ao atualizar status de processamento em respostas_completas:", updateRespostasError);
+        console.error("❌ Erro ao atualizar webhook_processed em respostas_completas:", {
+          error: updateRespostasError,
+          message: updateRespostasError.message,
+          submissionId
+        });
       } else {
-        console.log(`Respostas para submissão ${submissionId} marcadas como processadas`);
+        console.log(`✅ Respostas para submissão ${submissionId} marcadas como processadas`);
+        updateRespostasSuccess = true;
       }
     }
     
+    // Retornar resposta com status detalhado das atualizações
     return new Response(
       JSON.stringify({
-        message: "Dados enviados com sucesso para o Make.com",
+        success: updateSuccess, // Agora reflete o status real da atualização
+        message: updateSuccess 
+          ? "Dados enviados com sucesso para o Make.com e submissão marcada como processada"
+          : "Dados enviados para o Make.com, mas falha ao marcar como processada",
         submission_id: submissionId,
         timestamp: new Date().toISOString(),
-        status: "success",
+        webhook_sent: true,
+        updates: {
+          submission_updated: updateSuccess,
+          respostas_updated: updateRespostasSuccess,
+          update_error: updateError ? {
+            message: updateError.message,
+            code: updateError.code,
+            details: updateError.details
+          } : null
+        },
         webhook_url: webhookUrl.replace(WEBHOOK_TOKEN, "***token-oculto***"),
-        response: responseText || null
+        webhook_response: responseText || null
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
+        status: updateSuccess ? 200 : 207, // 207 = Multi-Status (parcialmente bem-sucedido)
       }
     );
     
