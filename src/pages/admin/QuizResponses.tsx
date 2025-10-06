@@ -447,9 +447,9 @@ const QuizResponses = () => {
     }
   };
   
-  const viewDetails = (submission: QuizSubmission) => {
+  const viewDetails = (submissionId: string, userId: string) => {
     // Redirecionar para as respostas do usuário específico
-    navigate(`/quiz/view-answers?id=${submission.id}&userId=${submission.user_id}&admin=true`);
+    navigate(`/quiz/view-answers?id=${submissionId}&userId=${userId}&admin=true`);
   };
   
   const toggleSelectAll = () => {
@@ -476,7 +476,7 @@ const QuizResponses = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => viewDetails(submission)}>
+        <DropdownMenuItem onClick={() => viewDetails(submission.id, submission.user_id)}>
           <ExternalLink className="h-4 w-4 mr-2" />
           Ver detalhes
         </DropdownMenuItem>
