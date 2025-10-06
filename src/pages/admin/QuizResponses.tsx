@@ -476,7 +476,7 @@ const QuizResponses = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => viewDetails(submission.id)}>
+        <DropdownMenuItem onClick={() => viewDetails(submission)}>
           <ExternalLink className="h-4 w-4 mr-2" />
           Ver detalhes
         </DropdownMenuItem>
