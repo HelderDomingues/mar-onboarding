@@ -66,7 +66,11 @@ interface QuizSubmission {
   started_at: string;
   completed_at: string | null;
   completed: boolean;
-  // webhook_processed removed as it doesn't exist in schema
+  completion_status?: {
+    total_required: number;
+    total_answered: number;
+    completion_percentage: number;
+  };
 }
 
 const QuizResponses = () => {
@@ -112,8 +116,6 @@ const QuizResponses = () => {
       } else if (statusFilter === 'incomplete') {
         query = query.eq('completed', false);
       }
-      // Por padrão, mostrar todos os registros se nenhum filtro for selecionado
-      // Removed webhook_processed filters as field doesn't exist in schema
 
       const { data, error } = await query;
 
@@ -121,7 +123,31 @@ const QuizResponses = () => {
         throw error;
       }
       
-      setSubmissions(data as unknown as QuizSubmission[]);
+      // CAMADA 6: Buscar status de completude para cada submissão
+      const enrichedData = await Promise.all(
+        (data || []).map(async (submission) => {
+          try {
+            const { data: validationData } = await supabaseAdmin
+              .rpc('validate_quiz_completeness', { p_user_id: submission.user_id });
+            
+            const validation = validationData as any;
+            
+            return {
+              ...submission,
+              completion_status: validation ? {
+                total_required: validation.total_required || 0,
+                total_answered: validation.total_answered || 0,
+                completion_percentage: validation.completion_percentage || 0
+              } : undefined
+            };
+          } catch (err) {
+            console.error(`Erro ao buscar completude para ${submission.id}:`, err);
+            return submission;
+          }
+        })
+      );
+      
+      setSubmissions(enrichedData as QuizSubmission[]);
       setSelectedRows([]);
     } catch (error: any) {
       logger.error('Erro ao buscar submissões:', {
@@ -529,13 +555,27 @@ const QuizResponses = () => {
       </TableCell>
       <TableCell>
         {submission.completed ? (
-          <Badge variant="outline" className="bg-green-100 border-green-300 text-green-800">
-            Completo
-          </Badge>
+          <div className="flex flex-col">
+            <Badge variant="outline" className="bg-green-100 border-green-300 text-green-800 mb-1">
+              Completo
+            </Badge>
+            {submission.completion_status && (
+              <span className="text-xs text-muted-foreground">
+                {submission.completion_status.total_answered}/{submission.completion_status.total_required} ({submission.completion_status.completion_percentage}%)
+              </span>
+            )}
+          </div>
         ) : (
-          <Badge variant="outline" className="bg-yellow-100 border-yellow-300 text-yellow-800">
-            Em andamento
-          </Badge>
+          <div className="flex flex-col">
+            <Badge variant="outline" className="bg-yellow-100 border-yellow-300 text-yellow-800 mb-1">
+              Em andamento
+            </Badge>
+            {submission.completion_status && (
+              <span className="text-xs text-muted-foreground">
+                {submission.completion_status.total_answered}/{submission.completion_status.total_required} ({submission.completion_status.completion_percentage}%)
+              </span>
+            )}
+          </div>
         )}
       </TableCell>
       <TableCell className="text-right">
@@ -627,7 +667,7 @@ const QuizResponses = () => {
                     <TableHead>Usuário</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Data de Início</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Status / Completude</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>

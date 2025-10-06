@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 export function QuizReviewComponent({ onComplete, modules: propModules, questions: propQuestions, answers: propAnswers, onEdit: propOnEdit }) {
+  const [incompleteModules, setIncompleteModules] = useState([]);
 
   // Mock fallback data (kept for development). The component now prefers props passed from the parent.
   const defaultModules = [
@@ -41,9 +45,55 @@ export function QuizReviewComponent({ onComplete, modules: propModules, question
     }
     return answer || 'Não respondido';
   };
+  
+  // CAMADA 2: Validar completude antes de finalizar
+  useEffect(() => {
+    const validateCompletion = () => {
+      const incomplete = [];
+      
+      modules.forEach((module) => {
+        const moduleQuestions = getModuleQuestions(module.id);
+        const requiredQuestions = moduleQuestions.filter(q => q.required);
+        const unanswered = requiredQuestions.filter(q => {
+          const answer = answers[q.id];
+          return !answer || (Array.isArray(answer) && answer.length === 0) || answer === '';
+        });
+        
+        if (unanswered.length > 0) {
+          incomplete.push({
+            module,
+            unansweredCount: unanswered.length,
+            unansweredQuestions: unanswered
+          });
+        }
+      });
+      
+      setIncompleteModules(incomplete);
+    };
+    
+    validateCompletion();
+  }, [modules, questions, answers]);
+  
+  const handleCompleteClick = () => {
+    if (incompleteModules.length > 0) {
+      return; // O botão estará desabilitado, mas esta é uma camada extra de proteção
+    }
+    onComplete();
+  };
 
   return (
     <div className="space-y-6">
+      {incompleteModules.length > 0 && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Questionário Incompleto</AlertTitle>
+          <AlertDescription>
+            Você ainda tem {incompleteModules.reduce((sum, m) => sum + m.unansweredCount, 0)} pergunta(s) obrigatória(s) não respondida(s) em {incompleteModules.length} módulo(s).
+            Por favor, complete todas as perguntas obrigatórias antes de finalizar.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <Card>
         <CardHeader>
           <CardTitle>Revisão das Suas Respostas</CardTitle>
@@ -56,13 +106,25 @@ export function QuizReviewComponent({ onComplete, modules: propModules, question
           <Accordion type="single" collapsible className="space-y-4">
             {modules.map((module, moduleIndex) => {
               const moduleQuestions = getModuleQuestions(module.id);
+              const requiredCount = moduleQuestions.filter(q => q.required).length;
+              const answeredRequired = moduleQuestions.filter(q => {
+                const answer = answers[q.id];
+                return q.required && answer && answer !== '' && !(Array.isArray(answer) && answer.length === 0);
+              }).length;
+              const isModuleComplete = answeredRequired >= requiredCount;
+              const incompleteInfo = incompleteModules.find(m => m.module.id === module.id);
               
               return (
                 <AccordionItem key={module.id} value={module.id}>
                   <AccordionTrigger className="text-left">
-                    <div>
-                      <h3 className="font-semibold">Módulo {module.order_number}: {module.title}</h3>
-                      <p className="text-sm text-muted-foreground">{moduleQuestions.length} questões</p>
+                    <div className="flex items-center gap-2 w-full">
+                      <div className="flex-1">
+                        <h3 className="font-semibold">Módulo {module.order_number}: {module.title}</h3>
+                        <p className="text-sm text-muted-foreground">{moduleQuestions.length} questões</p>
+                      </div>
+                      <Badge variant={isModuleComplete ? "default" : "destructive"} className="ml-auto mr-2">
+                        {answeredRequired}/{requiredCount} obrigatórias
+                      </Badge>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
@@ -91,8 +153,17 @@ export function QuizReviewComponent({ onComplete, modules: propModules, question
             })}
           </Accordion>
           
-          <div className="mt-6 flex justify-center">
-            <Button onClick={onComplete} size="lg">
+          <div className="mt-6 flex flex-col items-center gap-4">
+            {incompleteModules.length > 0 && (
+              <p className="text-sm text-destructive">
+                Complete todas as perguntas obrigatórias para finalizar o questionário
+              </p>
+            )}
+            <Button 
+              onClick={handleCompleteClick} 
+              size="lg"
+              disabled={incompleteModules.length > 0}
+            >
               Finalizar Questionário
             </Button>
           </div>

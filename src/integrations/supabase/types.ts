@@ -544,6 +544,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      validate_quiz_completeness: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

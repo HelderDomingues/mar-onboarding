@@ -252,51 +252,52 @@ serve(async (req) => {
     
     if (!respostas || !respostas.respostas) {
       console.error(`Nenhuma resposta encontrada para submissão ${submissionId}`);
-      
-      // Tentativa alternativa: gerar respostas na hora
-      console.log("Tentando gerar respostas na hora para a submissão");
-      
-      const { data: answers, error: answersError } = await supabase
-        .from("quiz_answers")
-        .select("question_text, answer")
-        .eq("user_id", submission.user_id);
-        
-      if (answersError || !answers || answers.length === 0) {
-        console.error("Falha na tentativa alternativa de buscar respostas:", answersError);
-        return new Response(
-          JSON.stringify({ 
-            error: "Respostas não encontradas para esta submissão", 
-            errorCode: "ANSWERS_NOT_FOUND",
-            submissionId,
-            timestamp: new Date().toISOString()
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 404,
-          }
-        );
-      }
-      
-      // Construir objeto de respostas manualmente
-      const respostasManual: Record<string, string> = {};
-      answers.forEach(answer => {
-        if (answer.question_text) {
-          respostasManual[answer.question_text] = answer.answer || "";
+      return new Response(
+        JSON.stringify({ 
+          error: "Respostas não encontradas para esta submissão", 
+          errorCode: "ANSWERS_NOT_FOUND",
+          submissionId,
+          timestamp: new Date().toISOString()
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 404,
         }
-      });
-      
-      console.log(`Geradas ${Object.keys(respostasManual).length} respostas manualmente`);
-      
-      // Continuar com estas respostas
-      let respostasCompletas = {
-        user_id: submission.user_id,
-        user_email: submission.user_email || "",
-        user_name: submission.user_name || "",
-        respostas: respostasManual,
-        submission_id: submissionId,
-        data_submissao: submission.completed_at || new Date().toISOString()
-      };
+      );
     }
+    
+    // CAMADA 5: Validar completude antes de enviar webhook
+    console.log("🔍 [Webhook] Validando completude antes de enviar...");
+    
+    const { data: validation, error: validationError } = await supabase
+      .rpc('validate_quiz_completeness', { p_user_id: submission.user_id });
+    
+    if (validationError) {
+      console.error("❌ [Webhook] Erro ao validar completude:", validationError);
+    } else if (!validation.valid) {
+      console.warn(`⚠️ [Webhook] Quiz incompleto detectado: ${validation.total_answered}/${validation.total_required} (${validation.completion_percentage}%)`);
+      
+      return new Response(
+        JSON.stringify({ 
+          error: "Quiz incompleto - não é possível enviar webhook", 
+          errorCode: "INCOMPLETE_QUIZ",
+          submissionId,
+          validation: {
+            total_required: validation.total_required,
+            total_answered: validation.total_answered,
+            completion_percentage: validation.completion_percentage,
+            missing_questions: validation.missing_questions
+          },
+          timestamp: new Date().toISOString()
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 422, // Unprocessable Entity
+        }
+      );
+    }
+    
+    console.log(`✅ [Webhook] Validação passou: ${validation.total_answered}/${validation.total_required} (${validation.completion_percentage}%)`);
     
     // Obter o perfil do usuário para informações complementares (consulta separada)
     const { data: profile, error: profileError } = await supabase

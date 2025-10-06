@@ -304,6 +304,32 @@ const Quiz = () => {
   };
   
   const handleNextModule = async () => {
+    // CAMADA 1: Validação de perguntas obrigatórias do módulo atual
+    const currentModuleQuestions = questions.filter(q => q.required);
+    const unansweredRequired = currentModuleQuestions.filter(q => {
+      const answer = answers[q.id];
+      return !answer || (Array.isArray(answer) && answer.length === 0) || answer === '';
+    });
+    
+    if (unansweredRequired.length > 0) {
+      toast({
+        title: "Perguntas obrigatórias não respondidas",
+        description: `Você precisa responder ${unansweredRequired.length} pergunta(s) obrigatória(s) antes de avançar.`,
+        variant: "destructive",
+      });
+      
+      // Scroll para a primeira pergunta não respondida
+      const firstUnansweredId = unansweredRequired[0].id;
+      const element = document.getElementById(firstUnansweredId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.focus();
+      }
+      
+      return;
+    }
+    
+    // Se todas as perguntas obrigatórias foram respondidas, permitir avançar
     if (currentModuleIndex < modules.length - 1) {
       const nextModuleIndex = currentModuleIndex + 1;
       setCurrentModuleIndex(nextModuleIndex);
@@ -754,13 +780,18 @@ const Quiz = () => {
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   ) : (
-                    <Button
-                      onClick={handleNextModule}
-                      disabled={isSubmitting}
-                    >
-                      Próximo
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
+                    <>
+                      <Badge variant="secondary" className="text-xs">
+                        {questions.filter(q => answers[q.id] && answers[q.id] !== '' && !(Array.isArray(answers[q.id]) && answers[q.id].length === 0)).length}/{questions.length}
+                      </Badge>
+                      <Button
+                        onClick={handleNextModule}
+                        disabled={isSubmitting}
+                      >
+                        Próximo
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </>
                   )}
                 </div>
               </CardFooter>

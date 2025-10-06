@@ -3,6 +3,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { QuizModule, QuizQuestion, QuizOption, QuizSubmission, QuizAnswer } from '@/types/quiz';
 import { sendQuizDataToWebhook } from '@/utils/webhookUtils';
 
+interface QuizValidationResult {
+  valid: boolean;
+  total_required: number;
+  total_answered: number;
+  completion_percentage: number;
+  missing_questions?: any[];
+  error?: string;
+}
+
 export async function fetchModules(): Promise<QuizModule[]> {
   const { data, error } = await supabase
     .from('quiz_modules')
@@ -115,9 +124,62 @@ export async function completeQuiz(submissionId: string): Promise<{ success: boo
   console.log('🎯 [CompleteQuiz] Iniciando processo de finalização:', { submissionId });
   
   try {
+    // CAMADA 3: Validar completude ANTES de marcar como completo
+    const { data: submission } = await supabase
+      .from('quiz_submissions')
+      .select('user_id')
+      .eq('id', submissionId)
+      .single();
+    
+    if (!submission) {
+      return {
+        success: false,
+        verified: false,
+        webhookSent: false,
+        error: 'Submissão não encontrada',
+        details: { step: 'fetch_submission' }
+      };
+    }
+    
+    console.log('🔍 [CompleteQuiz] Validando completude para user_id:', submission.user_id);
+    
+    const { data: validationData, error: validationError } = await supabase
+      .rpc('validate_quiz_completeness', { p_user_id: submission.user_id });
+    
+    if (validationError) {
+      console.error('❌ [CompleteQuiz] Erro ao validar completude:', validationError);
+      return {
+        success: false,
+        verified: false,
+        webhookSent: false,
+        error: validationError,
+        details: { step: 'validation', error: validationError }
+      };
+    }
+    
+    const validation = validationData as unknown as QuizValidationResult;
+    console.log('📊 [CompleteQuiz] Resultado da validação:', validation);
+    
+    if (!validation.valid) {
+      console.warn('⚠️ [CompleteQuiz] Quiz incompleto:', validation);
+      return {
+        success: false,
+        verified: false,
+        webhookSent: false,
+        error: 'Quiz incompleto',
+        details: {
+          step: 'validation_failed',
+          validation,
+          message: `Apenas ${validation.total_answered}/${validation.total_required} perguntas respondidas (${validation.completion_percentage}%)`
+        }
+      };
+    }
+    
+    console.log('✅ [CompleteQuiz] Validação passou: 100% completo');
+    
     const now = new Date().toISOString();
     
-    // Passo 1: Marcar como completo com completed_at
+    // Passo 2: Marcar como completo com completed_at
     const { error: updateError } = await supabase
       .from('quiz_submissions')
       .update({
