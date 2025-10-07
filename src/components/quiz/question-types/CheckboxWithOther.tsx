@@ -9,6 +9,7 @@ interface CheckboxWithOtherProps {
   options: QuizOption[];
   value: string[];
   onChange: (value: string[]) => void;
+  onBlur?: (value: string[]) => void;
   disabled?: boolean;
   hint?: string;
   error?: string | null;
@@ -20,6 +21,7 @@ export const CheckboxWithOther: React.FC<CheckboxWithOtherProps> = ({
   options,
   value = [],
   onChange,
+  onBlur,
   disabled = false,
   hint,
   error,
@@ -84,10 +86,11 @@ export const CheckboxWithOther: React.FC<CheckboxWithOtherProps> = ({
   const handleOtherTextBlur = () => {
     if (otherOption && isOtherSelected) {
       const baseValues = predefinedValues.filter(v => v !== otherOption.text);
-      if (otherText.trim()) {
-        onChange([...baseValues, otherText]);
-      } else {
-        onChange(baseValues);
+      const finalValues = otherText.trim() ? [...baseValues, otherText] : baseValues;
+      onChange(finalValues);
+      
+      if (onBlur) {
+        onBlur(finalValues);
       }
     }
   };

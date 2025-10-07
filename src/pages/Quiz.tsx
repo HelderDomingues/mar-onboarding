@@ -304,6 +304,16 @@ const Quiz = () => {
   };
   
   const handleNextModule = async () => {
+    // SOLUÇÃO 3: Salvar todas as respostas pendentes antes de validar
+    const allCurrentModuleQuestions = questions;
+    
+    for (const question of allCurrentModuleQuestions) {
+      const answer = answers[question.id];
+      if (answer && ((typeof answer === 'string' && answer !== '') || (Array.isArray(answer) && answer.length > 0))) {
+        await handleSaveAnswer(question.id, answer);
+      }
+    }
+    
     // CAMADA 1: Validação de perguntas obrigatórias do módulo atual
     const currentModuleQuestions = questions.filter(q => q.required);
     const unansweredRequired = currentModuleQuestions.filter(q => {
@@ -619,7 +629,13 @@ const Quiz = () => {
               id={question.id}
               options={question.options || []}
               value={answer as string}
-              onChange={(value) => handleInputChange(question.id, value)}
+              onChange={async (value) => {
+                handleInputChange(question.id, value);
+                await handleSaveAnswer(question.id, value);
+              }}
+              onBlur={async (value) => {
+                await handleSaveAnswer(question.id, value);
+              }}
               disabled={isSubmitting}
               hint={question.hint}
             />
@@ -637,6 +653,9 @@ const Quiz = () => {
               value={answer as string[] || []}
               onChange={async (value) => {
                 setAnswers(prev => ({ ...prev, [question.id]: value }));
+                await handleSaveAnswer(question.id, value);
+              }}
+              onBlur={async (value) => {
                 await handleSaveAnswer(question.id, value);
               }}
               disabled={isSubmitting}
@@ -782,7 +801,7 @@ const Quiz = () => {
                   ) : (
                     <>
                       <Badge variant="secondary" className="text-xs">
-                        {questions.filter(q => answers[q.id] && answers[q.id] !== '' && !(Array.isArray(answers[q.id]) && answers[q.id].length === 0)).length}/{questions.length}
+                        {questions.filter(q => q.required && answers[q.id] && answers[q.id] !== '' && !(Array.isArray(answers[q.id]) && answers[q.id].length === 0)).length}/{questions.filter(q => q.required).length}
                       </Badge>
                       <Button
                         onClick={handleNextModule}

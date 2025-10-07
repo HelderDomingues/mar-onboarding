@@ -9,6 +9,7 @@ interface RadioWithOtherProps {
   options: QuizOption[];
   value: string;
   onChange: (value: string) => void;
+  onBlur?: (value: string) => void;
   disabled?: boolean;
   hint?: string;
   error?: string | null;
@@ -19,6 +20,7 @@ export const RadioWithOther: React.FC<RadioWithOtherProps> = ({
   options,
   value,
   onChange,
+  onBlur,
   disabled = false,
   hint,
   error
@@ -70,7 +72,11 @@ export const RadioWithOther: React.FC<RadioWithOtherProps> = ({
 
   const handleOtherTextBlur = () => {
     if (otherOption) {
-      onChange(internalOtherText.trim() ? internalOtherText : otherOption.text);
+      const finalValue = internalOtherText.trim() ? internalOtherText : otherOption.text;
+      onChange(finalValue);
+      if (onBlur) {
+        onBlur(finalValue);
+      }
     }
   };
 
