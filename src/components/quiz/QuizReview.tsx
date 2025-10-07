@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { formatJsonAnswer } from "@/utils/formatUtils";
 export function QuizReview() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [answers, setAnswers] = useState<any[]>([]);
   const [modules, setModules] = useState<any[]>([]);
   const [submission, setSubmission] = useState<any>(null);
@@ -241,7 +243,7 @@ export function QuizReview() {
         <div className="text-center py-10">
           <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma resposta encontrada</h3>
           <p className="text-gray-500 mb-6">Você ainda não completou o questionário MAR.</p>
-          <Button onClick={() => window.location.href = '/quiz'}>
+          <Button onClick={() => navigate('/quiz')}>
             Ir para o Questionário <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
