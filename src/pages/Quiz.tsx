@@ -150,23 +150,48 @@ const Quiz = () => {
         
           // Carregar ou criar submissão e carregar respostas
           if (user?.id) {
+            console.log('🔍 [Quiz] Verificando submissão para usuário:', user.id);
             let submission = await fetchSubmission(user.id);
 
             // Se não houver submissão, cria uma nova
             if (!submission) {
+              console.log('📝 [Quiz] Criando nova submissão para usuário:', user.id);
+              
+              // Buscar full_name do perfil do usuário
+              const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('full_name')
+                .eq('id', user.id)
+                .maybeSingle();
+              
+              if (profileError) {
+                console.error('⚠️ [Quiz] Erro ao buscar perfil do usuário:', profileError);
+              }
+              
+              const full_name = profileData?.full_name || null;
+              console.log('👤 [Quiz] Nome do usuário:', full_name);
+
               const { data: newSubmission, error: submissionError } = await supabase
                 .from('quiz_submissions')
                 .insert([{
                   user_id: user.id,
                   user_email: user.email || '',
+                  full_name: full_name,
                   current_module: 1,
                   started_at: new Date().toISOString()
                 }])
                 .select()
                 .single();
 
-              if (submissionError) throw submissionError;
+              if (submissionError) {
+                console.error('❌ [Quiz] Erro ao criar submissão:', submissionError);
+                throw submissionError;
+              }
+              
+              console.log('✅ [Quiz] Submissão criada com sucesso:', newSubmission.id);
               submission = newSubmission;
+            } else {
+              console.log('✅ [Quiz] Submissão existente encontrada:', submission.id);
             }
 
             if (submission) {
