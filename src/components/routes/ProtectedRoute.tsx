@@ -15,6 +15,17 @@ export const ProtectedRoute = ({ component: Component }: ProtectedRouteProps) =>
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   
   useEffect(() => {
+    // Detectar se é acesso direto (refresh/F5)
+    const isDirectAccess = performance.navigation?.type === 1;
+    
+    if (isDirectAccess) {
+      console.log('[ProtectedRoute] 🔄 Acesso direto detectado (refresh/F5)', {
+        path: window.location.pathname,
+        isAuthenticated,
+        isLoading
+      });
+    }
+    
     // Aguardar o carregamento da autenticação
     if (!isLoading) {
       // Registrar tentativa apenas após o carregamento
