@@ -1,4 +1,5 @@
-import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
+import { getSupabaseAdminClient } from '@/utils/supabaseAdminClient';
 import { logger } from '@/utils/logger';
 import { QuizAnswer, QuizQuestion } from '@/types/quiz';
 
@@ -58,6 +59,7 @@ export async function completeQuizManually(userId: string) {
     }
 
     // Método alternativo: atualização direta via admin
+    const supabaseAdmin = getSupabaseAdminClient();
     const { data: submission, error: fetchError } = await supabaseAdmin
       .from('quiz_submissions')
       .select('id')
@@ -311,6 +313,8 @@ export function processQuizAnswersToSimplified(questions, answers) {
  */
 export async function getQuizCompletedAnswers(submissionId: string) {
   try {
+    const supabaseAdmin = getSupabaseAdminClient();
+    
     // Buscar detalhes da submissão
     const { data: submission, error: submissionError } = await supabaseAdmin
       .from('quiz_submissions')

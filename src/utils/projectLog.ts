@@ -229,23 +229,3 @@ addLogEntry('info', 'Sistema de logs inicializado', {
   timestamp: new Date().toISOString(),
   environment: typeof window !== 'undefined' ? window.location.hostname : 'unknown'
 });
-
-// Registra problema com links quebrados no dashboard
-addLogEntry('warning', 'Links quebrados no dashboard administrativo detectados', { 
-  detalhes: 'Vários botões e links no dashboard administrativo estão levando a páginas 404',
-  planoAcao: 'Revisar todos os links e criar as páginas necessárias'
-});
-
-// Registra a configuração do bucket de storage para materiais
-addLogEntry('info', 'Bucket de storage para materiais configurado', {
-  bucket: 'materials',
-  detalhes: 'Bucket criado com sucesso, políticas de acesso configuradas e tabelas de metadados criadas',
-  dataCriacao: new Date().toISOString()
-});
-
-// Registra a correção dos links no dashboard administrativo
-addLogEntry('info', 'Links no dashboard administrativo corrigidos', {
-  detalhes: 'Corrigidos links para Questionários Completos, Em Progresso, Taxa de Conclusão e Relatórios',
-  paginasCriadas: ['Reports.tsx'],
-  dataCorrecao: new Date().toISOString()
-});

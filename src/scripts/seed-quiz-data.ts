@@ -1,5 +1,5 @@
 
-import { supabaseAdmin } from '../integrations/supabase/client';
+import { getSupabaseAdminClient } from '../utils/supabaseAdminClient';
 import { logger } from '../utils/logger';
 
 interface QuizModule {
@@ -37,6 +37,7 @@ const seedQuizData = async () => {
       tag: 'Seed',
     });
     
+    const supabaseAdmin = getSupabaseAdminClient();
     await supabaseAdmin.from('quiz_options').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     await supabaseAdmin.from('quiz_questions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     await supabaseAdmin.from('quiz_modules').delete().neq('id', '00000000-0000-0000-0000-000000000000');

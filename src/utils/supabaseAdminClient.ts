@@ -21,7 +21,8 @@ export const getSupabaseAdminClient = () => {
     {
       auth: {
         autoRefreshToken: false,
-        persistSession: false
+        persistSession: false,
+        storageKey: 'supabase-admin' // Storage key única para evitar conflitos com sessões de usuário
       }
     }
   );

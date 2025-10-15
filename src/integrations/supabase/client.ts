@@ -17,38 +17,5 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   }
 });
 
-// Function to create admin client with service role key
-const createAdminClient = () => {
-  const serviceRoleKey = ServiceRoleConfig.get();
-
-  if (!serviceRoleKey) {
-    console.warn('Service role key not configured, using anon key for admin client');
-    return createClient<Database>(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
-  }
-
-  return createClient<Database>(
-    SUPABASE_URL,
-    serviceRoleKey,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    }
-  );
-};
-
-// Export service role client for admin operations
-export const supabaseAdmin = createAdminClient();
-
 // Export constants for components that need them
 export const SUPABASE_ANON_KEY = SUPABASE_PUBLISHABLE_KEY;

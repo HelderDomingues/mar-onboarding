@@ -7,7 +7,8 @@ import { recoverQuizData } from './quiz-recovery';
 import { seedQuizData } from './seed-quiz';
 import { logger } from '@/utils/logger';
 import { addLogEntry } from '@/utils/projectLog';
-import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
+import { getSupabaseAdminClient, isAdminClientConfigured } from '@/utils/supabaseAdminClient';
 
 /**
  * Função de recuperação forçada que garante a existência dos dados do questionário
@@ -42,7 +43,7 @@ export async function forceQuizRecovery(): Promise<{
     
     if (seedSuccess) {
       // Verifica os dados inseridos usando supabaseAdmin se disponível para evitar problemas de RLS
-      const client = supabaseAdmin || supabase;
+      const client = isAdminClientConfigured() ? getSupabaseAdminClient() : supabase;
       
       // Usar o cliente Supabase corretamente
       const modulesResponse = await client.from('quiz_modules').select('*');

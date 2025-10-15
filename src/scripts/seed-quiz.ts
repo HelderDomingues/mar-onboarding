@@ -4,7 +4,8 @@
  * Versão segura - Implementa backups antes de operações destrutivas e verificações
  */
 
-import { supabase, supabaseAdmin } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
+import { getSupabaseAdminClient } from '@/utils/supabaseAdminClient';
 import { quizModulesData, quizQuestionsData, quizOptionsData } from './quiz-data';
 import { logger } from '@/utils/logger';
 import { addLogEntry } from '@/utils/projectLog';
@@ -59,8 +60,9 @@ export const seedQuizData = async (): Promise<boolean> => {
         errors: { modulesError, questionsError, optionsError }
       });
       
-      // Tentar usar supabaseAdmin se disponível
-      if (supabaseAdmin) {
+      // Tentar usar supabaseAdmin
+      try {
+        const supabaseAdmin = getSupabaseAdminClient();
         logger.info('Tentando usar supabaseAdmin para inserção de dados', { tag: 'Seed' });
         
         // Limpar todas as tabelas existentes para inserção limpa
@@ -160,8 +162,11 @@ export const seedQuizData = async (): Promise<boolean> => {
           });
           return false;
         }
-      } else {
-        logger.error('Não foi possível acessar ou usar supabaseAdmin', { tag: 'Seed' });
+      } catch (adminError) {
+        logger.error('Não foi possível acessar ou usar supabaseAdmin', { 
+          tag: 'Seed',
+          error: adminError 
+        });
         return false;
       }
     }
