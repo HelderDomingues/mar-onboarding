@@ -19,19 +19,19 @@ export const UserSearch = ({
   isLoading
 }: UserSearchProps) => {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+    <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-4 mb-4 md:mb-6">
       <Button 
-        className="flex items-center gap-2 bg-primary" 
+        className="flex items-center justify-center gap-2 bg-primary min-h-[44px]" 
         onClick={handleAddUser}
       >
         <UserPlus className="h-4 w-4" />
-        <span>Novo Usuário</span>
+        <span className="text-sm md:text-base">Novo Usuário</span>
       </Button>
       
-      <div className="relative flex-grow max-w-md">
+      <div className="relative flex-1 md:flex-grow md:max-w-md">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input 
-          className="pl-9 w-full" 
+          className="pl-9 w-full min-h-[44px] text-sm md:text-base" 
           placeholder="Buscar usuários..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -44,6 +44,7 @@ export const UserSearch = ({
         onClick={fetchUsers}
         disabled={isLoading}
         title="Atualizar lista de usuários"
+        className="min-h-[44px] min-w-[44px]"
       >
         <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
       </Button>

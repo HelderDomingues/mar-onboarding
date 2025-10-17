@@ -4,6 +4,8 @@ import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
 import { logger } from "@/utils/logger";
 import { addLogEntry } from "@/utils/projectLog";
 
@@ -12,18 +14,32 @@ import { addLogEntry } from "@/utils/projectLog";
  * Apenas usuários com função de administrador podem acessar
  */
 const AdminRouteContent = () => {
-  const { open } = useSidebar();
+  const { toggleSidebar } = useSidebar();
+  
   return (
-    <>
+    <div className="min-h-screen w-full md:flex">
       <AdminSidebar />
-      <main
-        className={`flex-1 bg-gray-50 p-8 transition-all duration-300 ease-in-out ${
-          open ? "ml-[16rem]" : "ml-[3.5rem]"
-        }`}
-      >
-        <Outlet />
-      </main>
-    </>
+      
+      <div className="flex-1 flex flex-col w-full">
+        {/* Header mobile com trigger */}
+        <header className="md:hidden h-14 flex items-center border-b bg-background px-4 sticky top-0 z-30">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={toggleSidebar}
+            className="mr-2"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <h1 className="text-sm font-semibold">Sistema MAR</h1>
+        </header>
+
+        {/* Conteúdo principal */}
+        <main className="flex-1 bg-gradient-to-b from-blue-50 to-white p-4 md:p-8 overflow-auto">
+          <Outlet />
+        </main>
+      </div>
+    </div>
   );
 };
 

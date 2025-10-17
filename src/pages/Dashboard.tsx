@@ -5,7 +5,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { QuizSubmission } from "@/types/quiz";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { logger } from "@/utils/logger";
 import { addLogEntry } from "@/utils/projectLog";
 
@@ -98,11 +97,7 @@ const Dashboard = () => {
   }
 
   if (isAdmin) {
-    return (
-      <AdminLayout>
-        <AdminDashboard isAdmin={isAdmin} submission={submission} />
-      </AdminLayout>
-    );
+    return <AdminDashboard isAdmin={isAdmin} submission={submission} />;
   }
 
   return (

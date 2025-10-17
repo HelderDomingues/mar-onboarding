@@ -1,17 +1,14 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarFooter, useSidebar } from '@/components/ui/sidebar';
-import { Users, Database, FileText, Settings, Home, BarChart2, FileCheck, Book, Calendar, ListChecks, LogOut, PanelLeftClose, PanelRightClose } from 'lucide-react';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Users, Database, FileText, Settings, Home, BarChart2, FileCheck, Book, Calendar, ListChecks, LogOut, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-export const AdminSidebar = () => {
-  const {
-    logout
-  } = useAuth();
-  const {
-    open,
-    toggleSidebar
-  } = useSidebar();
+
+const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
+  const { logout } = useAuth();
+
   const handleSignOut = async () => {
     try {
       await logout();
@@ -19,207 +16,273 @@ export const AdminSidebar = () => {
       console.error('Erro ao sair:', error);
     }
   };
-  return <Sidebar collapsible="icon" className={open ? "w-64" : "w-16"}>
-      <SidebarHeader className="border-b">
-        <div className="flex items-center justify-between p-4">
-          {open && (
-            <div>
-              <h2 className="text-base md:text-lg font-semibold">Sistema MAR</h2>
+
+  return (
+    <>
+      <SidebarGroup>
+        <SidebarGroupLabel>Navegação</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink 
+                  to="/dashboard" 
+                  onClick={onLinkClick}
+                  className={({ isActive }) => 
+                    `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
+                  }
+                >
+                  <Home className="w-4 h-4" />
+                  <span>Dashboard</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink 
+                  to="/test-connection" 
+                  onClick={onLinkClick}
+                  className={({ isActive }) => 
+                    `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
+                  }
+                >
+                  <Database className="w-4 h-4" />
+                  <span>Teste de Conexão</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+      
+      <SidebarGroup>
+        <SidebarGroupLabel>Gerenciamento</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink 
+                  to="/admin/users" 
+                  onClick={onLinkClick}
+                  className={({ isActive }) => 
+                    `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
+                  }
+                >
+                  <Users className="w-4 h-4" />
+                  <span>Usuários</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink 
+                  to="/admin/materials" 
+                  onClick={onLinkClick}
+                  className={({ isActive }) => 
+                    `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
+                  }
+                >
+                  <Book className="w-4 h-4" />
+                  <span>Materiais</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink 
+                  to="/admin/quiz-responses" 
+                  onClick={onLinkClick}
+                  className={({ isActive }) => 
+                    `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
+                  }
+                >
+                  <FileCheck className="w-4 h-4" />
+                  <span>Respostas do Questionário</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+      
+      <SidebarGroup>
+        <SidebarGroupLabel>Questionário</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink 
+                  to="/admin/quiz-editor" 
+                  onClick={onLinkClick}
+                  className={({ isActive }) => 
+                    `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
+                  }
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Editor de Questionário</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink 
+                  to="/admin/seed-quiz" 
+                  onClick={onLinkClick}
+                  className={({ isActive }) => 
+                    `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
+                  }
+                >
+                  <Database className="w-4 h-4" />
+                  <span>Inicializar Questionário</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink 
+                  to="/admin/recover-quiz" 
+                  onClick={onLinkClick}
+                  className={({ isActive }) => 
+                    `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
+                  }
+                >
+                  <ListChecks className="w-4 h-4" />
+                  <span>Recuperar Questionário</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+      
+      <SidebarGroup>
+        <SidebarGroupLabel>Relatórios</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink 
+                  to="/admin/reports" 
+                  onClick={onLinkClick}
+                  className={({ isActive }) => 
+                    `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
+                  }
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span>Relatórios</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink 
+                  to="/admin/metrics" 
+                  onClick={onLinkClick}
+                  className={({ isActive }) => 
+                    `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
+                  }
+                >
+                  <BarChart2 className="w-4 h-4" />
+                  <span>Métricas</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink 
+                  to="/admin/logs" 
+                  onClick={onLinkClick}
+                  className={({ isActive }) => 
+                    `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
+                  }
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Logs do Sistema</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+      
+      <SidebarGroup>
+        <SidebarGroupLabel>Sistema</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink 
+                  to="/admin/settings" 
+                  onClick={onLinkClick}
+                  className={({ isActive }) => 
+                    `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
+                  }
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Configurações</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <div className="mt-auto border-t pt-4">
+        <Button 
+          variant="destructive" 
+          onClick={handleSignOut} 
+          className="w-full justify-start gap-2"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Sair</span>
+        </Button>
+      </div>
+    </>
+  );
+};
+
+export const AdminSidebar = () => {
+  const { isMobile, openMobile, setOpenMobile } = useSidebar();
+
+  // Mobile: Renderiza como Sheet (drawer overlay)
+  if (isMobile) {
+    return (
+      <Sheet open={openMobile} onOpenChange={setOpenMobile}>
+        <SheetContent side="left" className="w-72 p-0">
+          <div className="flex flex-col h-full">
+            <div className="border-b p-4">
+              <h2 className="text-lg font-semibold">Sistema MAR</h2>
               <p className="text-xs text-muted-foreground">Painel Admin</p>
             </div>
-          )}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={toggleSidebar} 
-            className="ml-auto"
-          >
-            {open ? <PanelLeftClose className="h-4 w-4" /> : <PanelRightClose className="h-4 w-4" />}
-          </Button>
-        </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <SidebarMenuItems onLinkClick={() => setOpenMobile(false)} />
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  // Desktop: Sidebar colapsável tradicional
+  return (
+    <Sidebar collapsible="icon" className="hidden md:flex">
+      <SidebarHeader className="border-b p-4">
+        <h2 className="text-lg font-semibold">Sistema MAR</h2>
+        <p className="text-xs text-muted-foreground">Painel Admin</p>
       </SidebarHeader>
       
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Navegação</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/dashboard" className={({
-                  isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
-                    <Home className="w-4 h-4 mr-2" />
-                    <span className={open ? "opacity-100" : "opacity-0"}>Dashboard</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/test-connection" className={({
-                  isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
-                    <Database className="w-4 h-4 mr-2" />
-                    <span className={open ? "opacity-100" : "opacity-0"}>Teste de Conexão</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        
-        <SidebarGroup>
-          <SidebarGroupLabel>Gerenciamento</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/admin/users" className={({
-                  isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
-                    <Users className="w-4 h-4 mr-2" />
-                    <span className={open ? "opacity-100" : "opacity-0"}>Usuários</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/admin/materials" className={({
-                  isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
-                    <Book className="w-4 h-4 mr-2" />
-                    <span className={open ? "opacity-100" : "opacity-0"}>Materiais</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/admin/quiz-responses" className={({
-                  isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
-                    <FileCheck className="w-4 h-4 mr-2" />
-                    <span className={open ? "opacity-100" : "opacity-0"}>Respostas do Questionário</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        
-        <SidebarGroup>
-          <SidebarGroupLabel>Questionário</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/admin/quiz-editor" className={({
-                  isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
-                    <FileText className="w-4 h-4 mr-2" />
-                    <span className={open ? "opacity-100" : "opacity-0"}>Editor de Questionário</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/admin/seed-quiz" className={({
-                  isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
-                    <Database className="w-4 h-4 mr-2" />
-                    <span className={open ? "opacity-100" : "opacity-0"}>Inicializar Questionário</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/admin/recover-quiz" className={({
-                  isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
-                    <ListChecks className="w-4 h-4 mr-2" />
-                    <span className={open ? "opacity-100" : "opacity-0"}>Recuperar Questionário</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        
-        <SidebarGroup>
-          <SidebarGroupLabel>Relatórios</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/admin/reports" className={({
-                  isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
-                    <Calendar className="w-4 h-4 mr-2" />
-                    <span className={open ? "opacity-100" : "opacity-0"}>Relatórios</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/admin/metrics" className={({
-                  isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
-                    <BarChart2 className="w-4 h-4 mr-2" />
-                    <span className={open ? "opacity-100" : "opacity-0"}>Métricas</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/admin/logs" className={({
-                  isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
-                    <FileText className="w-4 h-4 mr-2" />
-                    <span className={open ? "opacity-100" : "opacity-0"}>Logs do Sistema</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        
-        <SidebarGroup>
-          <SidebarGroupLabel>Sistema</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/admin/settings" className={({
-                  isActive
-                }) => `flex items-center w-full ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'} ${!open ? 'justify-center' : ''}`}>
-                    <Settings className="w-4 h-4 mr-2" />
-                    <span className={open ? "opacity-100" : "opacity-0"}>Configurações</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      <SidebarContent className="p-4">
+        <SidebarMenuItems />
       </SidebarContent>
-      
-      <SidebarFooter className="border-t">
-        <div className="p-4">
-          <Button 
-            variant="destructive" 
-            onClick={handleSignOut} 
-            className={`w-full ${open ? 'justify-start' : 'justify-center'}`}
-          >
-            <LogOut className="w-4 h-4" />
-            {open && <span className="ml-2">Sair</span>}
-          </Button>
-        </div>
-      </SidebarFooter>
-    </Sidebar>;
+    </Sidebar>
+  );
 };
+
 export default AdminSidebar;

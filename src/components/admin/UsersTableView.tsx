@@ -169,23 +169,23 @@ export const UsersTableView = ({
       </div>
 
       {/* Cards para mobile */}
-      <div className="md:hidden space-y-3 p-4">
+      <div className="md:hidden space-y-2 p-3">
         {filteredUsers.length === 0 ? (
-          <div className="text-center py-10 text-muted-foreground text-sm">
+          <div className="text-center py-10 text-muted-foreground text-xs">
             {searchQuery ? 'Nenhum usuário encontrado' : 'Nenhum usuário cadastrado'}
           </div>
         ) : (
           filteredUsers.map((user) => (
             <div 
               key={user.id} 
-              className="bg-background border rounded-lg p-4 space-y-3 shadow-sm"
+              className="bg-background border rounded-lg p-3 space-y-2 shadow-sm"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="font-medium text-sm">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-sm truncate">
                     {user.full_name || user.username || 'Sem nome'}
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
                     {user.email || 'Email não disponível'}
                   </p>
                 </div>
@@ -243,17 +243,17 @@ export const UsersTableView = ({
                 </DropdownMenu>
               </div>
 
-              <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-3 text-xs pt-1 border-t">
                 <div className="flex items-center gap-1">
                   {user.has_submission ? (
                     <>
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="text-green-600">Completo</span>
+                      <CheckCircle className="h-3 w-3 text-green-600" />
+                      <span className="text-green-600 text-xs">Completo</span>
                     </>
                   ) : (
                     <>
-                      <XCircle className="h-4 w-4 text-orange-500" />
-                      <span className="text-orange-500">Pendente</span>
+                      <XCircle className="h-3 w-3 text-orange-500" />
+                      <span className="text-orange-500 text-xs">Pendente</span>
                     </>
                   )}
                 </div>
