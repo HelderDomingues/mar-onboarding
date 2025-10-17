@@ -19,16 +19,22 @@ export const AdminSidebar = () => {
       console.error('Erro ao sair:', error);
     }
   };
-  return <Sidebar>
-      <SidebarHeader>
-        <div className={`flex items-center p-4 ${open ? 'justify-between' : 'justify-center'}`}>
-          
-          <div className={open ? 'opacity-100' : 'opacity-0'}>
-            <h2 className="text-lg font-semibold">Sistema MAR</h2>
-            <p className="text-xs text-muted-foreground">Painel Administrativo</p>
-          </div>
-          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="text-slate-400">
-            {open ? <PanelLeftClose /> : <PanelRightClose />}
+  return <Sidebar collapsible="icon" className={open ? "w-64" : "w-16"}>
+      <SidebarHeader className="border-b">
+        <div className="flex items-center justify-between p-4">
+          {open && (
+            <div>
+              <h2 className="text-base md:text-lg font-semibold">Sistema MAR</h2>
+              <p className="text-xs text-muted-foreground">Painel Admin</p>
+            </div>
+          )}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleSidebar} 
+            className="ml-auto"
+          >
+            {open ? <PanelLeftClose className="h-4 w-4" /> : <PanelRightClose className="h-4 w-4" />}
           </Button>
         </div>
       </SidebarHeader>
@@ -202,11 +208,15 @@ export const AdminSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter>
+      <SidebarFooter className="border-t">
         <div className="p-4">
-          <Button variant="outline" onClick={handleSignOut} className={`w-full bg-red-600 hover:bg-red-500 ${open ? 'justify-start' : 'justify-center'}`}>
-            <LogOut className="w-4 h-4 mr-2" />
-            <span className={open ? "opacity-100" : "opacity-0"}>Sair</span>
+          <Button 
+            variant="destructive" 
+            onClick={handleSignOut} 
+            className={`w-full ${open ? 'justify-start' : 'justify-center'}`}
+          >
+            <LogOut className="w-4 h-4" />
+            {open && <span className="ml-2">Sair</span>}
           </Button>
         </div>
       </SidebarFooter>

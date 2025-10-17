@@ -39,28 +39,28 @@ export function DashboardHeader({ isAdmin = false }: DashboardHeaderProps) {
   }, [user]);
   
   return (
-    <header className="bg-white border-b py-3 px-4 sm:px-6 lg:px-8 sticky top-0 z-30">
-      <div className="container mx-auto flex justify-between items-center">
+    <header className="bg-background w-full">
+      <div className="flex justify-between items-center w-full">
         <div className="flex items-center gap-2">
           <Link to="/dashboard">
             <img 
               src="/lovable-uploads/e109ec41-0f89-456d-8081-f73393ed4fd5.png" 
               alt="Crie Valor" 
-              className="h-7 object-scale-down"
+              className="h-6 md:h-7 object-scale-down"
             />
           </Link>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2">
           {isAdmin && (
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={() => navigate('/admin/users')}
-              className="mr-2 text-slate-600 hover:text-slate-900 gap-2"
+              className="text-slate-600 hover:text-slate-900"
             >
               <Cog className="h-4 w-4" />
-              <span className="hidden sm:inline">Admin</span>
+              <span className="hidden md:inline ml-1">Admin</span>
             </Button>
           )}
           
@@ -68,34 +68,34 @@ export function DashboardHeader({ isAdmin = false }: DashboardHeaderProps) {
             variant="ghost" 
             size="sm" 
             onClick={() => navigate('/dashboard')}
-            className="text-slate-600 hover:text-slate-900 gap-2"
+            className="text-slate-600 hover:text-slate-900 hidden sm:flex"
           >
             <Home className="h-4 w-4" />
-            <span className="hidden sm:inline">Dashboard</span>
+            <span className="hidden md:inline ml-1">Dashboard</span>
           </Button>
           
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={() => navigate('/profile')}
-            className="text-slate-600 hover:text-slate-900 gap-2"
+            className="text-slate-600 hover:text-slate-900 hidden sm:flex"
           >
             <User className="h-4 w-4" />
-            <span className="hidden sm:inline">Perfil</span>
+            <span className="hidden md:inline ml-1">Perfil</span>
           </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                <Avatar className="h-8 w-8">
+              <Button variant="ghost" size="sm" className="flex items-center gap-1 md:gap-2">
+                <Avatar className="h-7 w-7 md:h-8 md:w-8">
                   <AvatarFallback className="bg-blue-600 text-white text-xs">
                     {userInitials}
                   </AvatarFallback>
                 </Avatar>
-                <span className="hidden sm:inline text-slate-600">
+                <span className="hidden md:inline text-slate-600 text-sm">
                   {user?.email ? user.email.split('@')[0] : 'Usuário'}
                 </span>
-                <ChevronDown className="h-4 w-4 text-slate-600" />
+                <ChevronDown className="h-3 w-3 md:h-4 md:w-4 text-slate-600" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

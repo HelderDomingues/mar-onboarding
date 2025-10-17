@@ -9,6 +9,7 @@ import { UserSearch } from "./users/UserSearch";
 import { ServiceRoleSetup } from "./users/ServiceRoleSetup";
 import { UsersTableView } from "@/components/admin/UsersTableView";
 import { fetchUserProfiles, toggleAdminRole, setupEmailAccessService } from "./users/UsersService";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import type { UserProfile, ConfigResult } from "@/types/admin";
 
 const UsersPage = () => {
@@ -158,13 +159,14 @@ const UsersPage = () => {
   }
   
   return (
-    <div className="container max-w-7xl mx-auto p-6">
-      <div className="flex flex-col gap-2 mb-6">
-        <h1 className="text-2xl font-bold">Gerenciamento de Usuários</h1>
-        <p className="text-muted-foreground">
-          Gerencie usuários, permissões e acesso ao sistema.
-        </p>
-      </div>
+    <AdminLayout>
+      <div className="w-full max-w-7xl mx-auto space-y-4 md:space-y-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-xl md:text-2xl font-bold">Gerenciamento de Usuários</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Gerencie usuários, permissões e acesso ao sistema.
+          </p>
+        </div>
       
       <UserSearch 
         searchQuery={searchQuery}
@@ -175,13 +177,13 @@ const UsersPage = () => {
       />
       
       <Card className="shadow-sm">
-        <CardHeader className="pb-3 border-b">
-          <CardTitle>Usuários do Sistema</CardTitle>
-          <CardDescription>
+        <CardHeader className="pb-3 border-b px-4 md:px-6">
+          <CardTitle className="text-lg md:text-xl">Usuários do Sistema</CardTitle>
+          <CardDescription className="text-sm">
             Total de {users.length} usuários registrados
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           <ServiceRoleSetup
             error={error}
             setupEmailAccess={setupEmailAccess}
@@ -202,14 +204,15 @@ const UsersPage = () => {
             onSendEmail={handleSendEmail}
           />
         </CardContent>
-        <CardFooter className="flex justify-between border-t py-4 px-6 text-muted-foreground text-sm">
+        <CardFooter className="flex flex-col md:flex-row justify-between gap-2 border-t py-4 px-4 md:px-6 text-muted-foreground text-xs md:text-sm">
           <p>Atualizado em {new Date().toLocaleDateString('pt-BR')}</p>
           <div className="text-amber-600 font-medium text-xs">
-            {error ? "Acesso limitado aos dados dos usuários" : "Última atualização: " + new Date().toLocaleTimeString('pt-BR')}
+            {error ? "Acesso limitado" : "Última atualização: " + new Date().toLocaleTimeString('pt-BR')}
           </div>
         </CardFooter>
       </Card>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

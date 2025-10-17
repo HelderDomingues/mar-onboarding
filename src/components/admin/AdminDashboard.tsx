@@ -133,29 +133,31 @@ export function AdminDashboard({
     };
     fetchStats();
   }, [isAdmin, toast]);
-  return <div className="space-y-6 w-full font-sans">
+  return <div className="space-y-4 md:space-y-6 w-full font-sans">
       {/* Cabeçalho da página */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col gap-3 md:gap-4">
         <div>
-          <h1 className="text-2xl font-bold mb-1">Dashboard Administrativo</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="text-xl md:text-2xl font-bold mb-1">Dashboard Administrativo</h1>
+          <p className="text-muted-foreground text-xs md:text-sm">
             Visão geral do sistema MAR - Mapa para Alto Rendimento
           </p>
         </div>
         
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div className="relative flex-1 sm:flex-none">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input type="search" placeholder="Pesquisar..." className="pl-9 w-full md:w-[200px] h-9" />
+            <Input type="search" placeholder="Pesquisar..." className="pl-9 w-full sm:w-[200px] h-9" />
           </div>
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4 mr-1" />
-            Filtros
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => navigate("/profile")} className="flex items-center gap-1">
-            <User className="h-4 w-4" />
-            <span className="hidden md:inline">Perfil</span>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
+              <Filter className="h-4 w-4 mr-1" />
+              <span className="sm:inline">Filtros</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/profile")} className="flex-1 sm:flex-none">
+              <User className="h-4 w-4" />
+              <span className="ml-1 sm:inline">Perfil</span>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -172,7 +174,7 @@ export function AdminDashboard({
         </CardHeader>
         <CardContent>
           {/* Cards de estatísticas */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
             <Card className="dashboard-card bg-gradient-to-br from-blue-50 to-white border-blue-200">
               <CardContent className="p-0">
                 <div className="flex justify-between items-start">
@@ -275,7 +277,7 @@ export function AdminDashboard({
           </div>
           
           {/* Botões de ação rápida */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mt-4 md:mt-6">
             <Button onClick={() => navigate("/admin/users")} variant="outline" className="justify-start text-left h-auto py-3">
               <div className="rounded-full p-2 bg-blue-100 text-blue-600 mr-3">
                 <UsersIcon className="h-5 w-5" />
@@ -316,7 +318,7 @@ export function AdminDashboard({
       </Card>
       
       {/* Cards de ações */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         <Card className="dashboard-card">
           <CardHeader className="px-0 pt-0 pb-3">
             <CardTitle className="flex items-center gap-2 text-lg font-medium">
@@ -385,7 +387,7 @@ export function AdminDashboard({
             </TabsList>
             
             <TabsContent value="status">
-              <div className="h-64 w-full">
+              <div className="h-56 md:h-64 w-full overflow-x-auto">
                 {isLoading ? <div className="h-full flex items-center justify-center">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
                   </div> : <ResponsiveContainer width="100%" height="100%">

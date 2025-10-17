@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { QuizSubmission } from "@/types/quiz";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { logger } from "@/utils/logger";
 import { addLogEntry } from "@/utils/projectLog";
 
@@ -96,16 +97,20 @@ const Dashboard = () => {
     );
   }
 
+  if (isAdmin) {
+    return (
+      <AdminLayout>
+        <AdminDashboard isAdmin={isAdmin} submission={submission} />
+      </AdminLayout>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
-      <DashboardHeader isAdmin={isAdmin} />
+      <DashboardHeader isAdmin={false} />
 
       <div className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-slate-200">
-        {isAdmin ? (
-          <AdminDashboard isAdmin={isAdmin} submission={submission} />
-        ) : (
-          <UserDashboard submission={submission} />
-        )}
+        <UserDashboard submission={submission} />
       </div>
 
       <footer className="bg-white border-t border-gray-200 py-6">
