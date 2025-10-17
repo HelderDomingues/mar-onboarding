@@ -5,6 +5,7 @@ import { Login } from "@/components/auth/Login";
 import { useEffect } from "react";
 import { logger } from "@/utils/logger";
 import { addLogEntry } from "@/utils/projectLog";
+import marLogo from "@/assets/mar-logo-new.png";
 const Index = () => {
   const {
     isAuthenticated,
@@ -48,7 +49,7 @@ const Index = () => {
       
       <div className="flex-1 flex flex-col md:flex-row items-center justify-center p-6 gap-10 md:gap-20">
         <div className="max-w-md space-y-4 animate-slide-in">
-          <img alt="MAR - Mapa para Alto Rendimento" src="/lovable-uploads/b0f8ebcc-1d80-4da4-b9a4-e6d781f68084.png" className="h-20 mb-10" />
+          <img alt="MAR - Mapa para Alto Rendimento" src={marLogo} className="h-20 mb-10" />
           <h1 className="text-4xl font-bold text-blue-900">Área Exclusiva de Membros</h1>
           <p className="text-lg text-gray-600">Acesse e comece sua jornada exclusivamente desenvolvida para nossos membros.</p>
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
