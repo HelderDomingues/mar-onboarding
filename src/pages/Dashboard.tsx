@@ -34,7 +34,7 @@ const AdminDashboardLayout = ({ isAdmin, submission }: { isAdmin: boolean; submi
         </header>
 
         {/* Conteúdo principal */}
-        <main className="flex-1 bg-gradient-to-b from-blue-50 to-white p-4 md:p-8 overflow-auto">
+        <main className="flex-1 bg-gradient-to-b from-blue-50 to-white p-4 md:p-8 overflow-auto overflow-x-hidden">
           <AdminDashboard isAdmin={isAdmin} submission={submission} />
         </main>
       </div>

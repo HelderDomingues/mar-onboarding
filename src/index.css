@@ -228,7 +228,7 @@
 }
 
 .dashboard-card {
-  @apply rounded-xl shadow-sm transition-all duration-300 hover:shadow-md bg-white p-5 border border-gray-100;
+  @apply rounded-xl shadow-sm transition-all duration-300 hover:shadow-md bg-white p-3 md:p-5 border border-gray-100 overflow-hidden;
 }
 
 .stat-value {

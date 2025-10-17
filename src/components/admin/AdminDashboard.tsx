@@ -133,7 +133,7 @@ export function AdminDashboard({
     };
     fetchStats();
   }, [isAdmin, toast]);
-  return <div className="space-y-4 md:space-y-6 w-full font-sans">
+  return <div className="space-y-4 md:space-y-6 w-full font-sans overflow-x-hidden">
       {/* Cabeçalho da página */}
       <div className="flex flex-col gap-3 md:gap-4">
         <div>
@@ -177,22 +177,22 @@ export function AdminDashboard({
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
             <Card className="dashboard-card bg-gradient-to-br from-blue-50 to-white border-blue-200">
               <CardContent className="p-0">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Usuários</p>
-                    <div className="flex items-baseline gap-2 mt-1">
-                      <h3 className="text-2xl font-bold">{stats.totalUsers}</h3>
-                      <Badge variant="outline" className="font-medium bg-green-50 text-green-700 border-green-200">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs md:text-sm font-medium text-muted-foreground truncate">Usuários</p>
+                    <div className="flex items-baseline gap-2 mt-1 flex-wrap">
+                      <h3 className="text-xl md:text-2xl font-bold">{stats.totalUsers}</h3>
+                      <Badge variant="outline" className="font-medium bg-green-50 text-green-700 border-green-200 text-xs">
                         <ArrowUpRight className="h-3 w-3 mr-1" />
                         12%
                       </Badge>
                     </div>
                   </div>
-                  <div className="rounded-full p-2 bg-blue-100 text-blue-600">
-                    <UsersIcon className="h-5 w-5" />
+                  <div className="rounded-full p-2 bg-blue-100 text-blue-600 flex-shrink-0">
+                    <UsersIcon className="h-4 w-4 md:h-5 md:w-5" />
                   </div>
                 </div>
-                <div className="mt-4 text-xs flex justify-between">
+                <div className="mt-3 md:mt-4 text-xs flex justify-between">
                   <Button variant="ghost" size="sm" className="text-xs p-0 h-auto text-muted-foreground hover:text-primary" onClick={() => navigate('/admin/users')}>
                     Ver detalhes <ChevronRight className="ml-1 h-3 w-3" />
                   </Button>
@@ -202,22 +202,22 @@ export function AdminDashboard({
             
             <Card className="dashboard-card bg-gradient-to-br from-green-50 to-white border-green-200">
               <CardContent className="p-0">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Questionários Completos</p>
-                    <div className="flex items-baseline gap-2 mt-1">
-                      <h3 className="text-2xl font-bold">{stats.completedSubmissions}</h3>
-                      <Badge variant="outline" className="font-medium bg-green-50 text-green-700 border-green-200">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs md:text-sm font-medium text-muted-foreground truncate">Questionários Completos</p>
+                    <div className="flex items-baseline gap-2 mt-1 flex-wrap">
+                      <h3 className="text-xl md:text-2xl font-bold">{stats.completedSubmissions}</h3>
+                      <Badge variant="outline" className="font-medium bg-green-50 text-green-700 border-green-200 text-xs">
                         <ArrowUpRight className="h-3 w-3 mr-1" />
                         8%
                       </Badge>
                     </div>
                   </div>
-                  <div className="rounded-full p-2 bg-green-100 text-green-600">
-                    <FileCheck className="h-5 w-5" />
+                  <div className="rounded-full p-2 bg-green-100 text-green-600 flex-shrink-0">
+                    <FileCheck className="h-4 w-4 md:h-5 md:w-5" />
                   </div>
                 </div>
-                <div className="mt-4 text-xs flex justify-between">
+                <div className="mt-3 md:mt-4 text-xs flex justify-between">
                   <Button variant="ghost" size="sm" className="text-xs p-0 h-auto text-muted-foreground hover:text-primary" onClick={() => navigate('/admin/reports')}>
                     Ver relatórios <ChevronRight className="ml-1 h-3 w-3" />
                   </Button>
@@ -227,22 +227,22 @@ export function AdminDashboard({
             
             <Card className="dashboard-card bg-gradient-to-br from-amber-50 to-white border-amber-200">
               <CardContent className="p-0">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Em Progresso</p>
-                    <div className="flex items-baseline gap-2 mt-1">
-                      <h3 className="text-2xl font-bold">{stats.inProgressSubmissions}</h3>
-                      <Badge variant="outline" className="font-medium bg-amber-50 text-amber-700 border-amber-200">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs md:text-sm font-medium text-muted-foreground truncate">Em Progresso</p>
+                    <div className="flex items-baseline gap-2 mt-1 flex-wrap">
+                      <h3 className="text-xl md:text-2xl font-bold">{stats.inProgressSubmissions}</h3>
+                      <Badge variant="outline" className="font-medium bg-amber-50 text-amber-700 border-amber-200 text-xs">
                         <TrendingUp className="h-3 w-3 mr-1" />
                         3%
                       </Badge>
                     </div>
                   </div>
-                  <div className="rounded-full p-2 bg-amber-100 text-amber-600">
-                    <Clock className="h-5 w-5" />
+                  <div className="rounded-full p-2 bg-amber-100 text-amber-600 flex-shrink-0">
+                    <Clock className="h-4 w-4 md:h-5 md:w-5" />
                   </div>
                 </div>
-                <div className="mt-4 text-xs flex justify-between">
+                <div className="mt-3 md:mt-4 text-xs flex justify-between">
                   <Button variant="ghost" size="sm" className="text-xs p-0 h-auto text-muted-foreground hover:text-primary" onClick={() => navigate('/admin/metrics')}>
                     Ver métricas <ChevronRight className="ml-1 h-3 w-3" />
                   </Button>
@@ -252,22 +252,22 @@ export function AdminDashboard({
             
             <Card className="dashboard-card bg-gradient-to-br from-indigo-50 to-white border-indigo-200">
               <CardContent className="p-0">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Taxa de Conclusão</p>
-                    <div className="flex items-baseline gap-2 mt-1">
-                      <h3 className="text-2xl font-bold">{stats.completionRate}</h3>
-                      <Badge variant="outline" className="font-medium bg-red-50 text-red-700 border-red-200">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs md:text-sm font-medium text-muted-foreground truncate">Taxa de Conclusão</p>
+                    <div className="flex items-baseline gap-2 mt-1 flex-wrap">
+                      <h3 className="text-xl md:text-2xl font-bold">{stats.completionRate}</h3>
+                      <Badge variant="outline" className="font-medium bg-red-50 text-red-700 border-red-200 text-xs">
                         <ArrowDown className="h-3 w-3 mr-1" />
                         2%
                       </Badge>
                     </div>
                   </div>
-                  <div className="rounded-full p-2 bg-indigo-100 text-indigo-600">
-                    <BarChart className="h-5 w-5" />
+                  <div className="rounded-full p-2 bg-indigo-100 text-indigo-600 flex-shrink-0">
+                    <BarChart className="h-4 w-4 md:h-5 md:w-5" />
                   </div>
                 </div>
-                <div className="mt-4 text-xs flex justify-between">
+                <div className="mt-3 md:mt-4 text-xs flex justify-between">
                   <Button variant="ghost" size="sm" className="text-xs p-0 h-auto text-muted-foreground hover:text-primary" onClick={() => navigate('/admin/metrics')}>
                     Análise completa <ChevronRight className="ml-1 h-3 w-3" />
                   </Button>
@@ -278,37 +278,37 @@ export function AdminDashboard({
           
           {/* Botões de ação rápida */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mt-4 md:mt-6">
-            <Button onClick={() => navigate("/admin/users")} variant="outline" className="justify-start text-left h-auto py-3">
-              <div className="rounded-full p-2 bg-blue-100 text-blue-600 mr-3">
-                <UsersIcon className="h-5 w-5" />
+            <Button onClick={() => navigate("/admin/users")} variant="outline" className="justify-start text-left h-auto py-3 px-3">
+              <div className="rounded-full p-2 bg-blue-100 text-blue-600 mr-3 flex-shrink-0">
+                <UsersIcon className="h-4 w-4 md:h-5 md:w-5" />
               </div>
-              <div>
-                <p className="font-medium">Gerenciar Usuários</p>
-                <p className="text-xs text-muted-foreground mt-1">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm md:text-base truncate">Gerenciar Usuários</p>
+                <p className="text-xs text-muted-foreground mt-1 truncate">
                   Cadastre, edite e visualize usuários
                 </p>
               </div>
             </Button>
             
-            <Button onClick={() => navigate("/admin/reports")} variant="outline" className="justify-start text-left h-auto py-3">
-              <div className="rounded-full p-2 bg-green-100 text-green-600 mr-3">
-                <FileBarChart className="h-5 w-5" />
+            <Button onClick={() => navigate("/admin/reports")} variant="outline" className="justify-start text-left h-auto py-3 px-3">
+              <div className="rounded-full p-2 bg-green-100 text-green-600 mr-3 flex-shrink-0">
+                <FileBarChart className="h-4 w-4 md:h-5 md:w-5" />
               </div>
-              <div>
-                <p className="font-medium">Relatórios e Análises</p>
-                <p className="text-xs text-muted-foreground mt-1">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm md:text-base truncate">Relatórios e Análises</p>
+                <p className="text-xs text-muted-foreground mt-1 truncate">
                   Visualize relatórios de desempenho
                 </p>
               </div>
             </Button>
             
-            <Button onClick={() => navigate("/admin/seed-quiz")} variant="outline" className="justify-start text-left h-auto py-3">
-              <div className="rounded-full p-2 bg-purple-100 text-purple-600 mr-3">
-                <Database className="h-5 w-5" />
+            <Button onClick={() => navigate("/admin/seed-quiz")} variant="outline" className="justify-start text-left h-auto py-3 px-3">
+              <div className="rounded-full p-2 bg-purple-100 text-purple-600 mr-3 flex-shrink-0">
+                <Database className="h-4 w-4 md:h-5 md:w-5" />
               </div>
-              <div>
-                <p className="font-medium">Configurar Questionário</p>
-                <p className="text-xs text-muted-foreground mt-1">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm md:text-base truncate">Configurar Questionário</p>
+                <p className="text-xs text-muted-foreground mt-1 truncate">
                   Configure e recarregue os dados do quiz
                 </p>
               </div>
@@ -320,48 +320,63 @@ export function AdminDashboard({
       {/* Cards de ações */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         <Card className="dashboard-card">
-          <CardHeader className="px-0 pt-0 pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg font-medium">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base md:text-lg font-medium">
               <Layers className="h-5 w-5 text-blue-600" />
               Gerenciar Questionário
             </CardTitle>
           </CardHeader>
-          <CardContent className="px-0 space-y-3">
-            <p className="text-sm text-muted-foreground">
+          <CardContent className="space-y-3">
+            <p className="text-xs md:text-sm text-muted-foreground">
               Acesse o questionário MAR em modo administrador para editar questões e módulos.
             </p>
-            <div className="flex gap-2">
-              <Button onClick={() => navigate("/quiz?admin=true")} className="flex-1 justify-between text-slate-50">
-                Acessar Questionário
-                <ChevronRight className="h-4 w-4" />
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button 
+                onClick={() => navigate("/quiz?admin=true")} 
+                className="w-full sm:flex-1 justify-between text-slate-50 text-xs sm:text-sm"
+              >
+                <span className="truncate">Acessar Questionário</span>
+                <ChevronRight className="h-4 w-4 ml-2 flex-shrink-0" />
               </Button>
-              <Button onClick={() => navigate("/admin/seed-quiz")} variant="outline" className="flex-1 justify-between">
-                Configurar Questionário
-                <Database className="h-4 w-4 ml-2" />
+              <Button 
+                onClick={() => navigate("/admin/seed-quiz")} 
+                variant="outline" 
+                className="w-full sm:flex-1 justify-between text-xs sm:text-sm"
+              >
+                <span className="truncate">Configurar Questionário</span>
+                <Database className="h-4 w-4 ml-2 flex-shrink-0" />
               </Button>
             </div>
           </CardContent>
         </Card>
         
         <Card className="dashboard-card">
-          <CardHeader className="px-0 pt-0 pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg font-medium">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base md:text-lg font-medium">
               <FileBarChart className="h-5 w-5 text-blue-600" />
               Relatórios e Análises
             </CardTitle>
           </CardHeader>
-          <CardContent className="px-0 space-y-3">
-            <p className="text-sm text-muted-foreground">
+          <CardContent className="space-y-3">
+            <p className="text-xs md:text-sm text-muted-foreground">
               Visualize relatórios de desempenho e análises das respostas dos usuários.
             </p>
-            <div className="flex gap-2">
-              <Button variant="default" onClick={() => navigate("/admin/reports")} className="flex-1 justify-between text-slate-50">
-                Ver Relatórios
-                <ChevronRight className="h-4 w-4" />
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button 
+                variant="default" 
+                onClick={() => navigate("/admin/reports")} 
+                className="w-full sm:flex-1 justify-between text-slate-50 text-xs sm:text-sm"
+              >
+                <span className="truncate">Ver Relatórios</span>
+                <ChevronRight className="h-4 w-4 ml-2 flex-shrink-0" />
               </Button>
-              <Button variant="outline" className="flex-1 justify-between" onClick={() => navigate("/admin/metrics")}>
-                Ver Métricas
-                <ChevronRight className="h-4 w-4" />
+              <Button 
+                variant="outline" 
+                className="w-full sm:flex-1 justify-between text-xs sm:text-sm" 
+                onClick={() => navigate("/admin/metrics")}
+              >
+                <span className="truncate">Ver Métricas</span>
+                <ChevronRight className="h-4 w-4 ml-2 flex-shrink-0" />
               </Button>
             </div>
           </CardContent>
