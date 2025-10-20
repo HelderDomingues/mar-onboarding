@@ -32,7 +32,7 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
       <aside
         ref={ref}
         className={cn(
-          "fixed top-0 z-30 h-full transition-all duration-300 ease-in-out",
+          "fixed top-0 z-30 h-screen transition-all duration-300 ease-in-out overflow-hidden",
           side === "left" ? "left-0" : "right-0",
           open ? "w-[var(--sidebar-width)]" : "w-[var(--sidebar-width-icon)]",
           className
@@ -45,7 +45,7 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         }
         {...props}
       >
-        <div className="flex h-full flex-col bg-slate-900 text-white">
+        <div className="flex h-full flex-col bg-slate-900 text-white overflow-hidden">
           {children}
         </div>
       </aside>

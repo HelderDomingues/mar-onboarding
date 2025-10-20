@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
   const { logout } = useAuth();
+  const { open } = useSidebar();
 
   const handleSignOut = async () => {
     try {
@@ -20,7 +21,7 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
   return (
     <>
       <SidebarGroup>
-        <SidebarGroupLabel>Navegação</SidebarGroupLabel>
+        {open && <SidebarGroupLabel>Navegação</SidebarGroupLabel>}
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -32,8 +33,8 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                     `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
                   }
                 >
-                  <Home className="w-4 h-4" />
-                  <span>Dashboard</span>
+                  <Home className="w-4 h-4 flex-shrink-0" />
+                  {open && <span>Dashboard</span>}
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -47,8 +48,8 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                     `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
                   }
                 >
-                  <Database className="w-4 h-4" />
-                  <span>Teste de Conexão</span>
+                  <Database className="w-4 h-4 flex-shrink-0" />
+                  {open && <span>Teste de Conexão</span>}
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -57,7 +58,7 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
       </SidebarGroup>
       
       <SidebarGroup>
-        <SidebarGroupLabel>Gerenciamento</SidebarGroupLabel>
+        {open && <SidebarGroupLabel>Gerenciamento</SidebarGroupLabel>}
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -69,8 +70,8 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                     `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
                   }
                 >
-                  <Users className="w-4 h-4" />
-                  <span>Usuários</span>
+                  <Users className="w-4 h-4 flex-shrink-0" />
+                  {open && <span>Usuários</span>}
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -84,8 +85,8 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                     `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
                   }
                 >
-                  <Book className="w-4 h-4" />
-                  <span>Materiais</span>
+                  <Book className="w-4 h-4 flex-shrink-0" />
+                  {open && <span>Materiais</span>}
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -99,8 +100,8 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                     `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
                   }
                 >
-                  <FileCheck className="w-4 h-4" />
-                  <span>Respostas do Questionário</span>
+                  <FileCheck className="w-4 h-4 flex-shrink-0" />
+                  {open && <span>Respostas do Questionário</span>}
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -109,7 +110,7 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
       </SidebarGroup>
       
       <SidebarGroup>
-        <SidebarGroupLabel>Questionário</SidebarGroupLabel>
+        {open && <SidebarGroupLabel>Questionário</SidebarGroupLabel>}
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -121,8 +122,8 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                     `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
                   }
                 >
-                  <FileText className="w-4 h-4" />
-                  <span>Editor de Questionário</span>
+                  <FileText className="w-4 h-4 flex-shrink-0" />
+                  {open && <span>Editor de Questionário</span>}
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -136,8 +137,8 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                     `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
                   }
                 >
-                  <Database className="w-4 h-4" />
-                  <span>Inicializar Questionário</span>
+                  <Database className="w-4 h-4 flex-shrink-0" />
+                  {open && <span>Inicializar Questionário</span>}
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -151,8 +152,8 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                     `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
                   }
                 >
-                  <ListChecks className="w-4 h-4" />
-                  <span>Recuperar Questionário</span>
+                  <ListChecks className="w-4 h-4 flex-shrink-0" />
+                  {open && <span>Recuperar Questionário</span>}
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -161,7 +162,7 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
       </SidebarGroup>
       
       <SidebarGroup>
-        <SidebarGroupLabel>Relatórios</SidebarGroupLabel>
+        {open && <SidebarGroupLabel>Relatórios</SidebarGroupLabel>}
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -173,8 +174,8 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                     `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
                   }
                 >
-                  <Calendar className="w-4 h-4" />
-                  <span>Relatórios</span>
+                  <Calendar className="w-4 h-4 flex-shrink-0" />
+                  {open && <span>Relatórios</span>}
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -188,8 +189,8 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                     `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
                   }
                 >
-                  <BarChart2 className="w-4 h-4" />
-                  <span>Métricas</span>
+                  <BarChart2 className="w-4 h-4 flex-shrink-0" />
+                  {open && <span>Métricas</span>}
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -203,8 +204,8 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                     `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
                   }
                 >
-                  <FileText className="w-4 h-4" />
-                  <span>Logs do Sistema</span>
+                  <FileText className="w-4 h-4 flex-shrink-0" />
+                  {open && <span>Logs do Sistema</span>}
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -213,7 +214,7 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
       </SidebarGroup>
       
       <SidebarGroup>
-        <SidebarGroupLabel>Sistema</SidebarGroupLabel>
+        {open && <SidebarGroupLabel>Sistema</SidebarGroupLabel>}
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -225,8 +226,8 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                     `flex items-center gap-2 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`
                   }
                 >
-                  <Settings className="w-4 h-4" />
-                  <span>Configurações</span>
+                  <Settings className="w-4 h-4 flex-shrink-0" />
+                  {open && <span>Configurações</span>}
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -240,8 +241,8 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
           onClick={handleSignOut} 
           className="w-full justify-start gap-2"
         >
-          <LogOut className="w-4 h-4" />
-          <span>Sair</span>
+          <LogOut className="w-4 h-4 flex-shrink-0" />
+          {open && <span>Sair</span>}
         </Button>
       </div>
     </>
@@ -274,9 +275,13 @@ export const AdminSidebar = () => {
   return (
     <Sidebar collapsible="icon" className="hidden md:flex">
       <SidebarHeader className="border-b p-4 flex flex-row items-center justify-between">
-        <div className="flex-1 min-w-0">
-          <h2 className="text-lg font-semibold truncate">Sistema MAR</h2>
-          <p className="text-xs text-muted-foreground truncate">Painel Admin</p>
+        <div className={`flex-1 min-w-0 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
+          {open && (
+            <>
+              <h2 className="text-lg font-semibold truncate">Sistema MAR</h2>
+              <p className="text-xs text-muted-foreground truncate">Painel Admin</p>
+            </>
+          )}
         </div>
         <SidebarTrigger className="ml-2" />
       </SidebarHeader>

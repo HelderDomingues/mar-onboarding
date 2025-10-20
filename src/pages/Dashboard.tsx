@@ -13,13 +13,18 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 
 const AdminDashboardLayout = ({ isAdmin, submission }: { isAdmin: boolean; submission: QuizSubmission | null }) => {
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, open } = useSidebar();
   
   return (
-    <div className="min-h-screen w-full md:flex">
+    <div className="min-h-screen w-full flex">
       <AdminSidebar />
       
-      <div className="flex-1 flex flex-col w-full">
+      <div 
+        className="flex-1 flex flex-col w-full transition-all duration-300 ease-in-out"
+        style={{
+          marginLeft: open ? '16rem' : '3.5rem'
+        }}
+      >
         {/* Header mobile com trigger */}
         <header className="md:hidden h-14 flex items-center border-b bg-background px-4 sticky top-0 z-30">
           <Button 
