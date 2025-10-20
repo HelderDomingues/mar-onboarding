@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarFooter, useSidebar } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarFooter, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Users, Database, FileText, Settings, Home, BarChart2, FileCheck, Book, Calendar, ListChecks, LogOut, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -273,9 +273,12 @@ export const AdminSidebar = () => {
   // Desktop: Sidebar colapsável tradicional
   return (
     <Sidebar collapsible="icon" className="hidden md:flex">
-      <SidebarHeader className="border-b p-4">
-        <h2 className="text-lg font-semibold">Sistema MAR</h2>
-        <p className="text-xs text-muted-foreground">Painel Admin</p>
+      <SidebarHeader className="border-b p-4 flex flex-row items-center justify-between">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-lg font-semibold truncate">Sistema MAR</h2>
+          <p className="text-xs text-muted-foreground truncate">Painel Admin</p>
+        </div>
+        <SidebarTrigger className="ml-2" />
       </SidebarHeader>
       
       <SidebarContent className="p-4">
