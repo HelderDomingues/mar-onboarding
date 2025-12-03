@@ -20,7 +20,7 @@ export type Database = {
           admin_user_id: string
           created_at: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           new_values: Json | null
           old_values: Json | null
           target_record_id: string | null
@@ -32,7 +32,7 @@ export type Database = {
           admin_user_id: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_values?: Json | null
           old_values?: Json | null
           target_record_id?: string | null
@@ -44,12 +44,30 @@ export type Database = {
           admin_user_id?: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_values?: Json | null
           old_values?: Json | null
           target_record_id?: string | null
           target_table?: string | null
           user_agent?: string | null
+        }
+        Relationships: []
+      }
+      atualizar: {
+        Row: {
+          created_at: string
+          id: number
+          numero: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          numero?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          numero?: number | null
         }
         Relationships: []
       }
@@ -461,10 +479,7 @@ export type Database = {
         }
         Returns: Json
       }
-      complete_quiz: {
-        Args: { p_user_id: string }
-        Returns: boolean
-      }
+      complete_quiz: { Args: { p_user_id: string }; Returns: boolean }
       create_table_backup: {
         Args: {
           backup_reason?: string
@@ -473,24 +488,12 @@ export type Database = {
         }
         Returns: boolean
       }
-      fix_quiz_completion: {
-        Args: { p_user_id: string }
-        Returns: boolean
-      }
-      gerar_respostas_json: {
-        Args: { p_user_id: string }
-        Returns: Json
-      }
-      get_system_config: {
-        Args: { p_config_key: string }
-        Returns: string
-      }
-      get_user_role: {
-        Args: { user_id: string }
-        Returns: string
-      }
+      fix_quiz_completion: { Args: { p_user_id: string }; Returns: boolean }
+      gerar_respostas_json: { Args: { p_user_id: string }; Returns: Json }
+      get_system_config: { Args: { p_config_key: string }; Returns: string }
+      get_user_role: { Args: { user_id: string }; Returns: string }
       get_users_with_emails: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           full_name: string
           user_created_at: string
@@ -498,18 +501,9 @@ export type Database = {
           user_id: string
         }[]
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_current_user_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_quiz_complete: {
-        Args: { p_user_id: string }
-        Returns: boolean
-      }
+      is_admin: { Args: never; Returns: boolean }
+      is_current_user_admin: { Args: never; Returns: boolean }
+      is_quiz_complete: { Args: { p_user_id: string }; Returns: boolean }
       list_table_backups: {
         Args: { table_name_pattern: string }
         Returns: string[]
@@ -544,10 +538,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      validate_quiz_completeness: {
-        Args: { p_user_id: string }
-        Returns: Json
-      }
+      validate_quiz_completeness: { Args: { p_user_id: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never

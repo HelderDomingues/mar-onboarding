@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { UserDashboard } from "@/components/user/UserDashboard";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { useAuth } from "@/hooks/useAuth";
+import { useViewAsUser } from "@/contexts/ViewAsUserContext";
 import { supabase } from "@/integrations/supabase/client";
 import { QuizSubmission } from "@/types/quiz";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
@@ -49,6 +50,7 @@ const AdminDashboardLayout = ({ isAdmin, submission }: { isAdmin: boolean; submi
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { isViewingAsUser } = useViewAsUser();
   const [isAdmin, setIsAdmin] = useState(false);
   const [submission, setSubmission] = useState<QuizSubmission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -135,7 +137,7 @@ const Dashboard = () => {
     );
   }
 
-  if (isAdmin) {
+  if (isAdmin && !isViewingAsUser) {
     return (
       <SidebarProvider>
         <AdminDashboardLayout isAdmin={isAdmin} submission={submission} />
@@ -144,8 +146,8 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
-      <DashboardHeader isAdmin={false} />
+    <div className={`min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white ${isViewingAsUser ? 'pt-10' : ''}`}>
+      <DashboardHeader isAdmin={isAdmin} />
 
       <div className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-slate-200">
         <UserDashboard submission={submission} />
