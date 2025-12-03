@@ -81,7 +81,7 @@ export function UserDashboard({
             
             <div className="mb-6">
               <AspectRatio ratio={16 / 9} className="bg-slate-100 rounded-lg overflow-hidden mb-4">
-                <iframe src="https://www.youtube.com/embed/Lr_L7MAIUnM" title="Vídeo de Introdução ao MAR" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" className="w-full h-full object-cover" />
+                <iframe src="https://www.youtube.com/embed/eE9GDF4lq2Q" title="Vídeo de Introdução ao MAR" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" className="w-full h-full object-cover" />
               </AspectRatio>
               <h4 className="font-medium text-white mt-2">Vídeo de Introdução ao MAR</h4>
               <p className="text-blue-100 text-sm">
