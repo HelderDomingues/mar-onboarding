@@ -2,13 +2,15 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarFooter, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { Users, Database, FileText, Settings, Home, BarChart2, FileCheck, Book, Calendar, ListChecks, LogOut, Menu } from 'lucide-react';
+import { Users, Database, FileText, Settings, Home, BarChart2, FileCheck, Book, Calendar, ListChecks, LogOut, Menu, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useViewAsUser } from '@/contexts/ViewAsUserContext';
 
 const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
   const { logout } = useAuth();
   const { open } = useSidebar();
+  const { enableViewAsUser, isViewingAsUser } = useViewAsUser();
 
   const handleSignOut = async () => {
     try {
@@ -235,7 +237,19 @@ const SidebarMenuItems = ({ onLinkClick }: { onLinkClick?: () => void }) => {
         </SidebarGroupContent>
       </SidebarGroup>
 
-      <div className="mt-auto border-t pt-4">
+      <div className="mt-auto border-t pt-4 space-y-2">
+        <Button 
+          variant={isViewingAsUser ? "secondary" : "outline"}
+          onClick={() => {
+            enableViewAsUser();
+            onLinkClick?.();
+          }}
+          className="w-full justify-start gap-2"
+          disabled={isViewingAsUser}
+        >
+          <Eye className="w-4 h-4 flex-shrink-0" />
+          {open && <span>{isViewingAsUser ? "Modo Usuário Ativo" : "Ver como Usuário"}</span>}
+        </Button>
         <Button 
           variant="destructive" 
           onClick={handleSignOut} 
