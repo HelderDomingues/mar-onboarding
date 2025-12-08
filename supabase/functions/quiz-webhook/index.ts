@@ -8,7 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-console.log("Função quiz-webhook v3.0 iniciada - Otimizada para Make.com");
+console.log("Função quiz-webhook v4.0 iniciada - Payload ordenado por número de pergunta");
 
 // Obter token do webhook das variáveis de ambiente
 const WEBHOOK_TOKEN = Deno.env.get("WEBHOOK_TOKEN") || "amuls2ba837paniiscdb4hlero9pjpdi";
@@ -227,45 +227,6 @@ serve(async (req) => {
       );
     }
     
-    // Obter as respostas completas da tabela dedicada
-    const { data: respostas, error: respostasError } = await supabase
-      .from("quiz_respostas_completas")
-      .select("*")
-      .eq("submission_id", submissionId)
-      .maybeSingle();
-    
-    if (respostasError) {
-      console.error("Erro ao buscar respostas completas:", respostasError);
-      return new Response(
-        JSON.stringify({ 
-          error: "Erro ao buscar respostas", 
-          details: respostasError,
-          errorCode: "ANSWERS_FETCH_ERROR",
-          timestamp: new Date().toISOString()
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 500,
-        }
-      );
-    }
-    
-    if (!respostas || !respostas.respostas) {
-      console.error(`Nenhuma resposta encontrada para submissão ${submissionId}`);
-      return new Response(
-        JSON.stringify({ 
-          error: "Respostas não encontradas para esta submissão", 
-          errorCode: "ANSWERS_NOT_FOUND",
-          submissionId,
-          timestamp: new Date().toISOString()
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 404,
-        }
-      );
-    }
-    
     // CAMADA 5: Validar completude antes de enviar webhook
     console.log("🔍 [Webhook] Validando completude antes de enviar...");
     
@@ -299,7 +260,67 @@ serve(async (req) => {
     
     console.log(`✅ [Webhook] Validação passou: ${validation.total_answered}/${validation.total_required} (${validation.completion_percentage}%)`);
     
-    // Obter o perfil do usuário para informações complementares (consulta separada)
+    // Buscar TODAS as perguntas com módulos para ordenação correta
+    const { data: allQuestions, error: questionsError } = await supabase
+      .from("quiz_questions")
+      .select(`
+        id,
+        text,
+        order_number,
+        module_id,
+        quiz_modules!inner(order_number)
+      `)
+      .order("order_number", { ascending: true });
+    
+    if (questionsError) {
+      console.error("Erro ao buscar perguntas:", questionsError);
+    }
+    
+    // Criar mapeamento de question_id para número global ordenado
+    const questionMap = new Map<string, { globalNumber: number; text: string }>();
+    
+    if (allQuestions) {
+      // Ordenar perguntas por módulo e depois por order_number dentro do módulo
+      const sortedQuestions = allQuestions.sort((a, b) => {
+        const moduleA = (a as any).quiz_modules?.order_number || 0;
+        const moduleB = (b as any).quiz_modules?.order_number || 0;
+        if (moduleA !== moduleB) return moduleA - moduleB;
+        return a.order_number - b.order_number;
+      });
+      
+      // Atribuir número global sequencial
+      sortedQuestions.forEach((q, index) => {
+        questionMap.set(q.id, {
+          globalNumber: index + 1,
+          text: q.text
+        });
+      });
+      
+      console.log(`📋 Mapeadas ${questionMap.size} perguntas com numeração global`);
+    }
+    
+    // Buscar respostas individuais da tabela quiz_answers
+    const { data: answers, error: answersError } = await supabase
+      .from("quiz_answers")
+      .select("question_id, answer")
+      .eq("submission_id", submissionId);
+    
+    if (answersError) {
+      console.error("Erro ao buscar respostas:", answersError);
+    }
+    
+    // Obter as respostas completas da tabela dedicada (como fallback)
+    const { data: respostas, error: respostasError } = await supabase
+      .from("quiz_respostas_completas")
+      .select("*")
+      .eq("submission_id", submissionId)
+      .maybeSingle();
+    
+    if (respostasError) {
+      console.error("Erro ao buscar respostas completas:", respostasError);
+    }
+    
+    // Obter o perfil do usuário para informações complementares
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("*")
@@ -310,66 +331,127 @@ serve(async (req) => {
       console.warn("Aviso: Perfil não encontrado:", profileError);
     }
     
-    // Garantir que respostas é um objeto e não um array ou string
-    if (typeof respostas.respostas !== 'object' || Array.isArray(respostas.respostas)) {
-      console.error("Formato inválido de respostas:", typeof respostas.respostas);
-      try {
-        // Tenta converter para objeto se for string JSON
-        if (typeof respostas.respostas === 'string') {
-          respostas.respostas = JSON.parse(respostas.respostas);
-        } else if (Array.isArray(respostas.respostas)) {
-          // Converte array para objeto se possível
-          const respostasObj: Record<string, any> = {};
-          respostas.respostas.forEach((item: any, index: number) => {
-            if (typeof item === 'object' && item.question && item.answer) {
-              respostasObj[item.question] = item.answer;
-            } else {
-              respostasObj[`Resposta ${index + 1}`] = item;
-            }
+    // Mesclar campos do perfil e submissão
+    const userEmail = respostas?.user_email || submission.user_email || profile?.user_email || "";
+    const userName = respostas?.full_name || submission.full_name || profile?.full_name || "";
+    
+    // ============ CONSTRUIR PAYLOAD ORDENADO ============
+    // Formato: "NN - Título da Pergunta": "Resposta"
+    
+    const orderedAnswers: Record<string, string> = {};
+    
+    if (answers && answers.length > 0 && questionMap.size > 0) {
+      // Usar quiz_answers com mapeamento de perguntas
+      console.log(`📝 Processando ${answers.length} respostas com mapeamento ordenado`);
+      
+      // Criar array para ordenação
+      const answersWithOrder: Array<{ key: string; order: number; value: string }> = [];
+      
+      answers.forEach(answer => {
+        const questionInfo = questionMap.get(answer.question_id);
+        if (questionInfo) {
+          const paddedNumber = String(questionInfo.globalNumber).padStart(2, '0');
+          const key = `${paddedNumber} - ${questionInfo.text}`;
+          answersWithOrder.push({
+            key,
+            order: questionInfo.globalNumber,
+            value: answer.answer || ""
           });
-          respostas.respostas = respostasObj;
         }
-      } catch (e) {
-        console.error("Erro ao converter respostas para formato adequado:", e);
-        return new Response(
-          JSON.stringify({ 
-            error: "Formato de respostas inválido", 
-            errorCode: "INVALID_ANSWERS_FORMAT",
-            submissionId,
-            timestamp: new Date().toISOString()
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 500,
+      });
+      
+      // Ordenar pelo número da pergunta
+      answersWithOrder.sort((a, b) => a.order - b.order);
+      
+      // Adicionar ao objeto ordenado
+      answersWithOrder.forEach(item => {
+        orderedAnswers[item.key] = item.value;
+      });
+      
+    } else if (respostas?.respostas && typeof respostas.respostas === 'object') {
+      // Fallback: usar respostas_completas e tentar ordenar pelo texto
+      console.log("⚠️ Usando fallback com respostas_completas");
+      
+      const respostasObj = respostas.respostas as Record<string, any>;
+      const entries = Object.entries(respostasObj);
+      
+      // Tentar encontrar correspondência com questionMap pelo texto
+      const answersWithOrder: Array<{ key: string; order: number; value: string }> = [];
+      
+      entries.forEach(([questionText, answer]) => {
+        // Buscar no mapa pelo texto da pergunta
+        let foundOrder = 999;
+        let finalKey = questionText;
+        
+        questionMap.forEach((info, questionId) => {
+          if (info.text === questionText || questionText.includes(info.text) || info.text.includes(questionText)) {
+            foundOrder = info.globalNumber;
+            const paddedNumber = String(info.globalNumber).padStart(2, '0');
+            finalKey = `${paddedNumber} - ${info.text}`;
           }
-        );
-      }
+        });
+        
+        // Se não encontrou, tentar extrair número do início do texto
+        if (foundOrder === 999) {
+          const match = questionText.match(/^(\d+)/);
+          if (match) {
+            foundOrder = parseInt(match[1]);
+          }
+        }
+        
+        answersWithOrder.push({
+          key: finalKey,
+          order: foundOrder,
+          value: typeof answer === 'string' ? answer : JSON.stringify(answer)
+        });
+      });
+      
+      // Ordenar
+      answersWithOrder.sort((a, b) => a.order - b.order);
+      
+      // Adicionar ao objeto
+      answersWithOrder.forEach(item => {
+        orderedAnswers[item.key] = item.value;
+      });
     }
     
-    // Mesclar campos do perfil e submissão
-    const userEmail = respostas.user_email || submission.user_email || profile?.user_email || "";
-    const userName = respostas.user_name || submission.user_name || profile?.full_name || "";
+    if (Object.keys(orderedAnswers).length === 0) {
+      console.error(`Nenhuma resposta encontrada para submissão ${submissionId}`);
+      return new Response(
+        JSON.stringify({ 
+          error: "Respostas não encontradas para esta submissão", 
+          errorCode: "ANSWERS_NOT_FOUND",
+          submissionId,
+          timestamp: new Date().toISOString()
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 404,
+        }
+      );
+    }
     
-    // Preparar dados para enviar para o Make.com - formato plano otimizado
+    // Preparar dados para enviar para o Make.com - formato plano otimizado e ORDENADO
     const webhookPayload = {
       // Metadados da submissão (essenciais para tracking)
-      "ID_Submissao": submissionId,
-      "ID_Usuario": submission.user_id,
-      "Data_Submissao": new Date(submission.completed_at || respostas.data_submissao || new Date()).toISOString(),
-      "Timestamp": new Date().toISOString(),
-      "Origem": "Sistema MAR - Crie Valor Consultoria",
+      "00_ID_Submissao": submissionId,
+      "00_ID_Usuario": submission.user_id,
+      "00_Data_Submissao": new Date(submission.completed_at || respostas?.data_submissao || new Date()).toISOString(),
+      "00_Timestamp": new Date().toISOString(),
+      "00_Origem": "Sistema MAR - Crie Valor Consultoria",
       
       // Dados do usuário
-      "Email": userEmail,
-      "Nome": userName,
-      "Telefone": profile?.phone || '',
+      "00_Email": userEmail,
+      "00_Nome": userName,
+      "00_Telefone": profile?.phone || '',
       
-      // As respostas do questionário em formato plano
-      ...respostas.respostas
+      // As respostas do questionário em formato ordenado
+      ...orderedAnswers
     };
     
-    console.log("Enviando dados para webhook do Make.com no formato otimizado");
-    console.log(`Payload contém ${Object.keys(webhookPayload).length} campos`);
+    console.log("📤 Enviando dados para webhook do Make.com no formato ordenado");
+    console.log(`📊 Payload contém ${Object.keys(webhookPayload).length} campos`);
+    console.log(`📋 Primeiras chaves: ${Object.keys(webhookPayload).slice(0, 5).join(', ')}`);
     
     // URL do webhook do Make.com
     const webhookUrl = `https://hook.eu2.make.com/${WEBHOOK_TOKEN}`;
@@ -381,7 +463,7 @@ serve(async (req) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "User-Agent": "Supabase Edge Function v3.0"
+        "User-Agent": "Supabase Edge Function v4.0"
       },
       body: JSON.stringify(webhookPayload)
     });
@@ -460,13 +542,14 @@ serve(async (req) => {
     // Retornar resposta com status detalhado das atualizações
     return new Response(
       JSON.stringify({
-        success: updateSuccess, // Agora reflete o status real da atualização
+        success: updateSuccess,
         message: updateSuccess 
           ? "Dados enviados com sucesso para o Make.com e submissão marcada como processada"
           : "Dados enviados para o Make.com, mas falha ao marcar como processada",
         submission_id: submissionId,
         timestamp: new Date().toISOString(),
         webhook_sent: true,
+        payload_fields: Object.keys(webhookPayload).length,
         updates: {
           submission_updated: updateSuccess,
           respostas_updated: updateRespostasSuccess,
@@ -481,7 +564,7 @@ serve(async (req) => {
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: updateSuccess ? 200 : 207, // 207 = Multi-Status (parcialmente bem-sucedido)
+        status: updateSuccess ? 200 : 207,
       }
     );
     
