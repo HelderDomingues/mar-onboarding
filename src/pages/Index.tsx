@@ -51,7 +51,7 @@ const Index = () => {
         <div className="max-w-md space-y-4 animate-slide-in">
           <img alt="MAR - Mapa para Alto Rendimento" src={marLogo} className="h-20 mb-10" />
           <h1 className="text-4xl font-bold text-blue-900">Área Exclusiva de Membros</h1>
-          <p className="text-lg text-gray-600">Acesse e comece sua jornada rumo à clareza e direção com o Mapara para Alto Rendimento.</p>
+          <p className="text-lg text-gray-600">Acesse e comece sua jornada rumo à clareza e direção com o Mapa para Alto Rendimento.</p>
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
             <Button onClick={() => window.open("https://crievalor.com.br/mar", "_blank")} className="bg-quiz hover:bg-quiz-dark text-slate-50">
               Saiba Mais
