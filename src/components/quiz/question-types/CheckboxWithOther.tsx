@@ -29,8 +29,9 @@ export const CheckboxWithOther: React.FC<CheckboxWithOtherProps> = ({
 }) => {
   const [otherText, setOtherText] = useState('');
 
+  // Busca a opção "Outros" pelo campo is_other ou fallback pelo texto
   const otherOption = options.find(option => 
-    option.text.toLowerCase().includes('outro')
+    option.is_other === true || option.text.toLowerCase().includes('outro')
   );
 
   const predefinedValues = value.filter(v => 

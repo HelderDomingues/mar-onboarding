@@ -272,6 +272,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_other: boolean
           order_number: number
           question_id: string
           text: string
@@ -279,6 +280,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_other?: boolean
           order_number: number
           question_id: string
           text: string
@@ -286,6 +288,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_other?: boolean
           order_number?: number
           question_id?: string
           text?: string

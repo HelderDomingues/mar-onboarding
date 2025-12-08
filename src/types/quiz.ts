@@ -36,6 +36,7 @@ export interface QuizOption {
   question_id: string;
   text: string;
   order_number: number;
+  is_other?: boolean;  // Indica se é opção "Outros" que habilita campo de texto
   created_at?: string;
 }
 

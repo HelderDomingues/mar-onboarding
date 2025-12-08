@@ -88,7 +88,8 @@ export const QuizEditorDialog: React.FC<QuizEditorDialogProps> = ({
           setFormData({
             question_id: questionId || '',
             text: '',
-            order_number: 1
+            order_number: 1,
+            is_other: false
           });
           break;
       }
@@ -336,6 +337,28 @@ export const QuizEditorDialog: React.FC<QuizEditorDialogProps> = ({
           onChange={(e) => setFormData({ ...formData, order_number: parseInt(e.target.value) })}
           min="1"
         />
+      </div>
+
+      <div className="flex items-center space-x-2 p-3 bg-muted/50 rounded-lg border">
+        <Switch
+          id="is_other"
+          checked={formData.is_other || false}
+          onCheckedChange={(checked) => {
+            setFormData({ 
+              ...formData, 
+              is_other: checked,
+              text: checked && !formData.text ? 'Outro(s)' : formData.text
+            });
+          }}
+        />
+        <div className="flex-1">
+          <Label htmlFor="is_other" className="cursor-pointer font-medium">
+            Opção "Outros"
+          </Label>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Quando selecionada, habilita um campo de texto para o usuário digitar uma resposta personalizada
+          </p>
+        </div>
       </div>
     </div>
   );

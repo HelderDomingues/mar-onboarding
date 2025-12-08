@@ -29,8 +29,9 @@ export const RadioWithOther: React.FC<RadioWithOtherProps> = ({
   const [selectedValue, setSelectedValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Busca a opção "Outros" pelo campo is_other ou fallback pelo texto
   const otherOption = options.find(option => 
-    option.text.toLowerCase().includes('outro')
+    option.is_other === true || option.text.toLowerCase().includes('outro')
   );
 
   useEffect(() => {
