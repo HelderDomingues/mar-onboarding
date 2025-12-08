@@ -71,6 +71,7 @@ export interface Database {
           question_id: string
           text: string
           order_number: number
+          is_other: boolean
           created_at: string
         }
         Insert: {
@@ -78,6 +79,7 @@ export interface Database {
           question_id: string
           text: string
           order_number: number
+          is_other?: boolean
           created_at?: string
         }
         Update: {
@@ -85,6 +87,7 @@ export interface Database {
           question_id?: string
           text?: string
           order_number?: number
+          is_other?: boolean
           created_at?: string
         }
       }
